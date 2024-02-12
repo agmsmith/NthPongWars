@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=utf-8">
+<META NAME="viewport" CONTENT="width=device-width, initial-scale=1">
+<META NAME="author" CONTENT="Alexander G. M. Smith">
+<TITLE>NABU Nth Pong Wars Blog</TITLE>
+</HEAD>
+<BODY BGCOLOR="WHITE" TEXT="BLACK" LINK="BLUE" VLINK="SILVER">
+
+<H1>NABU Nth Pong Wars Blog</H1>
+
+<P>I'm trying to write an improved version of <I>Pong Wars</I> for the NABU as a project to become familiar with NABU programming.  Then maybe I can do a fancy Miniputt golf game.
+
+<P ALIGN=CENTER><IMG SRC="Pong_Wars_Koen_van_Gilst_version_20240207.png" ALT="[Screen shot of Pong Wars, Koen van Gilst version]" WIDTH="651" HEIGHT="687">
+
+<P><I>Pong Wars</I> is a game with a board of <I>width</I> by <I>height</I> squares and two balls of different colours (black and white usually).  Conveniently, the NABU video display is 32 "characters" wide by 24 rows tall, and if we use a square rather than a letter in the font, that can be our board.  It's also easily controlled in that mode (rather than fiddling with pixels and VDP bandwidth limits) and we can do the balls as sprites.
+
+<P>The balls move, controlled by inertia until they hit a square of a colour that doesn't match the ball's colour.  In that case, the square changes to the ball's colour and the ball's trajectory reflects (bounces) off the square.  The balls also bounce off the walls as you would expect.
+
+<P>I'd like to add a ball on ball collision explosion to the game, as they sometimes get stuck when near each other under the standard rules.  Also, user input via joystick to accelerate the balls in a selected direction (other games added paddles but that seems less fun, and for precision really needs paddle controls rather than joysticks).  And sound effects.  And up to 8 balls (thus the N in the title, for N up to 8 :-).  And network play with other versions of the program, possibly running on different types of computer.
+
+<H2>2024.02.07</H2>
+
+<P>After spending an hour last week investigating emulating the <A HREF="https://en.wikipedia.org/wiki/NABU_Network">NABU personal computer</A> in hopes of writing something for it, I've decided to keep notes in this blog.  So that I can remember what happened, and other people can start NABU development too.
+
+<P>First of course, I was reading some online web site documentation.  Of note are:
+<UL>
+  <LI><B>NABU RetroNET</B> <A HREF="https://nabu.ca/">https://nabu.ca/</A> - the main site for Nabu software, documentation and preservation of Nabu history.
+  <LI><B>The NABU Network</B> <A HREF="https://www.nabunetwork.com/">https://www.nabunetwork.com/</A> - a secondary and rival site of all things Nabu, and in particular news.
+  <LI><B>Links</B> <A HREF="https://gtamp.com/nabu/">https://gtamp.com/nabu/</A> - a page of links to Nabu emulators, Internet Adapter software varieties, forums.
+  <LI><B>NABU-Library</B> <A HREF="https://github.com/DJSures/NABU-LIB">https://github.com/DJSures/NABU-LIB</A> - is a code library by D. J. Sures to make writing NABU programs easier, targeting both CP/M and bare NABU systems.
+  <LI><B>Z88DK</B> <A HREF="https://z88dk.org/site/">https://z88dk.org/site/</A> - is a C compiler and assembler for a large variety of Z80 CPU computers.
+  <LI><B><I>Pong Wars</I> Discussions</B> on <A HREF="https://news.ycombinator.com/item?id=39159418">Y Combinator</A> and <A HREF="https://hachyderm.io/@vnglst/111828811496422610">Mastodon</A>.  <I>Pong Wars</I> has been around for a while, as these discussions uncover.  Some people want to port it to older 8 bit computers too.
+  <LI><B>Javascript version of <I>Pong Wars</I></B> <A HREF="https://pong-wars.koenvangilst.nl/">https://pong-wars.koenvangilst.nl/</A> - Play Koen van Gilst's version of <I>Pong Wars</I> in your web browser.
+  <LI><B>Source code for <I>Pong Wars</I></B> <A HREF="https://github.com/vnglst/pong-wars">https://github.com/vnglst/pong-wars</A> - Javascript, MIT license.  Also see the list of other known versions at the bottom of the page (good gamification ideas in the Atari 2600 version).
+</UL>
+
+<P>Then I spent some time reading the source code of the various implementations of <I>Pong Wars</I> from the <A HREF="https://github.com/vnglst/pong-wars?tab=readme-ov-file#alternate-version">list on Github</A>.  The bugs and feature requests list for Koen's version also suggest a few ideas and improvements.  Odd that they all iterate over the whole array of squares to draw the screen repeatedly, rather than just doing changed squares.  A sign of having too much CPU power!
+
+<H2>Setting up a Development Environment</H2>
+
+<P>I'm using Fedora 39 Linux.  Fortunately a lot of the needed tools have already been packaged.  So to install MAME (an emulator which handles the NABU):
+
+<BLOCKQUOTE>dnf install mame-data-software-lists mame-doc mame-tools</BLOCKQUOTE>
+
+<P>And for the C compiler and assembler:
+<BLOCKQUOTE>dnf install z88dk</BLOCKQUOTE>
+
+For the Internet Adapter server (simulates the NABU network distributing files to NABU computers), I'm starting with the one from Nabu.ca:
+
+<OL>
+  <LI>Download the appropriate one (Linux x86 for me) from <A HREF="https://nabu.ca/downloads-nabu-internet-adapter">https://nabu.ca/downloads-nabu-internet-adapter</A>
+  <LI>Unzip it and move the files to ~/bin/ or somewhere in your path.
+  <LI>Add a link named ~/bin/libdl.so that points to the actual location and file of that dynamic loader library.  Using the command "locate libdl", I found it at /usr/lib64/libdl.so.2
+  <LI>Test it by typing NABU-Internet-Adapter-84 in a Terminal window.  It should draw a nice text mode user interface (make Terminal window bigger to see more).  Arrow keys, tab and Enter let you navigate around the menus.  It seems to save files in ~/NABU Internet Adapter/
+</OL>
+
+<P>And that's as far as I have gotten.  Hope to run MAME next and see the stock NABU boot screen.
+
+<P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.
+</BODY>
+</HTML>

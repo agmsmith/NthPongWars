@@ -10,19 +10,41 @@
 
 <H1>NABU Nth Pong Wars Blog</H1>
 
-<P>I'm trying to write an improved version of <I>Pong Wars</I> for the NABU as a project to become familiar with NABU programming.  Then maybe I can do a fancy Miniputt golf game.
+<P>I'm trying to write an improved version of <I>Pong Wars</I> for the NABU as
+a project to become familiar with NABU programming.  Then maybe I can do a
+fancy Miniputt golf game.
 
-<P ALIGN=CENTER><IMG SRC="Pong_Wars_Koen_van_Gilst_version_20240207.png" ALT="[Screen shot of Pong Wars, Koen van Gilst version]" WIDTH="651" HEIGHT="687">
+<P ALIGN=CENTER><IMG SRC="Pong_Wars_Koen_van_Gilst_version_20240207.png"
+ALT="[Screen shot of Pong Wars, Koen van Gilst version]" WIDTH="651"
+HEIGHT="687">
 
-<P><I>Pong Wars</I> is a game with a board of <I>width</I> by <I>height</I> squares and two balls of different colours (black and white usually).  Conveniently, the NABU video display is 32 "characters" wide by 24 rows tall, and if we use a square rather than a letter in the font, that can be our board.  It's also easily controlled in that mode (rather than fiddling with pixels and VDP bandwidth limits) and we can do the balls as sprites.
+<P><I>Pong Wars</I> is a game with a board of <I>width</I> by <I>height</I>
+squares and two balls of different colours (black and white usually).
+Conveniently, the NABU video display is 32 "characters" wide by 24 rows tall,
+and if we use a square rather than a letter in the font, that can be our board.
+It's also easily controlled in that mode (rather than fiddling with pixels and
+VDP bandwidth limits) and we can do the balls as sprites.
 
-<P>The balls move, controlled by inertia until they hit a square of a colour that doesn't match the ball's colour.  In that case, the square changes to the ball's colour and the ball's trajectory reflects (bounces) off the square.  The balls also bounce off the walls as you would expect.
+<P>The balls move, controlled by inertia until they hit a square of a colour
+that doesn't match the ball's colour.  In that case, the square changes to the
+ball's colour and the ball's trajectory reflects (bounces) off the square.  The
+balls also bounce off the walls as you would expect.
 
-<P>I'd like to add a ball on ball collision explosion to the game, as they sometimes get stuck when near each other under the standard rules.  Also, user input via joystick to accelerate the balls in a selected direction (other games added paddles but that seems less fun, and for precision really needs paddle controls rather than joysticks).  And sound effects.  And up to 8 balls (thus the N in the title, for N up to 8 :-).  And network play with other versions of the program, possibly running on different types of computer.
+<P>I'd like to add a ball on ball collision explosion to the game, as they
+sometimes get stuck when near each other under the standard rules.  Also, user
+input via joystick to accelerate the balls in a selected direction (other games
+added paddles but that seems less fun, and for precision really needs paddle
+controls rather than joysticks).  And sound effects.  And up to 8 balls (thus
+the N in the title, for N up to 8 :-).  And network play with other versions of
+the program, possibly running on different types of computer.
 
 <H2>2024.02.07</H2>
 
-<P>After spending an hour last week investigating emulating the <A HREF="https://en.wikipedia.org/wiki/NABU_Network">NABU personal computer</A> in hopes of writing something for it, I've decided to keep notes in this blog.  So that I can remember what happened, and other people can start NABU development too.
+<P>After spending an hour last week investigating emulating the <A
+HREF="https://en.wikipedia.org/wiki/NABU_Network">NABU personal computer</A> in
+hopes of writing something for it, I've decided to keep notes in this blog.  So
+that I can remember what happened, and other people can start NABU development
+too.
 
 <P>First of course, I was reading some online web site documentation.  Of note are:
 <UL>
@@ -36,15 +58,23 @@
   <LI><B>Source code for <I>Pong Wars</I></B> <A HREF="https://github.com/vnglst/pong-wars">https://github.com/vnglst/pong-wars</A> - Javascript, MIT license.  Also see the list of other known versions at the bottom of the page (good gamification ideas in the Atari 2600 version).
 </UL>
 
-<P>Then I spent some time reading the source code of the various implementations of <I>Pong Wars</I> from the <A HREF="https://github.com/vnglst/pong-wars?tab=readme-ov-file#alternate-version">list on Github</A>.  The bugs and feature requests list for Koen's version also suggest a few ideas and improvements.  Odd that they all iterate over the whole array of squares to draw the screen repeatedly, rather than just doing changed squares.  A sign of having too much CPU power!
+<P>Then I spent some time reading the source code of the various
+implementations of <I>Pong Wars</I> from the
+<A HREF="https://github.com/vnglst/pong-wars?tab=readme-ov-file#alternate-version">list
+on Github</A>.  The bugs and feature requests list for Koen's version also
+suggest a few ideas and improvements.  Odd that they all iterate over the whole
+array of squares to draw the screen repeatedly, rather than just doing changed
+squares.  A sign of having too much CPU power!
 
 <H2>Setting up a Development Environment</H2>
 
-<P>I'm using Fedora 39 Linux.  Fortunately a lot of the needed tools have already been packaged.
+<P>I'm using Fedora 39 Linux.  Fortunately a lot of the needed tools have
+already been packaged.
 
 <H3>Install MAME</H3>
 
-<P>So to install MAME (an emulator which handles the NABU, currently version 0.262):
+<P>So to install MAME (an emulator which handles the NABU, currently version
+0.262):
 
 <BLOCKQUOTE>dnf install mame mame-data-software-lists mame-doc mame-tools</BLOCKQUOTE>
 
@@ -55,16 +85,24 @@
 
 <H3>Network Simulator</H3>
 
-<P>For the NABU Network Adapter server (simulates the NABU network distributing files to NABU computers), I'm starting with the one from Nabu.ca:
+<P>For the NABU Network Adapter server (simulates the NABU network distributing
+files to NABU computers), I'm starting with the one from Nabu.ca:
 
 <OL>
-  <LI>Download the appropriate one (Linux x86 for me) from <A HREF="https://nabu.ca/downloads-nabu-internet-adapter">https://nabu.ca/downloads-nabu-internet-adapter</A>
+  <LI>Download the appropriate one (Linux x86 for me) from
+    <A HREF="https://nabu.ca/downloads-nabu-internet-adapter">https://nabu.ca/downloads-nabu-internet-adapter</A>
   <LI>Unzip it and move the files to ~/bin/ or somewhere in your path.
-  <LI>Add a link named ~/bin/libdl.so that points to the actual location and file of that dynamic loader library.  Using the command "locate libdl", I found it at /usr/lib64/libdl.so.2
-  <LI>Test it by typing NABU-Internet-Adapter-84 in a Terminal window.  It should draw a nice text mode user interface (make Terminal window bigger to see more).  Arrow keys, tab and Enter let you navigate around the menus.  It seems to save files in ~/NABU Internet Adapter/
+  <LI>Add a link named ~/bin/libdl.so that points to the actual location and
+    file of that dynamic loader library.  Using the command "locate libdl", I
+    found it at /usr/lib64/libdl.so.2
+  <LI>Test it by typing NABU-Internet-Adapter-84 in a Terminal window.  It
+    should draw a nice text mode user interface (make Terminal window bigger to
+    see more).  Arrow keys, tab and Enter let you navigate around the menus.
+    It seems to save files in ~/NABU Internet Adapter/
 </OL>
 
-<P>And that's as far as I have gotten.  Hope to run MAME next and see the stock NABU boot screen.
+<P>And that's as far as I have gotten.  Hope to run MAME next and see the stock
+NABU boot screen.
 
 <HR>
 
@@ -72,9 +110,16 @@
 
 <H3>MAME Not Working</H3>
 
-<P>I started MAME setup by copying some of the files from "GTAMPs nabu-mame.zip" into a new MAME directory in my user account.  I was looking for configuration and other similar files, which weren't specific to the Windows OS MAME that the .zip file includes.  I also converted the nabu.cmd batch file into a NabuStart.sh bash script file.
+<P>I started MAME setup by copying some of the files from
+"GTAMPs nabu-mame.zip" into a new MAME directory in my user account.  I was
+looking for configuration and other similar files, which weren't specific to
+the Windows OS MAME that the .zip file includes.  I also converted the nabu.cmd
+batch file into a NabuStart.sh bash script file.
 
-<P>Boots, but doesn't run the network - RetroNet adapter says it got FF rather than some start sequence.  Later on I found it was due to a low baud rate setting on the simulated serial port that the NABU talks to the NABU network adapter.
+<P>Boots, but doesn't run the network - RetroNet adapter says it got FF rather
+than some start sequence.  Later on I found it was due to a low baud rate
+setting on the simulated serial port that the NABU talks to the NABU network
+adapter.
 
 <H3>Try nabud instead:</H3>
 
@@ -87,44 +132,74 @@ gpasswd --add nabu dialout
 <P>Add a password.<BR>
 passwd nabu
 
-<P>Log in as nabu user.  Get the source code: <CODE>git clone https://github.com/thorpej/nabud.git</CODE>  Then run ./configure, make, and as root "make install".
+<P>Log in as nabu user.  Get the source code:
+<CODE>git clone https://github.com/thorpej/nabud.git</CODE> Then run
+./configure, make, and as root "make install".
 
-<P>After all that, "man nabud" should give you the documentation, and there's a README on the GitHub page.  <A HREF="https://github.com/thorpej/nabud">https://github.com/thorpej/nabud</A>
+<P>After all that, "man nabud" should give you the documentation, and there's a
+README on the GitHub page.
+<A HREF="https://github.com/thorpej/nabud">https://github.com/thorpej/nabud</A>
 
 <P>Install Linux systemd settings for nabud by doing:<BR>
 cp -v /usr/local/share/nabud/systemd/nabud.service /etc/systemd/system/<BR>
-Put a configuration file nabud.conf in /usr/local/etc/nabud.conf (trimmed down from one of the examples).<BR>
-Then you can "systemctl status nabud", and use the enable and stop/restart commands as desired.
+Put a configuration file nabud.conf in /usr/local/etc/nabud.conf (trimmed down
+from one of the examples).<BR>
+Then you can "systemctl status nabud", and use the enable and stop/restart
+commands as desired.
 
-<P>Then I tried it again, and get "Got unexpected message 0xff".  Same problem as with Nabu.ca Network Adapter.  Maybe MAME needs a newer version or different ROMS or settings (actually was serial port speed).
+<P>Then I tried it again, and get "Got unexpected message 0xff".  Same problem
+as with Nabu.ca Network Adapter.  Maybe MAME needs a newer version or different
+ROMS or settings (actually was serial port speed).
 
 <H2>2024.02.20</H2>
 
 <H3>Look for ROMs and config files for MAME</H3>
 
-<P>Known working config for MAME found in <A HREF="https://forums.nabu.ca/viewtopic.php?t=17">https://forums.nabu.ca/viewtopic.php?t=17</A>.
+<P>Known working config for MAME found in
+<A HREF="https://forums.nabu.ca/viewtopic.php?t=17">https://forums.nabu.ca/viewtopic.php?t=17</A>.
 
-<P>ROMs in the Quiver at Nabu.ca are the same as in the "GTAMPs nabu-mame.zip"  But there's a mention in the Nabu.ca forums that ROM version 14 is a hacked up version, possibly adding to the communication protocols?   Discussion found at <A HREF="https://forums.nabu.ca/viewtopic.php?p=951">https://forums.nabu.ca/viewtopic.php?p=951</A>.  Turns out to be the same as the GTAMP nabupc-u53-ver14-2732.bin file.
+<P>ROMs in the Quiver at Nabu.ca are the same as in the "GTAMPs nabu-mame.zip"
+But there's a mention in the Nabu.ca forums that ROM version 14 is a hacked up
+version, possibly adding to the communication protocols?  Discussion found at
+<A HREF="https://forums.nabu.ca/viewtopic.php?p=951">https://forums.nabu.ca/viewtopic.php?p=951</A>.
+Turns out to be the same as the GTAMP nabupc-u53-ver14-2732.bin file.
 
-<P>Noticed that in the other .cmd files from GTAMP, some start MAME with a <CODE>-bios ver14</CODE> argument, or ver17.
+<P>Noticed that in the other .cmd files from GTAMP, some start MAME with a
+<CODE>-bios ver14</CODE> argument, or ver17.
 
 <H2>2024.02.21</H2>
 
 <H3>Serial Port Settings?</H3>
 
-<P>From a post on the Vintage Computer Federation <A HREF="https://forum.vcfed.org/index.php?threads/nabu-pc-emulation-under-mame.1241092/page-16">https://forum.vcfed.org/index.php?threads/nabu-pc-emulation-under-mame.1241092/page-16</A> they mentioned setting the baud rate in the emulator to 111900, and that the <B>Scroll Lock</B> key followed by Tab can bring up the MAME menu when running (so that you can change the serial port speed).  Mine was at 9600 baud.  And of course no scroll lock key on my laptop keyboard, so I had to dig up a USB keyboard just to press that button.
+<P>From a post on the Vintage Computer Federation
+<A HREF="https://forum.vcfed.org/index.php?threads/nabu-pc-emulation-under-mame.1241092/page-16">https://forum.vcfed.org/index.php?threads/nabu-pc-emulation-under-mame.1241092/page-16</A>
+they mentioned setting the baud rate in the emulator to 111900, and that the
+<B>Scroll Lock</B> key followed by Tab can bring up the MAME menu when running
+(so that you can change the serial port speed).  Mine was at 9600 baud.  And of
+course there's no scroll lock key on my laptop keyboard, so I had to dig up a
+USB keyboard just to press that button.
 
-<P>How about the other serial port settings?  <A HREF="https://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=122002">https://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=122002</A> says 111900 baud in both directions, 8 bits, no parity, 1 stop bit, no flow control.  Still didn't work.
+<P>How about the other serial port settings?
+<A HREF="https://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=122002">https://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=122002</A>
+says 111900 baud in both directions, 8 bits, no parity, 1 stop bit, no flow
+control.  Still didn't work.
 
 <H3>Start Over</H3>
 
-<P>I wiped out my MAME directory and restored it from GTAMP's .zip file.  MAME complained about not finding a keyboard rom; I just had to move the nabukeyboard*.bin files out from the roms/nabu_kb directory into roms/nabupc.  MAME stopped complaining about missing ROMs and it started working!  Using the -bios option to pick a rom was apparently causing problems, I just needed to use the defaults.  Argh!
+<P>I wiped out my MAME directory and restored it from GTAMP's .zip file.  MAME
+complained about not finding a keyboard rom; I just had to move the
+nabukeyboard*.bin files out from the roms/nabu_kb directory into roms/nabupc.
+MAME stopped complaining about missing ROMs and it started working!  Using the
+-bios option to pick a rom was apparently causing problems, I just needed to
+use the defaults.  Argh!
 
-<P>This command line works (after you get to the MAME menu and fix the serial port settings, and have one of the Nabu Network simulators running in the background on TCP port 5816):
+<P>This command line works (after you get to the MAME menu and fix the serial
+port settings, and have one of the Nabu Network simulators running in the
+background on TCP port 5816):<BR>
+<CODE>mame nabupc -window -resolution 1024x768 -hcca null_modem -bitb socket.127.0.0.1:5816</CODE>
 
-<P><CODE>mame nabupc -window -resolution 1024x768 -hcca null_modem -bitb socket.127.0.0.1:5816</CODE>
-
-<P>It even worked with both Network Adapter simulators, nabud and the Nabu.ca NABU Internet Adapter.
+<P>It even worked with both Network Adapter simulators, nabud and the Nabu.ca
+NABU Internet Adapter.
 
 <P>Next up, try compiling an example program and get it running.
 

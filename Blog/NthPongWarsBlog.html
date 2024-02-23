@@ -74,14 +74,13 @@ already been packaged.
 <H3>Install MAME</H3>
 
 <P>So to install MAME (an emulator which handles the NABU, currently version
-0.262):
-
-<BLOCKQUOTE>dnf install mame mame-data-software-lists mame-doc mame-tools</BLOCKQUOTE>
+0.262):<BR>
+<CODE>dnf install mame mame-data-software-lists mame-doc mame-tools</CODE>
 
 <H3>C Compiler</H3>
 
-<P>And for the C compiler and assembler:
-<BLOCKQUOTE>dnf install z88dk</BLOCKQUOTE>
+<P>And for the C compiler and assembler:<BR>
+<CODE>dnf install z88dk</CODE>
 
 <H3>Network Simulator</H3>
 
@@ -111,10 +110,10 @@ NABU boot screen.
 <H3>MAME Not Working</H3>
 
 <P>I started MAME setup by copying some of the files from
-"GTAMPs nabu-mame.zip" into a new MAME directory in my user account.  I was
-looking for configuration and other similar files, which weren't specific to
-the Windows OS MAME that the .zip file includes.  I also converted the nabu.cmd
-batch file into a NabuStart.sh bash script file.
+GTAMPs "nabu-mame.zip" for Windows into a new MAME directory in my user account.
+I was looking for configuration and other similar files, which weren't specific
+to the Windows OS MAME that the .zip file includes.  I also converted the
+nabu.cmd batch file into a NabuStart.sh bash script file.
 
 <P>Boots, but doesn't run the network - RetroNet adapter says it got FF rather
 than some start sequence.  Later on I found it was due to a low baud rate
@@ -124,24 +123,25 @@ adapter.
 <H3>Try nabud instead:</H3>
 
 <P>Add "nabu" user and group.<BR>
-useradd --create-home --comment "NABU Network Server" nabu
+<CODE>useradd --create-home --comment "NABU Network Server" nabu</CODE>
 
 <P>Add to dialout group, in case we ever have a real serial port.<BR>
-gpasswd --add nabu dialout
+<CODE>gpasswd --add nabu dialout</CODE>
 
 <P>Add a password.<BR>
-passwd nabu
+<CODE>passwd nabu</CODE>
 
-<P>Log in as nabu user.  Get the source code:
-<CODE>git clone https://github.com/thorpej/nabud.git</CODE> Then run
-./configure, make, and as root "make install".
+<P>Log in as nabu user.  Get the source code:<BR>
+<CODE>git clone https://github.com/thorpej/nabud.git</CODE><BR>
+Then run "./configure", "make", and as root "make install" in the nabud
+directory.
 
 <P>After all that, "man nabud" should give you the documentation, and there's a
 README on the GitHub page.
 <A HREF="https://github.com/thorpej/nabud">https://github.com/thorpej/nabud</A>
 
 <P>Install Linux systemd settings for nabud by doing:<BR>
-cp -v /usr/local/share/nabud/systemd/nabud.service /etc/systemd/system/<BR>
+<CODE>cp -v /usr/local/share/nabud/systemd/nabud.service /etc/systemd/system/</CODE><BR>
 Put a configuration file nabud.conf in /usr/local/etc/nabud.conf (trimmed down
 from one of the examples).<BR>
 Then you can "systemctl status nabud", and use the enable and stop/restart
@@ -158,7 +158,7 @@ ROMS or settings (actually was serial port speed).
 <P>Known working config for MAME found in
 <A HREF="https://forums.nabu.ca/viewtopic.php?t=17">https://forums.nabu.ca/viewtopic.php?t=17</A>.
 
-<P>ROMs in the Quiver at Nabu.ca are the same as in the "GTAMPs nabu-mame.zip"
+<P>ROMs in the Quiver at Nabu.ca are the same as in the GTAMPs "nabu-mame.zip"
 But there's a mention in the Nabu.ca forums that ROM version 14 is a hacked up
 version, possibly adding to the communication protocols?  Discussion found at
 <A HREF="https://forums.nabu.ca/viewtopic.php?p=951">https://forums.nabu.ca/viewtopic.php?p=951</A>.
@@ -184,7 +184,7 @@ USB keyboard just to press that button.
 says 111900 baud in both directions, 8 bits, no parity, 1 stop bit, no flow
 control.  Still didn't work.
 
-<H3>Start Over</H3>
+<H3>Start Over!</H3>
 
 <P>I wiped out my MAME directory and restored it from GTAMP's .zip file.  MAME
 complained about not finding a keyboard rom; I just had to move the
@@ -193,9 +193,10 @@ MAME stopped complaining about missing ROMs and it started working!  Using the
 -bios option to pick a rom was apparently causing problems, I just needed to
 use the defaults.  Argh!
 
-<P>This command line works (after you get to the MAME menu and fix the serial
-port settings, and have one of the Nabu Network simulators running in the
-background on TCP port 5816):<BR>
+<P>This command line works (after you get to the MAME menu via the scroll-lock
+and tab key, and fix the serial port settings, and have one of the Nabu Network
+simulators running in the background on TCP port 5816).  By the way, you can
+make the window dimensions larger or smaller as you wish for readability:<BR>
 <CODE>mame nabupc -window -resolution 1024x768 -hcca null_modem -bitb socket.127.0.0.1:5816</CODE>
 
 <P>It even worked with both Network Adapter simulators, nabud and the Nabu.ca

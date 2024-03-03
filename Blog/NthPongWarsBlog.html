@@ -53,6 +53,7 @@ too.
   <LI><B>Links</B> <A HREF="https://gtamp.com/nabu/">https://gtamp.com/nabu/</A> - a page of links to Nabu emulators, Internet Adapter software varieties, forums.
   <LI><B>NABU-Library</B> <A HREF="https://github.com/DJSures/NABU-LIB">https://github.com/DJSures/NABU-LIB</A> - is a code library by D. J. Sures to make writing NABU programs easier, targeting both CP/M and bare NABU systems.
   <LI><B>Z88DK</B> <A HREF="https://z88dk.org/site/">https://z88dk.org/site/</A> - is a C compiler and assembler for a large variety of Z80 CPU computers.
+  <LI><B>SDCC</B> <A HREF="https://sdcc.sourceforge.net/">https://sdcc.sourceforge.net/</A> the Small Device C Compiler used by ZCC.
   <LI><B><I>Pong Wars</I> Discussions</B> on <A HREF="https://news.ycombinator.com/item?id=39159418">Y Combinator</A> and <A HREF="https://hachyderm.io/@vnglst/111828811496422610">Mastodon</A>.  <I>Pong Wars</I> has been around for a while, as these discussions uncover.  Some people want to port it to older 8 bit computers too.
   <LI><B>Javascript version of <I>Pong Wars</I></B> <A HREF="https://pong-wars.koenvangilst.nl/">https://pong-wars.koenvangilst.nl/</A> - Play Koen van Gilst's version of <I>Pong Wars</I> in your web browser.
   <LI><B>Source code for <I>Pong Wars</I></B> <A HREF="https://github.com/vnglst/pong-wars">https://github.com/vnglst/pong-wars</A> - Javascript, MIT license.  Also see the list of other known versions at the bottom of the page (good gamification ideas in the Atari 2600 version).
@@ -80,7 +81,9 @@ already been packaged.
 <H3>C Compiler</H3>
 
 <P>And for the C compiler and assembler:<BR>
-<CODE>dnf install z88dk</CODE>
+<CODE>dnf install z88dk</CODE><BR>
+(actually, that doesn't work, no NABU subsystem, see later on for a source code
+based install)
 
 <H3>Network Simulator</H3>
 
@@ -203,6 +206,49 @@ make the window dimensions larger or smaller as you wish for readability:<BR>
 NABU Internet Adapter.
 
 <P>Next up, try compiling an example program and get it running.
+
+<H2>2024.02.27</H2>
+
+<P>After a bit of reading and then trying out CP/M (manual and reference card
+PDFs exist) in a simulated NABU computer running in MAME, I'm ready to start
+programming.  I'm looking at <A
+HREF="https://github.com/DJSures/NABU-LIB">https://github.com/DJSures/NABU-LIB</A>
+which documents how to set up a development environment and how to compile
+programs for the NABU.  Looks like the best way to run the game is under CP/M,
+rather than on bare hardware.  That way you can save games to disk, there's
+library code for running the hardware (text, graphics, sound, joysticks, serial
+data, interrupts, disk access, network access).  Hopefully that will make it
+easier to get started with writing the game.
+
+<H2>2024.03.03</H2>
+
+<P>Try to get the compiler working.  Of course, it doesn't, get warnings about
+#warning statements in the library's header file.  Hours of frustration ensue.
+
+<P>Try a Hello World simple C program.  Can't find zpragma command.  Try again,
+with zcc environment variables set to /usr/share/z88dk/... can't find nabu.cfg.
+But can find cpm.cfg.  Look at arguments, turn off "-vn" which hides what zcc
+is doing!
+
+<PRE>cp /usr/share/z88dk/lib/config/../..//lib/cpm_crt0.opt /tmp/tmpXXxzT5zg.opt
+cp /tmp/tmpXXxzT5zg.opt /tmp/tmpXXxzT5zg.asm
+zcpp -I. -DZ80 -DCPM -D__CPM__  -DZ88DK_USES_SDCC=1 -I/usr/share/z88dk/lib/config/../..//include  main.c /tmp/tmpXXFsyuOI.i2
+zpragma  < /tmp/tmpXXFsyuOI.i2 > /tmp/tmpXXFsyuOI.i
+sh: line 1: zpragma: command not found</PRE>
+
+<P>Looks like it does really need a zpragma command, and none exists.
+Deinstall ZCC with <CODE>dnf remove z88dk</CODE> and then download the source
+and build zcc and sdcc.  Instructions at
+<A HREF="https://github.com/z88dk/z88dk/wiki/installation">https://github.com/z88dk/z88dk/wiki/installation</A>.
+I just did a home directory install (not a system-wide install) of the
+March 3 2024 version (plenty of older versions are around and there's a
+Git repository too for easier reversions, might want to use 2.3 from 20.12.2023
+which was before a SDCC compiler change, though I see a NABU change in
+February 2024).<BR>
+<CODE>git clone --recursive  https://github.com/z88dk/z88dk.git<BR>
+dnf install gcc g++ gdb make bison flex libxml2-devel subversion zlib-devel m4 ragel re2c dos2unix texinfo texi2html curl perl cpanminus ccache boost boost-devel boost-graph perl-Modern-Perl perl-YAML-LibYAML perl-local-lib perl-Capture-Tiny perl-Path-Tiny perl-Text-Table perl-Data-HexDump perl-Regexp-Common perl-Clone perl-File-Slurp pkg-config gmp-devel
+</CODE><BR>
+Then continue on with the rest of the instructions, installing Perl modules, running the build, and adding environment variables to your .bashrc so ZCC is runnable.
 
 <P>- Alex
 

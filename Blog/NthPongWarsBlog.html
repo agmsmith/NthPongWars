@@ -244,11 +244,17 @@ I just did a home directory install (not a system-wide install) of the
 March 3 2024 version (plenty of older versions are around and there's a
 Git repository too for easier reversions, might want to use 2.3 from 20.12.2023
 which was before a SDCC compiler change, though I see a NABU change in
-February 2024).<BR>
-<CODE>git clone --recursive  https://github.com/z88dk/z88dk.git<BR>
+February 2024).
+
+<P><CODE>git clone --recursive  https://github.com/z88dk/z88dk.git<BR>
 dnf install gcc g++ gdb make bison flex libxml2-devel subversion zlib-devel m4 ragel re2c dos2unix texinfo texi2html curl perl cpanminus ccache boost boost-devel boost-graph perl-Modern-Perl perl-YAML-LibYAML perl-local-lib perl-Capture-Tiny perl-Path-Tiny perl-Text-Table perl-Data-HexDump perl-Regexp-Common perl-Clone perl-File-Slurp pkg-config gmp-devel
-</CODE><BR>
-Then continue on with the rest of the instructions, installing Perl modules, running the build, and adding environment variables to your .bashrc so ZCC is runnable.
+</CODE>
+
+<P>Then continue on with the rest of the instructions, installing Perl modules, running the build, and adding environment variables to your .bashrc so ZCC is runnable.  Finally do their test compile and try a NABU CP/M Hello World.
+
+<P>The tools to make a hard drive disk image for remote access are Windows versions, so instead copy the .COM file to NABU Internet Adapter/Store/D/0 and see if it shows up in Cloud CP/M on drive D user 0.  Need to use the "CPMDRIVE B" command within the NABU emulation.
+
+<P>Yay!  After 4 hours, got my Hello world test working.  Whew.  That's enough for today.  Next, try compiling NABU hardware library stuff and see if the example games work.
 
 <P>- Alex
 

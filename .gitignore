@@ -7,3 +7,6 @@
 # Ignore various directories, usually 3rd party stuff.
 /Key Software/*
 /MAME/*
+*.COM
+*.lis
+*.map

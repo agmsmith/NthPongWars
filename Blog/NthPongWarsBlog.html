@@ -49,7 +49,7 @@ too.
 <P>First of course, I was reading some online web site documentation.  Of note are:
 <UL>
   <LI><B>NABU RetroNET</B> <A HREF="https://nabu.ca/">https://nabu.ca/</A> - the main site for Nabu software, documentation and preservation of Nabu history.
-  <LI><B>The NABU Network</B> <A HREF="https://www.nabunetwork.com/">https://www.nabunetwork.com/</A> - a copy-cat somewhat dubious rival site of all things Nabu, but notable for news.
+  <LI><B>The NABU Network</B> <A HREF="https://www.nabunetwork.com/">https://www.nabunetwork.com/</A> - a copy-cat rival site of all things Nabu, notable for news.
   <LI><B>Links</B> <A HREF="https://gtamp.com/nabu/">https://gtamp.com/nabu/</A> - a page of links to Nabu emulators, Internet Adapter software varieties, forums.
   <LI><B>NABU-Library</B> <A HREF="https://github.com/DJSures/NABU-LIB">https://github.com/DJSures/NABU-LIB</A> - is a code library by D. J. Sures to make writing NABU programs easier, targeting both CP/M and bare NABU systems.
   <LI><B>Z88DK</B> <A HREF="https://z88dk.org/site/">https://z88dk.org/site/</A> - is a C compiler and assembler for a large variety of Z80 CPU computers.
@@ -247,33 +247,70 @@ which was before a SDCC compiler change, though I see a NABU change in
 February 2024).
 
 <P><CODE>git clone --recursive  https://github.com/z88dk/z88dk.git<BR>
-dnf install gcc g++ gdb make bison flex libxml2-devel subversion zlib-devel m4 ragel re2c dos2unix texinfo texi2html curl perl cpanminus ccache boost boost-devel boost-graph perl-Modern-Perl perl-YAML-LibYAML perl-local-lib perl-Capture-Tiny perl-Path-Tiny perl-Text-Table perl-Data-HexDump perl-Regexp-Common perl-Clone perl-File-Slurp pkg-config gmp-devel
-</CODE>
+dnf install gcc g++ gdb make bison flex libxml2-devel subversion zlib-devel m4
+ragel re2c dos2unix texinfo texi2html curl perl cpanminus ccache boost
+boost-devel boost-graph perl-Modern-Perl perl-YAML-LibYAML perl-local-lib
+perl-Capture-Tiny perl-Path-Tiny perl-Text-Table perl-Data-HexDump
+perl-Regexp-Common perl-Clone perl-File-Slurp pkg-config gmp-devel</CODE>
 
-<P>Then continue on with the rest of the instructions, installing Perl modules, running the build, and adding environment variables to your .bashrc so ZCC is runnable.  Finally do their test compile and try a NABU CP/M Hello World.
+<P>Then continue on with the rest of the instructions, installing Perl modules,
+running the build, and adding environment variables to your .bashrc so ZCC is
+runnable.  Finally do their test compile and try a NABU CP/M Hello World.
 
-<P>The tools to make a hard drive disk image for remote access are Windows versions, so instead copy the .COM file to NABU Internet Adapter/Store/D/0 and see if it shows up in Cloud CP/M on drive D user 0.  Need to use the "CPMDRIVE B" command within the NABU emulation.
+<P>The tools to make a hard drive disk image for remote access are Windows
+versions, so instead copy the .COM file to <I>NABU Internet
+Adapter/Store/D/0</I> and see if it shows up in Cloud CP/M on drive D user 0.
+Need to use the "CPMDRIVE B" command within the NABU emulation, then it
+appears.
 
-<P>Yay!  After 4 hours, got my Hello world test working.  Whew.  That's enough for today.  Next, try compiling NABU hardware library stuff and see if the example games work.
+<P>Yay!  After 4 hours, got my Hello world test working.  Whew.  That's enough
+for today.  Next, try compiling NABU hardware library stuff and see if the
+example games work.
 
 <H2>2024.03.04</H2>
 
-<P>I tried compiling <I>Brick Battle</I>, but lots of errors appear in the NABU-LIB code; you see this many times:
+<P>I tried compiling <I>Brick Battle</I>, but lots of errors appear in the
+NABU-LIB code; you see this many times:
 <PRE>main.c:742: warning 283: function declarator with no prototype
 main.c:855: error: syntax error
   ^---- ld ( 0xff00 ), hl
       ^---- ldh(0),hl
 </PRE>
 
-<P>The forums <A HREF="https://forums.nabu.ca/viewtopic.php?t=207">https://forums.nabu.ca/viewtopic.php?t=207</A> say something broke in Z88DK in May 2023.  A hint!  The left over listings of working code examples in NABU-LIB use version 4.2 of the SDCC compiler.
+<P>The forums <A
+HREF="https://forums.nabu.ca/viewtopic.php?t=207">https://forums.nabu.ca/viewtopic.php?t=207</A>
+say something broke in Z88DK in May 2023.  A hint: the left over listings of
+working code examples in NABU-LIB use version 4.2 of the SDCC compiler.
 
-<P>So first try compiling z88dk release 2.3 (December 20 2023), from this particular commit:
-<A HREF="https://github.com/z88dk/z88dk/commit/51889e53005df1258e1a437bc68e6c4f33b63786">https://github.com/z88dk/z88dk/commit/51889e53005df1258e1a437bc68e6c4f33b63786</A> and see what version of the compiler it has.  4.3.0 is the version, too new, and it doesn't work just as before.
+<P>So first try compiling z88dk release 2.3 (December 20 2023), from this
+particular commit: <A
+HREF="https://github.com/z88dk/z88dk/commit/51889e53005df1258e1a437bc68e6c4f33b63786">https://github.com/z88dk/z88dk/commit/51889e53005df1258e1a437bc68e6c4f33b63786</A>
+and see what version of the compiler it has.  4.3.0 is the version, too new,
+and it doesn't work just as before.
 
-<P>Go back in Git history and get Z88DK from May.  Actually, it looks like the switch to SDCC 4.3.0 was done on February 6 2023, so try the change just before it, from February 3rd <CODE>git checkout --recurse-submodules 492cb971987d88f91d2b046ce99d5bd34f6fadea</CODE>.  The build process fetches http://nightly.z88dk.org/zsdcc/zsdcc_r13131_src.tar.gz (hmmm, actual version number is slightly earlier).  And when compiled, it compiles without silly errors!  The listing says:<BR>
+<P>Go back in Git history and get Z88DK from May.  Actually, it looks like the
+switch to SDCC 4.3.0 was done on February 6 2023, so try the change just before
+it, from February 3rd <CODE>git checkout -b NABU-LIB-Compatible
+--recurse-submodules 492cb971987d88f91d2b046ce99d5bd34f6fadea</CODE>.  The
+build process fetches http://nightly.z88dk.org/zsdcc/zsdcc_r13131_src.tar.gz
+(hmmm, actual version number is slightly earlier).  And when compiled, it
+compiles without silly errors!  The listing says:<BR>
 <CODE>Version 4.2.0 #13081 (Linux)</CODE>
 
-<P>Now does it run?  I see that it loads the title screen picture off the Nabu.ca network (it's in a subdirectory too).  And music is included as compiled data.  Yay!  Music and title screen.  Plays with sound effects and everything in MAME, and exits nicely to CP/M too.  Okay, we're finally in business after yet another long afternoon trying to get the build system working.  Whew!
+<P>Now does it run?  I see that it loads the title screen picture off the
+Nabu.ca network (it's in a subdirectory too).  And music is included as
+compiled data.  Yay!  Music and title screen.  Plays with sound effects and
+everything in MAME, and exits nicely to CP/M too.  Okay, we're finally in
+business after yet another long afternoon trying to get the build system
+working.  Whew!
+
+<H2>2024.03.05</H2>
+
+<P>Look at the later NABU bug fix in 2859b2b64b5797f2eb4bf944785423a801b40e0c,
+but that seems to use a whole mostly new runtime system to do graphics,
+paddles, vt-100 terminal emulation etc, overlapping with NABU-LIB quite a lot.
+So either use the old Z88DK and NABU-LIB or use the newer Z88DK runtime without
+NABU-LIB.
 
 <P>- Alex
 

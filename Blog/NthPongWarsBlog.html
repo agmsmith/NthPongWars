@@ -304,6 +304,9 @@ everything in MAME, and exits nicely to CP/M too.  Okay, we're finally in
 business after yet another long afternoon trying to get the build system
 working.  Whew!
 
+<P>Shortcut to build the right version of Z88DK in one shot (after installing the software the builder needs) under Linux:<BR>
+<CODE>git clone https://github.com/z88dk/z88dk.git ; cd z88dk ; git checkout -b NABU-LIB-Compatible 492cb971987d88f91d2b046ce99d5bd34f6fadea ; git submodule update --init --recursive ; export BUILD_SDCC=1 ; export BUILD_SDCC_HTTP=1 ; ./build.sh ; cd ..</CODE>
+
 <H2>2024.03.05</H2>
 
 <P>Look at the later NABU bug fix in 2859b2b64b5797f2eb4bf944785423a801b40e0c,
@@ -311,6 +314,23 @@ but that seems to use a whole mostly new runtime system to do graphics,
 paddles, vt-100 terminal emulation etc, overlapping with NABU-LIB quite a lot.
 So either use the old Z88DK and NABU-LIB or use the newer Z88DK runtime without
 NABU-LIB.
+
+<P>Compile <I>Brick Battle</I>, read the game code, look at compiler output (array access gets simpler if player array structures are 8 bytes rather than 5 bytes), hack it up a bit.
+
+<H2>2024.03.11</H2>
+
+<P>Read source code for NABU-LIB and see what functionality it provides:
+
+<UL>
+  <LI>NabuTracker - Music from MIDI files, 2 note channels and one noise or note channel.  Each note specifies beat #, on/off, channel, pitch, volume.  Update function called every 1/16 note time (processes all notes with same beat number).  C# utility to convert .mid files to NabuTracker source code format.
+  <LI>Lots of remote commands to the Internet Adapter to open files, network connections and URLs to read or write them.  Also CP/M virtual remote disk support, which you'd access via the usual CP/M APIs.
+  <LI>Font loading (as data in a header file) for text and graphics modes, with several fonts to choose from.  Also terminal emulation with cursor, so you can print to the screen without using CP/M.
+  <LI>Can create programs for homebrew mode (your program + NABULIB controls the hardware directly) or CP/M mode or a mixture.
+  <LI>Can turn off various features to save space if you don't need them.
+  <LI>Has a debug feature to see if your code takes more than one frame to run.
+</UL>
+
+<P>WIP - Stopped at VDP Variables, NABU-LIB.h line 344.
 
 <P>- Alex
 

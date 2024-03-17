@@ -325,12 +325,24 @@ NABU-LIB.
   <LI>NabuTracker - Music from MIDI files, 2 note channels and one noise or note channel.  Each note specifies beat #, on/off, channel, pitch, volume.  Update function called every 1/16 note time (processes all notes with same beat number).  C# utility to convert .mid files to NabuTracker source code format.
   <LI>Lots of remote commands to the Internet Adapter to open files, network connections and URLs to read or write them.  Also CP/M virtual remote disk support, which you'd access via the usual CP/M APIs.
   <LI>Font loading (as data in a header file) for text and graphics modes, with several fonts to choose from.  Also terminal emulation with cursor, so you can print to the screen without using CP/M.
+  <LI>Text mode double buffer in main RAM, so only changes have to be copied to the slow VDP memory.  Also implements a cursor and scrolling.  And a hook into the BIOS CP/M cursor position get/set, and the whole suite of VT52 operations (clear to end of line, etc).
+  <LI>Keyboard access, isKeyPressed() is non-blocking.  Also get a character or a line.
+  <LI>Non-blocking Joystick access.
+  <LI>Can add VDP interrupt handlers.  Buffered VDP interrupt enable register (the real one is write only).  Other registers are also buffered in CPU RAM.
   <LI>Can create programs for homebrew mode (your program + NABULIB controls the hardware directly) or CP/M mode or a mixture.
   <LI>Can turn off various features to save space if you don't need them.
   <LI>Has a debug feature to see if your code takes more than one frame to run.
+  <LI>Music - can play a note (has a table of MIDI notes to frequency codes).  Also low level AY-3-8910 programmable sound generator chip access.
+  <LI>Support for regular NABU interrupt system.
+  <LI>Access the HCCA (Home Cable Computer Adapter) network interface.  Background interrupt to fill a receive buffer, API to get buffer contents.  Glue functions to get/send data as various size/sign integers.
 </UL>
 
-<P>WIP - Stopped at VDP Variables, NABU-LIB.h line 344.
+<H2>2024.03.17</H2>
+
+<P>Continue reading NABU-LIB.h at line 344, VDP Variables.
+
+<P>Stopped at line 1077, VDP.
+
 
 <P>- Alex
 

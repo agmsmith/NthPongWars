@@ -323,9 +323,10 @@ NABU-LIB.
 
 <UL>
   <LI>NabuTracker - Music from MIDI files, 2 note channels and one noise or note channel.  Each note specifies beat #, on/off, channel, pitch, volume.  Update function called every 1/16 note time (processes all notes with same beat number).  C# utility to convert .mid files to NabuTracker source code format.
-  <LI>Lots of remote commands to the Internet Adapter to open files, network connections and URLs to read or write them.  Also CP/M virtual remote disk support, which you'd access via the usual CP/M APIs.
+  <LI>Lots of remote commands to the Internet Adapter to open files (rn_fileOpen etc), network connections and URLs to read or write them.  Might be dependent on using the Nabu.ca Internet Adapter software as the server side for that extra functionality.  Also CP/M virtual remote disk support, which you'd access via the usual CP/M APIs.
   <LI>Font loading (as data in a header file) for text and graphics modes, with several fonts to choose from.  Also terminal emulation with cursor, so you can print to the screen without using CP/M.
   <LI>Text mode double buffer in main RAM, so only changes have to be copied to the slow VDP memory.  Also implements a cursor and scrolling.  And a hook into the BIOS CP/M cursor position get/set, and the whole suite of VT52 operations (clear to end of line, etc).
+  <LI>VDP init in various modes, load patterns, print text, draw high-res dots, move sprites.  Some assumptions such as sprites not animated (same pattern name for a given sprite ID).
   <LI>Keyboard access, isKeyPressed() is non-blocking.  Also get a character or a line.
   <LI>Non-blocking Joystick access.
   <LI>Can add VDP interrupt handlers.  Buffered VDP interrupt enable register (the real one is write only).  Other registers are also buffered in CPU RAM.
@@ -341,8 +342,9 @@ NABU-LIB.
 
 <P>Continue reading NABU-LIB.h at line 344, VDP Variables.
 
-<P>Stopped at line 1077, VDP.
+<H2>2024.03.20</H2>
 
+<P>Continue reading NABU-LIB.h at line 1077, VDP functions.  Finished .h, and then read NABU-LIB.c, with a side trip to check out how RetroNET-FileStore.* works (writes and reads codes over the HCCA serial port to the server to open files, etc, on the server and use a handle number to refer to them on the NABU).  Overall, several copy and paste documentation errors, works as expected and not super optimised so it's understandable.
 
 <P>- Alex
 

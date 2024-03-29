@@ -346,6 +346,21 @@ NABU-LIB.
 
 <P>Continue reading NABU-LIB.h at line 1077, VDP functions.  Finished .h, and then read NABU-LIB.c, with a side trip to check out how RetroNET-FileStore.* works (writes and reads codes over the HCCA serial port to the server to open files, etc, on the server and use a handle number to refer to them on the NABU).  Overall, several copy and paste documentation errors, works as expected and not super optimised so it's understandable.
 
+<H2>2024.03.29</H2>
+
+<P>Want to look at the zcc compiler NABU support.  Start by getting latest zcc source and compiling the compiler.  It uses zsdcc_r14648_src.tar.gz for the underlying compiler.  Then search for files with "nabu" in them.  See z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
+
+
+<UL>
+  <LI>Has TMS9918 video code for graphics and terminal text displays, actually a library written for some other computer, goes up to 3D flat shaded polygons.
+  <LI>Functions for accessing the HCCA network, with interrupt driven reads (to a ring buffer) and writes.
+  <LI>Interrupt system glue code, and keyboard+joystick+paddle and VDP interrupt handling.
+  <LI>Sound generator API, but no music player.
+  <LI>Includes RetroNet API for remote file & URL access.  See files in z88dk/libsrc/target/nabu/retronet/
+  <LI>Lots of examples, 2 NABU specific (RetroNet test, input test), rest are MSX ones, like slowly using lines to draw an Earth globe, or a spaceship that shoots while over a colourful scrolling river background, or a Tron light cycle game (Snakes) with sound.
+  <LI>Has various number libraries, from F48 floating point to 16 bit fixed point.  And matrix operations from the 3D library which adapts to use whatever underlying number system you use for your math library (see z88dk/include/lib3d.h).
+</UL>
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

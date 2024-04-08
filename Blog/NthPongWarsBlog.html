@@ -331,20 +331,42 @@ bytes), hack it up a bit.
 <P>Read source code for NABU-LIB and see what functionality it provides:
 
 <UL>
-  <LI>NabuTracker - Music from MIDI files, 2 note channels and one noise or note channel.  Each note specifies beat #, on/off, channel, pitch, volume.  Update function called every 1/16 note time (processes all notes with same beat number).  C# utility to convert .mid files to NabuTracker source code format.
-  <LI>Lots of remote commands to the Internet Adapter to open files (rn_fileOpen etc), network connections and URLs to read or write them.  Might be dependent on using the Nabu.ca Internet Adapter software as the server side for that extra functionality.  Also CP/M virtual remote disk support, which you'd access via the usual CP/M APIs.
-  <LI>Font loading (as data in a header file) for text and graphics modes, with several fonts to choose from.  Also terminal emulation with cursor, so you can print to the screen without using CP/M.
-  <LI>Text mode double buffer in main RAM, so only changes have to be copied to the slow VDP memory.  Also implements a cursor and scrolling.  And a hook into the BIOS CP/M cursor position get/set, and the whole suite of VT52 operations (clear to end of line, etc).
-  <LI>VDP init in various modes, load patterns, print text, draw high-res dots, move sprites.  Some assumptions such as sprites not animated (same pattern name for a given sprite ID).
-  <LI>Keyboard access, isKeyPressed() is non-blocking.  Also get a character or a line.
+  <LI>NabuTracker - Music from MIDI files, 2 note channels and one noise or
+    note channel.  Each note specifies beat #, on/off, channel, pitch, volume.
+    Update function called every 1/16 note time (processes all notes with same
+    beat number).  C# utility to convert .mid files to NabuTracker source code
+    format.
+  <LI>Lots of remote commands to the Internet Adapter to open files
+    (rn_fileOpen etc), network connections and URLs to read or write them.
+    Might be dependent on using the Nabu.ca Internet Adapter software as the
+    server side for that extra functionality.  Also CP/M virtual remote disk
+    support, which you'd access via the usual CP/M APIs.
+  <LI>Font loading (as data in a header file) for text and graphics modes, with
+    several fonts to choose from.  Also terminal emulation with cursor, so you
+    can print to the screen without using CP/M.
+  <LI>Text mode double buffer in main RAM, so only changes have to be copied to
+    the slow VDP memory.  Also implements a cursor and scrolling.  And a hook
+    into the BIOS CP/M cursor position get/set, and the whole suite of VT52
+    operations (clear to end of line, etc).
+  <LI>VDP init in various modes, load patterns, print text, draw high-res dots,
+    move sprites.  Some assumptions such as sprites not animated (same pattern
+    name for a given sprite ID).
+  <LI>Keyboard access, isKeyPressed() is non-blocking.  Also get a character or
+    a line.
   <LI>Non-blocking Joystick access.
-  <LI>Can add VDP interrupt handlers.  Buffered VDP interrupt enable register (the real one is write only).  Other registers are also buffered in CPU RAM.
-  <LI>Can create programs for homebrew mode (your program + NABULIB controls the hardware directly) or CP/M mode or a mixture.
+  <LI>Can add VDP interrupt handlers.  Buffered VDP interrupt enable register
+    (the real one is write only).  Other registers are also buffered in CPU
+    RAM.
+  <LI>Can create programs for homebrew mode (your program + NABULIB controls
+    the hardware directly) or CP/M mode or a mixture.
   <LI>Can turn off various features to save space if you don't need them.
   <LI>Has a debug feature to see if your code takes more than one frame to run.
-  <LI>Music - can play a note (has a table of MIDI notes to frequency codes).  Also low level AY-3-8910 programmable sound generator chip access.
+  <LI>Music - can play a note (has a table of MIDI notes to frequency codes).
+    Also low level AY-3-8910 programmable sound generator chip access.
   <LI>Support for regular NABU interrupt system.
-  <LI>Access the HCCA (Home Cable Computer Adapter) network interface.  Background interrupt to fill a receive buffer, API to get buffer contents.  Glue functions to get/send data as various size/sign integers.
+  <LI>Access the HCCA (Home Cable Computer Adapter) network interface.
+    Background interrupt to fill a receive buffer, API to get buffer contents.
+    Glue functions to get/send data as various size/sign integers.
 </UL>
 
 <H2>2024.03.17</H2>
@@ -370,13 +392,24 @@ underlying compiler.  Then search for files with "nabu" in them.  See
 z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
 
 <UL>
-  <LI>Has TMS9918 video code for graphics and terminal text displays, actually a library written for some other computer, goes up to 3D flat shaded polygons.
-  <LI>Functions for accessing the HCCA network, with interrupt driven reads (to a ring buffer) and writes.
-  <LI>Interrupt system glue code, and keyboard+joystick+paddle and VDP interrupt handling.
+  <LI>Has TMS9918 video code for graphics and terminal text displays, actually
+    a library written for some other computer, goes up to 3D flat shaded
+    polygons.
+  <LI>Functions for accessing the HCCA network, with interrupt driven reads (to
+    a ring buffer) and writes.
+  <LI>Interrupt system glue code, and keyboard+joystick+paddle and VDP
+    interrupt handling.
   <LI>Sound generator API, but no music player.
-  <LI>Includes RetroNet API for remote file & URL access.  See files in z88dk/libsrc/target/nabu/retronet/
-  <LI>Lots of examples, 2 NABU specific (RetroNet test, input test), rest are MSX ones, like slowly using lines to draw an Earth globe, or a spaceship that shoots while over a colourful scrolling river background, or a Tron light cycle game (Snakes) with sound.
-  <LI>Has various number libraries, from F48 floating point to 16 bit fixed point.  And matrix operations from the 3D library which adapts to use whatever underlying number system you use for your math library (see z88dk/include/lib3d.h).
+  <LI>Includes RetroNet API for remote file & URL access.  See files in
+    z88dk/libsrc/target/nabu/retronet/
+  <LI>Lots of examples, 2 NABU specific (RetroNet test, input test), rest are
+    MSX ones, like slowly using lines to draw an Earth globe, or a spaceship
+    that shoots while over a colourful scrolling river background, or a Tron
+    light cycle game (Snakes) with sound.
+  <LI>Has various number libraries, from F48 floating point to 16 bit fixed
+    point.  And matrix operations from the 3D library which adapts to use
+    whatever underlying number system you use for your math library (see
+    z88dk/include/lib3d.h).
 </UL>
 
 <H2>2024.04.07</H2>
@@ -392,8 +425,6 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
     screen saver.  Have N balls of different colours, maybe limit it to 4 due
     to NABU sprite limits.  Tiles are done as 8x8 pixel character blocks.  Top
     row on the screen is reserved for score, so 32x23 tiles = 736 tiles.
-    Though allow for other screen sizes for running on other computer system
-    types or as a game variation.
   <LI>Score.  Count of number of tiles owned by each colour.  Displayed in the
     background layer, 4 numbers each 3 digits in player's colour across the top
     of the screen.
@@ -437,26 +468,38 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
 <UL>
   <LI>Portable core code in C so it can run on other computer system types,
     like BeOS or Linux.
+  <LI>A allow for other screen sizes for running on other computer system
+    types or as a game variation on the NABU.
   <LI>Design for network play, which means trying to generate a small list of
     changes and then use that to update the display (small is good for VDP
     bandwidth limits) or to send over the network to update a client display.
   <LI>Use graphics I mode, so changing a tile is just a single byte write,
     though will need to duplicate the score digits with different colours for
-    each set.  Also have ASCII font in white and the tiles in each of 4 colours.
-    Maybe also have faded tiles (done with dithering) since we have 8 tiles per
-    colour palette entry.  Or use multicolour mode 64x46 tiles and display score
-    with sprites.
+    each set.  Also have ASCII font in white and the tiles in each of 4
+    colours.  Maybe also have faded tiles (done with dithering) since we have 8
+    tiles per colour palette entry.  Or use multicolour mode 64x46 tiles and
+    display score with sprites.
   <LI>Balls are done with sprites, 16x16, one sprite per ball.  Or maybe have a
     second one for a shadow, but use lower priority ones for that to avoid
     having the ball flicker.
-  <LI>Keep track of each player's tiles in a queue so we can burn their oldest
-    tiles as needed.  Linked list would be best, since we have to remove tiles
-    in the middle as the opponents take them.  Each global tile record would
-    have a forward and back pointer.
   <LI>Use fractional 16 bit integers (2's complement sign + 9 bit integer +
     6 bit fraction, values up to 511 + 63/64th) for velocity and position in
     pixels per frame.  Need a bit more than 256 since the NABU screen is 256
     pixels wide.
+  <LI>Keep track of each player's tiles in a queue so we can burn their oldest
+    tiles as needed.  Linked list would be best, since we have to remove tiles
+    in the middle as the opponents take them.  Each global tile record would
+    have a forward and back pointer.
+  <LI>After the simulation update for a frame has been done to the in-memory
+    tile and ball state, go through and extract a list of changes, using
+    opcodes (like tile position & new colour, ball position, score change,
+    sound effect) and then send it out to clients and also run it against our
+    own VDP.  Clients send back a similar list of opcodes for joystick and
+    other inputs.
+  <LI>Dynamically add and remove local players.  Have AI take over.
+  <LI>Dynamically add and remove remote players.  Clients can send special
+    opcodes to request the whole screen when joining the game, or a copy of the
+    game state data in case they want to take over running the game.
 </UL>
 
 <P>- Alex

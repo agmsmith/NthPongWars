@@ -308,7 +308,8 @@ everything in MAME, and exits nicely to CP/M too.  Okay, we're finally in
 business after yet another long afternoon trying to get the build system
 working.  Whew!
 
-<P>Shortcut to build the right version of Z88DK in one shot (after installing the software the builder needs) under Linux:<BR>
+<P>Shortcut to build the right version of Z88DK in one shot (after installing
+the software the builder needs) under Linux:<BR>
 <CODE>git clone https://github.com/z88dk/z88dk.git ; cd z88dk ; git checkout -b NABU-LIB-Compatible 492cb971987d88f91d2b046ce99d5bd34f6fadea ; git submodule update --init --recursive ; export BUILD_SDCC=1 ; export BUILD_SDCC_HTTP=1 ; ./build.sh ; cd ..</CODE>
 
 <H2>2024.03.05</H2>
@@ -319,7 +320,9 @@ paddles, vt-100 terminal emulation etc, overlapping with NABU-LIB quite a lot.
 So either use the old Z88DK and NABU-LIB or use the newer Z88DK runtime without
 NABU-LIB.
 
-<P>Compile <I>Brick Battle</I>, read the game code, look at compiler output (array access gets simpler if player array structures are 8 bytes rather than 5 bytes), hack it up a bit.
+<P>Compile <I>Brick Battle</I>, read the game code, look at compiler output
+(array access gets simpler if player array structures are 8 bytes rather than 5
+bytes), hack it up a bit.
 
 <H2>2024.03.11</H2>
 
@@ -350,13 +353,21 @@ NABU-LIB.
 
 <H2>2024.03.20</H2>
 
-<P>Continue reading NABU-LIB.h at line 1077, VDP functions.  Finished .h, and then read NABU-LIB.c, with a side trip to check out how RetroNET-FileStore.* works (writes and reads codes over the HCCA serial port to the server to open files, etc, on the server and use a handle number to refer to them on the NABU).  Overall, several copy and paste documentation errors, works as expected and not super optimised so it's understandable.
+<P>Continue reading NABU-LIB.h at line 1077, VDP functions.  Finished .h, and
+then read NABU-LIB.c, with a side trip to check out how RetroNET-FileStore.*
+works (writes and reads codes over the HCCA serial port to the server to open
+files, etc, on the server and use a handle number to refer to them on the
+NABU).  Overall, several copy and paste documentation errors, works as expected
+and not super optimised so it's understandable.
 
 <H2>2024.03.29</H2>
 
 <H3>Z88DK NABU Support?</H3>
 
-<P>Want to look at the zcc compiler NABU support.  Start by getting latest zcc source and compiling the compiler.  It uses zsdcc_r14648_src.tar.gz for the underlying compiler.  Then search for files with "nabu" in them.  See z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
+<P>Want to look at the zcc compiler NABU support.  Start by getting latest zcc
+source and compiling the compiler.  It uses zsdcc_r14648_src.tar.gz for the
+underlying compiler.  Then search for files with "nabu" in them.  See
+z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
 
 <UL>
   <LI>Has TMS9918 video code for graphics and terminal text displays, actually a library written for some other computer, goes up to 3D flat shaded polygons.
@@ -377,15 +388,28 @@ NABU-LIB.
 <P>Next up - game design.  What do I want in the game?
 
 <UL>
-  <LI>Nth Pong Wars stand-alone operation with zero players, just as a kind of screen saver.  Have N balls of different colours, maybe limit it to 4 due to NABU sprite limits.  Tiles are done as 8x8 pixel character blocks.
-  <LI>Score.  Count of number of tiles owned by each colour.  Displayed in the background layer, 4 numbers each 3 digits in player's colour across the top of the screen.
-  <LI>Idea from Atari 2600 version - score limit, game over when the highest player tile count reaches the limit.  Optionally, the limit slowly decreases over time, adding a sense of urgency to playing the game.
+  <LI>Nth Pong Wars stand-alone operation with zero players, just as a kind of
+    screen saver.  Have N balls of different colours, maybe limit it to 4 due
+    to NABU sprite limits.  Tiles are done as 8x8 pixel character blocks.
+  <LI>Score.  Count of number of tiles owned by each colour.  Displayed in the
+    background layer, 4 numbers each 3 digits in player's colour across the top
+    of the screen.
+  <LI>Idea from Atari 2600 version - score limit, game over when the highest
+    player tile count reaches the limit.  Optionally, the limit slowly
+    decreases over time, adding a sense of urgency to playing the game.
   <LI>Main menu to choose options.
-  <LI>High score table.  Ask for initials.  Store in a CP/M file.  Date stamp too so they know when they last played.
-  <LI>Player interaction.  Use the joystick to add some acceleration to a particular ball, multiple player support (up to 4 joysticks).
-  <LI>AI players for unassigned balls (if no joystick inputs after a while, the AI takes over).
-  <LI>Network play.  One main computer controls the game, joystick inputs received from client computers.  Sends out a data dump every once in a while with a list of changed tiles on screen and new sprite positions.
-  <LI>Fractional movement math (use 16 bit fixed point numbers), so can move faster than 1 square per frame.  Makes collision detection more complicated, can hit several tiles in one frame.
+  <LI>High score table.  Ask for initials.  Store in a CP/M file.  Date stamp
+    too so they know when they last played.
+  <LI>Player interaction.  Use the joystick to add some acceleration to a
+    particular ball, multiple player support (up to 4 joysticks).
+  <LI>AI players for unassigned balls (if no joystick inputs after a while, the
+    AI takes over).
+  <LI>Network play.  One main computer controls the game, joystick inputs
+    received from client computers.  Sends out a data dump every once in a
+    while with a list of changed tiles on screen and new sprite positions.
+  <LI>Fractional movement math (use 16 bit fixed point numbers), so can move
+    faster than 1 square per frame.  Makes collision detection more
+    complicated, can hit several tiles in one frame.
   <LI>Staleness.  After time the tiles fade to a background colour.
   <LI>Burn some of your tiles to do special effects, like have a larger ball.
 </UL>
@@ -393,7 +417,9 @@ NABU-LIB.
 <H3>Code Design</H3>
 
 <UL>
-  <LI>Design for network play, which means trying to generate a small list of changes and then use that to update the display or send over the network to update a client display.
+  <LI>Design for network play, which means trying to generate a small list of
+    changes and then use that to update the display (small is good for VDP
+    bandwidth limits) or send over the network to update a client display.
 </UL>
 
 <P>- Alex

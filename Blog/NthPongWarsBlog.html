@@ -390,16 +390,20 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
 <UL>
   <LI>Nth Pong Wars stand-alone operation with zero players, just as a kind of
     screen saver.  Have N balls of different colours, maybe limit it to 4 due
-    to NABU sprite limits.  Tiles are done as 8x8 pixel character blocks.
+    to NABU sprite limits.  Tiles are done as 8x8 pixel character blocks.  Top
+    row on the screen is reserved for score, so 32x23 tiles = 736 tiles.
+    Though allow for other screen sizes for running on other computer system
+    types or as a game variation.
   <LI>Score.  Count of number of tiles owned by each colour.  Displayed in the
     background layer, 4 numbers each 3 digits in player's colour across the top
     of the screen.
   <LI>Idea from Atari 2600 version - score limit, game over when the highest
     player tile count reaches the limit.  Optionally, the limit slowly
     decreases over time, adding a sense of urgency to playing the game.
-  <LI>Main menu to choose options.
-  <LI>High score table.  Ask for initials.  Store in a CP/M file.  Date stamp
-    too so they know when they last played.
+  <LI>Main menu to choose options.  Save options to a settings file.
+  <LI>High score table.  Ask for initials.  Store in a CP/M file on C: drive
+    since that's the writeable one?  Date stamp too so they know when they last
+    played.
   <LI>Player interaction.  Use the joystick to add some acceleration to a
     particular ball, multiple player support (up to 4 joysticks).
   <LI>AI players for unassigned balls (if no joystick inputs after a while, the
@@ -407,19 +411,52 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
   <LI>Network play.  One main computer controls the game, joystick inputs
     received from client computers.  Sends out a data dump every once in a
     while with a list of changed tiles on screen and new sprite positions.
+  <LI>Simulation math.  Need collision detection between ball and ball or ball
+    and tile.  Start with ad-hoc like the other examples use, then move to ball
+    as a circle intersecting tile rectangles.  Handle multiple tile
+    intersections per frame by considering shape of circle moving through space
+    to figure which tile it hits first, then bounce off tile and consider next
+    collision, until ball has moved its whole frame velocity distance.
   <LI>Fractional movement math (use 16 bit fixed point numbers), so can move
     faster than 1 square per frame.  Makes collision detection more
     complicated, can hit several tiles in one frame.
   <LI>Staleness.  After time the tiles fade to a background colour.
-  <LI>Burn some of your tiles to do special effects, like have a larger ball.
+  <LI>Burn some of your tiles to do special effects, like have a larger ball or
+    more acceleration when using the joystick.
+  <LI>Sound effects for collisions, ball-ball and ball-tile.  Maybe vary a bit
+    in pitch to reflect player's number.  Secondary sound effects for burning
+    tiles (affected by player), accelerating (player and acceleration direction
+    influence it).  Allow stacking of sound effects so several things happening
+    at once play out.
+  <LI>Background music, probably not in the game on the NABU, but definitely for
+    the menus.
 </UL>
 
 <H3>Code Design</H3>
 
 <UL>
+  <LI>Portable core code in C so it can run on other computer system types,
+    like BeOS or Linux.
   <LI>Design for network play, which means trying to generate a small list of
     changes and then use that to update the display (small is good for VDP
-    bandwidth limits) or send over the network to update a client display.
+    bandwidth limits) or to send over the network to update a client display.
+  <LI>Use graphics I mode, so changing a tile is just a single byte write,
+    though will need to duplicate the score digits with different colours for
+    each set.  Also have ASCII font in white and the tiles in each of 4 colours.
+    Maybe also have faded tiles (done with dithering) since we have 8 tiles per
+    colour palette entry.  Or use multicolour mode 64x46 tiles and display score
+    with sprites.
+  <LI>Balls are done with sprites, 16x16, one sprite per ball.  Or maybe have a
+    second one for a shadow, but use lower priority ones for that to avoid
+    having the ball flicker.
+  <LI>Keep track of each player's tiles in a queue so we can burn their oldest
+    tiles as needed.  Linked list would be best, since we have to remove tiles
+    in the middle as the opponents take them.  Each global tile record would
+    have a forward and back pointer.
+  <LI>Use fractional 16 bit integers (2's complement sign + 9 bit integer +
+    6 bit fraction, values up to 511 + 63/64th) for velocity and position in
+    pixels per frame.  Need a bit more than 256 since the NABU screen is 256
+    pixels wide.
 </UL>
 
 <P>- Alex

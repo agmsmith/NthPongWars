@@ -209,6 +209,8 @@ NABU Internet Adapter.
 
 <H2>2024.02.27</H2>
 
+<H3>How to Compile?</H3>
+
 <P>After a bit of reading and then trying out CP/M (manual and reference card
 PDFs exist) in a simulated NABU computer running in MAME, I'm ready to start
 programming.  I'm looking at <A
@@ -269,6 +271,8 @@ example games work.
 
 <H2>2024.03.04</H2>
 
+<H3>Regressing Z88DK to Compile NABU-LIB and DJ's Examples</H3>
+
 <P>I tried compiling <I>Brick Battle</I>, but lots of errors appear in the
 NABU-LIB code; you see this many times:
 <PRE>main.c:742: warning 283: function declarator with no prototype
@@ -319,6 +323,8 @@ NABU-LIB.
 
 <H2>2024.03.11</H2>
 
+<H3>NABU-LIB Functionality?</H3>
+
 <P>Read source code for NABU-LIB and see what functionality it provides:
 
 <UL>
@@ -348,8 +354,9 @@ NABU-LIB.
 
 <H2>2024.03.29</H2>
 
-<P>Want to look at the zcc compiler NABU support.  Start by getting latest zcc source and compiling the compiler.  It uses zsdcc_r14648_src.tar.gz for the underlying compiler.  Then search for files with "nabu" in them.  See z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
+<H3>Z88DK NABU Support?</H3>
 
+<P>Want to look at the zcc compiler NABU support.  Start by getting latest zcc source and compiling the compiler.  It uses zsdcc_r14648_src.tar.gz for the underlying compiler.  Then search for files with "nabu" in them.  See z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
 
 <UL>
   <LI>Has TMS9918 video code for graphics and terminal text displays, actually a library written for some other computer, goes up to 3D flat shaded polygons.
@@ -359,6 +366,34 @@ NABU-LIB.
   <LI>Includes RetroNet API for remote file & URL access.  See files in z88dk/libsrc/target/nabu/retronet/
   <LI>Lots of examples, 2 NABU specific (RetroNet test, input test), rest are MSX ones, like slowly using lines to draw an Earth globe, or a spaceship that shoots while over a colourful scrolling river background, or a Tron light cycle game (Snakes) with sound.
   <LI>Has various number libraries, from F48 floating point to 16 bit fixed point.  And matrix operations from the 3D library which adapts to use whatever underlying number system you use for your math library (see z88dk/include/lib3d.h).
+</UL>
+
+<H2>2024.04.07</H2>
+
+<P>So, best bet is to use Z88DK NABU support and the newer compiler.
+
+<H3>Game Design</H3>
+
+<P>Next up - game design.  What do I want in the game?
+
+<UL>
+  <LI>Nth Pong Wars stand-alone operation with zero players, just as a kind of screen saver.  Have N balls of different colours, maybe limit it to 4 due to NABU sprite limits.  Tiles are done as 8x8 pixel character blocks.
+  <LI>Score.  Count of number of tiles owned by each colour.  Displayed in the background layer, 4 numbers each 3 digits in player's colour across the top of the screen.
+  <LI>Idea from Atari 2600 version - score limit, game over when the highest player tile count reaches the limit.  Optionally, the limit slowly decreases over time, adding a sense of urgency to playing the game.
+  <LI>Main menu to choose options.
+  <LI>High score table.  Ask for initials.  Store in a CP/M file.  Date stamp too so they know when they last played.
+  <LI>Player interaction.  Use the joystick to add some acceleration to a particular ball, multiple player support (up to 4 joysticks).
+  <LI>AI players for unassigned balls (if no joystick inputs after a while, the AI takes over).
+  <LI>Network play.  One main computer controls the game, joystick inputs received from client computers.  Sends out a data dump every once in a while with a list of changed tiles on screen and new sprite positions.
+  <LI>Fractional movement math (use 16 bit fixed point numbers), so can move faster than 1 square per frame.  Makes collision detection more complicated, can hit several tiles in one frame.
+  <LI>Staleness.  After time the tiles fade to a background colour.
+  <LI>Burn some of your tiles to do special effects, like have a larger ball.
+</UL>
+
+<H3>Code Design</H3>
+
+<UL>
+  <LI>Design for network play, which means trying to generate a small list of changes and then use that to update the display or send over the network to update a client display.
 </UL>
 
 <P>- Alex

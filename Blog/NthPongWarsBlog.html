@@ -422,85 +422,140 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
 
 <UL>
   <LI>Nth Pong Wars stand-alone operation with zero players, just as a kind of
-    screen saver.  Have N balls of different colours, maybe limit it to 4 due
-    to NABU sprite limits.  Tiles are done as 8x8 pixel character blocks.  Top
-    row on the screen is reserved for score, so 32x23 tiles = 736 tiles.
+    screen saver and initial proof of concept.
+  <LI>Have N balls of different colours, maybe limit it to 4 due to NABU sprite
+    limits.  Also allow different sized balls, useful for bonus effects.
+  <LI>Tiles are done as 8x8 pixel character blocks.  Top row on the screen is
+    reserved for score, so 32 wide x 23 tall tiles = 736 tiles.  Each tile shows
+    the current owner's colour and maybe fade or modify to show other tile
+    properties, like power-ups.
   <LI>Score.  Count of number of tiles owned by each colour.  Displayed in the
-    background layer, 4 numbers each 3 digits in player's colour across the top
-    of the screen.
-  <LI>Idea from Atari 2600 version - score limit, game over when the highest
+    background layer, 4 numbers each 3 digits and a space in player's colour
+    across the top of the screen.  Tile count or percentage of total tiles or
+    both or a menu option?
+  <LI>Idea from Atari 2600 version - a score limit, game over when the highest
     player tile count reaches the limit.  Optionally, the limit slowly
     decreases over time, adding a sense of urgency to playing the game.
+    Display the limit on the score row too.
   <LI>Main menu to choose options.  Save options to a settings file.
   <LI>High score table.  Ask for initials.  Store in a CP/M file on C: drive
-    since that's the writeable one?  Date stamp too so they know when they last
-    played.
+    since that's the writable drive.  Date stamp too so they know when they last
+    played or can show all-time, yearly, monthly, weekly, daily, hourly champs.
+    Maybe also share the high scores across the network and have regional
+    high score boards too.  But don't show too many boards, just the ones the
+    players are interested in (ones they are on).
   <LI>Player interaction.  Use the joystick to add some acceleration to a
-    particular ball, multiple player support (up to 4 joysticks).
+    particular ball, multiple player support (up to 4 joysticks).  Fire button
+    activates special effects when held down.
   <LI>AI players for unassigned balls (if no joystick inputs after a while, the
     AI takes over).
-  <LI>Network play.  One main computer controls the game, joystick inputs
-    received from client computers.  Sends out a data dump every once in a
-    while with a list of changed tiles on screen and new sprite positions.
-  <LI>Simulation math.  Need collision detection between ball and ball or ball
-    and tile.  Start with ad-hoc like the other examples use, then move to ball
-    as a circle intersecting tile rectangles.  Handle multiple tile
-    intersections per frame by considering shape of circle moving through space
-    to figure which tile it hits first, then bounce off tile and consider next
-    collision, until ball has moved its whole frame velocity distance.
-  <LI>Fractional movement math (use 16 bit fixed point numbers), so can move
-    faster than 1 square per frame.  Makes collision detection more
-    complicated, can hit several tiles in one frame.
-  <LI>Staleness.  After time the tiles fade to a background colour.
+  <LI>Network play, up to 4 players total, with 0 to 4 per computer (so you can
+    have spectators), dynamic joining and leaving the game with AI players
+    taking over when joystick operators are away.
+  <LI>Staleness.  After time the tiles fade to a background colour.  Maybe even
+    vanish back to neutral, or to the worst player's colour to give them a
+    boost?
   <LI>Burn some of your tiles to do special effects, like have a larger ball or
-    more acceleration when using the joystick.
+    more acceleration when using the joystick.  Perhaps have power-up bonuses
+    that change the special effect when you run over them.
   <LI>Sound effects for collisions, ball-ball and ball-tile.  Maybe vary a bit
     in pitch to reflect player's number.  Secondary sound effects for burning
     tiles (affected by player), accelerating (player and acceleration direction
     influence it).  Allow stacking of sound effects so several things happening
     at once play out.
-  <LI>Background music, probably not in the game on the NABU, but definitely for
-    the menus.
+  <LI>Background music, probably not possible in the game on the NABU with all
+    those sound effects, but definitely for the menus.
 </UL>
 
 <H3>Code Design</H3>
 
+<P>Possible ways of implementing the game design.
+
 <UL>
   <LI>Portable core code in C so it can run on other computer system types,
-    like BeOS or Linux.
+    like BeOS or Linux.  The simulation code, game state and network protocol
+    should be the same for all platforms for portability reasons.
   <LI>A allow for other screen sizes for running on other computer system
-    types or as a game variation on the NABU.
-  <LI>Design for network play, which means trying to generate a small list of
-    changes and then use that to update the display (small is good for VDP
-    bandwidth limits) or to send over the network to update a client display.
+    types or as a game variation on the NABU.  NABU may be able to keep track
+    of larger playfields if there is enough memory, but only show a window into
+    the larger area (perhaps following the active players center of mass).
+  <LI>Design for network play, one main computer controls the game, clients
+    forward joystick inputs.  Main computer sends out a data dump every once in
+    a while (ideally every frame) with a list of state changes (a small list is
+    good for VDP and network bandwidth limits).
+  <LI>Dynamically add and remove remote players.  Clients can send special
+    opcodes to request the whole screen when joining the game, or a copy of the
+    game state data in case they want to take over running the game.
+  <LI>Dynamically add and remove local players.  Have AI take over or delete
+    idle players (get down to a two player screensaver game if idle long
+    enough).  Possibly this means that the menu doesn't ask for the number of
+    players, just add a ball if joystick activity is detected.
   <LI>Use graphics I mode, so changing a tile is just a single byte write,
     though will need to duplicate the score digits with different colours for
     each set.  Also have ASCII font in white and the tiles in each of 4
     colours.  Maybe also have faded tiles (done with dithering) since we have 8
-    tiles per colour palette entry.  Or use multicolour mode 64x46 tiles and
-    display score with sprites.
-  <LI>Balls are done with sprites, 16x16, one sprite per ball.  Or maybe have a
-    second one for a shadow, but use lower priority ones for that to avoid
-    having the ball flicker.
+    tiles per colour palette entry.  And power-up tiles.  Or use multicolour
+    mode 64x46 tiles and display score with sprites.
+  <LI>Balls are done with sprites, up to 16x16, one sprite per ball.  Or maybe
+    have a second one for a shadow, but use lower priority ones for that to
+    avoid having the ball flicker.  Also have balls from 1 pixel to 16 pixels
+    in diameter.  Ball image is left and top justified within the sprite
+    rectangle.  Maybe also show power-up effects by changing ball graphics?
+    Though for the large ball power-up, that's self evident.
   <LI>Use fractional 16 bit integers (2's complement sign + 9 bit integer +
     6 bit fraction, values up to 511 + 63/64th) for velocity and position in
     pixels per frame.  Need a bit more than 256 since the NABU screen is 256
-    pixels wide.
+    pixels wide.  Implies maximum game board size is 63 tiles tall or wide.
+  <LI>Coordinate system uses pixels, zero based like the Macintosh (not BeOS
+    which awkwardly used centers of pixels for integer coordinate points), top
+    left corner of pixel is (0,0), x increases to right, y increases down,
+    bottom right pixel corner is (1,1), tiles cover 8 pixels, tile center is at
+    (4.0, 4.0) with four pixels on either side of the center.
+  <LI>Simulation math.  Need collision detection between ball and ball or ball
+    and tile.  Start with ad-hoc like the other examples use, then move to ball
+    as a circle intersecting tile rectangles.  Handle multiple tile
+    intersections per frame by considering shape of circle moving through space
+    to figure which tile it hits first, then bounce off tile and consider next
+    collision, until ball has moved its whole frame velocity distance.<BR>
+    <BR>
+    Hmmm, rather than calculating edge collisions and dot products, find the
+    tiles under the current ball shape (ball size can vary, tile center distance
+    to ball center has to be less than ball radius + tile radius) and find
+    them all.  If they are the player's colour already, no change needed.  Other
+    tiles get owned by the player and also affect the ball motion.  Make a 2D
+    net vector sum of all the non-player tiles relative to the ball center, and
+    use that to bounce (reflect, reverse) the ball velocity component that's in
+    the same direction.  Can be a classic bounce, or if there is a ball push
+    through obstacles power-up active, it just adds friction proportional to the
+    vector length.  And of course, classic bounce off the board edge.
+  <LI>Fractional movement math (use 16 bit fixed point numbers), so can move
+    faster than 1 square per frame.  Makes collision detection more
+    complicated, can hit several tiles in one frame.  So do the simulation in
+    smaller steps than a single frame, moving the balls in steps of at
+    most half a tile at a time (fastest ball moves half a tile, others move
+    proportionally slower), then redoing collision tests (don't want to do one
+    ball then the others, want to detect mutual ball collisions more
+    realistically).  Repeat until the balls have all moved their velocity per
+    frame distance.  That way the ball won't skip over tiles if it is going too
+    fast.
   <LI>Keep track of each player's tiles in a queue so we can burn their oldest
     tiles as needed.  Linked list would be best, since we have to remove tiles
     in the middle as the opponents take them.  Each global tile record would
-    have a forward and back pointer.
+    have a forward and back pointer.  Burnt tiles can turn into empty tiles or
+    into power-ups.
   <LI>After the simulation update for a frame has been done to the in-memory
     tile and ball state, go through and extract a list of changes, using
     opcodes (like tile position & new colour, ball position, score change,
     sound effect) and then send it out to clients and also run it against our
     own VDP.  Clients send back a similar list of opcodes for joystick and
     other inputs.
-  <LI>Dynamically add and remove local players.  Have AI take over.
-  <LI>Dynamically add and remove remote players.  Clients can send special
-    opcodes to request the whole screen when joining the game, or a copy of the
-    game state data in case they want to take over running the game.
 </UL>
+
+<H2>2024.04.14</H2>
+
+<P>Yet more game design, and code design, they're kind of a continuum of design
+and not really separate.  Stealing lots of ideas, and coming up with a few
+new variations.
 
 <P>- Alex
 

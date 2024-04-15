@@ -55,7 +55,7 @@ too.
   <LI><B>Z88DK</B> <A HREF="https://z88dk.org/site/">https://z88dk.org/site/</A> - is a C compiler and assembler for a large variety of Z80 CPU computers.
   <LI><B>SDCC</B> <A HREF="https://sdcc.sourceforge.net/">https://sdcc.sourceforge.net/</A> the Small Device C Compiler used by ZCC.
   <LI><B><I>Pong Wars</I> Discussions</B> on <A HREF="https://news.ycombinator.com/item?id=39159418">Y Combinator</A> and <A HREF="https://hachyderm.io/@vnglst/111828811496422610">Mastodon</A>.  <I>Pong Wars</I> has been around for a while, as these discussions uncover.  Some people want to port it to older 8 bit computers too.
-  <LI><B>Javascript version of <I>Pong Wars</I></B> <A HREF="https://pong-wars.koenvangilst.nl/">https://pong-wars.koenvangilst.nl/</A> - Play Koen van Gilst's version of <I>Pong Wars</I> in your web browser.
+  <LI><B>Javascript version of <I>Pong Wars</I></B> <A HREF="https://pong-wars.koenvangilst.nl/">https://pong-wars.koenvangilst.nl/</A> - Play Koen van Gilst's version of <I>Pong Wars</I> in your web browser.  This web page inspired the Nth Pong Wars project.
   <LI><B>Source code for <I>Pong Wars</I></B> <A HREF="https://github.com/vnglst/pong-wars">https://github.com/vnglst/pong-wars</A> - Javascript, MIT license.  Also see the list of other known versions at the bottom of the page (good gamification ideas in the Atari 2600 version).
 </UL>
 
@@ -414,7 +414,8 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
 
 <H2>2024.04.07</H2>
 
-<P>So, best bet is to use Z88DK NABU support and the newer compiler.
+<P>So, best bet for portability and future compilation is to use Z88DK NABU
+support and the newer compiler.  But keep an eye on NABU-LIB for useful code.
 
 <H3>Game Design</H3>
 
@@ -475,7 +476,7 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
   <LI>Portable core code in C so it can run on other computer system types,
     like BeOS or Linux.  The simulation code, game state and network protocol
     should be the same for all platforms for portability reasons.
-  <LI>A allow for other screen sizes for running on other computer system
+  <LI>Allow for other screen sizes for running on other computer system
     types or as a game variation on the NABU.  NABU may be able to keep track
     of larger playfields if there is enough memory, but only show a window into
     the larger area (perhaps following the active players center of mass).
@@ -500,8 +501,9 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
     have a second one for a shadow, but use lower priority ones for that to
     avoid having the ball flicker.  Also have balls from 1 pixel to 16 pixels
     in diameter.  Ball image is left and top justified within the sprite
-    rectangle.  Maybe also show power-up effects by changing ball graphics?
-    Though for the large ball power-up, that's self evident.
+    rectangle.  Maybe also show power-up effects by changing ball graphics,
+    perhaps animating them?  Though for the large ball power-up, it's self
+    evident.
   <LI>Use fractional 16 bit integers (2's complement sign + 9 bit integer +
     6 bit fraction, values up to 511 + 63/64th) for velocity and position in
     pixels per frame.  Need a bit more than 256 since the NABU screen is 256
@@ -517,7 +519,6 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
     intersections per frame by considering shape of circle moving through space
     to figure which tile it hits first, then bounce off tile and consider next
     collision, until ball has moved its whole frame velocity distance.<BR>
-    <BR>
     Hmmm, rather than calculating edge collisions and dot products, find the
     tiles under the current ball shape (ball size can vary, tile center distance
     to ball center has to be less than ball radius + tile radius) and find
@@ -527,7 +528,8 @@ z88dk/include/arch/nabu.h and directory z88dk/include/arch/nabu/.
     use that to bounce (reflect, reverse) the ball velocity component that's in
     the same direction.  Can be a classic bounce, or if there is a ball push
     through obstacles power-up active, it just adds friction proportional to the
-    vector length.  And of course, classic bounce off the board edge.
+    vector length.  And of course, classic bounce off the board edge.  And ball
+    on ball collision detection and resulting explosions.
   <LI>Fractional movement math (use 16 bit fixed point numbers), so can move
     faster than 1 square per frame.  Makes collision detection more
     complicated, can hit several tiles in one frame.  So do the simulation in

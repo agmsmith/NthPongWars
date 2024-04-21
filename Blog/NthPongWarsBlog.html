@@ -611,6 +611,12 @@ int main(int argc, char **argv)
 }
 </XMP>
 
+<H2>2024.04.21</H2>
+
+<P>Continue with fixed point speed tests, trying to get the compiler to not optimise everything out by putting the code in a subroutine with arguments, rather than as constants.
+
+<P>Ugh, divide a 16 bit integer by 64 is <CODE>sra d; rr e;</CODE> repeated 6 times, totalling 24 bytes of opcodes.  Floating point is even worse, with lots of code to just put the 4 byte arguments on the stack to set up a library call.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

@@ -8,5 +8,8 @@
 /Key Software/*
 /MAME/*
 *.COM
+*.com
+*.img
 *.lis
 *.map
+*.sym

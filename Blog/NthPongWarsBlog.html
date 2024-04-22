@@ -617,7 +617,11 @@ int main(int argc, char **argv)
 
 <P>Ugh, divide a 16 bit integer by 64 is <CODE>sra d; rr e;</CODE> repeated 6 times, totalling 24 bytes of opcodes.  Floating point is even worse, with lots of code to just put the 4 byte arguments on the stack to set up a library call.
 
-<P>It looks like 4 byte integers take twice as long as 2 byte integers to add, and 6 times longer for 4 byte floating point numbers.  Since it's kind of non-standard to use 16 bit fixed point other than 8.8 bits (we want 10.6 for pixel coordinates), so use 4 byte integers in a 16.16 fixed point format.
+<P>It looks like 4 byte integers take twice as long as 2 byte integers to add, and 6 times longer for 4 byte floating point numbers.  Since it's kind of non-standard to use 16 bit fixed point other than 8.8 bits (we want 10.6 for pixel coordinates), 4 byte integers in a 16.16 fixed point format would be safer and easier for the computer to shift to get the integer or fraction portion.  4 bit integers will give us enough numeric range and be well supported on all computers.
+
+<P>But how fast is 4 byte integer math on the Z80?  2 seconds for 50000 calls to a subroutine that adds two 16 bit ints, 4 seconds for 32 bit ints, 15 seconds for 32 bit floats.  So, how much math do we need?  Most is collision detection, finding the tiles inside a circle around a ball.  The biggest ball is 32 pixels in diameter, so 4x4 tiles or 16 tiles.  Distance to ball would be an X and Y vector, so 2 subtractions (tile - ball position).  Can use a table to go from X to X squared, one more addition to add X^2 + Y^2 to get distance squared (avoid doing square root, work with squared pixel length) and a subtraction to do the comparison.  So 4 add/subtracts per tile, 16 times, 64 additions per ball.  4 balls, so 256 additions.  60 frames per second, so 15360 additions per second just for tile collisions.  And we can do 25000 additions per second for 16 bit math, or 12500 for 4 bit integers.  Looks like we should use 16 bit integers to be safe, or run at 30 frames per second.
+
+<P>So start with 32 bit fixed point math and rewrite as 16 bit if we don't have enough speed.
 
 <P>- Alex
 

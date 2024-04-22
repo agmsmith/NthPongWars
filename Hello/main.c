@@ -43,33 +43,28 @@ float Float32Test(float NumA, float NumB)
 
 int main(void)
 {
-  int i;
-  signed long Sum16 = 0;
-  signed long Sum32 = 0;
-  float SumFloat = 0.0;
-  static char FtoABuf[30];
+  short unsigned int i;
 
   printf("Hello World!\n");
   printf ("Test for basic compatibility by AGMS20240304.\n");
 
-  for (i = 0; i < 10000; i++)
+  for (i = 0; i < 50000; i++)
   {
-    Sum16 += FixedPoint16Test(2.1 * 64, 1.7 * 64);
+    FixedPoint16Test(2.1 * 64, 1.7 * 64);
   }
-  printf ("Fixed 16 sum is %ld (%ld).\n", Sum16 >> 6, Sum16);
+  printf ("Fixed 16 done.\n");
 
-  for (i = 0; i < 10000; i++)
+  for (i = 0; i < 50000; i++)
   {
-    Sum32 += FixedPoint32Test(2.1 * 1024, 1.7 * 1024);
+    FixedPoint32Test(2.1 * 1024, 1.7 * 1024);
   }
-  printf ("Fixed 32 sum is %ld (%d).\n", Sum32 >> 10, Sum32);
+  printf ("Fixed 32 done.\n");
 
-  for (i = 0; i < 10000; i++)
+  for (i = 0; i < 50000; i++)
   {
-    SumFloat += Float32Test(2.1, 1.7);
+    Float32Test(2.1, 1.7);
   }
-  ftoa(SumFloat, 2 /* fraction digits */, FtoABuf);
-  printf ("Float 32 sum is %s.\n", FtoABuf);
+  printf ("Float 32 done.\n");
 
   return 0;
 }

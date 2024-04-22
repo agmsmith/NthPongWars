@@ -564,64 +564,51 @@ new variations.
 <P>Wonder how well you can do 16 bit fixed point integers on the Z80, what does
 the generated code look like?
 
-Some test code, we have a 6 bit fraction and 10 bit integer part, adding works
-by just using signed 16 bit integers, but we need to divide by 64 to get the
-integer portion.
-
-<XMP>
-/* AGMS20240304 Hello World basic test of C compilers and runtime.
- * AGMS20240416 Add some code to see how the compiler handles 16 bit fixed
- * point fractions.
- *
- * Compile for NABU + RetroNet Cloud CP/M (generates a hard disk image) with:
- * zcc +cpm -subtype=naburn --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed --math32 main.c -o "TestNumb"
-*/
-
-#pragma output noprotectmsdos /* No need for MS-DOS warning code. */
-/* Don't #pragma printf %f /* Also need --math32 when compiling floating point. */
-
-#include <stdio.h>
-
-
-void FixedPointTest(void)
-{
-  signed short NumA = 42.1 * 64;
-  signed short NumB = 17.5 * 64;
-  signed short NumC = 0;
-  signed short NumD = 0;
-  signed short NumE = 0;
-
-  printf ("And now a test of fixed point math speed by AGMS20240416.\n");
-  NumC = NumA + NumB;
-  printf ("Adding %f plus %f yields %f.\n",
-    NumA / 64.0, NumB / 64.0, NumC / 64.0);
-  NumD = NumC / 64;
-  NumE = NumC % 64;
-  printf ("Or converting using integer math, result is %d and %d/64.\n",
-    NumD, NumE);
-}
-
-
-int main(int argc, char **argv)
-{
-  printf("Hello World!\n");
-  printf ("Test for basic compatibility by AGMS20240304.\n");
-  FixedPointTest();
-  return 0;
-}
-</XMP>
+<P>Write some test code, we have a 6 bit fraction and 10 bit integer part,
+adding works by just using signed 16 bit integers, but we need to divide by 64
+to get the integer portion.
 
 <H2>2024.04.21</H2>
 
-<P>Continue with fixed point speed tests, trying to get the compiler to not optimise everything out by putting the code in a subroutine with arguments, rather than as constants.
+<P>Continue with fixed point speed tests, trying to get the compiler to not
+optimise everything out by putting the code in a subroutine with arguments,
+rather than in-line with constants.
 
-<P>Ugh, divide a 16 bit integer by 64 is <CODE>sra d; rr e;</CODE> repeated 6 times, totalling 24 bytes of opcodes.  Floating point is even worse, with lots of code to just put the 4 byte arguments on the stack to set up a library call.
+<P>Ugh, divide a 16 bit integer by 64 is <CODE>sra d; rr e;</CODE> repeated 6
+times, totalling 24 bytes of opcodes.  Floating point is even worse, with lots
+of code to just put the 4 byte arguments on the stack to set up a library call.
 
-<P>It looks like 4 byte integers take twice as long as 2 byte integers to add, and 6 times longer for 4 byte floating point numbers.  Since it's kind of non-standard to use 16 bit fixed point other than 8.8 bits (we want 10.6 for pixel coordinates), 4 byte integers in a 16.16 fixed point format would be safer and easier for the computer to shift to get the integer or fraction portion.  4 bit integers will give us enough numeric range and be well supported on all computers.
+<P>Comparing against 2 byte integers, it looks like 4 byte integers take twice
+as long, and 4 byte floating point numbers take 8 times longer.  Since it's
+kind of non-standard to use 16 bit fixed point other than 8.8 bits (we want
+10.6 for pixel coordinates), 32 bit integers in a 16.16 fixed point format
+would be safer and easier for the computer to shift to get the integer or
+fraction portion.  32 bit integers will give us enough numeric range and be
+well supported on all computers.
 
-<P>But how fast is 4 byte integer math on the Z80?  2 seconds for 50000 calls to a subroutine that adds two 16 bit ints, 4 seconds for 32 bit ints, 15 seconds for 32 bit floats.  So, how much math do we need?  Most is collision detection, finding the tiles inside a circle around a ball.  The biggest ball is 32 pixels in diameter, so 4x4 tiles or 16 tiles.  Distance to ball would be an X and Y vector, so 2 subtractions (tile - ball position).  Can use a table to go from X to X squared, one more addition to add X^2 + Y^2 to get distance squared (avoid doing square root, work with squared pixel length) and a subtraction to do the comparison.  So 4 add/subtracts per tile, 16 times, 64 additions per ball.  4 balls, so 256 additions.  60 frames per second, so 15360 additions per second just for tile collisions.  And we can do 25000 additions per second for 16 bit math, or 12500 for 4 bit integers.  Looks like we should use 16 bit integers to be safe, or run at 30 frames per second.
+<P>But how fast is math on the Z80?  2 seconds for 50000 calls to a subroutine
+that adds two 16 bit ints, 4 seconds for 32 bit ints, 15 seconds for 32 bit
+floats.  Yes, there is some loop and subroutine call overhead, but that's close
+enough for estimates.
 
-<P>So start with 32 bit fixed point math and rewrite as 16 bit if we don't have enough speed.
+<P>So, how much math do we need?  Most is collision detection, finding the
+tiles inside a circle around a ball.  The biggest ball is 32 pixels in
+diameter, so 4x4 tiles or 16 tiles (well, maybe 5x5 for half tiles around the
+edge).  Distance from a tile to ball would be an (X, Y) vector, so 2
+subtractions to calculate it.  Can use a table to go from X (varies from 0 to
+ball radius plus tile radius = 20) to X squared (whew, expensive multiplication
+avoided), one more addition to add X^2 + Y^2 to get distance squared (avoid
+doing square root, work with squared pixel length) and a subtraction to do the
+comparison (<B>draw tiles as circles to match the math and look better</B> -
+in-joke: have a spherical cow Easter egg).  So 4 add/subtracts per tile, 16
+times, totalling 64 additions per ball.  4 balls, so 256 additions.  60 frames
+per second, so 15360 additions per second just for tile collisions.  And we can
+do 25000 additions per second for 16 bit math, or 12500 for 32 bit integers.
+Looks like we should use 16 bit integers to be safe, or use 32 and run at 30
+frames per second.
+
+<P>So start with 32 bit fixed point math and allow for the possibility of
+rewriting as 16 bit if we don't have enough speed.
 
 <P>- Alex
 

@@ -11,46 +11,65 @@
 /* Don't #pragma printf %f /* Want to print floating point numbers. */
 
 #include <stdio.h>
+#include <math.h>
 
 
-signed char FixedPoint16Test(signed short NumA, signed short NumB)
+signed short FixedPoint16Test(signed short NumA, signed short NumB)
 {
   signed short NumC;
 
   NumC = NumA + NumB;
-  return (signed char) (NumC >> 6);
+  return NumC;
 }
 
 
-signed short int FixedPoint32Test(signed long NumA, signed long NumB)
+signed long FixedPoint32Test(signed long NumA, signed long NumB)
 {
   signed long NumC;
 
   NumC = NumA + NumB;
-  return (signed short int) (NumC >> 16);
+  return NumC;
+}
+
+
+float Float32Test(float NumA, float NumB)
+{
+  float NumC;
+
+  NumC = NumA + NumB;
+  return NumC;
 }
 
 
 int main(void)
 {
   int i;
-  signed short Sum16 = 0;
+  signed long Sum16 = 0;
   signed long Sum32 = 0;
+  float SumFloat = 0.0;
+  static char FtoABuf[30];
 
   printf("Hello World!\n");
   printf ("Test for basic compatibility by AGMS20240304.\n");
 
-  for (i = 0; i < 30000; i++)
+  for (i = 0; i < 10000; i++)
   {
-    Sum16 += FixedPoint16Test(42.1 * 64, 17.5 * 64);
+    Sum16 += FixedPoint16Test(2.1 * 64, 1.7 * 64);
   }
-  printf ("Finished fixed point test, sum is %d.\n", Sum16);
+  printf ("Fixed 16 sum is %ld (%ld).\n", Sum16 >> 6, Sum16);
 
-
-  for (i = 0; i < 30000; i++)
+  for (i = 0; i < 10000; i++)
   {
-    Sum32 += FixedPoint16Test(42.1 * 65536, 17.5 * 65536);
+    Sum32 += FixedPoint32Test(2.1 * 1024, 1.7 * 1024);
   }
-  printf ("Finished fixed point test, sum is %ld.\n", Sum32);
-return 0;
+  printf ("Fixed 32 sum is %ld (%d).\n", Sum32 >> 10, Sum32);
+
+  for (i = 0; i < 10000; i++)
+  {
+    SumFloat += Float32Test(2.1, 1.7);
+  }
+  ftoa(SumFloat, 2 /* fraction digits */, FtoABuf);
+  printf ("Float 32 sum is %s.\n", FtoABuf);
+
+  return 0;
 }

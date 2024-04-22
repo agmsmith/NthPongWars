@@ -617,6 +617,8 @@ int main(int argc, char **argv)
 
 <P>Ugh, divide a 16 bit integer by 64 is <CODE>sra d; rr e;</CODE> repeated 6 times, totalling 24 bytes of opcodes.  Floating point is even worse, with lots of code to just put the 4 byte arguments on the stack to set up a library call.
 
+<P>It looks like 4 byte integers take twice as long as 2 byte integers to add, and 6 times longer for 4 byte floating point numbers.  Since it's kind of non-standard to use 16 bit fixed point other than 8.8 bits (we want 10.6 for pixel coordinates), so use 4 byte integers in a 16.16 fixed point format.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

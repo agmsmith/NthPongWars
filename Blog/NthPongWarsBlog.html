@@ -610,6 +610,12 @@ frames per second.
 <P>So start with 32 bit fixed point math and allow for the possibility of
 rewriting as 16 bit if we don't have enough speed.
 
+<H2>2024.04.25</H2>
+
+<P>Looked at ncurses, seems like it could show the tile field quite easily for Linux and BeOS in terminal mode, since it renders an array of characters to a screen.  Also has support for menus and windows.  Should be easier to debug in a terminal in a modern OS rather than on a NABU screen.  Nobody uses ncurses on Z88DK since the library is several kilobytes large.
+
+<P>Spent a while trying to get ncurses to do anything, turns out you need to read a character else it doesn't draw anything (or it draws and erases it too quickly to see it).  Also, can do colour, which will be good for the game!
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

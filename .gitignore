@@ -9,8 +9,9 @@
 /MAME/*
 *.COM
 *.com
+*.EXE
+*.exe
 *.img
 *.lis
 *.map
 *.sym
-TestNumb

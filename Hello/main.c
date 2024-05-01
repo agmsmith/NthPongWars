@@ -4,7 +4,7 @@
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a hard disk image and a
  * usable .COM file, --math32 for floating point) with:
- * zcc +cpm -subtype=naburn --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed --math32 main.c -o "TestNumb"
+ * zcc +cpm -subtype=naburn --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed --math32 main.c -o "TestNumb.exe"
 */
 
 #pragma output noprotectmsdos /* No need for MS-DOS warning code. */

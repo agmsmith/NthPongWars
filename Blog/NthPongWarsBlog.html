@@ -620,6 +620,16 @@ rewriting as 16 bit if we don't have enough speed.
 
 <P>Code just a ball bouncing off the walls, to get started.  Uses ncurses for output, keyboard for input, should compile in Linux and then BeOS.
 
+<P>Yeah!  It works.  The 16.16 bit fixed point math seems to work correctly, and I got ncurses running in real time (specified as 20 frames per second) and in colour.
+
+<P ALIGN=CENTER><IMG SRC="Pong_Wars_NCurses_and_Math_Test_20240501.png"
+ALT="[Screen shot of Pong Wars test by Alexander G. M. Smith, May 1, 2024, showing working fixed point math and ncurses input and output]" WIDTH="512"
+HEIGHT="432">
+
+<P>You can also see the <A HREF="main_20240501.c">source code in C</A> for this version.
+
+<P>Next up, design the main data structures for the balls and tiles.  And algorithms for evenly advancing positions of multiple balls moving faster than one tile per frame.  Hmmm, might also need a sorted tree of tile updates to find runs of changes for faster NABU VDP video chip writes and better network data compression.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

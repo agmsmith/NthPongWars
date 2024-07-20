@@ -18,27 +18,64 @@
  * AGMS20240718 - Start this header file.
  */
 
-#include <stdint.h> /* For __int32_t */
+#include <sys/types.h> /* For __int16_t, __int32_t */
+#include <endian.h> /* For __BYTE_ORDER, __LITTLE_ENDIAN */
 
 /*******************************************************************************
  * Constants, types.
  */
 
-typedef struct fx_bits_struct {
-  __int_16_t integer;
-  __int_16_t fraction;
+/* Our floating point data type "fx", can be interpreted as a 32 bit integer
+   to do math (addition, subtraction) or parts can be extracted, or converted
+   to or from a 32 bit float (very slowly).
+
+   Later we may change it to 3 bytes by reducing the size of the fraction,
+   but then addition and subtraction will need some custom assembler code. */
+
+typedef struct fx_bits_struct {\
+  /* Fields are ordered so that they combine 16 bit values into a 32 bit
+     integer of the same endianness.  So we can use a single 32 bit add
+     to add both fraction and integer in one shot.
+
+     Note that fractional parts are unsigned, and may be weird if the whole
+     number is negative (take the absolute value of the whole fx, then look at
+     the fractional part). */
+  #if __BYTE_ORDER == __LITTLE_ENDIAN
+    __uint16_t fraction;
+    __int16_t integer;
+  #else /* __BIG_ENDIAN we assume. */
+    __int16_t integer;
+    __uint16_t fraction;
+  #endif
 } fx_bits;
 
 typedef union fx_union {
-  __int_32_t as_int;
+  __int32_t as_int;
   fx_bits portions;
-} fx; /* Fixed point fraction currently in a 32 bit integer. */
+} fx;
 
+#define MAX_FX_FRACTION 0xFFFF
+#define MAX_FX_INT 0x7FFF
+
+#define _FX_FLOAT ((float) (((__int32_t) 1) << 16))
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)
-#define INT_TO_FX(int, x) (x.portions.fraction = 0, x.portions.integer = int)
+#define GET_FX_FLOAT(x) (x.as_int / _FX_FLOAT)
+#define INT_TO_FX(inta, x) (x.portions.integer = inta, x.portions.fraction = 0)
+#define INT_FRACTION_TO_FX(inta, fracb, x) (x.portions.integer = inta, x.portions.fraction = fracb)
+#define FLOAT_TO_FX(fpa, x) (x.as_int = fpa * _FX_FLOAT)
 
-#define _FX_FLOAT ((float) (1L << 16))
-#define FLOAT_TO_FX(fp, x) (x.as_int = fp * _FX_FLOAT)
-#define FX_TO_FLOAT(x) (x.as_int / _FX_FLOAT)
+/* Add fx values a and b and put the result in fx value c. */
+#define ADD_FX(a, b, c) (c.as_int = a.as_int + b.as_int)
+
+/* Put fx value a - b into c. */
+#define SUBTRACT_FX(a, b, c) (c.as_int = a.as_int - b.as_int)
+
+/* Compare two values A and B, return an integer of some sort (could be byte
+   sized on the Z80, 32 bits on x86 processors) which is negative if A < B,
+   zero if A = B, positive if A > B. */
+#define COMPARE_FX(a, b) (a.as_int - b.as_int)
+
+/* Divide a by 4 and put into b. */
+#define DIV4_FX(a, b) (b.as_int = a.as_int / 4)
 

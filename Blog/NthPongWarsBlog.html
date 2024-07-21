@@ -644,6 +644,18 @@ one tile per frame.  Hmmm, might also need a sorted tree of tile updates to
 find runs of changes for faster NABU VDP video chip writes and better network
 data compression.
 
+<H2>2024.07.21</H2>
+
+<P>I'm back, after a Fringe Theatre Festival and cottage maintenance kept me
+busy.  I moved the fixed point math to a header file, and then redid it as
+function calls, so that later we can use 3 byte integers in assembler code on
+the Z80.
+
+<P>Today I'm trying to make a Z80 version of the ncurses simple ball bouncing
+around test, trying to use the Z80DK libraries first (freshly updated Z80DK)
+and directly accessing the video memory.  Got as far as getting the fixed point
+math to compile on both Z80 and Linux.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

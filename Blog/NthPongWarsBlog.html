@@ -652,9 +652,84 @@ function calls, so that later we can use 3 byte integers in assembler code on
 the Z80.
 
 <P>Today I'm trying to make a Z80 version of the ncurses simple ball bouncing
-around test, trying to use the Z80DK libraries first (freshly updated Z80DK)
+around test, trying to use the Z88DK libraries first (freshly updated Z88DK)
 and directly accessing the video memory.  Got as far as getting the fixed point
 math to compile on both Z80 and Linux.
+
+<H2>2024.07.21</H2>
+
+<P>Switching to NABU-LIB libraries, since they're a bit richer in the NABU
+functionality, and they now compile with the latest Z88DK compiler (though with
+lots of "function declarator with no prototype" warnings).
+
+<H2>2024.07.25</H2>
+
+<P>Got some test code working with NABU-LIB for the first time.  It initialises
+things in graphics mode 2, including loading the font in 3 parts (video memory
+is triplicated to get the extra graphics resolution, with font tile patterns
+and colours repeated for each third of the screen).  I had it load garbage into
+the first 32 non-printing characters, thus the cleared screen around the
+printed text looks blobby.
+
+<P ALIGN=CENTER><IMG SRC="First_Mode_2_Graphics_20240725.jpeg"
+ALT="[Screen shot of NABU Graphics Mode 2 First Working Version]" WIDTH="640"
+HEIGHT="507">
+
+<P>Also had a look at generated code and was able to rewrite a nested for loop
+pair into a zero based do-while, which is faster and shorter.  There's no
+re-loading the loop variable and comparing it to a constant, also you can use
+an 8 bit counter rather than 16 to cover all 256 numbers in a do-while.
+
+<PRE>
+    for (uint8_t i = 0; i < 3; i++) {
+      for (uint16_t j = 0; j < 256; j++) {
+        IO_VDPDATA = j;
+      }
+    }
+
+becomes 22 bytes of opcodes...
+
+  7983  29b4  0e00              	ld	c,0x00
+  7984                          l_main_00115:
+  7985  29b6  79                	ld	a, c
+  7986  29b7  d603              	sub	a,0x03
+  7987  29b9  3011              	jr	NC,l_main_00102
+  7988  29bb  110000            	ld	de,0x0000
+  7989                          l_main_00112:
+  7990  29be  7a                	ld	a, d
+  7991  29bf  d601              	sub	a,0x01
+  7992  29c1  3006              	jr	NC,l_main_00116
+  7993  29c3  7b                	ld	a, e
+  7994  29c4  d3a0              	out	(_IO_VDPDATA), a
+  7995  29c6  13                	inc	de
+  7996  29c7  18f5              	jr	l_main_00112
+  7997                          l_main_00116:
+  7998  29c9  0c                	inc	c
+  7999  29ca  18ea              	jr	l_main_00115
+  8000                          l_main_00102:
+
+and the do-while version
+
+    uint8_t i = 3;
+    do {
+      uint8_t j = 0;
+      do {
+        IO_VDPDATA = j;
+      } while (--j != 0);
+    } while (--i != 0);
+
+becomes 11 bytes of opcodes...
+
+  8005  29d4  0e03              	ld	c,0x03
+  8006                          l_main_00130:
+  8007  29d6  af                	xor	a, a
+  8008                          l_main_00103:
+  8009  29d7  d3a0              	out	(_IO_VDPDATA), a
+  8010  29d9  3d                	dec	a
+  8011  29da  20fb              	jr	NZ,l_main_00103
+  8012  29dc  0d                	dec	c
+  8013  29dd  20f7              	jr	NZ,l_main_00130
+</PRE>
 
 <P>- Alex
 

@@ -18,12 +18,12 @@
  * AGMS20240718 - Start this header file.
  */
 
-#include <sys/types.h> /* For __uint16_t, __int32_t, u16_t, i32_t */
+#include <sys/types.h> /* For __uint16_t, __int32_t, u16_t, uint32_t etc. */
 #if __GNUC__
-  #define i16_t __int16_t
-  #define u16_t __uint16_t
-  #define i32_t __int32_t
-  #define u32_t __uint32_t
+  #define xxi16_t __int16_t
+  #define xxu16_t __uint16_t
+  #define xxi32_t __int32_t
+  #define xxu32_t __uint32_t
 #endif
 
 #include <endian.h> /* For __BYTE_ORDER, __LITTLE_ENDIAN */
@@ -48,23 +48,23 @@ typedef struct fx_bits_struct {\
      number is negative (take the absolute value of the whole fx, then look at
      the fractional part). */
   #if __BYTE_ORDER == __LITTLE_ENDIAN
-    u16_t fraction;
-    i16_t integer;
+    uint16_t fraction;
+    int16_t integer;
   #else /* __BIG_ENDIAN we assume. */
-    i16_t integer;
-    u16_t fraction;
+    int16_t integer;
+    uint16_t fraction;
   #endif
 } fx_bits;
 
 typedef union fx_union {
-  i32_t as_int;
+  int32_t as_int;
   fx_bits portions;
 } fx;
 
 #define MAX_FX_FRACTION 0xFFFF
 #define MAX_FX_INT 0x7FFF
 
-#define _FX_FLOAT ((float) (((i32_t) 1) << 16))
+#define _FX_FLOAT ((float) (((int32_t) 1) << 16))
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)
 #define GET_FX_FLOAT(x) (x.as_int / _FX_FLOAT)

@@ -192,9 +192,11 @@ control.  Still didn't work.
 <P>I wiped out my MAME directory and restored it from GTAMP's .zip file.  MAME
 complained about not finding a keyboard rom; I just had to move the
 nabukeyboard*.bin files out from the roms/nabu_kb directory into roms/nabupc.
-MAME stopped complaining about missing ROMs and it started working!  Using the
--bios option to pick a rom was apparently causing problems, I just needed to
-use the defaults.  Argh!
+MAME stopped complaining about missing ROMs and it started working!  If it
+finds no ROMs at all, you may also need to add a path to the ROMs using the MAME
+settings menu, since the default paths are to /usr/share.  Using the -bios
+option to pick a rom was apparently causing problems, I just needed to use the
+defaults.  Argh!
 
 <P>This command line works (after you get to the MAME menu via the scroll-lock
 and tab key, and fix the serial port settings, and have one of the Nabu Network

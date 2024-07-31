@@ -733,6 +733,12 @@ becomes 11 bytes of opcodes...
   8013  29dd  20f7              	jr	NZ,l_main_00130
 </PRE>
 
+<H2>2024.07.30</H2>
+
+<P>Draw a blue frame around the screen.  Find out that using printf() to print
+stuff to the CP/M output trashes video memory (likely because it thinks it is
+in text mode and overwrites some of our data, such as fonts).
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

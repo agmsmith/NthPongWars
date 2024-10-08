@@ -7,13 +7,12 @@
  * Compile with: gcc -g -O2 -lncurses -o NCursesTest.exe main.c
  */
 
-#include <stdint.h> /* For __int16_t */
 #include <ctype.h> /* For toupper() */
 #include <stdio.h> /* For printf and so on. */
 #include <curses.h> /* We're actually using ncurses, version 5.2 or later. */
 #include <signal.h>
 
-#include "../common/fixed_point.h" /* Use "fx" fixed point math library. */
+#include "../common/fixed_point.h" /* Use our "fx" fixed point math library. */
 
 
 /*******************************************************************************

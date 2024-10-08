@@ -17,15 +17,10 @@
  *
  * AGMS20240718 - Start this header file.
  */
+#ifndef _FIXED_POINT_H
+#define _FIXED_POINT_H 1
 
 #include <sys/types.h> /* For __uint16_t, __int32_t, u16_t, uint32_t etc. */
-#if __GNUC__
-  #define xxi16_t __int16_t
-  #define xxu16_t __uint16_t
-  #define xxi32_t __int32_t
-  #define xxu32_t __uint32_t
-#endif
-
 #include <endian.h> /* For __BYTE_ORDER, __LITTLE_ENDIAN */
 
 /*******************************************************************************
@@ -37,9 +32,12 @@
    to or from a 32 bit float (very slowly).
 
    Later we may change it to 3 bytes by reducing the size of the fraction,
-   but then addition and subtraction will need some custom assembler code. */
-
-typedef struct fx_bits_struct {\
+   but then addition and subtraction will need some custom assembler code.  So
+   write the game code in a subroutine call style (using #defines instead of
+   actual subroutines for now) and avoid using + and - directly on the 32 bit
+   integers in higher level code.
+*/
+typedef struct fx_bits_struct {
   /* Fields are ordered so that they combine 16 bit values into a 32 bit
      integer of the same endianness.  So we can use a single 32 bit add
      to add both fraction and integer in one shot.
@@ -64,13 +62,13 @@ typedef union fx_union {
 #define MAX_FX_FRACTION 0xFFFF
 #define MAX_FX_INT 0x7FFF
 
-#define _FX_FLOAT ((float) (((int32_t) 1) << 16))
+#define _FX_UNITY_FLOAT ((float) (((int32_t) 1) << 16))
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)
-#define GET_FX_FLOAT(x) (x.as_int / _FX_FLOAT)
+#define GET_FX_FLOAT(x) (x.as_int / _FX_UNITY_FLOAT)
 #define INT_TO_FX(inta, x) (x.portions.integer = inta, x.portions.fraction = 0)
 #define INT_FRACTION_TO_FX(inta, fracb, x) (x.portions.integer = inta, x.portions.fraction = fracb)
-#define FLOAT_TO_FX(fpa, x) (x.as_int = fpa * _FX_FLOAT)
+#define FLOAT_TO_FX(fpa, x) (x.as_int = fpa * _FX_UNITY_FLOAT)
 
 /* Add fx values a and b and put the result in fx value c. */
 #define ADD_FX(a, b, c) (c.as_int = a.as_int + b.as_int)
@@ -85,4 +83,6 @@ typedef union fx_union {
 
 /* Divide a by 4 and put into b. */
 #define DIV4_FX(a, b) (b.as_int = a.as_int / 4)
+
+#endif /* _FIXED_POINT_H */
 

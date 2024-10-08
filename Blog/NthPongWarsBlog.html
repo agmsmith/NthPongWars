@@ -96,7 +96,8 @@ files to NABU computers), I'm starting with the one from Nabu.ca:
   <LI>Unzip it and move the files to ~/bin/ or somewhere in your path.
   <LI>Add a link named ~/bin/libdl.so that points to the actual location and
     file of that dynamic loader library.  Using the command "locate libdl", I
-    found it at /usr/lib64/libdl.so.2
+    found it at /usr/lib64/libdl.so.2, thus the command is:
+    <CODE>ln -s /usr/lib64/libdl.so.2 ~/bin/libdl.so</CODE>
   <LI>Test it by typing NABU-Internet-Adapter-84 in a Terminal window.  It
     should draw a nice text mode user interface (make Terminal window bigger to
     see more).  Arrow keys, tab and Enter let you navigate around the menus.
@@ -738,6 +739,12 @@ becomes 11 bytes of opcodes...
 <P>Draw a blue frame around the screen.  Find out that using printf() to print
 stuff to the CP/M output trashes video memory (likely because it thinks it is
 in text mode and overwrites some of our data, such as fonts).
+
+<H2>2024.10.08</H2>
+
+<P>Finally have some time to work on putting in the headers for the main tile
+datatype; it's currently raining so cottage window seam sanding and caulking
+have to take a pause.
 
 <P>- Alex
 

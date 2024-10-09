@@ -43,10 +43,13 @@ typedef enum tile_owner_enum {
    playing area, which can include off-screen tiles.
 */
 typedef struct tile_struct {
-  __uint8_t pixel_x;
-  __uint8_t pixel_y;
-  /* Position of the tile top left corner in the play area, in pixels.  Used
-     during collision detection to avoid recalculating it. */
+  __uint16_t pixel_center_x;
+  __uint16_t pixel_center_y;
+  /* Position of the tile center in the play area, in pixels.  Used during
+     collision detection to avoid recalculating it.  Need 16 bits since the
+     play area can be larger than the NABU screen, so can go over 256 in pixel
+     coordinates.  Top left tile would have top left corner at pixel (0,0) and
+     thus the center at (4,4) when the tiles are 8 pixels wide and tall. */
 
   __uint16_t vdp_address;
   /* Location of this tile in NABU video memory.  Points to the name table

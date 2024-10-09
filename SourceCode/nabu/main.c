@@ -42,7 +42,7 @@
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
 #define FONT_LM80C
-#include "../../../NABU-LIB/NABULIB/patterns.h" /* Font data array in memory. */
+#include "../../../NABU-LIB/NABULIB/patterns.h" /* Font as a global array. */
 
 static char TempString[81]; /* For sprintfing into.  Avoids using stack. */
 
@@ -53,9 +53,18 @@ int main(void)
   fx fx_quarter;
 
   /* Note that printf goes through CP/M and scrambles the video memory (it's
-     arranged differently), so don't use printf during graphics mode. */
+     arranged differently), so don't use printf during graphics mode.  However
+     the NABU CP/M has a screen text buffer and that will be restored to the
+     screen when the program exits, so you can see printf output after exit. */
 
-  printf ("Starting the Nth Pong Wars experiment,\nAGMS20240730\n");
+  printf ("Starting the Nth Pong Wars experiment,\n");
+  printf ("by Alexander G. M. Smith, started 2024.\n");
+  printf ("Compiled on " __DATE__ " at " __TIME__ ".\n");
+  #if __SDCC
+    printf ("Using the SDCC compiler.\n");
+  #elif __GNUC__
+    printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");
+  #endif
   z80_delay_ms(1000);
 
   initNABULib();
@@ -121,7 +130,7 @@ int main(void)
   vdp_loadColorToId(1, TempString);
 
   /* Try printing some text.  Don't go off screen, else it will write past the
-     end of memory.  Test going off one line, autoscroll working? */
+     end of memory.  Test going off one line, autoscroll working?  Yup. */
   vdp_setCursor2(0, 0);
   for (uint8_t i = 0; i < _vdpCursorMaxYFull; i++) {
     sprintf(TempString, "Hello, world #%d!\n", (int) i);

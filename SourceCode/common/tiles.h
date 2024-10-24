@@ -17,11 +17,6 @@
 
 #include "fixed_point.h"
 
-/* The maximum number of players allowed.  On the NABU, it's limited to 4 due to
-   colour palette limits and the maximum number of visible sprites (4 visible,
-   more per scan line don't get drawn, and we use sprites for balls). */
-#define MAX_PLAYERS 4
-
 /* Size of the tiles in pixels.  On the NABU, character cells are 8 pixels.
    Might have to make these defines platform dependent. */
 #define TILE_PIXEL_HEIGHT 8
@@ -36,7 +31,12 @@ typedef enum tile_owner_enum {
   OWNER_PLAYER_2,
   OWNER_PLAYER_3,
   OWNER_PLAYER_4,
-  OWNER_MAX  
+  OWNER_PUP_NORMAL = 16, /* Power-up that makes you normal; resets other pups. */
+  OWNER_PUP_FAST, /* Power-up that makes you faster. */
+  OWNER_PUP_SLOW, /* Power-up that makes you slower. */
+  OWNER_PUP_STOP, /* Power-up that makes you stop. */
+  OWNER_PUP_THROUGH_10, /* Run through 10 squares, rather than bouncing. */
+  OWNER_MAX
 } tile_owner;
 
 /* This is the main tile status record.  There is one for each tile in the

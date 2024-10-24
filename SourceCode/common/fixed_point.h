@@ -48,7 +48,7 @@ typedef struct fx_bits_struct {
   #if __BYTE_ORDER == __LITTLE_ENDIAN
     uint16_t fraction;
     int16_t integer;
-  #else /* __BIG_ENDIAN we assume. */
+  #else /* __BIG_ENDIAN */
     int16_t integer;
     uint16_t fraction;
   #endif
@@ -56,6 +56,8 @@ typedef struct fx_bits_struct {
 
 typedef union fx_union {
   int32_t as_int;
+  /* So you can treat the whole thing as an integer to do additions in one shot,
+     but best not to use this in game code in case we switch to 3 byte fx. */
   fx_bits portions;
 } fx;
 

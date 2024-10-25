@@ -36,6 +36,7 @@ typedef enum tile_owner_enum {
   OWNER_PUP_SLOW, /* Power-up that makes you slower. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
   OWNER_PUP_THROUGH_10, /* Run through 10 squares, rather than bouncing. */
+  OWNER_PUP_COLOUR_CHANGE, /* Changes the player colour to an available one. */
   OWNER_MAX
 } tile_owner;
 

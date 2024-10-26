@@ -6,11 +6,11 @@
  * Compile for NABU + RetroNet Cloud CP/M (generates a usable .COM file),
  * with --math32 for 32 bit floating point.  Use the command line:
  *
- * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed --math32 main.c -o "WALLBNCE.COM"
+ * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm -o "NTHPONG.COM"
 */
 
 /* Various options to tell the Z88DK compiler system what to include. */
-#pragma output noprotectmsdos /* No need for don't run on MS-DOS warning. */
+#pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
 /* #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
@@ -23,8 +23,8 @@
   #include <stdio.h> /* For printf and sprintf and stdout file handles. */
 #endif
 #include <math.h> /* For floating point math routines. */
-#include "../common/fixed_point.h" /* Our own fixed point 16.16 math. */
-#include <arch/z80.h> /* for z80_delay_ms(), runs slow 3.579545 vs 4.0 Mhz. */
+#include "../common/fixed_point.h" /* Our own fixed point math. */
+#include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 
 /* Use DJ Sure's Nabu code library, for VDP video hardware and the Nabu Network
    simulated data network.  Now that it compiles with the latest Z88DK compiler
@@ -65,6 +65,9 @@ int main(void)
   #elif __GNUC__
     printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");
   #endif
+  printf ("Should be a 10 second time delay...\n");
+  z80_delay_ms(10000);
+  printf ("Done.\n");
   z80_delay_ms(1000);
 
   initNABULib();

@@ -27,9 +27,16 @@
    more per scan line don't get drawn, and we use sprites for balls). */
 #define MAX_PLAYERS 4
 
-/* Normal size of the player diameter in pixels.  Currently that's the only
-   diameter; it's too much work to make it variable (breaks animations). */
+/* Sizes allowed of the player (ball diameter in pixels).  Having in-between
+   sizes doesn't add much to the game, just a few ones are great for sweeping
+   out large areas.  To keep things simple, we have 8x8 sprites, 16x16 sprites,
+   and hardware double size 16x16 = 32x32 sprites.  So we have to do our
+   animations in 16x16 and make a reduced size 8x8 version too.  The player is
+   considered to be spherical (with this diameter), centered in the hardware
+   sprite box. */
 #define PLAYER_DIAMETER_NORMAL = 8
+#define PLAYER_DIAMETER_BIG = 16
+#define PLAYER_DIAMETER_HUGE = 32
 
 /* The various brains that can run a player.
 */
@@ -37,8 +44,20 @@ typedef enum brain_enum {
   BRAIN_INACTIVE = 0, /* This player is not active, don't display it. */
   BRAIN_JOYSTICK, /* Player controlled by a Human using a joystick. */
   BRAIN_NETWORK, /* Player controlled by a remote entity over the network. */
-  BRAIN_ALGORITHM, /* Player controlled by software, AI or other code. */
-  BRAIN_MAX
+  BRAIN_ALGORITHM_MIN, /* Range of Brains for players controlled by software. */
+  BRAIN_IDLE_DELAY = BRAIN_ALGORITHM_MIN,
+  /* This one doesn't accelerate, just drifts around, for 30 seconds, then it
+     randomly picks another brain type.  It's used for disconnected players, so
+     they can reconnect within the time delay without much happening.  But if
+     they take too long, they get replaced by an AI. */
+  BRAIN_CONSTANT_SPEED,
+  /* Tries to speed up to move at a constant speed in whatever direction it is
+     already going in. */
+  BRAIN_HOMING,
+  /* Tries to go towards another player at a constant speed.  Other player
+     choice changes sequentially every 10 seconds. */
+  BRAIN_ALGORITHM_MAX,
+  BRAIN_MAX = BRAIN_ALGORITHM_MAX
 } player_brain;
 
 
@@ -48,14 +67,14 @@ typedef enum brain_enum {
 typedef struct player_struct {
   __uint16_t pixel_center_x;
   __uint16_t pixel_center_y;
-  /* Position of the tile center in the play area, in pixels.  Used during
-     collision detection to avoid recalculating it.  Need 16 bits since the
-     play area can be larger than the NABU screen, so can go over 256 in pixel
-     coordinates.  Top left tile would have top left corner at pixel (0,0) and
-     thus the center at (4,4) when the tiles are 8 pixels wide and tall. */
+  /* Position of the center of the player in the play area, in pixels.  Used
+     during collision detection to avoid recalculating it.  Need 16 bits since
+     the play area can be larger than the NABU screen, so can go over 256 in
+     pixel coordinates.  Player size can vary, so the sprite's top left corner
+     has to be calculated from this. */
 
   player_brain brain;
-    /* Inactive invisible player or where this player gets its moves from. */
+    /* What controls this player, or marks it as inactive (not drawn). */
 
   __uint32_t brain_info;
     /* Extra information about this brain.  Joystick number for joysticks,
@@ -67,22 +86,15 @@ typedef struct player_struct {
      visual duplicates. */
 
   __uint16_t vdp_address;
-  /* Location of this tile in NABU video memory.  Points to the name table
-     entry for the tile, 0 if off screen. Makes it easier to find runs of
-     adjacent changed tiles so we don't have to take extra time to change the
-     VDP write address (it auto-increments in hardware).  Also avoids having
-     to calculate it (visible window into the virtual play area can move). */
+  /* Location of this sprite in NABU video memory.  Points to the name table
+     entry for the sprite. */
 
-  tile_owner owner;
-  /* What kind of tile is this?  Empty, player owned, or a power-up. */
-
-} tile_record;
+} player_record;
 
 /* An array of players.  To avoid using alloc/free with resulting fragmentation
    of the minuscule NABU memory, it is a static array sized in advance to be
    as large as possible. */
 static player_record g_player_array[MAX_PLAYERS];
-
 
 #endif /* _PLAYERS_H */
 

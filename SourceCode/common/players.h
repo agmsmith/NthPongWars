@@ -85,9 +85,23 @@ typedef struct player_struct {
      colour choices.  On the NABU this is a number from 0 to 15, which has some
      visual duplicates. */
 
-  __uint16_t vdp_address;
-  /* Location of this sprite in NABU video memory.  Points to the name table
-     entry for the sprite. */
+  __uint16_t sprite_vdp_address;
+  /* Location of this player's sprite attribute data in NABU video memory.
+     The attributes are 4 bytes for y, x, name, flags+colour.  We may later use
+     a second sprite for a drop-shadow - same as main sprite except a darker
+     colour and slightly offset, can simulate height above the ground by
+     changing the offset. */
+
+  __uint8_t sprite_vdp_name;
+  /* The name is the index to a 8 byte pattern element in the sprite generator
+     table.  16x16 sprites use 4 of those elements in a AC/BD left to right
+     order.  So to have animations available in both 16x16 and 8x8 modes, we
+     need 5 elements (40 bytes) per frame.  The players can reuse the same
+     animations (one for each power up), so 256/5 = 51 total animation frames
+     are available in VRAM (might be able to dynamically load animations only
+     for currently active power-ups).  For easier addressing (rather than
+     multiplying by 5), have all the 8x8 animations first, then all the 16x16
+     animations. */
 
 } player_record;
 

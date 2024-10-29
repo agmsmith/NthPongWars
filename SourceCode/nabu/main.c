@@ -81,8 +81,7 @@ int main(void)
     _vdpSpriteAttributeTableAddr = 0x1b00; 128 or 0x80 bytes long, ends 0x1b80.
     gap 0x1b80, length 1152 or 0x480, ends 0x2000.
     _vdpColorTableAddr = 0x2000; 6K or 0x1800 long, ends 0x3800.
-    _vdpSpriteGeneratorTableAddr = 0x3800; 1024 or 0x400 bytes long, end 0x3C00.
-    gap 0x3c00, length 1024 or 0x400, ends 0x4000.
+    _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
   vdp_clearVRAM();

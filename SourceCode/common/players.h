@@ -27,16 +27,15 @@
    more per scan line don't get drawn, and we use sprites for balls). */
 #define MAX_PLAYERS 4
 
-/* Sizes allowed of the player (ball diameter in pixels).  Having in-between
-   sizes doesn't add much to the game, just a few ones are great for sweeping
-   out large areas.  To keep things simple, we have 8x8 sprites, 16x16 sprites,
-   and hardware double size 16x16 = 32x32 sprites.  So we have to do our
-   animations in 16x16 and make a reduced size 8x8 version too.  The player is
-   considered to be spherical (with this diameter), centered in the hardware
-   sprite box. */
-#define PLAYER_DIAMETER_NORMAL = 8
-#define PLAYER_DIAMETER_BIG = 16
-#define PLAYER_DIAMETER_HUGE = 32
+/* Variable sized balls are problematic.  Having in-between sizes doesn't add
+   much to the game, just a few ones are great for sweeping out large areas.
+   But even then, we'd double the animation space needed (we have only 2K of
+   VRAM for all frames), so we're sticking with fixed size players.  For nice
+   detail on the NABU, we use 16x16 sprites (all sprites have to be the same)
+   and just draw an 8x8 ball in the center of the sprite and animate power-up
+   effects around the ball.  The player is considered to be spherical (with this
+   diameter), centered in the hardware sprite box. */
+#define PLAYER_PIXEL_DIAMETER_NORMAL = 8
 
 /* The various brains that can run a player.
 */
@@ -65,50 +64,81 @@ typedef enum brain_enum {
    Inactive players also get a record, in case they join a game in progress.
 */
 typedef struct player_struct {
-  __uint16_t pixel_center_x;
-  __uint16_t pixel_center_y;
+  fx pixel_center_x;
+  fx pixel_center_y;
   /* Position of the center of the player in the play area, in pixels.  Used
      during collision detection to avoid recalculating it.  Need 16 bits since
      the play area can be larger than the NABU screen, so can go over 256 in
-     pixel coordinates.  Player size can vary, so the sprite's top left corner
-     has to be calculated from this. */
+     pixel coordinates.  Signed, because players can go off screen, though
+     tiles can't, but we do math with both.  The sprite's top left corner has
+     to be calculated from the center. */
 
   player_brain brain;
     /* What controls this player, or marks it as inactive (not drawn). */
 
   __uint32_t brain_info;
     /* Extra information about this brain.  Joystick number for joysticks,
-       network identification for remote players, algorithm to use for AI. */
+       network identification for remote players, algorithm stuff for AI. */
 
-  __uint8_t colour;
-  /* Custom colour picked by the player.  Can't conflict with other players
-     colour choices.  On the NABU this is a number from 0 to 15, which has some
-     visual duplicates. */
+  __uint8_t main_colour;
+  /* Predefined colour for this player's main graphic.  On the NABU this is a
+     number from 1 to 15 in the standard TMS9918A palette.  In Unix, using
+     ncurses, this is a number from 1 to 4. */
+
+#ifdef NABU_H
+  __uint8_t shadow_colour;
+  /* Predefined colour for this player's shadow sprite.  We're using colours
+     which have a darker version of the same colour, so that can be a
+     drop-shadow.  Caches the values from k_PLAYER_COLOURS[player#]. */
 
   __uint16_t sprite_vdp_address;
-  /* Location of this player's sprite attribute data in NABU video memory.
-     The attributes are 4 bytes for y, x, name, flags+colour.  We may later use
-     a second sprite for a drop-shadow - same as main sprite except a darker
-     colour and slightly offset, can simulate height above the ground by
-     changing the offset. */
+  /* Location of this player's sprite attribute data in NABU video memory.  We
+     may later use a second sprite for a drop-shadow - same as main sprite
+     except a darker colour and slightly offset, can simulate height above the
+     ground by changing the offset. */
 
-  __uint8_t sprite_vdp_name;
+  /* What value we have stored in the VDP sprite attributes for our player main
+     sprite.  If we compute a different value, we need to write it to the VDP
+     and update these cached values.  Order is the same order as in the
+     hardware, thus Y is before X. */
+  uint8_t main_sprite_vdp_y_position;
+  uint8_t main_sprite_vdp_x_position;
+  uint8_t main_sprite_vdp_name;
   /* The name is the index to a 8 byte pattern element in the sprite generator
      table.  16x16 sprites use 4 of those elements in a AC/BD left to right
-     order.  So to have animations available in both 16x16 and 8x8 modes, we
-     need 5 elements (40 bytes) per frame.  The players can reuse the same
-     animations (one for each power up), so 256/5 = 51 total animation frames
-     are available in VRAM (might be able to dynamically load animations only
-     for currently active power-ups).  For easier addressing (rather than
-     multiplying by 5), have all the 8x8 animations first, then all the 16x16
-     animations. */
-
+     order.  So animations need 4 elements (32 bytes) per frame.  The players
+     can reuse the same animations (one for each power up), so 256/4 = 64 total
+     animation frames are available in VRAM (might be able to dynamically load
+     animations only for currently active power-ups). */
+  uint8_t main_sprite_vdp_flags_colour;
+  /* Current colour, and a 32 pixel shift flag for sprites with -32 < X < 0 */
+  
+  __uint8_t sprite_vdp_name;
+  /* What graphic are we showing for the sprite?  Could be an animation. */
+#endif /* NABU_H */
 } player_record;
 
 /* An array of players.  To avoid using alloc/free with resulting fragmentation
    of the minuscule NABU memory, it is a static array sized in advance to be
    as large as possible. */
 static player_record g_player_array[MAX_PLAYERS];
+
+
+#ifdef NABU_H
+/* Predefined colour choices for the players, used on the NABU. */
+
+typedef struct colour_pair_struct {
+  uint8_t main;
+  uint8_t shadow;
+} colour_pair_record;
+
+static const colour_pair_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
+  {VDP_LIGHT_GREEN, VDP_DARK_GREEN},
+  {VDP_LIGHT_BLUE, VDP_DARK_BLUE},
+  {VDP_LIGHT_RED, VDP_DARK_RED},
+  {VDP_LIGHT_YELLOW, VDP_DARK_YELLOW}
+};
+#endif /* NABU_H */
 
 #endif /* _PLAYERS_H */
 

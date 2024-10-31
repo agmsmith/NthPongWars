@@ -17,23 +17,22 @@
 #pragma printf = "%f %d %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
+/* Various standard libraries included here if we need them. */
 #if 0 /* These includes are included by NABU-LIB anyway. */
   #include <stdbool.h>
   #include <stdlib.h>
   #include <stdio.h> /* For printf and sprintf and stdout file handles. */
 #endif
-#include <math.h> /* For floating point math routines. */
-#include "../common/fixed_point.h" /* Our own fixed point math. */
-#include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
+#include <math.h> /* For 32 bit floating point math routines. */
 
 /* Use DJ Sure's Nabu code library, for VDP video hardware and the Nabu Network
    simulated data network.  Now that it compiles with the latest Z88DK compiler
    (lots of warnings about "function declarator with no prototype"),
    and it has a richer library for our purposes than the Z88DK NABU support.
-   Here are some defines specify options to build the library, see NABU-LIB.h
+   Here are some defines to select options in the library, see NABU-LIB.h
    for docs.  You may need to adjust the paths to fit where you downloaded it
    from https://github.com/DJSures/NABU-LIB.git */
-#define BIN_TYPE BIN_CPM
+#define BIN_TYPE BIN_CPM /* We're compiling for CP/M OS, not stand alone. */
 /* #define DISABLE_KEYBOARD_INT /* Disable it to use only the CP/M keyboard. */
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
@@ -43,6 +42,10 @@
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
 #define FONT_LM80C
 #include "../../../NABU-LIB/NABULIB/patterns.h" /* Font as a global array. */
+
+/* Our own game include files.  Comes after NABU-LIB.h has been included. */
+#include "../common/fixed_point.h" /* Our own fixed point math. */
+#include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 
 static char TempString[81]; /* For sprintfing into.  Avoids using stack. */
 
@@ -65,9 +68,6 @@ int main(void)
   #elif __GNUC__
     printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");
   #endif
-  printf ("Should be a 10 second time delay...\n");
-  z80_delay_ms(10000);
-  printf ("Done.\n");
   z80_delay_ms(1000);
 
   initNABULib();

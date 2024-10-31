@@ -6,6 +6,7 @@
 
 # Ignore various directories, usually 3rd party stuff.
 /Key Software/*
+/3rd Party Materials/*
 /MAME/*
 *.COM
 *.com

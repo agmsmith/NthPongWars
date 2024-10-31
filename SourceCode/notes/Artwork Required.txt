@@ -1,0 +1,17 @@
+Artwork Required  AGMS20241030
+
+Font.  Graphics mode 2.  Triplicated for video mode buffer reasons.  Colourful.
+- Tiles.  Shows tile owned by each player (4 characters needed, mostly colour differences).
+- Burnt tiles.  4 characters in dim colour for the players.
+- Power ups.  Add more characters for animation if we want it.
+- Score.  11 characters "0123456789%" * 4 players = 44, coloured for each player.
+- Borders, line drawing characters for |, _, and 4 corners, in gray.
+
+Sprites 16x16, 4 characters each in max 256 character font, so 64 frames of sprite animation.  Might be able to load power-up animations as needed.
+- Player graphics, just a ball,
+- Power ups, a few frames of animation for each, spinning around ball.
+
+Music for menus.
+
+Sound effects for power-ups, burning tiles for speed, collisions.
+

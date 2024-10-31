@@ -35,8 +35,7 @@ typedef enum tile_owner_enum {
   OWNER_PUP_FAST, /* Power-up that makes you faster. */
   OWNER_PUP_SLOW, /* Power-up that makes you slower. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
-  OWNER_PUP_THROUGH_10, /* Run through 10 squares, rather than bouncing. */
-  OWNER_PUP_COLOUR_CHANGE, /* Changes the player colour to an available one. */
+  OWNER_PUP_THROUGH_4, /* Run through 4 squares, rather than bouncing. */
   OWNER_MAX
 } tile_owner;
 
@@ -44,20 +43,28 @@ typedef enum tile_owner_enum {
    playing area, which can include off-screen tiles.
 */
 typedef struct tile_struct {
-  __uint16_t pixel_center_x;
-  __uint16_t pixel_center_y;
+  int16_t pixel_center_x;
+  int16_t pixel_center_y;
   /* Position of the tile center in the play area, in pixels.  Used during
      collision detection to avoid recalculating it.  Need 16 bits since the
      play area can be larger than the NABU screen, so can go over 256 in pixel
      coordinates.  Top left tile would have top left corner at pixel (0,0) and
-     thus the center at (4,4) when the tiles are 8 pixels wide and tall. */
+     thus the center at (4,4) when the tiles are 8 pixels wide and tall.
+     Signed, because players can go off screen, though tiles can't, but we do
+     math with both. */
 
-  __uint16_t vdp_address;
+  uint16_t vdp_address;
   /* Location of this tile in NABU video memory.  Points to the name table
      entry for the tile, 0 if off screen. Makes it easier to find runs of
      adjacent changed tiles so we don't have to take extra time to change the
      VDP write address (it auto-increments in hardware).  Also avoids having
-     to calculate it (visible window into the virtual play area can move). */
+     to calculate it (visible window into the virtual play area can move).
+     Since there is at most 16KB of video RAM, the number is from 0 to 16383. */
+
+  uint8_t vdp_name;
+  /* Which character in the font are we displaying for this tile?  Cached value
+     of what is in video memory (at vdp_address), so we can tell if it needs
+     updating.  Set to 255 to force an update; we never use that font entry. */
 
   tile_owner owner;
   /* What kind of tile is this?  Empty, player owned, or a power-up. */
@@ -68,29 +75,47 @@ typedef struct tile_struct {
    It has to be at least as large as the play area, which can be bigger than
    the actual screen size, if we're using windowing to show a portion of the
    area on computers with lower resolution screens.  NABU screen is 32x24, so
-   minimum 768 tiles. */
+   minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
+   you still have a limit on the number of rows too. */
 #define TILES_ARRAY_SIZE 2024
+#define TILES_MAX_ROWS 256
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation
    of the minuscule NABU memory, it is a static array sized in advance to be
    as large as possible. */
 static tile_record g_tile_array[TILES_ARRAY_SIZE];
 
+/* We keep an array of pointers to the start of each row of tiles, to save on
+   doing a slow multiplication.  Just index this array with the Y coordinate
+   and you'll get the start of that row. */
+static tile_record *g_tile_array_row_starts[TILES_MAX_ROWS];
+
 /* Size of the current play area, in tiles.  This can be larger or smaller than
    the screen size.  Hopefully width * height <= TILES_ARRAY_SIZE, if not then
    tiles after the end of the array are ignored (bottom of the play area) and
    the game may not work properly. */
-static __uint8_t g_play_area_height_tiles = 24;
-static __uint8_t g_play_area_width_tiles = 32;
+static uint8_t g_play_area_height_tiles = 24;
+static uint8_t g_play_area_width_tiles = 32;
 
 /* Size of the screen area we can draw tiles in, and position of the top left
    corner in the play area (it can move around to follow the balls).  Only the
    active area is considered, score and other stuff around the visible area
    isn't included. */
-static __uint8_t g_screen_height_tiles = 24;
-static __uint8_t g_screen_width_tiles = 32;
-static __uint8_t g_screen_top_X_tiles = 0;
-static __uint8_t g_screen_top_Y_tiles = 0;
+static uint8_t g_screen_height_tiles = 24;
+static uint8_t g_screen_width_tiles = 32;
+static uint8_t g_screen_top_X_tiles = 0;
+static uint8_t g_screen_top_Y_tiles = 0;
+
+extern bool InitTileArray(uint8 width, uint8 height);
+/* Sets the tile array to the given size, returns TRUE if successful.  FALSE if
+   the size is too big to handle.  This involves setting up the row indices,
+   then clearing each tile to be empty, and activates the screen window
+   (calculates VDP addresses for each tile). */
+
+extern void ActivateTileArrayWindow();
+/* Recalculates VDP addresses for the tiles which are on screen, and sets them
+   to NULL if off screen.  Uses the values in the g_screen_*_tiles globals.
+   Call this after you change those globals to move the window around. */
 
 #endif /* _TILES_H */
 

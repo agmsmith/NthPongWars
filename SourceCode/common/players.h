@@ -91,6 +91,11 @@ typedef struct player_struct {
      which have a darker version of the same colour, so that can be a
      drop-shadow.  Caches the values from k_PLAYER_COLOURS[player#]. */
 
+  __uint8_t sparkle_colour;
+  /* Predefined colour for this player's sparkle sprite.  It's usually used for
+     power-up animations and other such things around the ball.  Caches the
+     values from k_PLAYER_COLOURS[player#]. */
+
   __uint16_t sprite_vdp_address;
   /* Location of this player's sprite attribute data in NABU video memory.  We
      may later use a second sprite for a drop-shadow - same as main sprite
@@ -125,18 +130,20 @@ static player_record g_player_array[MAX_PLAYERS];
 
 
 #ifdef NABU_H
-/* Predefined colour choices for the players, used on the NABU. */
+/* Predefined colour choices for the players, used on the NABU.  The palette is
+   so limited that it's not worthwhile letting the player choose. */
 
-typedef struct colour_pair_struct {
+typedef struct colour_triplet_struct {
   uint8_t main;
   uint8_t shadow;
-} colour_pair_record;
+  uint8_t sparkle;
+} colour_triplet_record;
 
-static const colour_pair_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
-  {VDP_LIGHT_GREEN, VDP_DARK_GREEN},
-  {VDP_LIGHT_BLUE, VDP_DARK_BLUE},
-  {VDP_LIGHT_RED, VDP_DARK_RED},
-  {VDP_LIGHT_YELLOW, VDP_DARK_YELLOW}
+static const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
+  { VDP_MED_GREEN, VDP_DARK_GREEN, VDP_LIGHT_GREEN },
+  { VDP_LIGHT_BLUE, VDP_DARK_BLUE, VDP_CYAN },
+  {VDP_LIGHT_YELLOW, VDP_DARK_YELLOW, VDP_GRAY},
+  { VDP_MED_RED, VDP_DARK_RED, VDP_LIGHT_RED}
 };
 #endif /* NABU_H */
 

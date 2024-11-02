@@ -746,6 +746,46 @@ in text mode and overwrites some of our data, such as fonts).
 datatype; it's currently raining so cottage window seam sanding and caulking
 have to take a pause.
 
+<H2>2024.11.01</H2>
+
+<P>Cottage season is over, so there's less time taken up by maintenance.
+Headers are coming along, and I need to start coding, with an eye to visual
+feedback.  Thus I need to make some sprites.
+
+<P>I decided on 16x16 pixel mode.  Unfortunately if you set a mode (8x8, 16x16
+or doubled), it applies to all sprites, so you can't have a mixture of ones
+that are smaller and larger.  Instead, I'll use the highest resolution mode for
+better detail and make a smaller ball inside it.  Though 16x16 limits it to a
+total of 64 frames of animation in video memory.  The space around the ball
+will show power-up animations (such as faster speed, larger ball).  And we may
+have a darker shadow sprite under the ball to show height above ground and a
+sparkle sprite to add extra colour to the power-up animations and ball.
+
+<P>So what tools are there to make sprites?  Looking at the
+<A HREF="https://nabu.ca/downloads-quiver">Quiver</A> I settled on ICVGM, from
+2005, runs on Windows.  It also does font and screen editing, as well as
+sprites.  No docs included, but I found the author and a document with a chapter
+on ICVGM, search for
+<A HREF="https://html.duckduckgo.com/html?q=ICVGM%20Daniel%20Bienvenu">"ICVGM
+Daniel Bienvenu"</A> to find everything related to it.
+
+<P ALIGN=CENTER><IMG SRC="ICVGMFontAndSprite.png"
+ALT="[Screen shot of ICVGM editing font and sprites]" WIDTH="768" HEIGHT="474">
+
+<P>I added colourful font characters to show the score for each player and
+started on some sprites, with a bit of animation, so I'm forced to add
+animation to the game code :-).  As you can tell, I've picked colours for each
+player, ones which are distinctive and also have a couple of shades so we can
+do a shadow and sparkle too.  There weren't too many choices; the palette is so
+limited!
+
+<P>I should add some tiles to the character set, one for each player
+colour.  Maybe an embossed set to show tiles starting to expire or for some
+other special effect?  Or a gradient, since each scan line can have a different
+colour.  Nope, that looks bad (evolves to little squares in a square), try a
+square with a bigger border, which looks more solid than the square with a
+single pixel border.  Yeah, that could work.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

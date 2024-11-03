@@ -24,6 +24,7 @@
   #include <stdio.h> /* For printf and sprintf and stdout file handles. */
 #endif
 #include <math.h> /* For 32 bit floating point math routines. */
+#include <string.h> /* For strlen. */
 
 /* Use DJ Sure's Nabu code library, for VDP video hardware and the Nabu Network
    simulated data network.  Now that it compiles with the latest Z88DK compiler
@@ -43,11 +44,17 @@
 #define FONT_LM80C
 #include "../../../NABU-LIB/NABULIB/patterns.h" /* Font as a global array. */
 
-/* Our own game include files.  Comes after NABU-LIB.h has been included. */
-#include "../common/fixed_point.h" /* Our own fixed point math. */
-#include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
+/* Temporary buffer used for sprinting into and for intermediate storage during
+   screen loading, etc.  Avoids using stack space. */
+#define TEMPBUFFER_LEN 512
+static char TempBuffer[TEMPBUFFER_LEN];
 
-static char TempString[81]; /* For sprintfing into.  Avoids using stack. */
+/* Our own game include files.  Comes after NABU-LIB.h has been included and
+   TempBuffer defined. */
+
+#include "../common/fixed_point.h" /* Our own fixed point math. */
+#include "LoadScreen.c"
+#include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 
 int main(void)
 {
@@ -83,6 +90,9 @@ int main(void)
     _vdpColorTableAddr = 0x2000; 6K or 0x1800 long, ends 0x3800.
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
+
+  LoadScreenRaw("NTHPONG\\COTTAGE.BIN");
+  z80_delay_ms(10000);
 
   vdp_clearVRAM();
 
@@ -128,15 +138,15 @@ int main(void)
   /* Solid blue block at pattern #1, used for border around the screen. */
   vdp_loadPatternToId(1 /* ID */, ASCII);
   for (uint8_t i = 0; i < 8; i++)
-    TempString[i] = (char) (VDP_WHITE << 4 | VDP_DARK_BLUE);
-  vdp_loadColorToId(1, TempString);
+    TempBuffer[i] = (char) (VDP_WHITE << 4 | VDP_DARK_BLUE);
+  vdp_loadColorToId(1, TempBuffer);
 
   /* Try printing some text.  Don't go off screen, else it will write past the
      end of memory.  Test going off one line, autoscroll working?  Yup. */
   vdp_setCursor2(0, 0);
   for (uint8_t i = 0; i < _vdpCursorMaxYFull; i++) {
-    sprintf(TempString, "Hello, world #%d!\n", (int) i);
-    vdp_print(TempString);
+    sprintf(TempBuffer, "Hello, world #%d!\n", (int) i);
+    vdp_print(TempBuffer);
     vdp_newLine();
     z80_delay_ms(100);
   }
@@ -149,48 +159,48 @@ int main(void)
 
   vdp_setCursor2(0, 0);
   FLOAT_TO_FX(123.456, fx_test);
-  sprintf (TempString, "123.456 is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "123.456 is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
     GET_FX_FRACTION(fx_test),
     GET_FX_FRACTION(fx_test) / 65536.0);
-    vdp_print(TempString); vdp_newLine(); vdp_newLine();
+    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
   z80_delay_ms(1000);
 
   INT_TO_FX(-41, fx_test);
-  sprintf (TempString, "-41 is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "-41 is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
     GET_FX_FRACTION(fx_test),
     GET_FX_FRACTION(fx_test) / 65536.0);
-    vdp_print(TempString); vdp_newLine(); vdp_newLine();
+    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
   z80_delay_ms(1000);
 
   DIV4_FX(fx_test, fx_quarter);
-  sprintf (TempString, "-41/4 is %ld or %lX.\n", fx_quarter.as_int, fx_quarter.as_int);
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Int part is %d.\n", GET_FX_INTEGER(fx_quarter));
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "-41/4 is %ld or %lX.\n", fx_quarter.as_int, fx_quarter.as_int);
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_quarter));
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
     GET_FX_FRACTION(fx_quarter),
     GET_FX_FRACTION(fx_quarter) / 65536.0);
-    vdp_print(TempString); vdp_newLine(); vdp_newLine();
+    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
   z80_delay_ms(1000);
 
   INT_TO_FX(0, fx_test);
   SUBTRACT_FX(fx_test, fx_quarter, fx_test);
-  sprintf (TempString, "-(-41/4) is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
-    vdp_print(TempString); vdp_newLine();
-  sprintf (TempString, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "-(-41/4) is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
+    vdp_print(TempBuffer); vdp_newLine();
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
     GET_FX_FRACTION(fx_test),
     GET_FX_FRACTION(fx_test) / 65536.0);
-    vdp_print(TempString); vdp_newLine(); vdp_newLine();
+    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
   z80_delay_ms(1000);
 
   vdp_print("Hit any key to continue."); getChar();

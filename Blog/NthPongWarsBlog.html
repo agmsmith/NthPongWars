@@ -769,7 +769,7 @@ on ICVGM, search for
 <A HREF="https://html.duckduckgo.com/html?q=ICVGM%20Daniel%20Bienvenu">"ICVGM
 Daniel Bienvenu"</A> to find everything related to it.
 
-<P ALIGN=CENTER><IMG SRC="ICVGMFontAndSprite.png"
+<P ALIGN=CENTER><IMG SRC="ICVGMFontAndSprite20241101.png"
 ALT="[Screen shot of ICVGM editing font and sprites]" WIDTH="768" HEIGHT="474">
 
 <P>I added colourful font characters to show the score for each player and
@@ -785,6 +785,38 @@ other special effect?  Or a gradient, since each scan line can have a different
 colour.  Nope, that looks bad (evolves to little squares in a square), try a
 square with a bigger border, which looks more solid than the square with a
 single pixel border.  Yeah, that could work.
+
+<H2>2024.11.02</H2>
+
+<P>I side tracked today to look at doing full screen bitmap pictures.  There's
+a .SC2 file format which is basically a dump of the 7 VDP registers followed
+by a dump of all of video memory, so it can set up fonts, screen contents and
+sprites.  But how to make that, and how to load it?
+
+<P>So how do you make a picture, with dithering and colour choices to
+approximate a higher quality image on the NABU TMS9918A video processor?
+The Convert9918 project in the Quiver looked good (several different colour
+matching choices and dithering algorithm choices), but it needs a recent Windows
+to run, and I don't want to reboot my workstation just to use it.  The Quiver
+also mentioned 8BitWorkshop's
+<A HREF="https://8bitworkshop.com/dithertron/#sys=msx">Dithertron</A> which is
+a web browser tool that similarly dithers and tweaks to get a photo looking
+good.  Let's try that.
+
+<P>Dithertron outputs a binary file with just the pattern and colour data.  I
+adapted DJ Sures' Brick Battle LoadImage() function to work with that format
+(and added error checking).  It uses RetroNET-FileStore.h and files in a
+directory of the server computer, which should be faster to download rather
+than going through CP/M, and they don't get mangled by the Z88DK CP/M/stdio
+glue code that tries to interpret binary as text.  After a few syntax errors,
+and upside down shredded pictures, I got it to work!
+
+<P ALIGN=CENTER><A HREF="20241102PictureOriginal.png"><IMG
+SRC="20241102PictureOriginal.png"
+ALT="[Original test picture for converting to NABU]" WIDTH="256"
+HEIGHT="192"></A>
+<A HREF="20241102PictureNABU.png"><IMG SRC="20241102PictureNABU.png"
+ALT="[Converted picture on the NABU in MAME]" WIDTH="272" HEIGHT="214"></A>
 
 <P>- Alex
 

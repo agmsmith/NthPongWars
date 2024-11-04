@@ -16,6 +16,7 @@
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
 #pragma printf = "%f %d %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
+#pragma define CRT_STACK_SIZE=1024 /* Extra memory gets put into the heap. */
 
 /* Various standard libraries included here if we need them. */
 #if 0 /* These includes are included by NABU-LIB anyway. */
@@ -25,6 +26,7 @@
 #endif
 #include <math.h> /* For 32 bit floating point math routines. */
 #include <string.h> /* For strlen. */
+#include <malloc.h> /* For malloc and free, and initialising a heap. */
 
 /* Use DJ Sure's Nabu code library, for VDP video hardware and the Nabu Network
    simulated data network.  Now that it compiles with the latest Z88DK compiler
@@ -53,7 +55,8 @@ static char TempBuffer[TEMPBUFFER_LEN];
    TempBuffer defined. */
 
 #include "../common/fixed_point.h" /* Our own fixed point math. */
-#include "LoadScreen.c"
+#include "LoadScreenICVGM.c"
+#include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 
 int main(void)
@@ -91,8 +94,19 @@ int main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
-  LoadScreenRaw("NTHPONG\\COTTAGE.BIN");
-  z80_delay_ms(10000);
+  if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
+  {
+    printf("Failed to load cottage.\n");
+    return 10;
+  }
+  z80_delay_ms(2000);
+
+  if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
+  {
+    printf("Failed to load NthPong1.\n");
+    return 10;
+  }
+  z80_delay_ms(5000);
 
   vdp_clearVRAM();
 

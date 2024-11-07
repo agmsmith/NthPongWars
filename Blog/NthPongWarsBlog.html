@@ -627,6 +627,8 @@ quickly to see it).  Also, can do colour, which will be good for the game!
 
 <H2>2024.05.01</H2>
 
+<H3>Bouncing Ball using Fixed Point Math</H3>
+
 <P>Code just a ball bouncing off the walls, to get started.  Uses ncurses for
 output, keyboard for input, should compile in Linux and then BeOS.
 
@@ -666,6 +668,8 @@ functionality, and they now compile with the latest Z88DK compiler (though with
 lots of "function declarator with no prototype" warnings).
 
 <H2>2024.07.25</H2>
+
+<H3>Initialising Graphics Mode and Fast Loops</H3>
 
 <P>Got some test code working with NABU-LIB for the first time.  It initialises
 things in graphics mode 2, including loading the font in 3 parts (video memory
@@ -748,6 +752,8 @@ have to take a pause.
 
 <H2>2024.11.01</H2>
 
+<H3>Editing Graphics</H3>
+
 <P>Cottage season is over, so there's less time taken up by maintenance.
 Headers are coming along, and I need to start coding, with an eye to visual
 feedback.  Thus I need to make some sprites.
@@ -788,6 +794,8 @@ single pixel border.  Yeah, that could work.
 
 <H2>2024.11.02</H2>
 
+<H3>Full Screen Pictures</H3>
+
 <P>I side tracked today to look at doing full screen bitmap pictures.  There's
 a .SC2 file format which is basically a dump of the 7 VDP registers followed
 by a dump of all of video memory, so it can set up fonts, screen contents and
@@ -817,6 +825,30 @@ ALT="[Original test picture for converting to NABU]" WIDTH="256"
 HEIGHT="192"></A>
 <A HREF="PictureNABU20241102.png"><IMG SRC="PictureNABU20241102.png"
 ALT="[Converted picture on the NABU in MAME]" WIDTH="256" HEIGHT="192"></A>
+
+<H2>2024.11.03</H2>
+
+<H3>Malloc Memory Allocation - need a Heap!</H3>
+
+<P>I did another image loader for ICVGM's screen dump files.  They're ASCII
+assembler hex data statements, which we just convert to binary on the fly.  One
+complication is that it's for mode 1 graphics, which needs the tile font and
+colours to be triplicated from 2K to 6K for mode 2.  For efficiency, I want to
+read in that 2K of binary data into a buffer then write it to video memory
+three times (rather than rewinding and processing the source file 3 times).
+But I don't want to have a static 2K buffer sitting around unused most of the
+time.
+
+<P>So I'll allocate a 2K buffer from general memory, using malloc() and then
+free() (from malloc.h) it when done.  However, that requires a heap to be
+initialised, specifying all memory between the end of the program and the start
+of the operating system code as usable by the heap.  Turns out you can manually
+do it by setting up a global "_heap" variable, but there are a bunch of Z88DK
+special statements to do it different ways.  I settled on
+<CODE>#pragma define CRT_STACK_SIZE=1024</CODE> which leaves the specified
+amount of memory available to the stack (and thus local variables inside
+function calls), and uses the rest for the heap.   Hmmm, only 21K free, why is
+the program already so big?
 
 <P>- Alex
 

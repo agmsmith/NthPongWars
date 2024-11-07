@@ -14,7 +14,7 @@
 /* #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
-#pragma printf = "%f %d %ld %c %s %X %lX" /* Need these printf formats. */
+#pragma printf = "%f %d %u %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 #pragma define CRT_STACK_SIZE=1024 /* Extra memory gets put into the heap. */
 
@@ -74,7 +74,10 @@ int main(void)
   printf ("by Alexander G. M. Smith, started 2024.\n");
   printf ("Compiled on " __DATE__ " at " __TIME__ ".\n");
   #if __SDCC
-    printf ("Using the SDCC compiler.\n");
+    unsigned int totalMem, largestMem;
+    mallinfo(&totalMem, &largestMem);
+    printf ("Using the SDCC compiler\n");
+    printf ("Heap has %u bytes free.\n", totalMem);
   #elif __GNUC__
     printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");
   #endif

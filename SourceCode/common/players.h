@@ -48,7 +48,7 @@ typedef enum brain_enum {
   /* This one doesn't accelerate, just drifts around, for 30 seconds, then it
      randomly picks another brain type.  It's used for disconnected players, so
      they can reconnect within the time delay without much happening.  But if
-     they take too long, they get replaced by an AI. */
+     they take too long, they get replaced by an AI or become inactive. */
   BRAIN_CONSTANT_SPEED,
   /* Tries to speed up to move at a constant speed in whatever direction it is
      already going in. */

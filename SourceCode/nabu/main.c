@@ -58,6 +58,7 @@ static char TempBuffer[TEMPBUFFER_LEN];
 #include "LoadScreenICVGM.c"
 #include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
+#include "Art/NthPong1.h"
 
 int main(void)
 {

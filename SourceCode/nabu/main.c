@@ -7,16 +7,26 @@
  * with --math32 for 32 bit floating point.  Use the command line:
  *
  * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm -o "NTHPONG.COM"
+ *
+ * To prepare to run, create the data files in the server store directory,
+ * usually somewhere like Documents/NABU Internet Adapter/Store/NTHPONG/
+ * The Art/*.PC2 files are copied as is, the *.DAT text files edited by ICVGM
+ * are copied and renamed *.ICV.
 */
 
 /* Various options to tell the Z88DK compiler system what to include. */
+
 #pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
 /* #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
 #pragma printf = "%f %d %u %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
-#pragma define CRT_STACK_SIZE=1024 /* Extra memory gets put into the heap. */
+
+#pragma define CRT_STACK_SIZE=1024
+/* Reserve space for local variables on the stack, the remainder goes in the
+   heap for malloc()/free() to distribute.  The Z88DK C runtime uses a default
+   of 512 bytes of stack. */
 
 /* Various standard libraries included here if we need them. */
 #if 0 /* These includes are included by NABU-LIB anyway. */
@@ -49,7 +59,7 @@
 /* Temporary buffer used for sprinting into and for intermediate storage during
    screen loading, etc.  Avoids using stack space. */
 #define TEMPBUFFER_LEN 512
-static char TempBuffer[TEMPBUFFER_LEN];
+char TempBuffer[TEMPBUFFER_LEN];
 
 /* Our own game include files.  Comes after NABU-LIB.h has been included and
    TempBuffer defined. */

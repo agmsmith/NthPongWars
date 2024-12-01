@@ -55,10 +55,9 @@ bool LoadScreenPC2(const char *FileName)
   if (fileId == 0xff)
     return false; /* Not found? Wants uppercase, backslashes for directories! */
 
-  playNoteDelay(0, 0, 100);
-
   /* Reset the name table to the identity function. */
   { /* Put in a block so i and j are temporary variables. */
+    playNoteDelay(0, 0, 400);
     vdp_setWriteAddress(_vdpPatternNameTableAddr);
     uint8_t i = 3;
     do {
@@ -71,12 +70,14 @@ bool LoadScreenPC2(const char *FileName)
 
   /* Load tile patterns. */
 
+  playNoteDelay(1, 10, 400);
   vdp_setWriteAddress(_vdpPatternGeneratorTableAddr);
   if (!CopyFileToVRAM(fileId, 0x1800))
     goto ErrorExit;
 
   /* Load tile colours. */
 
+  playNoteDelay(2, 20, 400);
   vdp_setWriteAddress(_vdpColorTableAddr);
   if (!CopyFileToVRAM(fileId, 0x1800))
     goto ErrorExit;

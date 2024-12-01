@@ -23,7 +23,7 @@ typedef struct AnimStruct {
 
 enum AnimationsEnum {
   ANIM_BALL_ROLLING = 0,
-  ANIM_BALL_EFFECT_FAST
+  ANIM_BALL_EFFECT_FAST,
   ANIM_MAX
 };
 

@@ -103,7 +103,7 @@ static void CopyVRAMToRAM(uint16_t AmountToCopy, uint8_t *RAMBuffer)
  * the font, the sprite pattern table, and a sprite colour table (not quite
  * sprite attributes, we ignore it).
  *
- * Uses TempBuffer[TEMPBUFFER_LEN] defined by the main program.
+ * Uses char TempBuffer[TEMPBUFFER_LEN] defined by the main program.
  * Returns true if successful, false if it couldn't open the file or there
  * isn't enough data in the file or it doesn't have keywords.
  */
@@ -126,14 +126,13 @@ bool LoadScreenICVGM(const char *FileName)
   /* Need to load a font or colours for a font into RAM, then triplicate them
      into video memory.  Sprite patterns too, though not triplicated. */
 
-  decodedDataBuffer = malloc(0x800);
+  decodedDataBuffer = malloc(0x800); /* Largest data block is 2K. */
   if (decodedDataBuffer == NULL)
     goto ErrorExit;
 
-  playNoteDelay(1, 35, 100);
-
   /* Load name table. */
 
+  playNoteDelay(0, 35, 400);
   if (!CopyICVGMToRAM(fileId, "NAME", 768, decodedDataBuffer))
     goto ErrorExit;
   vdp_setWriteAddress(_vdpPatternNameTableAddr);
@@ -141,6 +140,7 @@ bool LoadScreenICVGM(const char *FileName)
 
   /* Load tile patterns. */
 
+  playNoteDelay(1, 45, 400);
   if (!CopyICVGMToRAM(fileId, "PATTERN", 0x800, decodedDataBuffer))
     goto ErrorExit;
   vdp_setWriteAddress(_vdpPatternGeneratorTableAddr);
@@ -150,6 +150,7 @@ bool LoadScreenICVGM(const char *FileName)
 
   /* Load tile colours. */
 
+  playNoteDelay(2, 57, 400);
   if (!CopyICVGMToRAM(fileId, "MCOLOR", 0x800, decodedDataBuffer))
     goto ErrorExit;
   vdp_setWriteAddress(_vdpColorTableAddr);
@@ -159,6 +160,7 @@ bool LoadScreenICVGM(const char *FileName)
 
   /* Load sprite patterns. */
 
+  playNoteDelay(0, 69, 400);
   if (!CopyICVGMToRAM(fileId, "SPATT", 0x800, decodedDataBuffer))
     goto ErrorExit;
   vdp_setWriteAddress(_vdpSpriteGeneratorTableAddr);

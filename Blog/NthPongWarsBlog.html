@@ -258,15 +258,19 @@ boost-devel boost-graph perl-Modern-Perl perl-YAML-LibYAML perl-local-lib
 perl-Capture-Tiny perl-Path-Tiny perl-Text-Table perl-Data-HexDump
 perl-Regexp-Common perl-Clone perl-File-Slurp pkg-config gmp-devel</CODE>
 
-<P>Then continue on with the rest of the instructions, installing Perl modules,
-running the build, and adding environment variables (ZCCCFG) to your .bashrc so ZCC is
-runnable.  Finally do their test compile and try a NABU CP/M Hello World.
+<P>Then continue on with the rest of the instructions, installing Perl modules
+(as root do <CODE>cpan App::Prove CPU::Z80::Assembler Data::Dump Data::HexDump
+File::Path List::Uniq Modern::Perl Object::Tiny::RW Regexp::Common Test::Harness
+Text::Diff Text::Table YAML::Tiny</CODE>), running the z88dk compiler build,
+and then adding environment variables (ZCCCFG) to your .bashrc so ZCC is
+runnable.  Finally try compiling a NABU CP/M Hello World from NABU-LIB.
 
 <P>The tools to make a hard drive disk image for remote access are Windows
 versions, so instead copy the .COM file to <I>NABU Internet
 Adapter/Store/D/0</I> and see if it shows up in Cloud CP/M on drive D user 0.
 Need to use the "CPMDRIVE B" command within the NABU emulation, then it
-appears.
+appears (there's an option in later NABU Network Adapters to automatically do
+this).
 
 <P>Yay!  After 4 hours, got my Hello world test working.  Whew.  That's enough
 for today.  Next, try compiling NABU hardware library stuff and see if the
@@ -848,7 +852,8 @@ special statements to do it different ways.  I settled on
 <CODE>#pragma define CRT_STACK_SIZE=1024</CODE> which leaves the specified
 amount of memory available to the stack (and thus local variables inside
 function calls), and uses the rest for the heap.   Hmmm, only 21K free, why is
-the program already so big?
+the program already so big?  Oh, right, I already have static arrays for tile
+data.
 
 <P>- Alex
 

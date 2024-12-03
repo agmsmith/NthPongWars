@@ -6,8 +6,9 @@
 
 /* Tile patterns and colours for the tiles that vary by owner, showing the
    ones the player has taken control of.  TN is Tile Name.  Empty is [0],
-   player 1 to 4 are [1] to [4].  There are sets for 3 levels of staleness,
-   which essentially have larger borders when fresher.
+   player 1 to 4 are [1] to [4], thus TN_OWNER_SET_SIZE is 5.  There are sets
+   for 3 levels of staleness, which essentially have larger borders when
+   fresher.
 */
 #define TN_OWNER_SET_SIZE 5
 #define TN_OWNER_STALE_SET 0
@@ -28,7 +29,7 @@ enum AnimationsEnum {
 };
 
 static AnimRecord g_AnimData[ANIM_MAX] = {
-  {0, 3},
-  {3, 6}
+  {0, 3}, /* ANIM_BALL_ROLLING - a ball rolling, 8 pixel diameter, centered. */
+  {3, 6}, /* ANIM_BALL_EFFECT_FAST - halo circling around ball. */
 };
 

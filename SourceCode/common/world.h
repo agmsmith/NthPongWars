@@ -27,7 +27,7 @@ void LoadWorld(world_preset WhichWorld)
 {
   switch (WhichWorld)
   {
-    WORLD_PLAIN_NABU_SCREEN
+    WORLD_PLAIN_NABU_SCREEN:
     default:
     {
       g_play_area_height_tiles = 23;

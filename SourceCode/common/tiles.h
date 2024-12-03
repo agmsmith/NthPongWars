@@ -35,7 +35,7 @@ typedef enum tile_owner_enum {
   OWNER_PUP_FAST, /* Power-up that makes you faster. */
   OWNER_PUP_SLOW, /* Power-up that makes you slower. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
-  OWNER_PUP_THROUGH_4, /* Run through 4 squares, rather than bouncing. */
+  OWNER_PUP_THROUGH_4, /* Run through next 4 squares, rather than bouncing. */
   OWNER_MAX
 } tile_owner;
 
@@ -53,21 +53,25 @@ typedef struct tile_struct {
      Signed, because players can go off screen, though tiles can't, but we do
      math with both. */
 
+  tile_owner owner;
+  /* What kind of tile is this?  Empty, player owned, or a power-up. */
+
+#ifdef NABU_H
   uint16_t vdp_address;
   /* Location of this tile in NABU video memory.  Points to the name table
      entry for the tile, 0 if off screen. Makes it easier to find runs of
      adjacent changed tiles so we don't have to take extra time to change the
      VDP write address (it auto-increments in hardware).  Also avoids having
      to calculate it (visible window into the virtual play area can move).
-     Since there is at most 16KB of video RAM, the number is from 0 to 16383. */
+     Since there is at most 16KB of video RAM, the number is from 0 to 16383,
+     and zero means off screen (points to font data by the way, not to
+     character data, so zero will never be used for on-screen tiles). */
 
   uint8_t vdp_name;
   /* Which character in the font are we displaying for this tile?  Cached value
      of what is in video memory (at vdp_address), so we can tell if it needs
      updating.  Set to 255 to force an update; we never use that font entry. */
-
-  tile_owner owner;
-  /* What kind of tile is this?  Empty, player owned, or a power-up. */
+#endif /* NABU_H */
 
 } tile_record;
 

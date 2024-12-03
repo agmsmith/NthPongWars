@@ -82,8 +82,9 @@ typedef struct player_struct {
 
   __uint8_t main_colour;
   /* Predefined colour for this player's main graphic.  On the NABU this is a
-     number from 1 to 15 in the standard TMS9918A palette.  In Unix, using
-     ncurses, this is a number from 1 to 4. */
+     number from 1 to 15 in the standard TMS9918A palette, see the
+     k_PLAYER_COLOURS[iPlayer].main value.  In Unix, using ncurses, this is a
+     number from 1 to 4, which we'll calculate from the player index. */
 
 #ifdef NABU_H
   __uint8_t shadow_colour;
@@ -131,7 +132,9 @@ static player_record g_player_array[MAX_PLAYERS];
 
 #ifdef NABU_H
 /* Predefined colour choices for the players, used on the NABU.  The palette is
-   so limited that it's not worthwhile letting the player choose. */
+   so limited that it's not worthwhile letting the player choose.  The first
+   three are fairly distinct, though the fourth redish one is easily confused
+   with others, which is why it's fourth. */
 
 typedef struct colour_triplet_struct {
   uint8_t main;
@@ -142,9 +145,20 @@ typedef struct colour_triplet_struct {
 static const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
   { VDP_MED_GREEN, VDP_DARK_GREEN, VDP_LIGHT_GREEN },
   { VDP_LIGHT_BLUE, VDP_DARK_BLUE, VDP_CYAN },
-  {VDP_LIGHT_YELLOW, VDP_DARK_YELLOW, VDP_GRAY},
+  { VDP_LIGHT_YELLOW, VDP_DARK_YELLOW, VDP_GRAY },
   { VDP_MED_RED, VDP_DARK_RED, VDP_LIGHT_RED}
 };
+
+/* Assignments of sprites.  There are 32, and they are displayed in priority
+   from #0 to #31, with #0 on top.  If more than 4 overlap on a scan line,
+   the top 4 are displayed and the rest disappear.  So put the balls first!
+*/
+typedef enum sprite_assignment_enum {
+  SPRITE_NUM_BALLS = 0, /* First 4 sprites are the balls for 4 players. */
+  SPRITE_NUM_EFFECTS = 4, /* Four sprites for the special effects around balls. */
+  SPRITE_NUM_SHADOWS = 8, /* Four sprites for the drop shadows under balls. */
+} sprite_numbers;
+
 #endif /* NABU_H */
 
 #endif /* _PLAYERS_H */

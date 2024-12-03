@@ -70,7 +70,7 @@ typedef struct tile_struct {
   uint8_t vdp_name;
   /* Which character in the font are we displaying for this tile?  Cached value
      of what is in video memory (at vdp_address), so we can tell if it needs
-     updating.  Set to 255 to force an update; we never use that font entry. */
+     updating.  Set to 0 to force an update; we never use that font entry. */
 #endif /* NABU_H */
 
 } tile_record;

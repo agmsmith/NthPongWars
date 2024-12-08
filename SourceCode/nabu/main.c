@@ -26,7 +26,8 @@
 #pragma define CRT_STACK_SIZE=1024
 /* Reserve space for local variables on the stack, the remainder goes in the
    heap for malloc()/free() to distribute.  The Z88DK C runtime uses a default
-   of 512 bytes of stack. */
+   of 512 bytes of stack.  NABU Cloud CP/M has 200 bytes at the very end of
+   memory for its stack (just after the interrupt table). */
 
 /* Various standard libraries included here if we need them. */
 #if 0 /* These includes are included by NABU-LIB anyway. */
@@ -53,8 +54,11 @@
 /* #define DISABLE_CURSOR /* Don't flash during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
+
+#if 0 /* We have our own VDP font now, don't need ASCII array in memory. */
 #define FONT_LM80C
 #include "../../../NABU-LIB/NABULIB/patterns.h" /* Font as a global array. */
+#endif
 
 /* Temporary buffer used for sprinting into and for intermediate storage during
    screen loading, etc.  Avoids using stack space. */
@@ -68,7 +72,17 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "LoadScreenICVGM.c"
 #include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
-#include "Art/NthPong1.h"
+#include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
+
+/* The usual press any key to continue prompt, in VDP graphics mode.  NULL for
+   a default message string. */
+static char HitAnyKey(const char *MessageText)
+{
+  vdp_newLine();
+  vdp_print((char *) (MessageText ? MessageText : "Press any key to continue."));
+  return getChar();
+}
+
 
 int main(void)
 {
@@ -81,8 +95,11 @@ int main(void)
      the NABU CP/M has a screen text buffer and that will be restored to the
      screen when the program exits, so you can see printf output after exit. */
 
-  printf ("Starting the Nth Pong Wars experiment,\n");
-  printf ("by Alexander G. M. Smith, started 2024.\n");
+  printf ("Welcome to the Nth Pong Wars NABU game.\n");
+  printf ("By Alexander G. M. Smith, contact me at\n");
+  printf ("agmsmith@ncf.ca.  Project started\n");
+  printf ("February 2024, see the blog at\n");
+  printf ("https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n");
   printf ("Compiled on " __DATE__ " at " __TIME__ ".\n");
   #if __SDCC
     unsigned int totalMem, largestMem;
@@ -92,7 +109,8 @@ int main(void)
   #elif __GNUC__
     printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");
   #endif
-  z80_delay_ms(1000);
+  printf ("Hit any key... ");
+  printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
 
   initNABULib();
 
@@ -110,75 +128,30 @@ int main(void)
 
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
-    printf("Failed to load cottage.\n");
+    printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
     return 10;
   }
-  z80_delay_ms(2000);
+  z80_delay_ms(1000); /* No font loaded, just graphics, so no hit any key. */
+
+  /* Load our game screen, with a font and sprites defined. */
 
   if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
   {
-    printf("Failed to load NthPong1.\n");
+    printf("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
     return 10;
   }
-  z80_delay_ms(5000);
-
-  vdp_clearVRAM();
-
-  /* Write a test pattern to the name table, so you can see the font loading.
-     Use of Do-While generates better assembler code (half the size), combines
-     a test if zero with a decrement instruction, so fewer instructions.
-     Comparing against zero is also faster.  The resulting assembler code:
-        ld	c,0x03
-      l_main_00118:
-        xor	a, a
-      l_main_00101:
-        out	(_IO_VDPDATA), a
-        dec	a
-        jr	NZ,l_main_00101
-        dec	c
-        jr	NZ,l_main_00118
-     */
-  { /* Put in a block so i and j are temporary variables. */
-    vdp_setWriteAddress(_vdpPatternNameTableAddr);
-    uint8_t i = 3;
-    do {
-      uint8_t j = 0;
-      do {
-        IO_VDPDATA = j;
-      } while (--j != 0);
-    } while (--i != 0);
-  }
-
-  /* Set colours to white and black for every tile / letter. */
-
-  vdp_setWriteAddress(_vdpColorTableAddr);
-  for (uint16_t i = 0x1800; i != 0; i--) {
-    IO_VDPDATA = (uint8_t) ((VDP_WHITE << 4) | VDP_BLACK);
-  }
-
-  /* Note that font doesn't have first 32 control characters, so load them with
-     whatever garbage is in memory.  Also this call triplicates it into each of
-     the 3 split screen slices of graphics mode 2 pattern table.  Plain
-     vdp_loadASCIIFont() doesn't do the triplication, and skips first 32. */
-  vdp_loadPatternTable(ASCII - 256, 1024);
-  vdp_loadPatternToId(0, ASCII); /* Blank at name #0, for screen clear. */
-
-  /* Solid blue block at pattern #1, used for border around the screen. */
-  vdp_loadPatternToId(1 /* ID */, ASCII);
-  for (uint8_t i = 0; i < 8; i++)
-    TempBuffer[i] = (char) (VDP_WHITE << 4 | VDP_DARK_BLUE);
-  vdp_loadColorToId(1, TempBuffer);
+  HitAnyKey(NULL);
 
   /* Try printing some text.  Don't go off screen, else it will write past the
      end of memory.  Test going off one line, autoscroll working?  Yup. */
   vdp_setCursor2(0, 0);
   for (uint8_t i = 0; i < _vdpCursorMaxYFull; i++) {
-    sprintf(TempBuffer, "Hello, world #%d!\n", (int) i);
+    sprintf(TempBuffer, "Hello, world #%d!", (int) i);
     vdp_print(TempBuffer);
     vdp_newLine();
     z80_delay_ms(100);
   }
-  vdp_clearScreen(); /* Just clears the text area = name table to zero. */
+  vdp_fillScreen(' '); /* Just clears the text area = name table to this. */
 
   /* Rather than having to compute it each time it is used, save a constant. */
   FLOAT_TO_FX(0.5, FX_ONE_HALF);
@@ -187,33 +160,33 @@ int main(void)
 
   vdp_setCursor2(0, 0);
   FLOAT_TO_FX(123.456, fx_test);
-  sprintf (TempBuffer, "123.456 is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
+  sprintf (TempBuffer, "123.456 is %ld or %lX.", fx_test.as_int, fx_test.as_int);
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
+  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_test));
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
     GET_FX_FRACTION(fx_test),
     GET_FX_FRACTION(fx_test) / 65536.0);
     vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
   z80_delay_ms(1000);
 
   INT_TO_FX(-41, fx_test);
-  sprintf (TempBuffer, "-41 is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
+  sprintf (TempBuffer, "-41 is %ld or %lX.", fx_test.as_int, fx_test.as_int);
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
+  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_test));
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
     GET_FX_FRACTION(fx_test),
     GET_FX_FRACTION(fx_test) / 65536.0);
     vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
   z80_delay_ms(1000);
 
   DIV4_FX(fx_test, fx_quarter);
-  sprintf (TempBuffer, "-41/4 is %ld or %lX.\n", fx_quarter.as_int, fx_quarter.as_int);
+  sprintf (TempBuffer, "-41/4 is %ld or %lX.", fx_quarter.as_int, fx_quarter.as_int);
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_quarter));
+  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_quarter));
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
     GET_FX_FRACTION(fx_quarter),
     GET_FX_FRACTION(fx_quarter) / 65536.0);
     vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
@@ -221,17 +194,17 @@ int main(void)
 
   INT_TO_FX(0, fx_test);
   SUBTRACT_FX(fx_test, fx_quarter, fx_test);
-  sprintf (TempBuffer, "-(-41/4) is %ld or %lX.\n", fx_test.as_int, fx_test.as_int);
+  sprintf (TempBuffer, "-(-41/4) is %ld or %lX.", fx_test.as_int, fx_test.as_int);
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.\n", GET_FX_INTEGER(fx_test));
+  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_test));
     vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.\n",
+  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
     GET_FX_FRACTION(fx_test),
     GET_FX_FRACTION(fx_test) / 65536.0);
     vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
   z80_delay_ms(1000);
 
-  vdp_print("Hit any key to continue."); getChar();
+  HitAnyKey("Hit any key for frame test.");
 
   /* Set up a simple bouncing ball, using character graphics. */
 
@@ -250,6 +223,12 @@ int main(void)
   INT_FRACTION_TO_FX(_vdpCursorMaxYFull - 2, MAX_FX_FRACTION, wall_bottom_y);
 
   /* Draw the walls around the screen.  Blue solid block #1 for frame. */
+
+  /* Solid blue block at pattern #1, used for border around the screen. */
+  memset(TempBuffer, 0, 8);
+  vdp_loadPatternToId(1 /* ID */, TempBuffer);
+  memset(TempBuffer, (char) (VDP_WHITE << 4 | VDP_DARK_BLUE), 8);
+  vdp_loadColorToId(1, TempBuffer);
 
   for (uint8_t row = 0; row < _vdpCursorMaxYFull; row++)
   {
@@ -351,8 +330,6 @@ int main(void)
   }
 #endif
 
-  vdp_newLine();
-  vdp_print("Hit any key to end.");
-  printf ("You ended with %c.\n", getChar());
+  printf ("You ended with %c.\n", HitAnyKey("Hit any key to end."));
   return 0;
 }

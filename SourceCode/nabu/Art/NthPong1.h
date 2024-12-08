@@ -11,9 +11,9 @@
    fresher.
 */
 #define TN_OWNER_SET_SIZE 5
-#define TN_OWNER_STALE_SET 0
-#define TN_OWNER_MIDDLING_SET 5
-#define TN_OWNER_FRESH_SET 10
+#define TN_OWNER_STALE_SET 2
+#define TN_OWNER_MIDDLING_SET 7
+#define TN_OWNER_FRESH_SET 12
 
 /* Sprites for the ball animation and special effects surrounding it. */
 

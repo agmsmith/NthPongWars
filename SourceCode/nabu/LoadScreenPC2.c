@@ -37,7 +37,7 @@ static bool CopyFileToVRAM(uint8_t fileId, uint16_t amountToRead)
  * be set to the identity function (position X maps to name X for each of 3
  * bands of 256 tiles) and no sprites are used.
  *
- * Uses TempBuffer[TEMPBUFFER_LEN] defined by the main program.
+ * Uses char TempBuffer[TEMPBUFFER_LEN] defined by the main program.
  * Returns true if successful, false if it couldn't open the file or there
  * isn't enough data in the file.
  */
@@ -57,9 +57,9 @@ bool LoadScreenPC2(const char *FileName)
 
   /* Reset the name table to the identity function. */
   { /* Put in a block so i and j are temporary variables. */
+    uint8_t i = 3;
     playNoteDelay(0, 0, 400);
     vdp_setWriteAddress(_vdpPatternNameTableAddr);
-    uint8_t i = 3;
     do {
       uint8_t j = 0;
       do {

@@ -15,8 +15,6 @@
 #ifndef _TILES_H
 #define _TILES_H 1
 
-#include "fixed_point.h"
-
 /* Size of the tiles in pixels.  On the NABU, character cells are 8 pixels.
    Might have to make these defines platform dependent. */
 #define TILE_PIXEL_HEIGHT 8
@@ -51,10 +49,19 @@ typedef struct tile_struct {
      coordinates.  Top left tile would have top left corner at pixel (0,0) and
      thus the center at (4,4) when the tiles are 8 pixels wide and tall.
      Signed, because players can go off screen, though tiles can't, but we do
-     math with both. */
+     math with both.  Not using a fixed point number here to save space. */
 
   tile_owner owner;
   /* What kind of tile is this?  Empty, player owned, or a power-up. */
+
+  unsigned int dirty_screen : 1;
+  /* Set to TRUE if this tile needs to be redrawn on the next screen update.
+     Only relevant for tiles that are on screen, ignored elsewhere. */
+
+  unsigned int dirty_remote : 1;
+  /* Set to TRUE if this tile needs to be sent to remote players on the next
+     network update.  Relevant for all tiles in the play area, which can be
+     bigger than the screen. */
 
 #ifdef NABU_H
   uint16_t vdp_address;
@@ -73,7 +80,7 @@ typedef struct tile_struct {
      updating.  Set to 0 to force an update; we never use that font entry. */
 #endif /* NABU_H */
 
-} tile_record;
+} tile_record, *tile_pointer;
 
 /* We keep a global array of tiles, rather than dynamically allocating them.
    It has to be at least as large as the play area, which can be bigger than
@@ -82,44 +89,52 @@ typedef struct tile_struct {
    minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
    you still have a limit on the number of rows too. */
 #define TILES_ARRAY_SIZE 2024
-#define TILES_MAX_ROWS 256
+#define TILES_MAX_ROWS 255
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation
    of the minuscule NABU memory, it is a static array sized in advance to be
    as large as possible. */
-static tile_record g_tile_array[TILES_ARRAY_SIZE];
+extern tile_record g_tile_array[TILES_ARRAY_SIZE];
 
 /* We keep an array of pointers to the start of each row of tiles, to save on
    doing a slow multiplication.  Just index this array with the Y coordinate
    and you'll get the start of that row. */
-static tile_record *g_tile_array_row_starts[TILES_MAX_ROWS];
+extern tile_pointer g_tile_array_row_starts[TILES_MAX_ROWS];
 
 /* Size of the current play area, in tiles.  This can be larger or smaller than
    the screen size.  Hopefully width * height <= TILES_ARRAY_SIZE, if not then
    tiles after the end of the array are ignored (bottom of the play area) and
    the game may not work properly. */
-static uint8_t g_play_area_height_tiles = 24;
-static uint8_t g_play_area_width_tiles = 32;
+extern uint8_t g_play_area_height_tiles;
+extern uint8_t g_play_area_width_tiles;
+
+/* These are calculated from the play area size, when you call InitTileArray(),
+   so you don't need to recalculate it all the time when doing tile loops. */
+extern uint16_t g_play_area_num_tiles; /* Number of tiles in the play area. */
+extern tile_pointer g_play_area_end_tile; /* Just past the last tile. */
 
 /* Size of the screen area we can draw tiles in, and position of the top left
    corner in the play area (it can move around to follow the balls).  Only the
    active area is considered, score and other stuff around the visible area
    isn't included. */
-static uint8_t g_screen_height_tiles = 24;
-static uint8_t g_screen_width_tiles = 32;
-static uint8_t g_screen_top_X_tiles = 0;
-static uint8_t g_screen_top_Y_tiles = 0;
+extern uint8_t g_screen_height_tiles;
+extern uint8_t g_screen_width_tiles;
+extern uint8_t g_screen_top_X_tiles;
+extern uint8_t g_screen_top_Y_tiles;
+bleeble - need offset between screen and play area, int16_t.
 
-extern bool InitTileArray(uint8 width, uint8 height);
-/* Sets the tile array to the given size, returns TRUE if successful.  FALSE if
-   the size is too big to handle.  This involves setting up the row indices,
-   then clearing each tile to be empty, and activates the screen window
-   (calculates VDP addresses for each tile). */
+extern bool InitTileArray(void);
+/* Sets the tile array to the given size (g_screen_width_tiles by
+   g_play_area_height_tiles), returns TRUE if successful.  FALSE if the size is
+   too big to handle.  This involves setting up the row indices, then clearing
+   each tile to be empty, and then activating the current screen window
+   (see ActivateTileArrayWindow). */
 
-extern void ActivateTileArrayWindow();
+extern void ActivateTileArrayWindow(void);
 /* Recalculates VDP addresses for the tiles which are on screen, and sets them
    to NULL if off screen.  Uses the values in the g_screen_*_tiles globals.
-   Call this after you change those globals to move the window around. */
+   Call this after you change those globals to move the window around.  Will
+   clip the globals so that they fit on the real screen. */
 
 #endif /* _TILES_H */
 

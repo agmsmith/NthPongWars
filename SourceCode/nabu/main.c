@@ -50,7 +50,7 @@
 /* #define DISABLE_KEYBOARD_INT /* Disable it to use only the CP/M keyboard. */
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
-/* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
+#define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
 /* #define DISABLE_CURSOR /* Don't flash during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
@@ -73,6 +73,7 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
+#include "../common/tiles.c"
 
 /* The usual press any key to continue prompt, in VDP graphics mode.  NULL for
    a default message string. */
@@ -104,7 +105,7 @@ int main(void)
   #if __SDCC
     unsigned int totalMem, largestMem;
     mallinfo(&totalMem, &largestMem);
-    printf ("Using the SDCC compiler\n");
+    printf ("Using the SDCC compiler %s.\n", __SDCC);
     printf ("Heap has %u bytes free.\n", totalMem);
   #elif __GNUC__
     printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");

@@ -87,10 +87,6 @@ static char HitAnyKey(const char *MessageText)
 
 int main(void)
 {
-  fx FX_ONE_HALF;
-  fx fx_test;
-  fx fx_quarter;
-
   /* Note that printf goes through CP/M and scrambles the video memory (it's
      arranged differently), so don't use printf during graphics mode.  However
      the NABU CP/M has a screen text buffer and that will be restored to the
@@ -105,7 +101,7 @@ int main(void)
   #if __SDCC
     unsigned int totalMem, largestMem;
     mallinfo(&totalMem, &largestMem);
-    printf ("Using the SDCC compiler %s.\n", __SDCC);
+    printf ("Using the SDCC compiler, unknown version.\n");
     printf ("Heap has %u bytes free.\n", totalMem);
   #elif __GNUC__
     printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");
@@ -113,7 +109,7 @@ int main(void)
   printf ("Hit any key... ");
   printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
 
-  initNABULib();
+  initNABULib(); /* No longer can use CP/M text input or output. */
 
   vdp_init(VDP_MODE_G2, VDP_WHITE /* fgColor not applicable */,
     VDP_BLACK /* bgColor */, true /* bigSprites 16x16 pixels but fewer names */,
@@ -143,194 +139,38 @@ int main(void)
   }
   HitAnyKey(NULL);
 
-  /* Try printing some text.  Don't go off screen, else it will write past the
-     end of memory.  Test going off one line, autoscroll working?  Yup. */
-  vdp_setCursor2(0, 0);
-  for (uint8_t i = 0; i < _vdpCursorMaxYFull; i++) {
-    sprintf(TempBuffer, "Hello, world #%d!", (int) i);
-    vdp_print(TempBuffer);
-    vdp_newLine();
-    z80_delay_ms(100);
-  }
-  vdp_fillScreen(' '); /* Just clears the text area = name table to this. */
+  /* Set up the tiles.  Directly map play area to screen for now. */
 
-  /* Rather than having to compute it each time it is used, save a constant. */
-  FLOAT_TO_FX(0.5, FX_ONE_HALF);
+  g_play_area_height_tiles = 8;
+  g_play_area_width_tiles = 8;
 
-  /* Do some sanity tests. */
+  g_screen_height_tiles = 22;
+  g_screen_width_tiles = 30;
+  g_screen_top_X_tiles = 1;
+  g_screen_top_Y_tiles = 1;
 
-  vdp_setCursor2(0, 0);
-  FLOAT_TO_FX(123.456, fx_test);
-  sprintf (TempBuffer, "123.456 is %ld or %lX.", fx_test.as_int, fx_test.as_int);
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_test));
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
-    GET_FX_FRACTION(fx_test),
-    GET_FX_FRACTION(fx_test) / 65536.0);
-    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
-  z80_delay_ms(1000);
+  g_play_area_col_for_screen = 0;
+  g_play_area_row_for_screen = 0;
 
-  INT_TO_FX(-41, fx_test);
-  sprintf (TempBuffer, "-41 is %ld or %lX.", fx_test.as_int, fx_test.as_int);
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_test));
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
-    GET_FX_FRACTION(fx_test),
-    GET_FX_FRACTION(fx_test) / 65536.0);
-    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
-  z80_delay_ms(1000);
-
-  DIV4_FX(fx_test, fx_quarter);
-  sprintf (TempBuffer, "-41/4 is %ld or %lX.", fx_quarter.as_int, fx_quarter.as_int);
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_quarter));
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
-    GET_FX_FRACTION(fx_quarter),
-    GET_FX_FRACTION(fx_quarter) / 65536.0);
-    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
-  z80_delay_ms(1000);
-
-  INT_TO_FX(0, fx_test);
-  SUBTRACT_FX(fx_test, fx_quarter, fx_test);
-  sprintf (TempBuffer, "-(-41/4) is %ld or %lX.", fx_test.as_int, fx_test.as_int);
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Int part is %d.", GET_FX_INTEGER(fx_test));
-    vdp_print(TempBuffer); vdp_newLine();
-  sprintf (TempBuffer, "Fract part is %d / 65536 or %f.",
-    GET_FX_FRACTION(fx_test),
-    GET_FX_FRACTION(fx_test) / 65536.0);
-    vdp_print(TempBuffer); vdp_newLine(); vdp_newLine();
-  z80_delay_ms(1000);
-
-  HitAnyKey("Hit any key for frame test.");
-
-  /* Set up a simple bouncing ball, using character graphics. */
-
-  fx ball_velocity_x; INT_TO_FX(0, ball_velocity_x);
-  fx ball_velocity_y; INT_TO_FX(0, ball_velocity_y);
-  fx ball_position_x; INT_TO_FX(1, ball_position_x);
-  fx ball_position_y; INT_TO_FX(1, ball_position_y);
-  fx wall_left_x, wall_right_x, wall_top_y, wall_bottom_y;
-
-  /* Ball position X can be from 1.0 to almost width-1, for an 80 column screen
-     that would be 1.0 to 78.99.  It's drawn at the integer portion character
-     cell, so 1 to 78.  Wall is cells at X = 0 and 79.  Y is similar. */
-  INT_TO_FX(1, wall_left_x);
-  INT_FRACTION_TO_FX(_vdpCursorMaxXFull - 2, MAX_FX_FRACTION, wall_right_x);
-  INT_TO_FX(1, wall_top_y);
-  INT_FRACTION_TO_FX(_vdpCursorMaxYFull - 2, MAX_FX_FRACTION, wall_bottom_y);
-
-  /* Draw the walls around the screen.  Blue solid block #1 for frame. */
-
-  /* Solid blue block at pattern #1, used for border around the screen. */
-  memset(TempBuffer, 0, 8);
-  vdp_loadPatternToId(1 /* ID */, TempBuffer);
-  memset(TempBuffer, (char) (VDP_WHITE << 4 | VDP_DARK_BLUE), 8);
-  vdp_loadColorToId(1, TempBuffer);
-
-  for (uint8_t row = 0; row < _vdpCursorMaxYFull; row++)
+  if (!InitTileArray())
   {
-    vdp_writeCharAtLocation(0, row, 1);
-    vdp_writeCharAtLocation(_vdpCursorMaxXFull - 1, row, 1);
+    printf("Failed to set up play area tiles.\n");
+    return 10;
   }
+  for (uint8_t i = 0; i < OWNER_MAX; i++)
+    g_tile_array[i].owner = i;
 
-  for (uint8_t col = 0; col < _vdpCursorMaxXFull; col++)
+  playNoteDelay(0, 0, 400);
+  vdp_enableVDPReadyInt();
+  while (!isKeyPressed())
   {
-    vdp_writeCharAtLocation(col, 0, 1);
-    vdp_writeCharAtLocation(col, _vdpCursorMaxYFull - 1, 1);
+    UpdateTileAnimations();
+    vdp_waitVDPReadyInt();
+    CopyTilesToScreen();
   }
-
-  vdp_setCursor2(1, 0);
-  vdp_print("Frame:");
-
-#if 0
-  while (!g_stop_running)
-  {
-    int letter;
-
-    letter = getch(); /* Read a character and do a time delay if none. */
-    if (letter != ERR) /* Returns ERR if no character ready. */
-    {
-      /* Decode user input.  Q to quit, WASD or cursor keys to move,
-         space to fire. */
-      char letter_upcase = toupper(letter);
-
-      if (letter_upcase == 'Q')
-        g_stop_running = true;
-      else if (letter == KEY_DOWN || letter_upcase == 'S')
-        ADD_FX(ball_velocity_y, FX_ONE_HALF, ball_velocity_y);
-      else if (letter == KEY_UP || letter_upcase == 'W')
-        SUBTRACT_FX(ball_velocity_y, FX_ONE_HALF, ball_velocity_y);
-      else if (letter == KEY_LEFT || letter_upcase == 'A')
-        SUBTRACT_FX(ball_velocity_x, FX_ONE_HALF, ball_velocity_x);
-      else if (letter == KEY_RIGHT || letter_upcase == 'D')
-        ADD_FX(ball_velocity_x, FX_ONE_HALF, ball_velocity_x);
-    }
-
-    /* Erase old ball position with a space character. */
-
-    attr_set(A_NORMAL, 0 /* colour pair # */, NULL /* options */);
-    col = GET_FX_INTEGER(ball_position_x);
-    row = GET_FX_INTEGER(ball_position_y);
-    mvaddch(row, col, ' ');
-
-    /* Update ball position and velocities - bounce off walls. */
-
-    ADD_FX(ball_position_x, ball_velocity_x, ball_position_x);
-    if (COMPARE_FX(ball_position_x, wall_left_x) < 0)
-    {
-      ball_position_x = wall_left_x; /* Don't go through wall. */
-      /* velocity = -(vel - vel/4), reverse direction and reduce speed. */
-      DIV4_FX(ball_velocity_x, fx_quarter);
-      SUBTRACT_FX(fx_quarter, ball_velocity_x, ball_velocity_x);
-    }
-    else if (COMPARE_FX(ball_position_x, wall_right_x) > 0)
-    {
-      ball_position_x = wall_right_x;
-      DIV4_FX(ball_velocity_x, fx_quarter);
-      SUBTRACT_FX(fx_quarter, ball_velocity_x, ball_velocity_x);
-    }
-
-    ADD_FX(ball_position_y, ball_velocity_y, ball_position_y);
-    if (COMPARE_FX(ball_position_y, wall_top_y) < 0)
-    {
-      ball_position_y = wall_top_y;
-      DIV4_FX(ball_velocity_y, fx_quarter);
-      SUBTRACT_FX(fx_quarter, ball_velocity_y, ball_velocity_y);
-    }
-    else if (COMPARE_FX(ball_position_y, wall_bottom_y) > 0)
-    {
-      ball_position_y = wall_bottom_y;
-      DIV4_FX(ball_velocity_y, fx_quarter);
-      SUBTRACT_FX(fx_quarter, ball_velocity_y, ball_velocity_y);
-    }
-
-    /* Draw the ball. */
-
-    attr_set(A_NORMAL, 1 /* colour pair # */, NULL /* options */);
-    col = GET_FX_INTEGER(ball_position_x);
-    row = GET_FX_INTEGER(ball_position_y);
-    mvaddch(row, col, 'O');
-
-    /* Print the score. */
-
-    snprintf(score_string, sizeof(score_string) - 1,
-      "%d, (%9.5f,%9.5f), (%9.5f,%9.5f)", frame_count,
-      GET_FX_FLOAT(ball_position_x),
-      GET_FX_FLOAT(ball_position_y),
-      GET_FX_FLOAT(ball_velocity_x),
-      GET_FX_FLOAT(ball_velocity_y));
-    attr_set(A_REVERSE, 0 /* colour pair # */, NULL /* options */);
-    mvaddstr(0 /* row */, 10 /* col */, score_string);
-
-    refresh;
-    frame_count++;
-  }
-#endif
-
+  vdp_disableVDPReadyInt();
   printf ("You ended with %c.\n", HitAnyKey("Hit any key to end."));
+  UpdateTileAnimations(); /* So we can see some dirty flags. */
+  DumpTilesToTerminal();
   return 0;
 }

@@ -29,13 +29,18 @@ typedef enum tile_owner_enum {
   OWNER_PLAYER_2,
   OWNER_PLAYER_3,
   OWNER_PLAYER_4,
-  OWNER_PUP_NORMAL = 16, /* Power-up that makes you normal; resets other pups. */
+  OWNER_PUP_NORMAL, /* Power-up that makes you normal. */
   OWNER_PUP_FAST, /* Power-up that makes you faster. */
   OWNER_PUP_SLOW, /* Power-up that makes you slower. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
-  OWNER_PUP_THROUGH_4, /* Run through next 4 squares, rather than bouncing. */
+  OWNER_PUP_RUN_THROUGH, /* Run through squares, rather than bouncing. */
   OWNER_MAX
 } tile_owner;
+
+/* Animations are done by changing the character displayed for a particular tile
+   type.  A NUL terminated string lists the characters to be used in sequence,
+   once per frame.  For slower animations, repeat the character. */
+extern const char *g_TileAnimData[OWNER_MAX];
 
 /* This is the main tile status record.  There is one for each tile in the
    playing area, which can include off-screen tiles.
@@ -54,11 +59,23 @@ typedef struct tile_struct {
   tile_owner owner;
   /* What kind of tile is this?  Empty, player owned, or a power-up. */
 
-  unsigned int dirty_screen : 1;
+  uint8_t animationIndex;
+  /* Which frame of animation to display.  If the "owner" has a related
+     animation (an array of characters to be cycled through), this keeps track
+     of them, counting up from zero to the number of frames-1, and repeating.
+     The corresponding character from the owner animation gets drawn. */
+
+  uint8_t displayedChar;
+  /* Which character in the font are we displaying for this tile?  Cached value
+     of what is in video memory (at vdp_address) on the NABU, or character in
+     the Curses display, so we can tell if it needs updating.  Set to 0 to force
+     an update; we never use that font entry. */
+
+  uint8_t dirty_screen : 1;
   /* Set to TRUE if this tile needs to be redrawn on the next screen update.
      Only relevant for tiles that are on screen, ignored elsewhere. */
 
-  unsigned int dirty_remote : 1;
+  uint8_t dirty_remote : 1;
   /* Set to TRUE if this tile needs to be sent to remote players on the next
      network update.  Relevant for all tiles in the play area, which can be
      bigger than the screen. */
@@ -73,11 +90,6 @@ typedef struct tile_struct {
      Since there is at most 16KB of video RAM, the number is from 0 to 16383,
      and zero means off screen (points to font data by the way, not to
      character data, so zero will never be used for on-screen tiles). */
-
-  uint8_t vdp_name;
-  /* Which character in the font are we displaying for this tile?  Cached value
-     of what is in video memory (at vdp_address), so we can tell if it needs
-     updating.  Set to 0 to force an update; we never use that font entry. */
 #endif /* NABU_H */
 
 } tile_record, *tile_pointer;
@@ -88,7 +100,7 @@ typedef struct tile_struct {
    area on computers with lower resolution screens.  NABU screen is 32x24, so
    minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
    you still have a limit on the number of rows too. */
-#define TILES_ARRAY_SIZE 2024
+#define TILES_ARRAY_SIZE 1024
 #define TILES_MAX_ROWS 255
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation
@@ -113,15 +125,21 @@ extern uint8_t g_play_area_width_tiles;
 extern uint16_t g_play_area_num_tiles; /* Number of tiles in the play area. */
 extern tile_pointer g_play_area_end_tile; /* Just past the last tile. */
 
-/* Size of the screen area we can draw tiles in, and position of the top left
-   corner in the play area (it can move around to follow the balls).  Only the
+/* Size of the screen area we can draw tiles in, Only the
    active area is considered, score and other stuff around the visible area
    isn't included. */
 extern uint8_t g_screen_height_tiles;
 extern uint8_t g_screen_width_tiles;
 extern uint8_t g_screen_top_X_tiles;
 extern uint8_t g_screen_top_Y_tiles;
-bleeble - need offset between screen and play area, int16_t.
+
+/* Where the visible screen is in the play area.  It can move around to follow
+   the balls if the play area is larger than the screen.  This top left corner
+   in play area tiles corresponds to the top left corner of the g_screen_*
+   rectangle. */
+extern uint8_t g_play_area_col_for_screen;
+extern uint8_t g_play_area_row_for_screen;
+
 
 extern bool InitTileArray(void);
 /* Sets the tile array to the given size (g_screen_width_tiles by
@@ -134,7 +152,21 @@ extern void ActivateTileArrayWindow(void);
 /* Recalculates VDP addresses for the tiles which are on screen, and sets them
    to NULL if off screen.  Uses the values in the g_screen_*_tiles globals.
    Call this after you change those globals to move the window around.  Will
-   clip the globals so that they fit on the real screen. */
+   clip the globals so that they fit on the real screen.  Tries to be fast, so
+   you can move the window often. */
+
+extern void UpdateTileAnimations(void);
+/* Go through all the tiles and update displayedChar for the current frame,
+   using the animation data for each type of tile.  If the character changes,
+   mark the tile as dirty. */
+
+extern void CopyTilesToScreen(void);
+/* Go through all the tiles that are on-screen and update the screen as needed.
+  Clear the dirty_screen flags of the ones updated.  Works for NABU and Curses
+  screens. */
+
+extern void DumpTilesToTerminal(void);
+/* For debugging, print all the tiles on the terminal. */
 
 #endif /* _TILES_H */
 

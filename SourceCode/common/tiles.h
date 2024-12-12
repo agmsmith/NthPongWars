@@ -39,11 +39,14 @@ typedef enum tile_owner_enum {
 
 /* Animations are done by changing the character displayed for a particular tile
    type.  A NUL terminated string lists the characters to be used in sequence,
-   once per frame.  For slower animations, repeat the character. */
+   once per frame.  For slower animations, repeat the character.  Animations
+   that are one character long save time - after being displayed, they no longer
+   need updates. */
 extern const char *g_TileAnimData[OWNER_MAX];
 
 /* This is the main tile status record.  There is one for each tile in the
-   playing area, which can include off-screen tiles.
+   playing area, which can include off-screen tiles if the play area is bigger
+   than the screen window.
 */
 typedef struct tile_struct {
   int16_t pixel_center_x;
@@ -63,7 +66,7 @@ typedef struct tile_struct {
   /* Which frame of animation to display.  If the "owner" has a related
      animation (an array of characters to be cycled through), this keeps track
      of them, counting up from zero to the number of frames-1, and repeating.
-     The corresponding character from the owner animation gets drawn. */
+     The corresponding character from g_TileAnimData[owner] gets drawn. */
 
   uint8_t displayedChar;
   /* Which character in the font are we displaying for this tile?  Cached value
@@ -71,14 +74,20 @@ typedef struct tile_struct {
      the Curses display, so we can tell if it needs updating.  Set to 0 to force
      an update; we never use that font entry. */
 
-  uint8_t dirty_screen : 1;
+  unsigned int dirty_screen : 1;
   /* Set to TRUE if this tile needs to be redrawn on the next screen update.
      Only relevant for tiles that are on screen, ignored elsewhere. */
 
-  uint8_t dirty_remote : 1;
+  unsigned int dirty_remote : 1;
   /* Set to TRUE if this tile needs to be sent to remote players on the next
      network update.  Relevant for all tiles in the play area, which can be
      bigger than the screen. */
+
+  unsigned int animated : 1;
+  /* Set to TRUE if this tile has an animation and needs to be updated every
+     frame.  The animation is related to the tile's owner, so if the owner
+     changes, this needs updating.  Tiles with a one frame animation get this
+     set to FALSE after the first update. */
 
 #ifdef NABU_H
   uint16_t vdp_address;
@@ -140,6 +149,26 @@ extern uint8_t g_screen_top_Y_tiles;
 extern uint8_t g_play_area_col_for_screen;
 extern uint8_t g_play_area_row_for_screen;
 
+/* A cache to keep track of which tiles are animated.  If more than the cache
+  maximum are animated, the cache isn't used and we revert to scanning all tiles
+  for animated ones, slowly.  These are the tiles with the animated flag set,
+  meaning their animations are more than one frame long so they need updating
+  always.  If you set the cache index to 0xFF, it will force a full iteration
+  over all tiles and recompute which tiles should be in the cache.
+*/
+#define MAX_ANIMATED_CACHE 10
+extern tile_pointer g_cache_animated_tiles[MAX_ANIMATED_CACHE];
+extern uint8_t g_cache_animated_tiles_index; /* Next free cache entry. */
+
+/* A cache to keep track of which tiles are dirty on screen (have the
+   dirty_screen flag set).  If more than the cache maximum are dirty, the cache
+   isn't used and we revert to scanning the array of all tiles, slowly, for
+   dirty flags.  No particular order of tiles, though it would be nice to have
+   them in increasing VDP address order.
+*/
+#define MAX_DIRTY_SCREEN_CACHE 20
+extern tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];
+extern uint8_t g_cache_dirty_screen_tiles_index; /* Next free cache entry. */
 
 extern bool InitTileArray(void);
 /* Sets the tile array to the given size (g_screen_width_tiles by
@@ -166,7 +195,9 @@ extern void CopyTilesToScreen(void);
   screens. */
 
 extern void DumpTilesToTerminal(void);
-/* For debugging, print all the tiles on the terminal. */
+/* For debugging, print all the tiles on the terminal.  For the NABU, this works
+   best if you redirect input and output to be over the network (rather than on
+   screen) so that it doesn't interfere with the VDP graphics mode. */
 
 #endif /* _TILES_H */
 

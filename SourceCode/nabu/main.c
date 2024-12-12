@@ -141,16 +141,16 @@ int main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 22;
-  g_play_area_width_tiles = 30;
+  g_play_area_height_tiles = 24;
+  g_play_area_width_tiles = 32;
 
   g_screen_height_tiles = 22;
   g_screen_width_tiles = 30;
   g_screen_top_X_tiles = 1;
   g_screen_top_Y_tiles = 1;
 
-  g_play_area_col_for_screen = 0;
-  g_play_area_row_for_screen = 0;
+  g_play_area_col_for_screen = 1;
+  g_play_area_row_for_screen = 1;
 
   if (!InitTileArray())
   {
@@ -160,6 +160,8 @@ int main(void)
   for (uint8_t i = 0; i < OWNER_MAX; i++)
     g_tile_array[i].owner = i;
 
+  int16_t frameCounter = 0;
+
   playNoteDelay(0, 0, 400);
   vdp_enableVDPReadyInt();
   while (!isKeyPressed())
@@ -167,10 +169,18 @@ int main(void)
     UpdateTileAnimations();
     vdp_waitVDPReadyInt();
     CopyTilesToScreen();
+
+    vdp_setCursor2(27, 0);
+    strcpy(TempBuffer, "000"); /* Leading zeroes. */
+    itoa(frameCounter, TempBuffer + 3, 10 /* base */);
+    vdp_print(TempBuffer + strlen(TempBuffer) - 3 /* Last three chars. */);
+    frameCounter++;
   }
   vdp_disableVDPReadyInt();
-  printf ("You ended with %c.\n", HitAnyKey("Hit any key to end."));
-  UpdateTileAnimations(); /* So we can see some dirty flags. */
+
+/*  UpdateTileAnimations(); /* So we can see some dirty flags. */
   DumpTilesToTerminal();
+  printf ("Frame count: %d\n", (int) frameCounter);
   return 0;
 }
+

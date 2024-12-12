@@ -23,6 +23,12 @@ uint8_t g_screen_top_Y_tiles = 0;
 uint8_t g_play_area_col_for_screen = 0;
 uint8_t g_play_area_row_for_screen = 0;
 
+tile_pointer g_cache_animated_tiles[MAX_ANIMATED_CACHE];
+uint8_t g_cache_animated_tiles_index = 0;
+
+tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];
+uint8_t g_cache_dirty_screen_tiles_index = 0;
+
 const char *g_TileAnimData[OWNER_MAX] =
 {
 #ifdef NABU_H
@@ -112,10 +118,18 @@ bool InitTileArray(void)
       pTile->displayedChar = 0;
       pTile->dirty_screen = true;
       pTile->dirty_remote = true;
+      pTile->animated = true; /* First update will recalculate this. */
     }
   }
 
   ActivateTileArrayWindow();
+  
+  /* Force caches to be recomputed on the next update, and do a full screen
+     update of the tiles. */
+
+  g_cache_animated_tiles_index = 0xFF;
+  g_cache_dirty_screen_tiles_index = 0xFF;
+
   return true;
 }
 
@@ -211,50 +225,103 @@ void ActivateTileArrayWindow(void)
 #endif /* NABU_H */
 }
 
+/* Update the animation state of a tile.  Mark as dirty if it changed and needs
+   redrawing (but not network dirty, only care about tile owner changing for
+   that).  Also if we see it is a one frame animation, flag it as not animated
+   so it doesn't get useless future calls to this function.
+*/
+static void UpdateOneTileAnimation(tile_pointer pTile)
+{
+  uint8_t newChar;
+  const char *pAnimString;
+  uint8_t animIndex;
+
+  pAnimString = g_TileAnimData[pTile->owner];
+  animIndex = pTile->animationIndex;
+  newChar = pAnimString[++animIndex];
+  if (newChar == 0) /* End of animation string, go back to start. */
+  {
+    newChar = pAnimString[0];
+    if (animIndex <= 1) /* Only one frame of animation, not really animated. */
+      pTile->animated = false;
+    animIndex = 0;
+  }
+  pTile->animationIndex = animIndex;
+  if (pTile->displayedChar != newChar)
+  {
+    pTile->displayedChar = newChar;
+#ifdef NABU_H
+    if (pTile->vdp_address != NULL)
+      pTile->dirty_screen = true;
+#endif /* NABU_H */
+  }
+}
+
 
 /* Go through all the tiles and update displayedChar for the current frame,
    using the animation data for each type of tile.  If the character changes,
-   mark the tile as dirty.
+   mark the tile as dirty.  For speed, we just look at cached animated tiles,
+   unless the cache is overflowing, then we do the full iteration over all
+   tiles.
 */
 void UpdateTileAnimations(void)
 {
   uint8_t col, row;
   tile_pointer pTile;
 
-  /* For more efficient Z80 code and fewer memory accesses, these loops run
-     backwards, down to zero. */
+  if (g_cache_animated_tiles_index > MAX_ANIMATED_CACHE)
+  {
+    /* Overflowing cache, do all tiles and reset the cache contents.  For more
+       efficient Z80 code and fewer memory accesses, these loops run backwards,
+       down to zero. */
 
-  row = g_play_area_height_tiles;
-  do {
-    row--;
-    pTile = g_tile_array_row_starts[row];
-    col = g_play_area_width_tiles;
+    g_cache_animated_tiles_index = 0;
+    row = g_play_area_height_tiles;
     do {
-      col--;
-      uint8_t newChar;
-      const char *pAnimString;
-      uint8_t animIndex;
-      pAnimString = g_TileAnimData[pTile->owner];
-      animIndex = pTile->animationIndex;
-      newChar = pAnimString[++animIndex];
-      if (newChar == 0) /* End of animation string, go back to start. */
+      row--;
+      pTile = g_tile_array_row_starts[row];
+      col = g_play_area_width_tiles;
+      do {
+        col--;
+        UpdateOneTileAnimation(pTile);
+
+        /* Add tile to animated tiles cache if it is animated and on screen.
+           If cache is full, keep counting them, up to the maximum count. */
+
+        if (pTile->animated && pTile->vdp_address != NULL)
+        {
+          if (g_cache_animated_tiles_index < MAX_ANIMATED_CACHE)
+          {
+            g_cache_animated_tiles[g_cache_animated_tiles_index++] = pTile;
+          }
+          else if (g_cache_animated_tiles_index != 0xFF)
+            g_cache_animated_tiles_index++;
+        }
+
+        pTile++;
+      } while (col != 0);
+    } while (row != 0);
+  }
+  else /* Cache is not overflowing, just update the cached animated tiles. */
+  {
+    /* Update the animations for all tiles in the cache.  If some stop being
+       animated and on screen, remove them from the cache. */
+
+    uint8_t oldIndex, newIndex;
+    newIndex = 0;
+    for (oldIndex = 0; oldIndex < g_cache_animated_tiles_index; oldIndex++)
+    {
+      pTile = g_cache_animated_tiles[oldIndex];
+      UpdateOneTileAnimation(pTile);
+      if (pTile->animated)
       {
-        newChar = pAnimString[0];
-        animIndex = 0;
+        if (oldIndex != newIndex) /* Not already in that position in cache. */
+          g_cache_animated_tiles[newIndex] = pTile;
+        newIndex++;
       }
-      pTile->animationIndex = animIndex;
-      if (pTile->displayedChar != newChar)
-      {
-        pTile->displayedChar = newChar;
-#ifdef NABU_H
-        if (pTile->vdp_address != NULL)
-          pTile->dirty_screen = true;
-#endif /* NABU_H */
-        pTile->dirty_remote = true;
-      }
-      pTile++;
-    } while (col != 0);
-  } while (row != 0);
+    }
+    g_cache_animated_tiles_index = newIndex;
+  }
 }
 
 
@@ -305,14 +372,34 @@ void CopyTilesToScreen(void)
 #endif /* NABU_H */
 }
 
+static void DumpOneTileToTerminal(tile_pointer pTile)
+{
+  printf("(%d,%d) Owner=%d Anim=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
+    (int) pTile->pixel_center_x,
+    (int) pTile->pixel_center_y,
+    (int) pTile->owner,
+    (int) pTile->animationIndex,
+    (int) pTile->displayedChar,
+    (int) pTile->dirty_screen,
+    (int) pTile->dirty_remote,
+#ifdef NABU_H
+    (int) pTile->vdp_address
+#else
+    0
+#endif /* NABU_H */
+  );
+}
 
+ 
 /* For debugging, print all the tiles on the terminal.
 */
 void DumpTilesToTerminal(void)
 {
+  uint8_t index;
   tile_pointer pTile;
 
   printf("Tile data dump...\n");
+
   printf("Play area %dx%d tiles (%d).\n",
     g_play_area_width_tiles, g_play_area_height_tiles, g_play_area_num_tiles);
   printf("Screen area %dx%d, top at (%d,%d).\n",
@@ -322,21 +409,14 @@ void DumpTilesToTerminal(void)
     g_play_area_col_for_screen, g_play_area_row_for_screen);
 
   for (pTile = g_tile_array; pTile != g_play_area_end_tile; pTile++)
-  {
-    printf("(%d,%d) Owner=%d Anim=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
-      (int) pTile->pixel_center_x,
-      (int) pTile->pixel_center_y,
-      (int) pTile->owner,
-      (int) pTile->animationIndex,
-      (int) pTile->displayedChar,
-      (int) pTile->dirty_screen,
-      (int) pTile->dirty_remote,
-#ifdef NABU_H
-      (int) pTile->vdp_address
-#else
-      0
-#endif /* NABU_H */
-      );
-  }
+    DumpOneTileToTerminal(pTile);
+
+  printf("Cached animated tiles, %d:\n", (int) g_cache_animated_tiles_index);
+  for (index = 0; index < g_cache_animated_tiles_index; index++)
+    DumpOneTileToTerminal(g_cache_animated_tiles[index]);
+
+  printf("Cached dirty tiles, %d:\n", (int) g_cache_dirty_screen_tiles_index);
+  for (index = 0; index < g_cache_dirty_screen_tiles_index; index++)
+    DumpOneTileToTerminal(g_cache_dirty_screen_tiles[index]);
 }
 

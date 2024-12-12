@@ -858,6 +858,35 @@ function calls), and uses the rest for the heap.   Hmmm, only 21K free, why is
 the program already so big?  Oh, right, I already have static arrays for tile
 data.
 
+<H2>2024.12.11</H2>
+
+<P>After a couple of days of coding, I got tiles to display, with animation!
+
+<P>There's an array of tiles, with information about each one - such as what
+kind of tile it is (which player owns it, or is it a power-up tile), animation
+state and some cached data (VDP address it uses, dirty flag, and play-area
+coordinates for physics calculations).  The tile area can be bigger than the
+screen - there's a scrollable window to display a smaller area of tiles.
+
+<P>As part of the update, all tiles have their animation recalculated (currently
+just cycles through a string of letters or special characters in the font),
+which means a pair of loops going through all tiles then finding the character
+to display for each one.  Then for the Video Display Processor update (triggered
+by an interrupt), just the changed tiles are copied to the video memory.  Again
+it's a loop over all tiles to find the ones marked dirty.
+
+<P>I get the idea that we can't loop over all tiles.  So I'll have to mark dirty
+ones by keeping a separate small list of tiles which need updating (and another
+list of ones which have animations), and only update those ones.  The CPU is so
+slow that I suspect I'll have to have at most a dozen in that list!  So, fast
+moving balls changing lots of tiles may be difficult.
+
+<P ALIGN=CENTER><A HREF="NthPongVideoTilesWorkingSlowly20241211.mp4"><IMG
+SRC="NthPongVideoTilesWorkingSlowly20241211.png" WIDTH="280" HEIGHT="224"
+ALT="[Video of Tiles Animating]"></A><BR>
+<A HREF="NthPongVideoTilesWorkingSlowly20241211.mp4">NthPongVideoTilesWorkingSlowly20241211.mp4</A><BR>
+<A HREF="NthPongVideoTilesWorkingSlowly20241211.txt">Script</A>
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

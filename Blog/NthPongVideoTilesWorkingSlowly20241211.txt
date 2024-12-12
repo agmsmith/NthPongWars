@@ -1,0 +1,7 @@
+Script for NthPongVideoTilesWorkingSlowly20241211...
+
+This is an early run of the Nth pong wars game by Alexander G. M. Smith, for the NABU computer.  It's notable in that the tiles that are starting to work.  The first pass of the tile code was finished on December 10th 2024; as we will see, there need to be a few improvements.
+We're using D. J. Sures cloud CP/M, at least initially.  I've skipped over some of the boring bits of the boot up and program load.
+Next up, there's a status message which shows that we're already running out of memory.  Then I'm testing some full screen loads, the first is 12 kilobytes of binary for a picture of a cottage, the second one is 35 kilobytes of ASCII data with the game screen and font.  Which takes a while.
+Then we have almost a full screen of tiles being displayed, with a few of them animated.  The frame rate is very slow.  So I went down from 30 by 22 (total 660 tiles) to 6 by 6 (total 36) tiles, and it's much faster.  So it looks like we have pocket calculator CPU speed and need to rethink how to avoid doing any computation.
+

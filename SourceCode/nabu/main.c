@@ -141,8 +141,8 @@ int main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 8;
-  g_play_area_width_tiles = 8;
+  g_play_area_height_tiles = 22;
+  g_play_area_width_tiles = 30;
 
   g_screen_height_tiles = 22;
   g_screen_width_tiles = 30;

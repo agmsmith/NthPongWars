@@ -72,7 +72,7 @@ bool InitTileArray(void)
   uint8_t col, row;
   int16_t x, y;
 
-  g_play_area_num_tiles = g_play_area_height_tiles * g_screen_width_tiles;
+  g_play_area_num_tiles = g_play_area_height_tiles * g_play_area_width_tiles;
   g_play_area_end_tile = NULL;
   if (g_play_area_height_tiles == 0 || g_play_area_width_tiles == 0)
     return false;
@@ -81,23 +81,22 @@ bool InitTileArray(void)
     return false;
   g_play_area_end_tile = g_tile_array + g_play_area_num_tiles;
 
-  /* Fill in all the row starts, NULL when past the end of actual data for
-     easier debugging. */
+  /* Fill in all the row start pointers, NULL when past the end of actual data
+     for easier past end handling.  Also don't have a partial row at the end. */
 
   pTile = g_tile_array;
   numRemaining = g_play_area_num_tiles;
   for (row = 0; row != TILES_MAX_ROWS; row++)
   {
-    g_tile_array_row_starts[row] = pTile;
     if (numRemaining >= g_play_area_width_tiles)
     {
+      g_tile_array_row_starts[row] = pTile;
       pTile += g_play_area_width_tiles;
       numRemaining -= g_play_area_width_tiles;
     }
-    else
+    else /* No more full rows of tiles. */
     {
-      pTile = NULL;
-      numRemaining = 0;
+      g_tile_array_row_starts[row] = NULL;
     }
   }
 
@@ -107,6 +106,8 @@ bool InitTileArray(void)
   for (row = 0; row != g_play_area_height_tiles; row++, y += TILE_PIXEL_HEIGHT)
   {
     pTile = g_tile_array_row_starts[row];
+    if (pTile == NULL)
+      return false; /* Sanity check, algorithm is wrong, fix code. */
     x = TILE_PIXEL_WIDTH / 2;
     for (col = 0; col != g_play_area_width_tiles;
     col++, pTile++, x += TILE_PIXEL_WIDTH)
@@ -123,12 +124,6 @@ bool InitTileArray(void)
   }
 
   ActivateTileArrayWindow();
-  
-  /* Force caches to be recomputed on the next update, and do a full screen
-     update of the tiles. */
-
-  g_cache_animated_tiles_index = 0xFF;
-  g_cache_dirty_screen_tiles_index = 0xFF;
 
   return true;
 }
@@ -158,7 +153,7 @@ void ActivateTileArrayWindow(void)
 
   const uint8_t SCREEN_WIDTH = 32;
   const uint8_t SCREEN_HEIGHT = 24;
-#else /* Perhaps for Curses, get the real screen size? */
+#else /* TODO: for Curses, get the real screen size? */
   const uint8_t SCREEN_WIDTH = 32;
   const uint8_t SCREEN_HEIGHT = 24;
 #endif /* NABU_H */
@@ -177,7 +172,8 @@ void ActivateTileArrayWindow(void)
 
 #ifdef NABU_H
   /* Define a rectangle in play area space, where the screen is.  Top left
-     included, bottom right is just past the end. */
+     included, bottom right is just past the end.  Can be partially or
+     completely outside the play area, but no need to clip it. */
 
   playScreenLeft = g_play_area_col_for_screen;
   playScreenRight = g_play_area_col_for_screen + g_screen_width_tiles;
@@ -190,10 +186,12 @@ void ActivateTileArrayWindow(void)
   for (row = 0; row != g_play_area_height_tiles; row++)
   {
     pTile = g_tile_array_row_starts[row];
+    if (pTile == NULL)
+      break; /* Less play area tiles than screen area. */
     if (row >= playScreenTop && row < playScreenBottom)
-    { /* Row is partly on screen. */
+    { /* Row is at least partly on screen. */
       vdpAddress = 0;
-      for (col = 0; col != g_play_area_width_tiles; col++, pTile++)
+      for (col = 0; col < g_play_area_width_tiles; col++, pTile++)
       {
         /* Watch out for special case where playScreenLeft == playScreenRight */
         if (col == playScreenRight)
@@ -216,12 +214,19 @@ void ActivateTileArrayWindow(void)
     }
     else /* Whole row is off screen. */
     {
-      for (col = 0; col != g_play_area_width_tiles; col++, pTile++)
+      for (col = 0; col < g_play_area_width_tiles; col++, pTile++)
       {
         pTile->vdp_address = 0;
       }
     }
   }
+    
+  /* Force caches to be recomputed on the next update, and do a full screen
+     update of the tiles. */
+
+  g_cache_animated_tiles_index = 0xFF;
+  g_cache_dirty_screen_tiles_index = 0xFF;
+
 #endif /* NABU_H */
 }
 
@@ -280,6 +285,8 @@ void UpdateTileAnimations(void)
     do {
       row--;
       pTile = g_tile_array_row_starts[row];
+      if (pTile == NULL)
+        break;
       col = g_play_area_width_tiles;
       do {
         col--;
@@ -341,12 +348,23 @@ void CopyTilesToScreen(void)
   uint16_t vdpAddress;
 
   /* Define a rectangle in play area space, where the screen is.  Top left
-     included, bottom right is just past the end. */
+     included, bottom right is just past the end.  Clip to play area if the play
+     area is smaller or the screen is otherwise partly off the play area.
+     TODO: Compute this only when screen size/position changes and save it. */
 
   playScreenLeft = g_play_area_col_for_screen;
+  if (playScreenLeft >= g_play_area_width_tiles)
+    return; /* Screen is past the right side of the play area, nothing to do. */
   playScreenRight = g_play_area_col_for_screen + g_screen_width_tiles;
+  if (playScreenRight > g_play_area_width_tiles)
+    playScreenRight = g_play_area_width_tiles;
+
   playScreenTop = g_play_area_row_for_screen;
+  if (playScreenTop >= g_play_area_height_tiles)
+    return; /* Screen is below the play area, nothing to draw. */
   playScreenBottom = g_play_area_row_for_screen + g_screen_height_tiles;
+  if (playScreenBottom > g_play_area_height_tiles)
+    playScreenBottom = g_play_area_height_tiles;
 
   /* Go through just the visible tiles. */
 
@@ -354,6 +372,9 @@ void CopyTilesToScreen(void)
   {
     vdpAddress = 0;
     pTile = g_tile_array_row_starts[row];
+    if (pTile == NULL)
+      break; /* Something went wrong, shouldn't happen. */
+    pTile += playScreenLeft;
     for (col = playScreenLeft; col != playScreenRight; col++, pTile++)
     {
       if (pTile->dirty_screen)
@@ -400,6 +421,23 @@ void DumpTilesToTerminal(void)
 
   printf("Tile data dump...\n");
 
+  for (pTile = g_tile_array; pTile != g_play_area_end_tile; pTile++)
+    DumpOneTileToTerminal(pTile);
+
+  printf("Cached animated tiles, %d:\n", (int) g_cache_animated_tiles_index);
+  if (g_cache_animated_tiles_index <= MAX_ANIMATED_CACHE)
+  {
+    for (index = 0; index < g_cache_animated_tiles_index; index++)
+      DumpOneTileToTerminal(g_cache_animated_tiles[index]);
+  }
+
+  printf("Cached dirty tiles, %d:\n", (int) g_cache_dirty_screen_tiles_index);
+  if (g_cache_dirty_screen_tiles_index <= MAX_DIRTY_SCREEN_CACHE)
+  {
+    for (index = 0; index < g_cache_dirty_screen_tiles_index; index++)
+      DumpOneTileToTerminal(g_cache_dirty_screen_tiles[index]);
+  }
+
   printf("Play area %dx%d tiles (%d).\n",
     g_play_area_width_tiles, g_play_area_height_tiles, g_play_area_num_tiles);
   printf("Screen area %dx%d, top at (%d,%d).\n",
@@ -407,16 +445,5 @@ void DumpTilesToTerminal(void)
     g_screen_top_X_tiles, g_screen_top_Y_tiles);
   printf("Screen location in play area (%d,%d).\n",
     g_play_area_col_for_screen, g_play_area_row_for_screen);
-
-  for (pTile = g_tile_array; pTile != g_play_area_end_tile; pTile++)
-    DumpOneTileToTerminal(pTile);
-
-  printf("Cached animated tiles, %d:\n", (int) g_cache_animated_tiles_index);
-  for (index = 0; index < g_cache_animated_tiles_index; index++)
-    DumpOneTileToTerminal(g_cache_animated_tiles[index]);
-
-  printf("Cached dirty tiles, %d:\n", (int) g_cache_dirty_screen_tiles_index);
-  for (index = 0; index < g_cache_dirty_screen_tiles_index; index++)
-    DumpOneTileToTerminal(g_cache_dirty_screen_tiles[index]);
 }
 

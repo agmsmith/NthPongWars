@@ -109,7 +109,7 @@ typedef struct tile_struct {
    area on computers with lower resolution screens.  NABU screen is 32x24, so
    minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
    you still have a limit on the number of rows too. */
-#define TILES_ARRAY_SIZE 1024
+#define TILES_ARRAY_SIZE 70
 #define TILES_MAX_ROWS 255
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation

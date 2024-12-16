@@ -23,7 +23,7 @@
 #pragma printf = "%f %d %u %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
-#pragma define CRT_STACK_SIZE=1024
+#pragma define CRT_STACK_SIZE=2048
 /* Reserve space for local variables on the stack, the remainder goes in the
    heap for malloc()/free() to distribute.  The Z88DK C runtime uses a default
    of 512 bytes of stack.  NABU Cloud CP/M has 200 bytes at the very end of
@@ -75,13 +75,17 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
 #include "../common/tiles.c"
 
+static char OriginalLocationZeroMemory[20];
+
 /* The usual press any key to continue prompt, in VDP graphics mode.  NULL for
    a default message string. */
 static char HitAnyKey(const char *MessageText)
 {
+  char keyPressed;
   vdp_newLine();
   vdp_print((char *) (MessageText ? MessageText : "Press any key to continue."));
-  return getChar();
+  keyPressed = getChar();
+  return keyPressed;
 }
 
 
@@ -109,6 +113,9 @@ int main(void)
   printf ("Hit any key... ");
   printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
 
+  /* Detect memory corruption from using a NULL pointer. */
+  memcpy (OriginalLocationZeroMemory, NULL, sizeof(OriginalLocationZeroMemory));
+
   initNABULib(); /* No longer can use CP/M text input or output. */
 
   vdp_init(VDP_MODE_G2, VDP_WHITE /* fgColor not applicable */,
@@ -123,12 +130,14 @@ int main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
+#if 0
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
     return 10;
   }
   z80_delay_ms(1000); /* No font loaded, just graphics, so no hit any key. */
+#endif
 
   /* Load our game screen, with a font and sprites defined. */
 
@@ -141,45 +150,72 @@ int main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 24;
-  g_play_area_width_tiles = 32;
+  g_play_area_height_tiles = 8;
+  g_play_area_width_tiles = 8;
 
-  g_screen_height_tiles = 22;
-  g_screen_width_tiles = 30;
-  g_screen_top_X_tiles = 1;
-  g_screen_top_Y_tiles = 1;
+  g_screen_height_tiles = 20;
+  g_screen_width_tiles = 28;
+  g_screen_top_X_tiles = 2;
+  g_screen_top_Y_tiles = 2;
 
-  g_play_area_col_for_screen = 1;
-  g_play_area_row_for_screen = 1;
+  g_play_area_col_for_screen = 0;
+  g_play_area_row_for_screen = 0;
 
   if (!InitTileArray())
   {
     printf("Failed to set up play area tiles.\n");
     return 10;
   }
-  for (uint8_t i = 0; i < OWNER_MAX; i++)
-    g_tile_array[i].owner = i;
+  for (uint8_t i = 0; i < OWNER_MAX && i < g_play_area_width_tiles; i++)
+  {
+    tile_pointer pTile;
+    pTile = g_tile_array_row_starts[i];
+    if (pTile == NULL)
+      break;
+    pTile->owner = i;
+    pTile += i;
+    pTile->owner = i;
+  }
 
-  int16_t frameCounter = 0;
-
-  playNoteDelay(0, 0, 400);
+  int frameCounter = 0;
   vdp_enableVDPReadyInt();
+  while (isKeyPressed())
+    ; /* Wait for the key to be released. */
   while (!isKeyPressed())
   {
     UpdateTileAnimations();
     vdp_waitVDPReadyInt();
     CopyTilesToScreen();
-
     vdp_setCursor2(27, 0);
     strcpy(TempBuffer, "000"); /* Leading zeroes. */
     itoa(frameCounter, TempBuffer + 3, 10 /* base */);
     vdp_print(TempBuffer + strlen(TempBuffer) - 3 /* Last three chars. */);
     frameCounter++;
+
+    /* Every once in a while move the screen around the play area. */
+
+    if ((frameCounter & 0x3f) == 0)
+    {
+      if (++g_play_area_col_for_screen >= g_play_area_width_tiles)
+      {
+        g_play_area_col_for_screen = 0;
+        if (++g_play_area_row_for_screen >= g_play_area_height_tiles)
+          g_play_area_row_for_screen = 0;
+      }
+      ActivateTileArrayWindow();
+    }
+
+    if (memcmp(OriginalLocationZeroMemory, NULL,
+    sizeof(OriginalLocationZeroMemory)) != 0)
+    {
+      vdp_setCursor2(1, 1);
+      vdp_print("Corrupted NULL");
+    }
   }
   vdp_disableVDPReadyInt();
 
 /*  UpdateTileAnimations(); /* So we can see some dirty flags. */
-  DumpTilesToTerminal();
+/*   DumpTilesToTerminal(); */
   printf ("Frame count: %d\n", (int) frameCounter);
   return 0;
 }

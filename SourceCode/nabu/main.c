@@ -90,13 +90,16 @@ static char HitAnyKey(const char *MessageText)
 static uint16_t sStackFramePointer = 0;
 static uint16_t sStackPointer = 0;
 
-int SubMain(void)
+void main(void)
 {
   /* Save some stack space, variables that persist in main() can be static. */
-  static unsigned int sTotalMem, sLargestMem;
-  static int sFrameCounter;
   static char sOriginalLocationZeroMemory[16];
   static char sOriginalStackMemory[16];
+  static uint16_t sFrameCounter;
+
+  /* A few local variables to force stack frame creation, sets IX register. */
+  uint8_t i;
+  unsigned int sTotalMem, sLargestMem;
 
   /* Note that printf goes through CP/M and scrambles the video memory (it's
      arranged differently), so don't use printf during graphics mode.  However
@@ -110,8 +113,8 @@ int SubMain(void)
   printf ("https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n");
   printf ("Compiled on " __DATE__ " at " __TIME__ ".\n");
   mallinfo(&sTotalMem, &sLargestMem);
-  printf ("Using the SDCC compiler, unknown version.\n");
   printf ("Heap has %u bytes free, largest %u.\n", sTotalMem, sLargestMem);
+  printf ("Using the SDCC compiler, unknown version.\n");
 
   __asm
   push af;
@@ -123,8 +126,12 @@ int SubMain(void)
   pop hl;
   pop af;
   __endasm;
-  printf ("Stack pointer is $%X, frame $%X.\n",
-    (int) sStackPointer, (int) sStackFramePointer);
+  /* If frame pointer is $FF00 or above (the CP/M really small stack), while
+     stack is $Cxxx then things may go badly.  Frame should be inside stack.
+     Also weird bug in Z88DK where printf("$%X $$$$$%X", a, b); loses any
+     number of dollar signs before the second %X. */
+  printf("Stack pointer is $%X, frame %c%X.\n",
+    (int) sStackPointer, '$', (int) sStackFramePointer);
   printf ("Hit any key... ");
   printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
 
@@ -139,11 +146,9 @@ int SubMain(void)
   }
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
-     letter and user may affect this. */
+     letter and user may affect this since they're in the CP/M parameters. */
   memcpy(sOriginalLocationZeroMemory, NULL, sizeof(sOriginalLocationZeroMemory));
 
-
-#if 1
   initNABULib(); /* No longer can use CP/M text input or output. */
 
   vdp_init(VDP_MODE_G2, VDP_WHITE /* fgColor not applicable */,
@@ -161,18 +166,16 @@ int SubMain(void)
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
-    return 10;
+    return;
   }
   z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
-#endif
 
-#if 0
   /* Load our game screen, with a font and sprites defined. */
 
   if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
   {
     printf("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
-    return 10;
+    return;
   }
 
   /* Set up the tiles.  Directly map play area to screen for now. */
@@ -187,16 +190,16 @@ int SubMain(void)
 
   g_play_area_col_for_screen = 0;
   g_play_area_row_for_screen = 0;
-
+#if 1
   if (!InitTileArray())
   {
     printf("Failed to set up play area tiles.\n");
-    return 10;
+    return;
   }
 
   /* Set up a test pattern in the tile array. */
 
-  for (uint8_t i = 0; i < OWNER_MAX && i < g_play_area_width_tiles; i++)
+  for (i = 0; i < OWNER_MAX && i < g_play_area_width_tiles; i++)
   {
     tile_pointer pTile;
     pTile = g_tile_array_row_starts[i];
@@ -206,20 +209,29 @@ int SubMain(void)
     pTile += i;
     pTile->owner = i;
   }
+#endif
+
+#if 1
+  vdp_setCursor2(0, 0);
+  vdp_print("Let go of the keyboard to start.");
+  while (isKeyPressed())
+    ; /* So you get a few frames displayed at least. */
+#endif
+
+  vdp_setCursor2(0, 0);
+  vdp_print("Press a key to stop.");
 
   sFrameCounter = 0;
   vdp_enableVDPReadyInt();
-  while (0 && !isKeyPressed())
+  while (!isKeyPressed())
   {
-    UpdateTileAnimations();
+/*    UpdateTileAnimations(); */
     vdp_waitVDPReadyInt();
-#if 0
-    CopyTilesToScreen();
-#endif
+/*    CopyTilesToScreen(); */
     vdp_setCursor2(27, 0);
     strcpy(TempBuffer, "000"); /* Leading zeroes. */
-    itoa(sFrameCounter, TempBuffer + 3, 10 /* base */);
-    vdp_print(TempBuffer + strlen(TempBuffer) - 3 /* Last three chars. */);
+    utoa(sFrameCounter, TempBuffer + 3, 10 /* base */);
+    vdp_print(TempBuffer + (strlen(TempBuffer) - 3) /* Last three chars. */);
     sFrameCounter++;
 
     /* Every once in a while move the screen around the play area. */
@@ -232,7 +244,7 @@ int SubMain(void)
         if (++g_play_area_row_for_screen >= g_play_area_height_tiles)
           g_play_area_row_for_screen = 0;
       }
-      ActivateTileArrayWindow();
+/*       ActivateTileArrayWindow(); */
     }
 
 #if 1
@@ -251,10 +263,9 @@ int SubMain(void)
 #endif
   }
   vdp_disableVDPReadyInt();
-#endif
 
 /*  UpdateTileAnimations(); /* So we can see some dirty flags. */
-/*  DumpTilesToTerminal(); */
+  DumpTilesToTerminal();
   printf ("Frame count: %d\n", sFrameCounter);
 
   if (memcmp(sOriginalLocationZeroMemory, NULL,
@@ -272,15 +283,10 @@ int SubMain(void)
     rst 0;
     __endasm;
   }
-
-  return 0;
-}
-
-int main(void)
-{
-  /* Call our main program so we get a proper stack frame in register IX,
-     not the very small CP/M stack frame at 0xFF00. */
-
-  return SubMain();
+#if 1 /* Plain return isn't working. */
+  __asm
+  rst 0;
+  __endasm;
+#endif
 }
 

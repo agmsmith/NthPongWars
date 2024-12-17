@@ -896,7 +896,7 @@ ALT="[Video of Tiles Animating]"></A><BR>
 
 <P>I'm getting some oddities happening, and a crash on exit.  I was thinking it
 may be from writing to a NULL pointer, trashing memory at location zero, where
-the CP/M list of subroutine entry addresses is.  But that didn't seem to be the
+the CP/M parameters and a few entry points are.  But that didn't seem to be the
 problem, when the display updates but code like the frame counter doesn't run,
 and shows a non-changing number rather than counting up from zero.  Which makes
 me wonder if the stack frame has gone past the end of the stack.
@@ -922,10 +922,20 @@ static uint16_t sStackPointer = 0;
     (int) sStackPointer, (int) sStackFramePointer);
 </PRE>
 
-<P>Nope, the stack looks fine, though I had to fix the frame by making main a
-subroutine of a dummy main.  Oh well, at least I can do printfs to find the
-problem, by redirecting CP/M text output to a telnet server (doesn't mess up
-the VDP graphics memory when outputting to the serial port + network).
+<P>Nope, the stack looks fine, though the frame pointer ix was $FF00, while the
+stack was $CCD5.  But after adding some local variables, the frame pointer was
+near the stack.  Maybe the mystery crash was because I had main() returning an
+int, rather than void?
+
+<P>More mysteries, printf("$%X $$$$$%X", a, b) loses all the $ characters before
+the second %X (for printing hexadecimal numbers in upper case).
+
+<P>One other tip, I can do printf to find problems, by redirecting CP/M text
+output to a telnet server (doesn't mess up the VDP graphics memory when
+outputting to the serial port + network).  It also lets you see stuff that
+would otherwise scroll off the top of the CP/M screen, and in 80 columns.  Uses
+the STAT CON:=UC1: and STAT RDR:=UR1: commands to redirect CP/M input and
+output to a remote telnet session.
 
 <P>- Alex
 

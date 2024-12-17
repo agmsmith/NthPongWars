@@ -110,7 +110,7 @@ typedef struct tile_struct {
    minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
    you still have a limit on the number of rows too. */
 #define TILES_ARRAY_SIZE 70
-#define TILES_MAX_ROWS 255
+#define TILES_MAX_ROWS 256
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation
    of the minuscule NABU memory, it is a static array sized in advance to be

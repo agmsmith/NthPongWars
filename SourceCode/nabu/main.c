@@ -23,7 +23,7 @@
 #pragma printf = "%f %d %u %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
-#pragma define CRT_STACK_SIZE=2048
+#pragma define CRT_STACK_SIZE=1024
 /* Reserve space for local variables on the stack, the remainder goes in the
    heap for malloc()/free() to distribute.  The Z88DK C runtime uses a default
    of 512 bytes of stack.  NABU Cloud CP/M has 200 bytes at the very end of
@@ -75,22 +75,29 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
 #include "../common/tiles.c"
 
-static char OriginalLocationZeroMemory[20];
 
 /* The usual press any key to continue prompt, in VDP graphics mode.  NULL for
    a default message string. */
 static char HitAnyKey(const char *MessageText)
 {
-  char keyPressed;
   vdp_newLine();
   vdp_print((char *) (MessageText ? MessageText : "Press any key to continue."));
-  keyPressed = getChar();
-  return keyPressed;
+  return getChar();
 }
 
+/* Variables in main() that also need to be accessed from assembler have to be
+   globalish. */
+static uint16_t sStackFramePointer = 0;
+static uint16_t sStackPointer = 0;
 
-int main(void)
+int SubMain(void)
 {
+  /* Save some stack space, variables that persist in main() can be static. */
+  static unsigned int sTotalMem, sLargestMem;
+  static int sFrameCounter;
+  static char sOriginalLocationZeroMemory[16];
+  static char sOriginalStackMemory[16];
+
   /* Note that printf goes through CP/M and scrambles the video memory (it's
      arranged differently), so don't use printf during graphics mode.  However
      the NABU CP/M has a screen text buffer and that will be restored to the
@@ -102,20 +109,41 @@ int main(void)
   printf ("February 2024, see the blog at\n");
   printf ("https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n");
   printf ("Compiled on " __DATE__ " at " __TIME__ ".\n");
-  #if __SDCC
-    unsigned int totalMem, largestMem;
-    mallinfo(&totalMem, &largestMem);
-    printf ("Using the SDCC compiler, unknown version.\n");
-    printf ("Heap has %u bytes free.\n", totalMem);
-  #elif __GNUC__
-    printf ("Using the GNU gcc compiler version " __VERSION__ ".\n");
-  #endif
+  mallinfo(&sTotalMem, &sLargestMem);
+  printf ("Using the SDCC compiler, unknown version.\n");
+  printf ("Heap has %u bytes free, largest %u.\n", sTotalMem, sLargestMem);
+
+  __asm
+  push af;
+  push hl;
+  ld hl,0
+  add hl, sp; /* No actual move sp to hl instruction, but can add it. */
+  ld (_sStackPointer), hl;
+  ld (_sStackFramePointer), ix;
+  pop hl;
+  pop af;
+  __endasm;
+  printf ("Stack pointer is $%X, frame $%X.\n",
+    (int) sStackPointer, (int) sStackFramePointer);
   printf ("Hit any key... ");
   printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
 
-  /* Detect memory corruption from using a NULL pointer. */
-  memcpy (OriginalLocationZeroMemory, NULL, sizeof(OriginalLocationZeroMemory));
+  /* Detect memory corruption in our stack. */
+  memcpy(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
+    sizeof(sOriginalStackMemory));
 
+  if (memcmp(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
+  sizeof(sOriginalStackMemory)) != 0)
+  {
+    printf("Corrupted Stack Memory before anything done!");
+  }
+
+  /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
+     letter and user may affect this. */
+  memcpy(sOriginalLocationZeroMemory, NULL, sizeof(sOriginalLocationZeroMemory));
+
+
+#if 1
   initNABULib(); /* No longer can use CP/M text input or output. */
 
   vdp_init(VDP_MODE_G2, VDP_WHITE /* fgColor not applicable */,
@@ -130,15 +158,15 @@ int main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
-#if 0
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
     return 10;
   }
-  z80_delay_ms(1000); /* No font loaded, just graphics, so no hit any key. */
+  z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
 #endif
 
+#if 0
   /* Load our game screen, with a font and sprites defined. */
 
   if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
@@ -146,7 +174,6 @@ int main(void)
     printf("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
     return 10;
   }
-  HitAnyKey(NULL);
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
@@ -166,6 +193,9 @@ int main(void)
     printf("Failed to set up play area tiles.\n");
     return 10;
   }
+
+  /* Set up a test pattern in the tile array. */
+
   for (uint8_t i = 0; i < OWNER_MAX && i < g_play_area_width_tiles; i++)
   {
     tile_pointer pTile;
@@ -177,24 +207,24 @@ int main(void)
     pTile->owner = i;
   }
 
-  int frameCounter = 0;
+  sFrameCounter = 0;
   vdp_enableVDPReadyInt();
-  while (isKeyPressed())
-    ; /* Wait for the key to be released. */
-  while (!isKeyPressed())
+  while (0 && !isKeyPressed())
   {
     UpdateTileAnimations();
     vdp_waitVDPReadyInt();
+#if 0
     CopyTilesToScreen();
+#endif
     vdp_setCursor2(27, 0);
     strcpy(TempBuffer, "000"); /* Leading zeroes. */
-    itoa(frameCounter, TempBuffer + 3, 10 /* base */);
+    itoa(sFrameCounter, TempBuffer + 3, 10 /* base */);
     vdp_print(TempBuffer + strlen(TempBuffer) - 3 /* Last three chars. */);
-    frameCounter++;
+    sFrameCounter++;
 
     /* Every once in a while move the screen around the play area. */
 
-    if ((frameCounter & 0x3f) == 0)
+    if ((sFrameCounter & 0x3f) == 0)
     {
       if (++g_play_area_col_for_screen >= g_play_area_width_tiles)
       {
@@ -205,18 +235,52 @@ int main(void)
       ActivateTileArrayWindow();
     }
 
-    if (memcmp(OriginalLocationZeroMemory, NULL,
-    sizeof(OriginalLocationZeroMemory)) != 0)
+#if 1
+    if (memcmp(sOriginalLocationZeroMemory, NULL,
+    sizeof(sOriginalLocationZeroMemory)) != 0)
     {
-      vdp_setCursor2(1, 1);
-      vdp_print("Corrupted NULL");
+      vdp_setCursor2(0, 0);
+      vdp_print("Corrupted NULL Memory!");
     }
+    if (memcmp(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
+    sizeof(sOriginalStackMemory)) != 0)
+    {
+      vdp_setCursor2(0, 1);
+      vdp_print("Corrupted Stack Memory!");
+    }
+#endif
   }
   vdp_disableVDPReadyInt();
+#endif
 
 /*  UpdateTileAnimations(); /* So we can see some dirty flags. */
-/*   DumpTilesToTerminal(); */
-  printf ("Frame count: %d\n", (int) frameCounter);
+/*  DumpTilesToTerminal(); */
+  printf ("Frame count: %d\n", sFrameCounter);
+
+  if (memcmp(sOriginalLocationZeroMemory, NULL,
+  sizeof(sOriginalLocationZeroMemory)) != 0)
+  {
+    printf("Corrupted NULL Memory!");
+  }
+
+  if (memcmp(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
+  sizeof(sOriginalStackMemory)) != 0)
+  {
+    printf("Corrupted Stack Memory!");
+    /* Restart CP/M even when the stack is corrupted. */
+    __asm
+    rst 0;
+    __endasm;
+  }
+
   return 0;
+}
+
+int main(void)
+{
+  /* Call our main program so we get a proper stack frame in register IX,
+     not the very small CP/M stack frame at 0xFF00. */
+
+  return SubMain();
 }
 

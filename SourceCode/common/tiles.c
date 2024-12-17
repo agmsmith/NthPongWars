@@ -82,12 +82,12 @@ bool InitTileArray(void)
   g_play_area_end_tile = g_tile_array + g_play_area_num_tiles;
 
   /* Fill in all the row start pointers, NULL when past the end of actual data
-     for easier past end handling.  Also don't have a partial row at the end. */
+     for easier past end handling.  Also don't have a partial row. */
 
   pTile = g_tile_array;
   numRemaining = g_play_area_num_tiles;
-  for (row = 0; row != TILES_MAX_ROWS; row++)
-  {
+  row = 0;
+  do {
     if (numRemaining >= g_play_area_width_tiles)
     {
       g_tile_array_row_starts[row] = pTile;
@@ -98,7 +98,14 @@ bool InitTileArray(void)
     {
       g_tile_array_row_starts[row] = NULL;
     }
-  }
+    row++;
+    /* Normally it is a full 256 entry array and row is a byte sized index which
+      overflows at 255.  So normally don't need this test. */
+    #if TILES_MAX_ROWS < 256
+    if (row == TILES_MAX_ROWS)
+      break;
+    #endif
+  } while (row != 0); /* Stop when row overflows back to zero. */
 
   /* Clear all the tiles to an empty state. */
 

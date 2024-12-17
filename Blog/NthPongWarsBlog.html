@@ -890,6 +890,43 @@ ALT="[Video of Tiles Animating]"></A><BR>
 <A HREF="NthPongVideoTilesWorkingSlowly20241211.mp4">NthPongVideoTilesWorkingSlowly20241211.mp4</A><BR>
 <A HREF="NthPongVideoTilesWorkingSlowly20241211.txt">Script</A>
 
+<H2>2024.12.16</H2>
+
+<H3>Weird Bugs prompt First Assembler Code</H3>
+
+<P>I'm getting some oddities happening, and a crash on exit.  I was thinking it
+may be from writing to a NULL pointer, trashing memory at location zero, where
+the CP/M list of subroutine entry addresses is.  But that didn't seem to be the
+problem, when the display updates but code like the frame counter doesn't run,
+and shows a non-changing number rather than counting up from zero.  Which makes
+me wonder if the stack frame has gone past the end of the stack.
+
+<P>So I had to write some assembler to get the stack pointer and see if it was
+above $FF00 (the small area past the interrupt table that Cloud CP/M uses for
+the stack) or my much larger stack somewhere else in memory.
+<PRE>
+static uint16_t sStackFramePointer = 0;
+static uint16_t sStackPointer = 0;
+...
+  __asm
+  push af;
+  push hl;
+  ld hl,0
+  add hl, sp; /* No actual move sp to hl instruction, but can add it. */
+  ld (_sStackPointer), hl;
+  ld (_sStackFramePointer), ix;
+  pop hl;
+  pop af;
+  __endasm;
+  printf ("Stack pointer is $%X, frame $%X.\n",
+    (int) sStackPointer, (int) sStackFramePointer);
+</PRE>
+
+<P>Nope, the stack looks fine, though I had to fix the frame by making main a
+subroutine of a dummy main.  Oh well, at least I can do printfs to find the
+problem, by redirecting CP/M text output to a telnet server (doesn't mess up
+the VDP graphics memory when outputting to the serial port + network).
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

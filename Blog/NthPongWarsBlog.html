@@ -907,7 +907,7 @@ me wonder if the stack frame has gone past the end of the stack.
 
 <P>So I had to write some assembler to get the stack pointer and see if it was
 above $FF00 (the small area past the interrupt table that Cloud CP/M uses for
-the stack) or my much larger stack somewhere else in memory.
+the stack) or inside my much larger stack somewhere else in memory.
 <PRE>
 static uint16_t sStackFramePointer = 0;
 static uint16_t sStackPointer = 0;
@@ -928,8 +928,10 @@ static uint16_t sStackPointer = 0;
 
 <P>Nope, the stack looks fine, though the frame pointer register ix was $FF00,
 while the stack was $CCD5.  But after adding some local variables, the frame
-pointer was near the stack.  Maybe the mystery crash was because I had main()
-returning an int, rather than void?
+pointer was near the stack as it should be.
+
+<P>Maybe the mystery crash was because I had main() returning an int, rather
+than void?  Yes, making main() return void fixed the crash at exit.
 
 <P>More mysteries, <CODE>printf("$%X $$$$$%X", a, b)</CODE> loses the $
 character (or even more $$$$ ones) before the second %X (for printing
@@ -937,12 +939,36 @@ hexadecimal numbers in upper case).  I had to work around it by doing
 <CODE>printf("$%X %c%X", a, '$', b)</CODE>.  Was it mangling the stack when
 doing that?
 
-<P>One other tip, I can do printf to find problems, by redirecting CP/M text
+<P>One other tip, I can use printf to find problems, by redirecting CP/M text
 output to a telnet server (doesn't mess up the VDP graphics memory when
 outputting to the serial port + network).  It also lets you see stuff that
 would otherwise scroll off the top of the CP/M screen, and in 80 columns.  Uses
-the STAT CON:=UC1: and STAT RDR:=UR1: commands to redirect CP/M input and
-output to a remote telnet session.
+the <CODE>STAT CON:=UC1:</CODE> and <CODE>STAT RDR:=UR1:</CODE> commands (in
+that order) to redirect CP/M output and input to a remote telnet session.  On
+second thought, the system hangs (doesn't switch back to text mode, who knows
+what input device it is trying to listen to) after the program if you have RDR:
+redirected, so only use the CON: one.  You can set it back to the screen with
+<CODE>STAT CON:=CRT:</CODE>.
+
+<H2>2024.12.18</H2>
+
+<H3>Faster Tiles, Less Crashing</H3>
+
+<P>After fixing some bugs and switching to using a cache for updating only tiles
+which are both on screen and have animation, it's starting to work better.
+Still have to speed things up more by making a cache listing dirty tiles that
+need drawing, rather than scanning the whole array of tiles to look for dirty
+flags.
+
+<P>Along the way, I found out that the most reliable way to exit back to CP/M
+is with a jump to location zero, assuming you haven't trashed it with a NULL
+pointer.  A plain return at the end of the program only sometimes works.
+
+<P>I also tried the DEBUG_VDP_INT option in NABU_LIB, which flashes the Alert
+light when you miss a frame.  It has a logic bug and leaves the light on all
+the time!  To fix it, add a <CODE>vdpIsReady = false;</CODE> right after your
+call to vdp_waitVDPReadyInt(), because that function forgets to reset the flag
+after waiting.
 
 <P>- Alex
 

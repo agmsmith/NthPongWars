@@ -50,7 +50,7 @@
 /* #define DISABLE_KEYBOARD_INT /* Disable it to use only the CP/M keyboard. */
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
-#define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
+/* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
 /* #define DISABLE_CURSOR /* Don't flash during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
@@ -101,10 +101,36 @@ void main(void)
   uint8_t i;
   unsigned int sTotalMem, sLargestMem;
 
+  /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
+     letter and user may affect this since they're in the CP/M parameter
+     area (the first 256 bytes of memory). */
+  memcpy(sOriginalLocationZeroMemory, NULL, sizeof(sOriginalLocationZeroMemory));
+
+  /* Grab the stack pointer and stack frame pointer to see if they're sane.
+     If the frame pointer is $FF00 or above (the CP/M really small stack),
+     while stack is $Cxxx then things may go badly.  Frame should be inside
+     stack. */
+  __asm
+  push af;
+  push hl;
+  ld hl,0
+  add hl, sp; /* No actual move sp to hl instruction, but can add it. */
+  ld (_sStackPointer), hl;
+  ld (_sStackFramePointer), ix;
+  pop hl;
+  pop af;
+  __endasm;
+
+  /* Detect memory corruption in our stack. */
+  memcpy(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
+    sizeof(sOriginalStackMemory));
+
   /* Note that printf goes through CP/M and scrambles the video memory (it's
      arranged differently), so don't use printf during graphics mode.  However
      the NABU CP/M has a screen text buffer and that will be restored to the
-     screen when the program exits, so you can see printf output after exit. */
+     screen when the program exits, so you can see printf output after exit.
+     Or if you've redirected output to a remote device (telnet server), you can
+     see it there. */
 
   printf ("Welcome to the Nth Pong Wars NABU game.\n");
   printf ("By Alexander G. M. Smith, contact me at\n");
@@ -116,38 +142,31 @@ void main(void)
   printf ("Heap has %u bytes free, largest %u.\n", sTotalMem, sLargestMem);
   printf ("Using the SDCC compiler, unknown version.\n");
 
-  __asm
-  push af;
-  push hl;
-  ld hl,0
-  add hl, sp; /* No actual move sp to hl instruction, but can add it. */
-  ld (_sStackPointer), hl;
-  ld (_sStackFramePointer), ix;
-  pop hl;
-  pop af;
-  __endasm;
-  /* If frame pointer is $FF00 or above (the CP/M really small stack), while
-     stack is $Cxxx then things may go badly.  Frame should be inside stack.
-     Also weird bug in Z88DK where printf("$%X $$$$$%X", a, b); loses any
+  /* Weird bug in Z88DK where printf("$%X $$$$$%X", a, b); loses any
      number of dollar signs before the second %X. */
+#if 0
+  printf("Stack pointer is $%X, frame $%X.\n",
+    (int) sStackPointer, (int) sStackFramePointer);
+#else
   printf("Stack pointer is $%X, frame %c%X.\n",
     (int) sStackPointer, '$', (int) sStackFramePointer);
+#endif
   printf ("Hit any key... ");
   printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
-
-  /* Detect memory corruption in our stack. */
-  memcpy(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
-    sizeof(sOriginalStackMemory));
 
   if (memcmp(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
   sizeof(sOriginalStackMemory)) != 0)
   {
-    printf("Corrupted Stack Memory before anything done!");
+    printf("Corrupted Stack Memory before anything done!\n");
+    return;
   }
 
-  /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
-     letter and user may affect this since they're in the CP/M parameters. */
-  memcpy(sOriginalLocationZeroMemory, NULL, sizeof(sOriginalLocationZeroMemory));
+  if (memcmp(sOriginalLocationZeroMemory, NULL,
+  sizeof(sOriginalLocationZeroMemory)) != 0)
+  {
+    printf("Corrupted zero page Memory before anything done!\n");
+    return;
+  }
 
   initNABULib(); /* No longer can use CP/M text input or output. */
 
@@ -190,7 +209,7 @@ void main(void)
 
   g_play_area_col_for_screen = 0;
   g_play_area_row_for_screen = 0;
-#if 1
+
   if (!InitTileArray())
   {
     printf("Failed to set up play area tiles.\n");
@@ -209,31 +228,28 @@ void main(void)
     pTile += i;
     pTile->owner = i;
   }
-#endif
-
-#if 1
-  vdp_setCursor2(0, 0);
-  vdp_print("Let go of the keyboard to start.");
-  while (isKeyPressed())
-    ; /* So you get a few frames displayed at least. */
-#endif
-
-  vdp_setCursor2(0, 0);
-  vdp_print("Press a key to stop.");
 
   sFrameCounter = 0;
   vdp_enableVDPReadyInt();
   while (!isKeyPressed())
   {
-/*    UpdateTileAnimations(); */
+    UpdateTileAnimations();
+#if 1
+    /* Check for updates that took longer than a frame.  The DEBUG_VDP_INT
+       doesn't seem to work in MAME, leaving the Alert light on all the time. */
+    if (vdpIsReady)
+      playNoteDelay(2, 71, 40); /* High, short note. */
+#endif
     vdp_waitVDPReadyInt();
-/*    CopyTilesToScreen(); */
+    vdpIsReady = false;
+    CopyTilesToScreen();
     vdp_setCursor2(27, 0);
     strcpy(TempBuffer, "000"); /* Leading zeroes. */
     utoa(sFrameCounter, TempBuffer + 3, 10 /* base */);
     vdp_print(TempBuffer + (strlen(TempBuffer) - 3) /* Last three chars. */);
     sFrameCounter++;
 
+#if 1
     /* Every once in a while move the screen around the play area. */
 
     if ((sFrameCounter & 0x3f) == 0)
@@ -244,8 +260,9 @@ void main(void)
         if (++g_play_area_row_for_screen >= g_play_area_height_tiles)
           g_play_area_row_for_screen = 0;
       }
-/*       ActivateTileArrayWindow(); */
+      ActivateTileArrayWindow();
     }
+#endif
 
 #if 1
     if (memcmp(sOriginalLocationZeroMemory, NULL,
@@ -264,7 +281,7 @@ void main(void)
   }
   vdp_disableVDPReadyInt();
 
-/*  UpdateTileAnimations(); /* So we can see some dirty flags. */
+  UpdateTileAnimations(); /* So we can see some dirty flags. */
   DumpTilesToTerminal();
   printf ("Frame count: %d\n", sFrameCounter);
 
@@ -283,10 +300,15 @@ void main(void)
     rst 0;
     __endasm;
   }
-#if 1 /* Plain return isn't working. */
+
+#if 1
+  /* If plain return isn't working.  Happens if main doesn't return void, or if
+     you print too much CP/M output to the screen when in graphics mode. */
+  printf("Done.  Brute force exit to CP/M.\n");
   __asm
   rst 0;
   __endasm;
 #endif
+  printf("Done.  Returning to CP/M.\n");
 }
 

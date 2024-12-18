@@ -78,6 +78,10 @@ already been packaged.
 0.262):<BR>
 <CODE>dnf install mame mame-data-software-lists mame-doc mame-tools</CODE>
 
+<P>Note that stock MAME 0.270 is the last working version in Fedora 41 Linux,
+versions 0.271 and 0.272 don't work (serial port connection to the NABU fake
+server doesn't go through).
+
 <H3>C Compiler</H3>
 
 <P>And for the C compiler and assembler:<BR>
@@ -922,13 +926,16 @@ static uint16_t sStackPointer = 0;
     (int) sStackPointer, (int) sStackFramePointer);
 </PRE>
 
-<P>Nope, the stack looks fine, though the frame pointer ix was $FF00, while the
-stack was $CCD5.  But after adding some local variables, the frame pointer was
-near the stack.  Maybe the mystery crash was because I had main() returning an
-int, rather than void?
+<P>Nope, the stack looks fine, though the frame pointer register ix was $FF00,
+while the stack was $CCD5.  But after adding some local variables, the frame
+pointer was near the stack.  Maybe the mystery crash was because I had main()
+returning an int, rather than void?
 
-<P>More mysteries, printf("$%X $$$$$%X", a, b) loses all the $ characters before
-the second %X (for printing hexadecimal numbers in upper case).
+<P>More mysteries, <CODE>printf("$%X $$$$$%X", a, b)</CODE> loses the $
+character (or even more $$$$ ones) before the second %X (for printing
+hexadecimal numbers in upper case).  I had to work around it by doing
+<CODE>printf("$%X %c%X", a, '$', b)</CODE>.  Was it mangling the stack when
+doing that?
 
 <P>One other tip, I can do printf to find problems, by redirecting CP/M text
 output to a telnet server (doesn't mess up the VDP graphics memory when

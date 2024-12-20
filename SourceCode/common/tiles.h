@@ -108,8 +108,9 @@ typedef struct tile_struct {
    the actual screen size, if we're using windowing to show a portion of the
    area on computers with lower resolution screens.  NABU screen is 32x24, so
    minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
-   you still have a limit on the number of rows too. */
-#define TILES_ARRAY_SIZE 70
+   you still have a limit of TILES_MAX_ROWS on the number of rows, and 256 on
+   columns since both of those get stored in bytes. */
+#define TILES_ARRAY_SIZE 1000
 #define TILES_MAX_ROWS 256
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation
@@ -119,7 +120,8 @@ extern tile_record g_tile_array[TILES_ARRAY_SIZE];
 
 /* We keep an array of pointers to the start of each row of tiles, to save on
    doing a slow multiplication.  Just index this array with the Y coordinate
-   and you'll get the start of that row. */
+   and you'll get the start of that row, or NULL if you are past the end of
+   the play area. */
 extern tile_pointer g_tile_array_row_starts[TILES_MAX_ROWS];
 
 /* Size of the current play area, in tiles.  This can be larger or smaller than
@@ -134,9 +136,8 @@ extern uint8_t g_play_area_width_tiles;
 extern uint16_t g_play_area_num_tiles; /* Number of tiles in the play area. */
 extern tile_pointer g_play_area_end_tile; /* Just past the last tile. */
 
-/* Size of the screen area we can draw tiles in, Only the
-   active area is considered, score and other stuff around the visible area
-   isn't included. */
+/* Size of the screen area we can draw tiles in, Only the active area is
+   considered, score and other stuff around the visible area isn't included. */
 extern uint8_t g_screen_height_tiles;
 extern uint8_t g_screen_width_tiles;
 extern uint8_t g_screen_top_X_tiles;
@@ -145,18 +146,23 @@ extern uint8_t g_screen_top_Y_tiles;
 /* Where the visible screen is in the play area.  It can move around to follow
    the balls if the play area is larger than the screen.  This top left corner
    in play area tiles corresponds to the top left corner of the g_screen_*
-   rectangle. */
+   rectangle.  Negative coordinates aren't implemented. */
 extern uint8_t g_play_area_col_for_screen;
 extern uint8_t g_play_area_row_for_screen;
 
 /* A cache to keep track of which tiles are animated.  If more than the cache
   maximum are animated, the cache isn't used and we revert to scanning all tiles
-  for animated ones, slowly.  These are the tiles with the animated flag set,
-  meaning their animations are more than one frame long so they need updating
-  always.  If you set the cache index to 0xFF, it will force a full iteration
-  over all tiles and recompute which tiles should be in the cache.
+  for animated ones, slowly.  These are the tiles with the animated flag set
+  and are on screen, meaning their animations are more than one frame long so
+  they need updating always.  If you set the cache index to 0xFF, it will force
+  a full iteration over all tiles and recompute which tiles should be in the
+  cache.
+
+  After more than 30 animated tiles and nothing else being updated, you run out
+  of time to update the screen within one frame.  But it's still faster than the
+  full screen scan, so use double that.
 */
-#define MAX_ANIMATED_CACHE 10
+#define MAX_ANIMATED_CACHE 65
 extern tile_pointer g_cache_animated_tiles[MAX_ANIMATED_CACHE];
 extern uint8_t g_cache_animated_tiles_index; /* Next free cache entry. */
 
@@ -164,9 +170,12 @@ extern uint8_t g_cache_animated_tiles_index; /* Next free cache entry. */
    dirty_screen flag set).  If more than the cache maximum are dirty, the cache
    isn't used and we revert to scanning the array of all tiles, slowly, for
    dirty flags.  No particular order of tiles, though it would be nice to have
-   them in increasing VDP address order.
+   them in increasing VDP address order to save on VDP address changes.
+
+   In practice, a lot of the animations are slower (else too fast to see), so
+   the dirty cache doesn't have to be as big as the animation cache. */
 */
-#define MAX_DIRTY_SCREEN_CACHE 20
+#define MAX_DIRTY_SCREEN_CACHE 50
 extern tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];
 extern uint8_t g_cache_dirty_screen_tiles_index; /* Next free cache entry. */
 
@@ -182,7 +191,11 @@ extern void ActivateTileArrayWindow(void);
    to NULL if off screen.  Uses the values in the g_screen_*_tiles globals.
    Call this after you change those globals to move the window around.  Will
    clip the globals so that they fit on the real screen.  Tries to be fast, so
-   you can move the window often. */
+   you can move the window often, but it will probably cost a missed frame. */
+
+extern void SetTileOwner(tile_pointer pTile, tile_owner newOwner);
+/* Change the owner of the tile to the given one.  Takes care of updating
+   animation stuff and setting dirty flags. */
 
 extern void UpdateTileAnimations(void);
 /* Go through all the tiles and update displayedChar for the current frame,
@@ -196,8 +209,8 @@ extern void CopyTilesToScreen(void);
 
 extern void DumpTilesToTerminal(void);
 /* For debugging, print all the tiles on the terminal.  For the NABU, this works
-   best if you redirect input and output to be over the network (rather than on
-   screen) so that it doesn't interfere with the VDP graphics mode. */
+   best if you redirect output (STAT CON:=UC1:) to be over the network (rather
+   than on screen) so that it doesn't interfere with the VDP graphics mode. */
 
 #endif /* _TILES_H */
 

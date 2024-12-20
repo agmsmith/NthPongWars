@@ -970,6 +970,27 @@ the time!  To fix it, add a <CODE>vdpIsReady = false;</CODE> right after your
 call to vdp_waitVDPReadyInt(), because that function forgets to reset the flag
 after waiting.
 
+<H2>2024.12.19</H2>
+
+<H3>Even Faster Tiles!</H3>
+
+<P>Today I implemented the dirty tile cache, so now it only processes tiles that
+need drawing, until the cache overflows and we go back to the old slow full
+screen scan technique.  It can support up to about 30 animated tiles before
+running over the 60hz frame update time.  Since those will be used for
+power-ups, we can design it to not have that many of them.  Though we'll need
+CPU time to calculate the ball movements and physics, so the final limit will
+be smaller.  Perhaps aim for 8 power ups active at any time?
+
+<P ALIGN=CENTER><A HREF="NthPongVideoTilesWorkingFast20241219.mp4"><IMG
+SRC="NthPongVideoTilesWorkingFast20241219.png" WIDTH="280" HEIGHT="216"
+ALT="[Video of Tiles Animating Fast!]"></A><BR>
+<A HREF="NthPongVideoTilesWorkingFast20241219.mp4">NthPongVideoTilesWorkingFast20241219.mp4</A><BR>
+Video of faster tile animations.  The "ding" sound is whenever it doesn't have
+enough time to complete a full update at a 60 updates per second.  The
+animations are power-ups, spelling out Slow, Fast, Through, Normal.  Though in
+the final game, they'll be iconical graphics rather than letter sequences.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

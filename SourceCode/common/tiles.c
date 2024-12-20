@@ -23,6 +23,13 @@ uint8_t g_screen_top_Y_tiles = 0;
 uint8_t g_play_area_col_for_screen = 0;
 uint8_t g_play_area_row_for_screen = 0;
 
+/* Computed location of the screen in the play area, to avoid recalculating it
+   every frame.  Updated by ActivateTileArrayWindow(). */
+static uint8_t s_PlayScreenBottom = 0;
+static uint8_t s_PlayScreenLeft = 0;
+static uint8_t s_PlayScreenRight = 0;
+static uint8_t s_PlayScreenTop = 0;
+
 tile_pointer g_cache_animated_tiles[MAX_ANIMATED_CACHE];
 uint8_t g_cache_animated_tiles_index = 0;
 
@@ -72,11 +79,10 @@ bool InitTileArray(void)
   uint8_t col, row;
   int16_t x, y;
 
-  g_play_area_num_tiles = g_play_area_height_tiles * g_play_area_width_tiles;
   g_play_area_end_tile = NULL;
-  if (g_play_area_height_tiles == 0 || g_play_area_width_tiles == 0)
+  g_play_area_num_tiles = g_play_area_height_tiles * g_play_area_width_tiles;
+  if (g_play_area_num_tiles == 0)
     return false;
-
   if (g_play_area_num_tiles > TILES_ARRAY_SIZE)
     return false;
   g_play_area_end_tile = g_tile_array + g_play_area_num_tiles;
@@ -140,16 +146,12 @@ bool InitTileArray(void)
    to NULL if off screen.  Uses the values in the g_screen_*_tiles globals.
    Call this after you change those globals to move the window around.  Will
    clip the globals so that they fit on the real screen.  Tries to be fast, so
-   you can move the window often.
+   you can move the window often, but it will probably cost a missed frame.
 */
 void ActivateTileArrayWindow(void)
 {
 #ifdef NABU_H
   uint8_t col, row;
-  uint8_t playScreenBottom;
-  uint8_t playScreenLeft;
-  uint8_t playScreenRight;
-  uint8_t playScreenTop;
   tile_pointer pTile;
   uint16_t vdpAddress;
 
@@ -167,48 +169,57 @@ void ActivateTileArrayWindow(void)
 
   if (g_screen_top_X_tiles > SCREEN_WIDTH)
     g_screen_top_X_tiles = SCREEN_WIDTH;
-
   if (g_screen_top_X_tiles + g_screen_width_tiles > SCREEN_WIDTH)
     g_screen_width_tiles = SCREEN_WIDTH - g_screen_top_X_tiles;
 
   if (g_screen_top_Y_tiles > SCREEN_HEIGHT)
     g_screen_top_Y_tiles = SCREEN_HEIGHT;
-
   if (g_screen_top_Y_tiles + g_screen_height_tiles > SCREEN_HEIGHT)
     g_screen_height_tiles = SCREEN_HEIGHT - g_screen_top_Y_tiles;
 
-#ifdef NABU_H
-  /* Define a rectangle in play area space, where the screen is.  Top left
+  /* Find the location of the screen in play area coordinates.  Top left
      included, bottom right is just past the end.  Can be partially or
-     completely outside the play area, but no need to clip it. */
+     completely outside the play area, clipped to be reasonable. */
 
-  playScreenLeft = g_play_area_col_for_screen;
-  playScreenRight = g_play_area_col_for_screen + g_screen_width_tiles;
-  playScreenTop = g_play_area_row_for_screen;
-  playScreenBottom = g_play_area_row_for_screen + g_screen_height_tiles;
+  s_PlayScreenLeft = g_play_area_col_for_screen;
+  if (s_PlayScreenLeft >= g_play_area_width_tiles)
+    s_PlayScreenLeft = g_play_area_width_tiles;
+  s_PlayScreenRight = g_play_area_col_for_screen + g_screen_width_tiles;
+  if (s_PlayScreenRight > g_play_area_width_tiles)
+    s_PlayScreenRight = g_play_area_width_tiles;
+  if (s_PlayScreenRight < s_PlayScreenLeft) /* Can happen with byte overflow. */
+    s_PlayScreenRight = s_PlayScreenLeft;
 
+  s_PlayScreenTop = g_play_area_row_for_screen;
+  if (s_PlayScreenTop >= g_play_area_height_tiles)
+    s_PlayScreenTop = g_play_area_height_tiles;
+  s_PlayScreenBottom = g_play_area_row_for_screen + g_screen_height_tiles;
+  if (s_PlayScreenBottom > g_play_area_height_tiles)
+    s_PlayScreenBottom = g_play_area_height_tiles;
+  if (s_PlayScreenBottom < s_PlayScreenTop) /* Work around overflow errors. */
+    s_PlayScreenBottom = s_PlayScreenTop;
+
+#ifdef NABU_H
   /* Go through all tiles, setting their VDP addresses if on screen, clearing
      to NULL if off screen. */
 
   for (row = 0; row != g_play_area_height_tiles; row++)
   {
     pTile = g_tile_array_row_starts[row];
-    if (pTile == NULL)
-      break; /* Less play area tiles than screen area. */
-    if (row >= playScreenTop && row < playScreenBottom)
+    if (row >= s_PlayScreenTop && row < s_PlayScreenBottom)
     { /* Row is at least partly on screen. */
       vdpAddress = 0;
       for (col = 0; col < g_play_area_width_tiles; col++, pTile++)
       {
-        /* Watch out for special case where playScreenLeft == playScreenRight */
-        if (col == playScreenRight)
+        /* Watch out for special case where s_PlayScreenLeft == s_PlayScreenRight */
+        if (col == s_PlayScreenRight)
           vdpAddress = 0;
-        else if (col == playScreenLeft)
+        else if (col == s_PlayScreenLeft)
         {
           uint8_t screenX;
           uint8_t screenY;
-          screenX = col - playScreenLeft + g_screen_top_X_tiles;
-          screenY = row - playScreenTop + g_screen_top_Y_tiles;
+          screenX = col - s_PlayScreenLeft + g_screen_top_X_tiles;
+          screenY = row - s_PlayScreenTop + g_screen_top_Y_tiles;
           vdpAddress = _vdpPatternNameTableAddr + screenX +
             SCREEN_WIDTH * screenY;
         }
@@ -227,15 +238,39 @@ void ActivateTileArrayWindow(void)
       }
     }
   }
-    
+#endif /* NABU_H */
+
   /* Force caches to be recomputed on the next update, and do a full screen
      update of the tiles. */
 
   g_cache_animated_tiles_index = 0xFF;
   g_cache_dirty_screen_tiles_index = 0xFF;
-
-#endif /* NABU_H */
 }
+
+
+/* Change the owner of the tile to the given one.  Takes care of updating
+   animation stuff and getting it drawn later.
+*/
+void SetTileOwner(tile_pointer pTile, tile_owner newOwner)
+{
+  if (pTile == NULL || pTile->owner == newOwner || newOwner >= OWNER_MAX)
+    return; /* Nothing to do. */
+  pTile->owner = newOwner;
+
+  pTile->animationIndex = 0;
+  if (!pTile->animated)
+  {
+    pTile->animated = true;
+
+    /* Add the tile to the animated ones, so it gets the display data updated,
+       which will cause it to be marked dirty and drawn if needed. */
+    if (g_cache_animated_tiles_index < MAX_ANIMATED_CACHE)
+      g_cache_animated_tiles[g_cache_animated_tiles_index++] = pTile;
+    else if (g_cache_animated_tiles_index != 0xFF)
+      g_cache_animated_tiles_index++;
+  }
+}
+
 
 /* Update the animation state of a tile.  Mark as dirty if it changed and needs
    redrawing (but not network dirty, only care about tile owner changing for
@@ -259,13 +294,22 @@ static void UpdateOneTileAnimation(tile_pointer pTile)
     animIndex = 0;
   }
   pTile->animationIndex = animIndex;
+
   if (pTile->displayedChar != newChar)
   {
     pTile->displayedChar = newChar;
 #ifdef NABU_H
-    if (pTile->vdp_address != NULL)
+    if (!pTile->dirty_screen && pTile->vdp_address != 0)
+#else
+    if (!pTile->dirty_screen)
+#endif
+    {
       pTile->dirty_screen = true;
-#endif /* NABU_H */
+      if (g_cache_dirty_screen_tiles_index < MAX_DIRTY_SCREEN_CACHE)
+        g_cache_dirty_screen_tiles[g_cache_dirty_screen_tiles_index++] = pTile;
+      else if (g_cache_dirty_screen_tiles_index != 0xFF)
+        g_cache_dirty_screen_tiles_index++;
+    }
   }
 }
 
@@ -301,13 +345,14 @@ void UpdateTileAnimations(void)
 
         /* Add tile to animated tiles cache if it is animated and on screen.
            If cache is full, keep counting them, up to the maximum count. */
-
-        if (pTile->animated && pTile->vdp_address != NULL)
+#ifdef NABU_H
+        if (pTile->animated && pTile->vdp_address != 0)
+#else
+        if (pTile->animated)
+#endif
         {
           if (g_cache_animated_tiles_index < MAX_ANIMATED_CACHE)
-          {
             g_cache_animated_tiles[g_cache_animated_tiles_index++] = pTile;
-          }
           else if (g_cache_animated_tiles_index != 0xFF)
             g_cache_animated_tiles_index++;
         }
@@ -346,57 +391,55 @@ void UpdateTileAnimations(void)
 void CopyTilesToScreen(void)
 {
 #ifdef NABU_H
+  uint8_t cacheIndex;
   uint8_t col, row;
-  uint8_t playScreenBottom;
-  uint8_t playScreenLeft;
-  uint8_t playScreenRight;
-  uint8_t playScreenTop;
   tile_pointer pTile;
   uint16_t vdpAddress;
 
-  /* Define a rectangle in play area space, where the screen is.  Top left
-     included, bottom right is just past the end.  Clip to play area if the play
-     area is smaller or the screen is otherwise partly off the play area.
-     TODO: Compute this only when screen size/position changes and save it. */
-
-  playScreenLeft = g_play_area_col_for_screen;
-  if (playScreenLeft >= g_play_area_width_tiles)
+  if (s_PlayScreenLeft >= g_play_area_width_tiles)
     return; /* Screen is past the right side of the play area, nothing to do. */
-  playScreenRight = g_play_area_col_for_screen + g_screen_width_tiles;
-  if (playScreenRight > g_play_area_width_tiles)
-    playScreenRight = g_play_area_width_tiles;
-
-  playScreenTop = g_play_area_row_for_screen;
-  if (playScreenTop >= g_play_area_height_tiles)
+  if (s_PlayScreenTop >= g_play_area_height_tiles)
     return; /* Screen is below the play area, nothing to draw. */
-  playScreenBottom = g_play_area_row_for_screen + g_screen_height_tiles;
-  if (playScreenBottom > g_play_area_height_tiles)
-    playScreenBottom = g_play_area_height_tiles;
 
-  /* Go through just the visible tiles. */
-
-  for (row = playScreenTop; row != playScreenBottom; row++)
+  if (g_cache_dirty_screen_tiles_index > MAX_DIRTY_SCREEN_CACHE)
   {
-    vdpAddress = 0;
-    pTile = g_tile_array_row_starts[row];
-    if (pTile == NULL)
-      break; /* Something went wrong, shouldn't happen. */
-    pTile += playScreenLeft;
-    for (col = playScreenLeft; col != playScreenRight; col++, pTile++)
+    /* Cache invalid or overflowed, update all visible tiles. */
+
+    for (row = s_PlayScreenTop; row != s_PlayScreenBottom; row++)
     {
-      if (pTile->dirty_screen)
+      vdpAddress = 0;
+      pTile = g_tile_array_row_starts[row];
+      if (pTile == NULL)
+        break; /* Something went wrong, shouldn't happen. */
+      pTile += s_PlayScreenLeft;
+      for (col = s_PlayScreenLeft; col != s_PlayScreenRight; col++, pTile++)
       {
-        pTile->dirty_screen = false;
-        if (pTile->vdp_address != vdpAddress)
+        if (pTile->dirty_screen)
         {
-          vdpAddress = pTile->vdp_address;
-          vdp_setWriteAddress(vdpAddress);
+          pTile->dirty_screen = false;
+          if (pTile->vdp_address != vdpAddress)
+          {
+            vdpAddress = pTile->vdp_address;
+            vdp_setWriteAddress(vdpAddress);
+          }
+          IO_VDPDATA = pTile->displayedChar;
+          vdpAddress++;
         }
-        IO_VDPDATA = pTile->displayedChar;
-        vdpAddress++;
       }
     }
   }
+  else /* Only update the dirty tiles in the cache list. */
+  {
+    for (cacheIndex = g_cache_dirty_screen_tiles_index; cacheIndex != 0; )
+    {
+      cacheIndex--;
+      pTile = g_cache_dirty_screen_tiles[cacheIndex];
+      pTile->dirty_screen = false;
+      vdp_setWriteAddress(pTile->vdp_address);
+      IO_VDPDATA = pTile->displayedChar;
+    }
+  }
+  g_cache_dirty_screen_tiles_index = 0;
 #endif /* NABU_H */
 }
 
@@ -418,7 +461,7 @@ static void DumpOneTileToTerminal(tile_pointer pTile)
   );
 }
 
- 
+
 /* For debugging, print all the tiles on the terminal.
 */
 void DumpTilesToTerminal(void)
@@ -428,8 +471,10 @@ void DumpTilesToTerminal(void)
 
   printf("Tile data dump...\n");
 
+#if 0
   for (pTile = g_tile_array; pTile != g_play_area_end_tile; pTile++)
     DumpOneTileToTerminal(pTile);
+#endif
 
   printf("Cached animated tiles, %d:\n", (int) g_cache_animated_tiles_index);
   if (g_cache_animated_tiles_index <= MAX_ANIMATED_CACHE)

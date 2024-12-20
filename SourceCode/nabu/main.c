@@ -86,16 +86,16 @@ static char HitAnyKey(const char *MessageText)
 }
 
 /* Variables in main() that also need to be accessed from assembler have to be
-   globalish. */
-static uint16_t sStackFramePointer = 0;
-static uint16_t sStackPointer = 0;
+   globalish.  Make them static. */
+static uint16_t s_StackFramePointer = 0;
+static uint16_t s_StackPointer = 0;
 
 void main(void)
 {
   /* Save some stack space, variables that persist in main() can be static. */
-  static char sOriginalLocationZeroMemory[16];
-  static char sOriginalStackMemory[16];
-  static uint16_t sFrameCounter;
+  static char s_OriginalLocationZeroMemory[16];
+  static char s_OriginalStackMemory[16];
+  static uint16_t s_FrameCounter;
 
   /* A few local variables to force stack frame creation, sets IX register. */
   uint8_t i;
@@ -104,7 +104,8 @@ void main(void)
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter
      area (the first 256 bytes of memory). */
-  memcpy(sOriginalLocationZeroMemory, NULL, sizeof(sOriginalLocationZeroMemory));
+  memcpy(s_OriginalLocationZeroMemory, NULL,
+    sizeof(s_OriginalLocationZeroMemory));
 
   /* Grab the stack pointer and stack frame pointer to see if they're sane.
      If the frame pointer is $FF00 or above (the CP/M really small stack),
@@ -115,15 +116,15 @@ void main(void)
   push hl;
   ld hl,0
   add hl, sp; /* No actual move sp to hl instruction, but can add it. */
-  ld (_sStackPointer), hl;
-  ld (_sStackFramePointer), ix;
+  ld (_s_StackPointer), hl;
+  ld (_s_StackFramePointer), ix;
   pop hl;
   pop af;
   __endasm;
 
   /* Detect memory corruption in our stack. */
-  memcpy(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
-    sizeof(sOriginalStackMemory));
+  memcpy(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
+    sizeof(s_OriginalStackMemory));
 
   /* Note that printf goes through CP/M and scrambles the video memory (it's
      arranged differently), so don't use printf during graphics mode.  However
@@ -146,23 +147,23 @@ void main(void)
      number of dollar signs before the second %X. */
 #if 0
   printf("Stack pointer is $%X, frame $%X.\n",
-    (int) sStackPointer, (int) sStackFramePointer);
+    (int) s_StackPointer, (int) s_StackFramePointer);
 #else
   printf("Stack pointer is $%X, frame %c%X.\n",
-    (int) sStackPointer, '$', (int) sStackFramePointer);
+    (int) s_StackPointer, '$', (int) s_StackFramePointer);
 #endif
   printf ("Hit any key... ");
   printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
 
-  if (memcmp(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
-  sizeof(sOriginalStackMemory)) != 0)
+  if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
+  sizeof(s_OriginalStackMemory)) != 0)
   {
     printf("Corrupted Stack Memory before anything done!\n");
     return;
   }
 
-  if (memcmp(sOriginalLocationZeroMemory, NULL,
-  sizeof(sOriginalLocationZeroMemory)) != 0)
+  if (memcmp(s_OriginalLocationZeroMemory, NULL,
+  sizeof(s_OriginalLocationZeroMemory)) != 0)
   {
     printf("Corrupted zero page Memory before anything done!\n");
     return;
@@ -199,13 +200,13 @@ void main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 8;
-  g_play_area_width_tiles = 8;
+  g_play_area_height_tiles = 23;
+  g_play_area_width_tiles = 32;
 
-  g_screen_height_tiles = 20;
-  g_screen_width_tiles = 28;
-  g_screen_top_X_tiles = 2;
-  g_screen_top_Y_tiles = 2;
+  g_screen_height_tiles = 23;
+  g_screen_width_tiles = 32;
+  g_screen_top_X_tiles = 0;
+  g_screen_top_Y_tiles = 1;
 
   g_play_area_col_for_screen = 0;
   g_play_area_row_for_screen = 0;
@@ -229,7 +230,7 @@ void main(void)
     pTile->owner = i;
   }
 
-  sFrameCounter = 0;
+  s_FrameCounter = 0;
   vdp_enableVDPReadyInt();
   while (!isKeyPressed())
   {
@@ -245,34 +246,73 @@ void main(void)
     CopyTilesToScreen();
     vdp_setCursor2(27, 0);
     strcpy(TempBuffer, "000"); /* Leading zeroes. */
-    utoa(sFrameCounter, TempBuffer + 3, 10 /* base */);
+    utoa(s_FrameCounter, TempBuffer + 3, 10 /* base */);
     vdp_print(TempBuffer + (strlen(TempBuffer) - 3) /* Last three chars. */);
-    sFrameCounter++;
+    s_FrameCounter++;
 
-#if 1
+#if 0
     /* Every once in a while move the screen around the play area. */
 
-    if ((sFrameCounter & 0x3f) == 0)
+    if ((s_FrameCounter & 0xff) == 0)
     {
+#if 0
       if (++g_play_area_col_for_screen >= g_play_area_width_tiles)
       {
         g_play_area_col_for_screen = 0;
         if (++g_play_area_row_for_screen >= g_play_area_height_tiles)
           g_play_area_row_for_screen = 0;
       }
+#endif
       ActivateTileArrayWindow();
     }
 #endif
 
 #if 1
-    if (memcmp(sOriginalLocationZeroMemory, NULL,
-    sizeof(sOriginalLocationZeroMemory)) != 0)
+  /* Draw some new tiles once in a while, randomly moving around. */
+
+  if ((s_FrameCounter & 0x3) == 2)
+  {
+    static uint8_t row, col;
+    tile_owner newOwner;
+    tile_pointer pTile;
+
+    row++;
+    if (((s_FrameCounter >> 4) & 0x0f) == 0)
+    { /* Rarely put in a power up. */
+      newOwner = (rand() & 7) + OWNER_PUP_NORMAL;
+    }
+    else
+    {
+      newOwner = rand() & 0x07;
+      if (newOwner >= OWNER_PUP_NORMAL)
+        newOwner = OWNER_MAX; /* Skip power ups. */
+    }
+    if (newOwner <= OWNER_MAX)
+    {
+      col++;
+      if (col >= g_play_area_width_tiles)
+        col = 0;
+      if (row >= g_play_area_height_tiles)
+        row = 0;
+      pTile = g_tile_array_row_starts[row];
+      if (pTile != NULL)
+      {
+        pTile += col;
+        SetTileOwner(pTile, newOwner);
+      }
+    }
+  }
+#endif
+
+#if 1
+    if (memcmp(s_OriginalLocationZeroMemory, NULL,
+    sizeof(s_OriginalLocationZeroMemory)) != 0)
     {
       vdp_setCursor2(0, 0);
       vdp_print("Corrupted NULL Memory!");
     }
-    if (memcmp(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
-    sizeof(sOriginalStackMemory)) != 0)
+    if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
+    sizeof(s_OriginalStackMemory)) != 0)
     {
       vdp_setCursor2(0, 1);
       vdp_print("Corrupted Stack Memory!");
@@ -283,16 +323,16 @@ void main(void)
 
   UpdateTileAnimations(); /* So we can see some dirty flags. */
   DumpTilesToTerminal();
-  printf ("Frame count: %d\n", sFrameCounter);
+  printf ("Frame count: %d\n", s_FrameCounter);
 
-  if (memcmp(sOriginalLocationZeroMemory, NULL,
-  sizeof(sOriginalLocationZeroMemory)) != 0)
+  if (memcmp(s_OriginalLocationZeroMemory, NULL,
+  sizeof(s_OriginalLocationZeroMemory)) != 0)
   {
     printf("Corrupted NULL Memory!");
   }
 
-  if (memcmp(sOriginalStackMemory, (char *) (sStackFramePointer + 1),
-  sizeof(sOriginalStackMemory)) != 0)
+  if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
+  sizeof(s_OriginalStackMemory)) != 0)
   {
     printf("Corrupted Stack Memory!");
     /* Restart CP/M even when the stack is corrupted. */

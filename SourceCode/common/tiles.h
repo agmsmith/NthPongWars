@@ -173,7 +173,7 @@ extern uint8_t g_cache_animated_tiles_index; /* Next free cache entry. */
    them in increasing VDP address order to save on VDP address changes.
 
    In practice, a lot of the animations are slower (else too fast to see), so
-   the dirty cache doesn't have to be as big as the animation cache. */
+   the dirty cache doesn't have to be as big as the animation cache.
 */
 #define MAX_DIRTY_SCREEN_CACHE 50
 extern tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];

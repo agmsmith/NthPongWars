@@ -390,11 +390,12 @@ void UpdateTileAnimations(void)
 */
 void CopyTilesToScreen(void)
 {
-#ifdef NABU_H
   uint8_t cacheIndex;
   uint8_t col, row;
   tile_pointer pTile;
+#ifdef NABU_H
   uint16_t vdpAddress;
+#endif
 
   if (s_PlayScreenLeft >= g_play_area_width_tiles)
     return; /* Screen is past the right side of the play area, nothing to do. */
@@ -407,7 +408,9 @@ void CopyTilesToScreen(void)
 
     for (row = s_PlayScreenTop; row != s_PlayScreenBottom; row++)
     {
+#ifdef NABU_H
       vdpAddress = 0;
+#endif
       pTile = g_tile_array_row_starts[row];
       if (pTile == NULL)
         break; /* Something went wrong, shouldn't happen. */
@@ -417,6 +420,7 @@ void CopyTilesToScreen(void)
         if (pTile->dirty_screen)
         {
           pTile->dirty_screen = false;
+#ifdef NABU_H
           if (pTile->vdp_address != vdpAddress)
           {
             vdpAddress = pTile->vdp_address;
@@ -424,6 +428,7 @@ void CopyTilesToScreen(void)
           }
           IO_VDPDATA = pTile->displayedChar;
           vdpAddress++;
+#endif
         }
       }
     }
@@ -435,13 +440,15 @@ void CopyTilesToScreen(void)
       cacheIndex--;
       pTile = g_cache_dirty_screen_tiles[cacheIndex];
       pTile->dirty_screen = false;
+#ifdef NABU_H
       vdp_setWriteAddress(pTile->vdp_address);
       IO_VDPDATA = pTile->displayedChar;
+#endif
     }
   }
   g_cache_dirty_screen_tiles_index = 0;
-#endif /* NABU_H */
 }
+
 
 static void DumpOneTileToTerminal(tile_pointer pTile)
 {

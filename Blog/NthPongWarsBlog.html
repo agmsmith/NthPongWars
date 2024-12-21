@@ -1019,6 +1019,22 @@ enough time to complete a full update at a 60 updates per second.  The
 animations are power-ups, spelling out Slow, Fast, Through, Normal.  Though in
 the final game, they'll be iconical graphics rather than letter sequences.
 
+<HR>
+<H2><A NAME="2024.12.20"></A>2024.12.20</H2>
+
+<H3>Now with Sprites!</H3>
+
+<P>Got the basic player code and sprites animation system in today.  For the
+longest time I was stumped when it wouldn't animate.  Turns out you need to
+specify the pattern name in multiples of 4 since I was using 16x16 sprites, not
+8x8.  There's also coordinate conversion from fractions to hardware pixels,
+which can be weird (might be designed to be off by 1, also has a flag to shift
+things left by 32 pixels so you can go over 256 in a byte).  May not be perfect,
+but it works, with ball, shadow and power-up layers.
+
+<P ALIGN=CENTER><IMG SRC="FirstSprites20241220.GIF" WIDTH="280" HEIGHT="216"
+ALT="[Video of Sprites Moving for the First Time!]">
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

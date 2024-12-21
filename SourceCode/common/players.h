@@ -41,22 +41,20 @@
 */
 typedef enum brain_enum {
   BRAIN_INACTIVE = 0, /* This player is not active, don't display it. */
+  BRAIN_KEYBOARD, /* Player controlled by a Human using the keyboard. */
   BRAIN_JOYSTICK, /* Player controlled by a Human using a joystick. */
   BRAIN_NETWORK, /* Player controlled by a remote entity over the network. */
-  BRAIN_ALGORITHM_MIN, /* Range of Brains for players controlled by software. */
-  BRAIN_IDLE_DELAY = BRAIN_ALGORITHM_MIN,
-  /* This one doesn't accelerate, just drifts around, for 30 seconds, then it
-     randomly picks another brain type.  It's used for disconnected players, so
-     they can reconnect within the time delay without much happening.  But if
-     they take too long, they get replaced by an AI or become inactive. */
+  BRAIN_IDLE,
+  /* This one doesn't accelerate, just drifts around.  It's used for
+     disconnected players, so they can reconnect within a time delay without
+     much happening.  But if they take too long, the player becomes inactive. */
   BRAIN_CONSTANT_SPEED,
   /* Tries to speed up to move at a constant speed in whatever direction it is
      already going in. */
   BRAIN_HOMING,
   /* Tries to go towards another player at a constant speed.  Other player
      choice changes sequentially every 10 seconds. */
-  BRAIN_ALGORITHM_MAX,
-  BRAIN_MAX = BRAIN_ALGORITHM_MAX
+  BRAIN_MAX
 } player_brain;
 
 
@@ -76,89 +74,65 @@ typedef struct player_struct {
   player_brain brain;
     /* What controls this player, or marks it as inactive (not drawn). */
 
-  __uint32_t brain_info;
+  uint32_t brain_info;
     /* Extra information about this brain.  Joystick number for joysticks,
        network identification for remote players, algorithm stuff for AI. */
 
-  __uint8_t main_colour;
+  uint8_t main_colour;
   /* Predefined colour for this player's main graphic.  On the NABU this is a
      number from 1 to 15 in the standard TMS9918A palette, see the
      k_PLAYER_COLOURS[iPlayer].main value.  In Unix, using ncurses, this is a
      number from 1 to 4, which we'll calculate from the player index. */
 
 #ifdef NABU_H
-  __uint8_t shadow_colour;
+  uint8_t vdpSpriteX; /* 0 left, to 255 almost off right side. */
+  uint8_t vdpSpriteY;
+  /* $E1 past top, $FF=-1 for fully visible at top of screen, 191 off bottom,
+     207 maximum past bottom, 208=$D0 to end sprite list. */
+  uint8_t vdpEarlyClock32Left; /* 0, or $80 for shift left 32 pixels. */
+  /* Ball location converted to sprite coordinates.  The main ball sprite and
+     the sparkle sprite are at these locations.  The shadow sprite is offset
+     one pixel to the lower right. */
+  
+  SpriteAnimationType main_anim_type; /* Animation for the main ball sprite. */
+  SpriteAnimRecord main_anim; /* A copy of the related animation data. */
+
+  uint8_t shadow_colour;
   /* Predefined colour for this player's shadow sprite.  We're using colours
      which have a darker version of the same colour, so that can be a
-     drop-shadow.  Caches the values from k_PLAYER_COLOURS[player#]. */
+     drop-shadow.  Caches the values from k_PLAYER_COLOURS[player#].
+     The shadow sprite will be showing the main animation, just offset a bit. */
 
-  __uint8_t sparkle_colour;
+  uint8_t sparkle_colour;
   /* Predefined colour for this player's sparkle sprite.  It's usually used for
      power-up animations and other such things around the ball.  Caches the
      values from k_PLAYER_COLOURS[player#]. */
-
-  __uint16_t sprite_vdp_address;
-  /* Location of this player's sprite attribute data in NABU video memory.  We
-     may later use a second sprite for a drop-shadow - same as main sprite
-     except a darker colour and slightly offset, can simulate height above the
-     ground by changing the offset. */
-
-  /* What value we have stored in the VDP sprite attributes for our player main
-     sprite.  If we compute a different value, we need to write it to the VDP
-     and update these cached values.  Order is the same order as in the
-     hardware, thus Y is before X. */
-  uint8_t main_sprite_vdp_y_position;
-  uint8_t main_sprite_vdp_x_position;
-  uint8_t main_sprite_vdp_name;
-  /* The name is the index to a 8 byte pattern element in the sprite generator
-     table.  16x16 sprites use 4 of those elements in a AC/BD left to right
-     order.  So animations need 4 elements (32 bytes) per frame.  The players
-     can reuse the same animations (one for each power up), so 256/4 = 64 total
-     animation frames are available in VRAM (might be able to dynamically load
-     animations only for currently active power-ups). */
-  uint8_t main_sprite_vdp_flags_colour;
-  /* Current colour, and a 32 pixel shift flag for sprites with -32 < X < 0 */
-  
-  __uint8_t sprite_vdp_name;
-  /* What graphic are we showing for the sprite?  Could be an animation. */
+  SpriteAnimationType sparkle_anim_type; /* Which sparkle animation, or none. */
+  SpriteAnimRecord sparkle_anim;
 #endif /* NABU_H */
-} player_record;
+} player_record, *player_pointer;
 
 /* An array of players.  To avoid using alloc/free with resulting fragmentation
-   of the minuscule NABU memory, it is a static array sized in advance to be
-   as large as possible. */
-static player_record g_player_array[MAX_PLAYERS];
+   of the minuscule NABU memory, it is a global array sized in advance to be
+   as large as possible, and we just flag inactive players (can be
+   non-sequential as joysticks are picked up or go idle). */
+extern player_record g_player_array[MAX_PLAYERS];
+
+extern void InitialisePlayers(void);
+/* Set up the initial player data, mostly colours and animations. */
+
+extern void UpdatePlayerAnimations(void);
+/* Update animations for the next frame.  Also convert location of the player
+   to hardware pixel coordinates. */
 
 
 #ifdef NABU_H
-/* Predefined colour choices for the players, used on the NABU.  The palette is
-   so limited that it's not worthwhile letting the player choose.  The first
-   three are fairly distinct, though the fourth redish one is easily confused
-   with others, which is why it's fourth. */
-
-typedef struct colour_triplet_struct {
-  uint8_t main;
-  uint8_t shadow;
-  uint8_t sparkle;
-} colour_triplet_record;
-
-static const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
-  { VDP_MED_GREEN, VDP_DARK_GREEN, VDP_LIGHT_GREEN },
-  { VDP_LIGHT_BLUE, VDP_DARK_BLUE, VDP_CYAN },
-  { VDP_LIGHT_YELLOW, VDP_DARK_YELLOW, VDP_GRAY },
-  { VDP_MED_RED, VDP_DARK_RED, VDP_LIGHT_RED}
-};
-
-/* Assignments of sprites.  There are 32, and they are displayed in priority
-   from #0 to #31, with #0 on top.  If more than 4 overlap on a scan line,
-   the top 4 are displayed and the rest disappear.  So put the balls first!
-*/
-typedef enum sprite_assignment_enum {
-  SPRITE_NUM_BALLS = 0, /* First 4 sprites are the balls for 4 players. */
-  SPRITE_NUM_EFFECTS = 4, /* Four sprites for the special effects around balls. */
-  SPRITE_NUM_SHADOWS = 8, /* Four sprites for the drop shadows under balls. */
-} sprite_numbers;
-
+extern uint8_t CopyPlayersToSprites(void);
+/* Copy all the players to hardware sprites.  Returns the number of the next
+   free sprite.  Inactive players don't use any sprites.  Also inactive sparkle
+   animations don't use a sprite.  They are copied in priority order, all balls,
+   then sparkles, then shadows.  Should be the first thing updated as the
+   vertical blanking starts, since sprites updated during display look bad. */
 #endif /* NABU_H */
 
 #endif /* _PLAYERS_H */

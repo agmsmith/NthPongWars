@@ -474,11 +474,12 @@ static void DumpOneTileToTerminal(tile_pointer pTile)
 void DumpTilesToTerminal(void)
 {
   uint8_t index;
-  tile_pointer pTile;
 
   printf("Tile data dump...\n");
 
 #if 0
+  /* Dump all tiles in the tile array. */
+  tile_pointer pTile;
   for (pTile = g_tile_array; pTile != g_play_area_end_tile; pTile++)
     DumpOneTileToTerminal(pTile);
 #endif

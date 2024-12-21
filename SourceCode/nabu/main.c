@@ -12,7 +12,7 @@
  * usually somewhere like Documents/NABU Internet Adapter/Store/NTHPONG/
  * The Art/*.PC2 files are copied as is, the *.DAT text files edited by ICVGM
  * are copied and renamed *.ICV.
-*/
+ */
 
 /* Various options to tell the Z88DK compiler system what to include. */
 
@@ -74,6 +74,7 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
 #include "../common/tiles.c"
+#include "../common/players.c"
 
 
 /* The usual press any key to continue prompt, in VDP graphics mode.  NULL for
@@ -100,6 +101,7 @@ void main(void)
   /* A few local variables to force stack frame creation, sets IX register. */
   uint8_t i;
   unsigned int sTotalMem, sLargestMem;
+  uint8_t lastSprite;
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter
@@ -230,11 +232,18 @@ void main(void)
     pTile->owner = i;
   }
 
+  InitialisePlayers();
+
+  /* The main program loop.  Update things (which may take a while), then wait
+     for vertical blanking to start, then copy data to the VDP quickly, then
+     go back to updating things etc. */
+
   s_FrameCounter = 0;
   vdp_enableVDPReadyInt();
   while (!isKeyPressed())
   {
     UpdateTileAnimations();
+    UpdatePlayerAnimations();
 #if 1
     /* Check for updates that took longer than a frame.  The DEBUG_VDP_INT
        doesn't seem to work in MAME, leaving the Alert light on all the time. */
@@ -243,6 +252,15 @@ void main(void)
 #endif
     vdp_waitVDPReadyInt();
     vdpIsReady = false;
+
+    /* Do the sprites first, since they're time critical to avoid glitches. */
+    lastSprite = CopyPlayersToSprites();
+
+    /* No more sprites to draw, terminate sprite list for the VDP with magic
+       vertical position of 208 or $D0. */
+    vdp_setWriteAddress(_vdpSpriteAttributeTableAddr + lastSprite * 4);
+    IO_VDPDATA = 208;
+
     CopyTilesToScreen();
     vdp_setCursor2(27, 0);
     strcpy(TempBuffer, "000"); /* Leading zeroes. */
@@ -265,6 +283,33 @@ void main(void)
 #endif
       ActivateTileArrayWindow();
     }
+#endif
+
+#if 1
+  /* Move players around. */
+
+  for (i = 0; i < MAX_PLAYERS; i++) 
+  {
+    player_pointer pPlayer = g_player_array + i;
+    if (pPlayer->pixel_center_x.portions.integer > 256)
+    {
+      pPlayer->pixel_center_x.portions.integer = -16;
+      pPlayer->pixel_center_y.portions.integer++;
+    }
+    else
+      pPlayer->pixel_center_x.portions.integer++;
+
+    if ((rand() & 0xff) == 0)
+    {
+      SpriteAnimationType NewType =
+        (s_FrameCounter & 0x80) ? SPRITE_ANIM_NONE : SPRITE_ANIM_BALL_EFFECT_FAST;
+      if (NewType != pPlayer->sparkle_anim_type)
+      {
+        pPlayer->sparkle_anim_type = NewType;
+        pPlayer->sparkle_anim = g_SpriteAnimData[NewType];
+      }
+    }
+  }
 #endif
 
 #if 1

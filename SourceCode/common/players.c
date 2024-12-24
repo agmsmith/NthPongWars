@@ -45,7 +45,8 @@ void InitialisePlayers(void)
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_x);
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
     pixelCoord += 32;
-    pPlayer->brain = BRAIN_INACTIVE + 1 /* bleeble */;
+    pPlayer->pixel_flying_height = 2;
+    pPlayer->brain = BRAIN_INACTIVE + 1 /* bleeble so all drawn */;
     pPlayer->brain_info = 0;
     pPlayer->main_colour =
 #ifdef NABU_H
@@ -91,33 +92,45 @@ void UpdatePlayerAnimations(void)
   int16_t screenX;
   int16_t screenY;
 
-  iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
-  do {
+  for (iPlayer = MAX_PLAYERS; iPlayer-- != 0; pPlayer++)
+  {
     if (pPlayer->brain != BRAIN_INACTIVE)
     {
       UpdateOneAnimation(&pPlayer->main_anim);
+
+#ifdef NABU_H
       if (pPlayer->sparkle_anim_type != SPRITE_ANIM_NONE)
         UpdateOneAnimation(&pPlayer->sparkle_anim);
 
-      /* Update the sprite screen coordinates. */
+      /* Update the sprite screen coordinates.  Convert from player coordinates.
+         The Nabu has a 256x192 pixel screen and 16x16 sprites, VDP top of
+         screen for sprites is (0,-1) and sprite coordinates are top left corner
+         of the sprite.  Player coordinates are center of player ball, 8 pixels
+         away from the top left of the 16x16 sprite:
+
+         Position Type    Player X    Player Y    Sprite X   Sprite Y
+         Off screen       -8          -8          -16        -17
+         Partly on screen -7 to 7    -7 to 7      -15..-1    -16..-2
+         On screen        8 to 248    8 to 184    0..240     -1..175
+         Partly on screen 249 to 263  185 to 199  241..255   176..190
+         Off screen       264         200         256        191
+      */
 
       screenX = GET_FX_INTEGER(pPlayer->pixel_center_x);
-      screenX -= 8 /* Half of hardware Sprite width; center -> top left. */;
+      screenX -= PLAYER_SCREEN_TO_SPRITE_OFFSET;
 
       screenY = GET_FX_INTEGER(pPlayer->pixel_center_y);
-      screenY -= 8 /* Half of hardware Sprite width; center -> top left. */;
+      screenY -= PLAYER_SCREEN_TO_SPRITE_OFFSET + 1 /* VDP hardware Y oddity */;
 
-      if (screenX <= -16 || screenY <= -16 || screenX >= 256 || screenY >= 192)
-      { /* Sprite is off screen, make it hidden off bottom. */
-        pPlayer->vdpEarlyClock32Left = 0;
-        pPlayer->vdpSpriteX = 255;
-        pPlayer->vdpSpriteY = 192;
+      if (screenX <= -16 || screenY <= -17 || screenX >= 256 || screenY >= 191)
+      { /* Sprite is off screen, flag it as not drawable. */
+        pPlayer->vdpSpriteY = 208; /* Our flag for not drawable. */
       }
       else /* Partly or fully on screen. */
       {
         pPlayer->vdpSpriteY = screenY;
-        if (screenX < 0) /* Hardware hack to do more than 256 coordinates. */
+        if (screenX < 0) /* Hardware trick to do a few negative coordinates. */
         {
           pPlayer->vdpEarlyClock32Left = 0x80;
           pPlayer->vdpSpriteX = screenX + 32;
@@ -128,10 +141,36 @@ void UpdatePlayerAnimations(void)
           pPlayer->vdpSpriteX = screenX;
         }
       }
+
+      /* Find the coordinates of the shadow sprite, under the ball.  Slightly
+         offset to show height above the board.  Have to calculate it separately
+         since it may be on screen while the ball is off screen. */
+
+      screenX += pPlayer->pixel_flying_height;
+      screenY += pPlayer->pixel_flying_height;
+      if (screenX <= -16 || screenY <= -17 || screenX >= 256 || screenY >= 191)
+      { /* Sprite is off screen, flag it as not drawable. */
+        pPlayer->vdpShadowSpriteY = 208; /* Our flag for not drawable. */
+      }
+      else /* Partly or fully on screen. */
+      {
+        pPlayer->vdpShadowSpriteY = screenY;
+        if (screenX < 0)
+        {
+          pPlayer->vdpShadowEarlyClock32Left = 0x80;
+          pPlayer->vdpShadowSpriteX = screenX + 32;
+        }
+        else
+        {
+          pPlayer->vdpShadowEarlyClock32Left = 0;
+          pPlayer->vdpShadowSpriteX = screenX;
+        }
+      }
+#endif /* NABU_H */
     }
-    pPlayer++;
-  } while (iPlayer-- != 0);
+  }
 }
+
 
 #ifdef NABU_H
 /* Copy all the players to hardware sprites.  Returns the number of the next
@@ -140,26 +179,23 @@ void UpdatePlayerAnimations(void)
    then sparkles, then shadows.  Should be the first thing updated as the
    vertical blanking starts, since sprites updated during display look bad.
 */
-uint8_t CopyPlayersToSprites(void)
+void CopyPlayersToSprites(void)
 {
-  uint8_t spriteCount;
   uint8_t iPlayer;
   player_pointer pPlayer;
 
-  spriteCount = 0;
   vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
 
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE)
+    if (pPlayer->brain != BRAIN_INACTIVE && pPlayer->vdpSpriteY != 0xD0)
     {
-      /* Do the main ball sprite.  Presumably always present. */
+      /* Do the main ball sprite, if on screen. */
       IO_VDPDATA = pPlayer->vdpSpriteY;
       IO_VDPDATA = pPlayer->vdpSpriteX;
       IO_VDPDATA = pPlayer->main_anim.current_name;
       IO_VDPDATA = pPlayer->vdpEarlyClock32Left | pPlayer->main_colour;
-      spriteCount++;
     }
     pPlayer++;
   } while (iPlayer-- != 0);
@@ -169,40 +205,38 @@ uint8_t CopyPlayersToSprites(void)
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE)
+    if (pPlayer->brain != BRAIN_INACTIVE &&
+    pPlayer->sparkle_anim_type != SPRITE_ANIM_NONE &&
+    pPlayer->vdpSpriteY != 0xD0)
     {
-      if (pPlayer->sparkle_anim_type != SPRITE_ANIM_NONE)
-      {
-        /* Do the sparkle power-up sprite.  Same location as ball. */
-        IO_VDPDATA = pPlayer->vdpSpriteY;
-        IO_VDPDATA = pPlayer->vdpSpriteX;
-        IO_VDPDATA = pPlayer->sparkle_anim.current_name;
-        IO_VDPDATA = pPlayer->vdpEarlyClock32Left | pPlayer->sparkle_colour;
-        spriteCount++;
-      }
+      /* Do the sparkle power-up sprite.  Same location as ball. */
+      IO_VDPDATA = pPlayer->vdpSpriteY;
+      IO_VDPDATA = pPlayer->vdpSpriteX;
+      IO_VDPDATA = pPlayer->sparkle_anim.current_name;
+      IO_VDPDATA = pPlayer->vdpEarlyClock32Left | pPlayer->sparkle_colour;
     }
     pPlayer++;
   } while (iPlayer-- != 0);
 
-  /* Do the shadow sprites.  Same as ball sprite, but different colour and
-     slightly offset.  In future could offset it more to show ball flying. */
+  /* Do the shadow sprites.  Same shape as ball sprite, but different colour
+     and slightly offset to show height above ground. */
 
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE)
+    if (pPlayer->brain != BRAIN_INACTIVE && pPlayer->vdpShadowSpriteX != 0xD0)
     {
-      /* Do the shadow ball sprite.  Presumably always present. */
-      IO_VDPDATA = pPlayer->vdpSpriteY + 1;
-      IO_VDPDATA = pPlayer->vdpSpriteX + 1;
+      IO_VDPDATA = pPlayer->vdpShadowSpriteY;
+      IO_VDPDATA = pPlayer->vdpShadowSpriteX;
       IO_VDPDATA = pPlayer->main_anim.current_name;
-      IO_VDPDATA = pPlayer->vdpEarlyClock32Left | pPlayer->shadow_colour;
-      spriteCount++;
+      IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | pPlayer->shadow_colour;
     }
     pPlayer++;
   } while (iPlayer-- != 0);
 
-  return spriteCount;
+  /* No more sprites to draw, terminate sprite list for the VDP with magic
+     vertical position of 208 or $D0. */
+  IO_VDPDATA = 0xD0;
 }
 #endif /* NABU_H */
 

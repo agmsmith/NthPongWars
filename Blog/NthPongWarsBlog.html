@@ -1035,6 +1035,18 @@ but it works, with ball, shadow and power-up layers.
 <P ALIGN=CENTER><IMG SRC="FirstSprites20241220.GIF" WIDTH="280" HEIGHT="216"
 ALT="[Video of Sprites Moving for the First Time!]">
 
+<P>Three days later, I added keyboard inputs to manually move sprites around and
+check that the coordinate conversion from player to screen to VDP works.  The
+sprites now hit the edge at the right time, and can go past the screen edge to
+be off screen (useful when the board is bigger than the screen display).  Turns
+out the VDP top of screen for sprites is -1, not zero in the Y coordinate.
+
+<P>I also added a variable offset for the shadow sprite.  You can move the
+shadow away from the ball to show that the ball is flying above the board.
+I'll have to come up with some power-up ideas to use that.
+
+<P>Now that player drawing is working, next up is the physics simulation.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.

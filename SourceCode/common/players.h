@@ -35,7 +35,14 @@
    and just draw an 8x8 ball in the center of the sprite and animate power-up
    effects around the ball.  The player is considered to be spherical (with this
    diameter), centered in the hardware sprite box. */
-#define PLAYER_PIXEL_DIAMETER_NORMAL = 8
+#define PLAYER_PIXEL_DIAMETER_NORMAL 8
+
+#ifdef NABU_H
+/* Offset from the player screen coordinates to the top left corner of the
+   sprite.  Since the players are 8 pixels in diameter, centered in the sprite
+   box, the offset is 8 pixels in both X and Y. */
+#define PLAYER_SCREEN_TO_SPRITE_OFFSET 8 
+#endif /* NABU_H */
 
 /* The various brains that can run a player.
 */
@@ -70,6 +77,10 @@ typedef struct player_struct {
      pixel coordinates.  Signed, because players can go off screen, though
      tiles can't, but we do math with both.  The sprite's top left corner has
      to be calculated from the center. */
+  uint8_t pixel_flying_height;
+    /* How far above the board the player is.  Will draw the shadow sprite
+       offset diagonally by this many pixels. 2 is a good value, 1 is hard to
+       see, 0 is hidden by the ball (ball on ground?). */
 
   player_brain brain;
     /* What controls this player, or marks it as inactive (not drawn). */
@@ -88,11 +99,15 @@ typedef struct player_struct {
   uint8_t vdpSpriteX; /* 0 left, to 255 almost off right side. */
   uint8_t vdpSpriteY;
   /* $E1 past top, $FF=-1 for fully visible at top of screen, 191 off bottom,
-     207 maximum past bottom, 208=$D0 to end sprite list. */
+     207 maximum past bottom, 208=$D0 to end sprite list.  We also use that
+     magic value to flag sprites that are off screen and shouldn't be drawn. */
   uint8_t vdpEarlyClock32Left; /* 0, or $80 for shift left 32 pixels. */
   /* Ball location converted to sprite coordinates.  The main ball sprite and
      the sparkle sprite are at these locations.  The shadow sprite is offset
-     one pixel to the lower right. */
+     a bit to show depth. */
+  uint8_t vdpShadowSpriteX;
+  uint8_t vdpShadowSpriteY;
+  uint8_t vdpShadowEarlyClock32Left;
   
   SpriteAnimationType main_anim_type; /* Animation for the main ball sprite. */
   SpriteAnimRecord main_anim; /* A copy of the related animation data. */
@@ -127,7 +142,7 @@ extern void UpdatePlayerAnimations(void);
 
 
 #ifdef NABU_H
-extern uint8_t CopyPlayersToSprites(void);
+extern void CopyPlayersToSprites(void);
 /* Copy all the players to hardware sprites.  Returns the number of the next
    free sprite.  Inactive players don't use any sprites.  Also inactive sparkle
    animations don't use a sprite.  They are copied in priority order, all balls,

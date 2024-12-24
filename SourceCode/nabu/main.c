@@ -55,7 +55,7 @@
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
 
-#if 0 /* We have our own VDP font now, don't need ASCII array in memory. */
+#if 0 /* We have our own VDP font now, don't need ASCII array using memory. */
 #define FONT_LM80C
 #include "../../../NABU-LIB/NABULIB/patterns.h" /* Font as a global array. */
 #endif
@@ -101,7 +101,7 @@ void main(void)
   /* A few local variables to force stack frame creation, sets IX register. */
   uint8_t i;
   unsigned int sTotalMem, sLargestMem;
-  uint8_t lastSprite;
+  bool keepRunning;
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter
@@ -135,15 +135,15 @@ void main(void)
      Or if you've redirected output to a remote device (telnet server), you can
      see it there. */
 
-  printf ("Welcome to the Nth Pong Wars NABU game.\n");
-  printf ("By Alexander G. M. Smith, contact me at\n");
-  printf ("agmsmith@ncf.ca.  Project started\n");
-  printf ("February 2024, see the blog at\n");
-  printf ("https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n");
-  printf ("Compiled on " __DATE__ " at " __TIME__ ".\n");
+  printf("Welcome to the Nth Pong Wars NABU game.\n");
+  printf("By Alexander G. M. Smith, contact me at\n");
+  printf("agmsmith@ncf.ca.  Project started\n");
+  printf("February 2024, see the blog at\n");
+  printf("https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n");
+  printf("Compiled on " __DATE__ " at " __TIME__ ".\n");
   mallinfo(&sTotalMem, &sLargestMem);
-  printf ("Heap has %u bytes free, largest %u.\n", sTotalMem, sLargestMem);
-  printf ("Using the SDCC compiler, unknown version.\n");
+  printf("Heap has %u bytes free, largest %u.\n", sTotalMem, sLargestMem);
+  printf("Using the SDCC compiler, unknown version.\n");
 
   /* Weird bug in Z88DK where printf("$%X $$$$$%X", a, b); loses any
      number of dollar signs before the second %X. */
@@ -219,19 +219,6 @@ void main(void)
     return;
   }
 
-  /* Set up a test pattern in the tile array. */
-
-  for (i = 0; i < OWNER_MAX && i < g_play_area_width_tiles; i++)
-  {
-    tile_pointer pTile;
-    pTile = g_tile_array_row_starts[i];
-    if (pTile == NULL)
-      break;
-    pTile->owner = i;
-    pTile += i;
-    pTile->owner = i;
-  }
-
   InitialisePlayers();
 
   /* The main program loop.  Update things (which may take a while), then wait
@@ -239,14 +226,16 @@ void main(void)
      go back to updating things etc. */
 
   s_FrameCounter = 0;
+  keepRunning = true;
   vdp_enableVDPReadyInt();
-  while (!isKeyPressed())
+  while (keepRunning)
   {
     UpdateTileAnimations();
     UpdatePlayerAnimations();
 #if 1
     /* Check for updates that took longer than a frame.  The DEBUG_VDP_INT
-       doesn't seem to work in MAME, leaving the Alert light on all the time. */
+       doesn't seem to work in MAME, leaving the Alert light on all the time,
+       because vdp_waitVDPReadyInt() doesn't clear the vdpIsReady flag. */
     if (vdpIsReady)
       playNoteDelay(2, 71, 40); /* High, short note. */
 #endif
@@ -254,12 +243,7 @@ void main(void)
     vdpIsReady = false;
 
     /* Do the sprites first, since they're time critical to avoid glitches. */
-    lastSprite = CopyPlayersToSprites();
-
-    /* No more sprites to draw, terminate sprite list for the VDP with magic
-       vertical position of 208 or $D0. */
-    vdp_setWriteAddress(_vdpSpriteAttributeTableAddr + lastSprite * 4);
-    IO_VDPDATA = 208;
+    CopyPlayersToSprites();
 
     CopyTilesToScreen();
     vdp_setCursor2(27, 0);
@@ -286,11 +270,13 @@ void main(void)
 #endif
 
 #if 1
-  /* Move players around. */
+  /* Move players around and change animations. */
 
-  for (i = 0; i < MAX_PLAYERS; i++) 
+  for (i = 0; i < MAX_PLAYERS; i++)
   {
     player_pointer pPlayer = g_player_array + i;
+
+#if 0
     if (pPlayer->pixel_center_x.portions.integer > 256)
     {
       pPlayer->pixel_center_x.portions.integer = -16;
@@ -298,6 +284,7 @@ void main(void)
     }
     else
       pPlayer->pixel_center_x.portions.integer++;
+#endif
 
     if ((rand() & 0xff) == 0)
     {
@@ -315,14 +302,13 @@ void main(void)
 #if 1
   /* Draw some new tiles once in a while, randomly moving around. */
 
-  if ((s_FrameCounter & 0x3) == 2)
   {
     static uint8_t row, col;
     tile_owner newOwner;
     tile_pointer pTile;
 
     row++;
-    if (((s_FrameCounter >> 4) & 0x0f) == 0)
+    if (((s_FrameCounter >> 4) & 0x3f) == 22)
     { /* Rarely put in a power up. */
       newOwner = (rand() & 7) + OWNER_PUP_NORMAL;
     }
@@ -332,7 +318,7 @@ void main(void)
       if (newOwner >= OWNER_PUP_NORMAL)
         newOwner = OWNER_MAX; /* Skip power ups. */
     }
-    if (newOwner <= OWNER_MAX)
+    if (newOwner < OWNER_MAX)
     {
       col++;
       if (col >= g_play_area_width_tiles)
@@ -349,7 +335,7 @@ void main(void)
   }
 #endif
 
-#if 1
+#if 1 /* Check for corrupted memory. */
     if (memcmp(s_OriginalLocationZeroMemory, NULL,
     sizeof(s_OriginalLocationZeroMemory)) != 0)
     {
@@ -363,6 +349,62 @@ void main(void)
       vdp_print("Corrupted Stack Memory!");
     }
 #endif
+    /* Process Keyboard and Joystick inputs. */
+
+    while (isKeyPressed())
+    {
+      static uint8_t iControlledPlayer = 0;
+      uint8_t letter;
+
+      letter = getChar(); /* Note, may flash cursor, writing ' ' to VDP. */
+      if (letter >= 0xE0 && letter < 0xE4) /* Cursor key pressed. */
+      {
+        player_pointer pPlayer = g_player_array + iControlledPlayer;
+        if (letter == 0xE3) /* Down cursor key pressed. */
+        {
+          if (++pPlayer->pixel_center_y.portions.integer > 202)
+            pPlayer->pixel_center_y.portions.integer = -10;
+        }
+        if (letter == 0xE2) /* Up cursor key pressed. */
+        {
+          if (--pPlayer->pixel_center_y.portions.integer < -10)
+            pPlayer->pixel_center_y.portions.integer = 202;
+        }
+        if (letter == 0xE1) /* Left cursor key pressed. */
+        {
+          if (--pPlayer->pixel_center_x.portions.integer < -10)
+            pPlayer->pixel_center_x.portions.integer = 266;
+        }
+        if (letter == 0xE0) /* Right cursor key pressed. */
+        {
+          if (++pPlayer->pixel_center_x.portions.integer > 266)
+            pPlayer->pixel_center_x.portions.integer = -10;
+        }
+        printf("Player %d moved to %d, %d.\n", iControlledPlayer,
+          pPlayer->pixel_center_x.portions.integer,
+          pPlayer->pixel_center_y.portions.integer);
+      }
+      else if (letter >= 0x80) /* High bit set for joystick and NABU special keys. */
+      {
+        /* Joystick or special keys.  Ignore them, there are lots of them. */
+        /* printf("(%X)", letter); */
+      }
+      else
+      {
+        printf ("Got letter %d %c.\n", (int) letter, letter);
+        if (letter == 'q')
+          keepRunning = false;
+        else if (letter >= '1' && letter <= '4')
+        {
+          iControlledPlayer = letter - '1';
+          printf("Now controlling player %d.\n", (int) iControlledPlayer);
+        }
+        else if (letter == 'r')
+          vdp_refreshViewPort();
+        else
+          printf ("Unhandled letter %d.\n", (int) letter);
+      }
+    }
   }
   vdp_disableVDPReadyInt();
 

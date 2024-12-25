@@ -981,11 +981,11 @@ redirected, so only use the CON: one.  You can set it back to the screen with
 
 <H3>Faster Tiles, Less Crashing</H3>
 
-<P>After fixing some bugs and switching to using a cache for updating only tiles
-which are both on screen and have animation, it's starting to work better.
-Still have to speed things up more by making a cache listing dirty tiles that
-need drawing, rather than scanning the whole array of tiles to look for dirty
-flags.
+<P>After fixing some bugs and switching to using a cache for updating only
+tiles which are both on screen and have animation, it's starting to work
+better.  Still have to speed things up more by making a cache listing dirty
+tiles that need drawing, rather than scanning the whole array of tiles to look
+for dirty flags.
 
 <P>Along the way, I found out that the most reliable way to exit back to CP/M
 is with a jump to location zero, assuming you haven't trashed it with a NULL
@@ -1002,10 +1002,10 @@ after waiting.
 
 <H3>Even Faster Tiles!</H3>
 
-<P>Today I implemented the dirty tile cache, so now it only processes tiles that
-need drawing, until the cache overflows and we go back to the old slow full
-screen scan technique.  It can support up to about 30 animated tiles before
-running over the 60hz frame update time.  Since those will be used for
+<P>Today I implemented the dirty tile cache, so now it only processes tiles
+that need drawing, until the cache overflows and we go back to the old slow
+full screen scan technique.  It can support up to about 30 animated tiles
+before running over the 60hz frame update time.  Since those will be used for
 power-ups, we can design it to not have that many of them.  Though we'll need
 CPU time to calculate the ball movements and physics, so the final limit will
 be smaller.  Perhaps aim for 8 power ups active at any time?
@@ -1035,17 +1035,75 @@ but it works, with ball, shadow and power-up layers.
 <P ALIGN=CENTER><IMG SRC="FirstSprites20241220.GIF" WIDTH="280" HEIGHT="216"
 ALT="[Video of Sprites Moving for the First Time!]">
 
-<P>Three days later, I added keyboard inputs to manually move sprites around and
-check that the coordinate conversion from player to screen to VDP works.  The
-sprites now hit the edge at the right time, and can go past the screen edge to
-be off screen (useful when the board is bigger than the screen display).  Turns
-out the VDP top of screen for sprites is -1, not zero in the Y coordinate.
+<P>Three days later, I added keyboard inputs to manually move sprites around
+and check that the coordinate conversion from player to screen to VDP works.
+The sprites now hit the edge at the right time, and can go past the screen edge
+to be off screen (useful when the board is bigger than the screen display).
+Turns out the VDP top of screen for sprites is -1, not zero in the Y
+coordinate.
 
 <P>I also added a variable offset for the shadow sprite.  You can move the
 shadow away from the ball to show that the ball is flying above the board.
 I'll have to come up with some power-up ideas to use that.
 
 <P>Now that player drawing is working, next up is the physics simulation.
+
+<HR>
+<H2><A NAME="2024.12.25"></A>2024.12.25</H2>
+
+<H3>Physics in Small Steps</H3>
+
+<P>After a night of sleeping on it, I've come up with an approach that should
+let slow and fast balls collide semi-accurately with tiles and other balls,
+with out too much slow math.  Better write it down before I wake up!
+
+<P>Balls have a position in play area coordinates (pixels basically, can be
+bigger than the screen), and a velocity in pixels per frame (a fixed point
+fraction, 2 byte integer part, 2 byte fraction - though that may go down to 1
+byte fraction for speed if I have time to write some math routines in
+assembler).  Each frame, the ball moves forward the distance and direction
+specified by the velocity by adding the velocity to the position, unless it
+hits something.  However, I want balls to move both slower than 1 and faster
+than 1 pixel per frame.  The hard part is going faster than a tile or ball
+width in pixels - I don't want to skip over tiles and other balls while zipping
+along.
+
+<P>Some pinball games do it by running the physics at some multiple of the
+frame rate, though most stop at 60 hz.  <A
+HREF="https://www.vpforums.org/index.php?showtopic=27416&page=1">Virtual
+Pinball</A> decouples physics from frame rate and can run it much faster, with
+the caveat that each physics step should take the same amount of time for
+consistency.  Andreas Axelsson of <A
+HREF="https://www.lemonamiga.com/interviews/andreas_axelsson/">Pinball
+Dreams/Fantasies/Illusions</A> fame has <A
+HREF="https://gamedev.net/forums/topic/55242-pinball/">some tips on
+collisions</A> - using a ball bitmap with collision angles embedded, and again
+physics running faster than the frame rate.
+
+<P>The Nabu doesn't have the CPU horsepower to do multiple physics updates per
+frame all the time, so I'm going to use smaller updates steps only when needed.
+The number of updates is related to the fastest ball's speed - each step should
+advance the ball by at most 1 tile in X or Y (8 pixels in our case).  If there
+are slight rounding errors causing missed tiles, advance by 0.5 tile width.
+Since we don't want to do division, find the number of right shifts that reduce
+the fastest ball's fastest velocity coordinate to less than 1 tile, then do
+that shifting on all ball velocities to get the per step velocity for each
+ball.  We will be doing 2**(number of shifts) steps, at minimum 0 shifts, at
+most 7 shifts, corresponding to 1 to 128 steps (if a ball is moving faster than
+128 tiles per frame, some collisions will be missed).  All the balls will be
+updated with that number of steps and updated in parallel, so that balls
+crossing paths will collide at the right spot.
+
+<P>Each step, add the step velocity to the ball position to get the new
+position for that step.  Check tiles around that new position for collisions -
+have to check the tile the ball is on and the 3 adjacent tiles in the quadrant
+nearest the new position to see if their distance from tile center to ball
+center is less than (tile radius + ball radius).  Once all balls are updated
+for the step, check for collisions between balls using centers and ball radii.
+
+<P>When a collision happens, reflect the ball velocity and ball's step
+velocity.  Maybe reduce or increase the ball velocity (but not the step
+velocity - too messy) for inelastic or explosive collisions.
 
 <P>- Alex
 

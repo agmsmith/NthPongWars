@@ -4,23 +4,24 @@
  * ball using VDP video memory direct access, and our fixed point math.
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a usable .COM file),
- * with --math32 for 32 bit floating point.  Use the command line:
+ * Optionally with --math32 for 32 bit floating point, uses 5K extra memory.
+ * Use this command line to compile:
  *
- * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm -o "NTHPONG.COM"
+ * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed main.c z80_delay_ms.asm z80_delay_tstate.asm -o "NTHPONG.COM"
  *
  * To prepare to run, create the data files in the server store directory,
  * usually somewhere like Documents/NABU Internet Adapter/Store/NTHPONG/
  * The Art/*.PC2 files are copied as is, the *.DAT text files edited by ICVGM
- * are copied and renamed *.ICV.
+ * are copied and renamed *.ICV (TODO: convert them to binary for speed).
  */
 
 /* Various options to tell the Z88DK compiler system what to include. */
 
 #pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
-/* #pragma output noredir /* No command line file redirection. */
+#pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
-#pragma printf = "%f %d %u %ld %c %s %X %lX" /* Need these printf formats. */
+#pragma printf = "%d %u %ld %c %s %X" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
 #pragma define CRT_STACK_SIZE=1024
@@ -35,7 +36,7 @@
   #include <stdlib.h>
   #include <stdio.h> /* For printf and sprintf and stdout file handles. */
 #endif
-#include <math.h> /* For 32 bit floating point math routines. */
+/* #include <math.h> /* For 32 bit floating point math routines. */
 #include <string.h> /* For strlen. */
 #include <malloc.h> /* For malloc and free, and initialising a heap. */
 
@@ -45,7 +46,8 @@
    and it has a richer library for our purposes than the Z88DK NABU support.
    Here are some defines to select options in the library, see NABU-LIB.h
    for docs.  You may need to adjust the paths to fit where you downloaded it
-   from https://github.com/DJSures/NABU-LIB.git */
+   from https://github.com/DJSures/NABU-LIB.git   There's also a fixed up fork
+   at https://github.com/agmsmith/NABU-LIB/tree/NthPongCustomisations */
 #define BIN_TYPE BIN_CPM /* We're compiling for CP/M OS, not stand alone. */
 /* #define DISABLE_KEYBOARD_INT /* Disable it to use only the CP/M keyboard. */
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
@@ -55,7 +57,7 @@
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
 
-#if 0 /* We have our own VDP font now, don't need ASCII array using memory. */
+#if 0 /* We have our own VDP font now, don't need array using up memory. */
 #define FONT_LM80C
 #include "../../../NABU-LIB/NABULIB/patterns.h" /* Font as a global array. */
 #endif
@@ -75,10 +77,13 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
 #include "../common/tiles.c"
 #include "../common/players.c"
+#include "../common/simulate.c"
 
 
-/* The usual press any key to continue prompt, in VDP graphics mode.  NULL for
-   a default message string. */
+/*******************************************************************************
+ * The usual press any key to continue prompt, in VDP graphics mode.  NULL for
+ * a default message string.
+ */
 static char HitAnyKey(const char *MessageText)
 {
   vdp_newLine();
@@ -86,8 +91,11 @@ static char HitAnyKey(const char *MessageText)
   return getChar();
 }
 
-/* Variables in main() that also need to be accessed from assembler have to be
-   globalish.  Make them static. */
+
+/*******************************************************************************
+ * Main program.  Variables in main() that also need to be accessed from
+ * assembler have to be globalish.  Make them static but global scope.
+ */
 static uint16_t s_StackFramePointer = 0;
 static uint16_t s_StackPointer = 0;
 
@@ -111,7 +119,7 @@ void main(void)
 
   /* Grab the stack pointer and stack frame pointer to see if they're sane.
      If the frame pointer is $FF00 or above (the CP/M really small stack),
-     while stack is $Cxxx then things may go badly.  Frame should be inside
+     while stack is $Cxxx then things may go badly.  Frame should be nearby
      stack. */
   __asm
   push af;
@@ -133,7 +141,7 @@ void main(void)
      the NABU CP/M has a screen text buffer and that will be restored to the
      screen when the program exits, so you can see printf output after exit.
      Or if you've redirected output to a remote device (telnet server), you can
-     see it there. */
+     see it there and it doesn't mess up the screen. */
 
   printf("Welcome to the Nth Pong Wars NABU game.\n");
   printf("By Alexander G. M. Smith, contact me at\n");
@@ -235,7 +243,7 @@ void main(void)
 #if 1
     /* Check if our update took longer than a frame. */
     if (vdpIsReady) /* Non-zero means we missed 1 or more frames. */
-      playNoteDelay(2, 65 + vdpIsReady /* Higher if more missed */, 40);
+      playNoteDelay(2, 65 + vdpIsReady /* Higher pitch if more missed */, 40);
 #endif
     vdp_waitVDPReadyInt();
 

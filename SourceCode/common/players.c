@@ -46,6 +46,10 @@ void InitialisePlayers(void)
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
     pixelCoord += 32;
     pPlayer->pixel_flying_height = 2;
+    INT_TO_FX(6, pPlayer->velocity_x);
+    DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
+    INT_TO_FX(1, pPlayer->velocity_y);
+
     pPlayer->brain = BRAIN_INACTIVE + 1 /* bleeble so all drawn */;
     pPlayer->brain_info = 0;
     pPlayer->main_colour =
@@ -125,7 +129,7 @@ void UpdatePlayerAnimations(void)
 
       if (screenX <= -16 || screenY <= -17 || screenX >= 256 || screenY >= 191)
       { /* Sprite is off screen, flag it as not drawable. */
-        pPlayer->vdpSpriteY = 208; /* Our flag for not drawable. */
+        pPlayer->vdpSpriteY = SPRITE_NOT_DRAWABLE;
       }
       else /* Partly or fully on screen. */
       {
@@ -144,26 +148,32 @@ void UpdatePlayerAnimations(void)
 
       /* Find the coordinates of the shadow sprite, under the ball.  Slightly
          offset to show height above the board.  Have to calculate it separately
-         since it may be on screen while the ball is off screen. */
+         since it may be on screen while the ball is off screen.  Or maybe it's
+         not drawn at all, if the ball is on the ground. */
 
-      screenX += pPlayer->pixel_flying_height;
-      screenY += pPlayer->pixel_flying_height;
-      if (screenX <= -16 || screenY <= -17 || screenX >= 256 || screenY >= 191)
-      { /* Sprite is off screen, flag it as not drawable. */
-        pPlayer->vdpShadowSpriteY = 208; /* Our flag for not drawable. */
-      }
-      else /* Partly or fully on screen. */
+      if (pPlayer->pixel_flying_height == 0)
+        pPlayer->vdpShadowSpriteY = SPRITE_NOT_DRAWABLE;
+      else
       {
-        pPlayer->vdpShadowSpriteY = screenY;
-        if (screenX < 0)
-        {
-          pPlayer->vdpShadowEarlyClock32Left = 0x80;
-          pPlayer->vdpShadowSpriteX = screenX + 32;
+        screenX += pPlayer->pixel_flying_height;
+        screenY += pPlayer->pixel_flying_height;
+        if (screenX <= -16 || screenY <= -17 || screenX >= 256 || screenY >= 191)
+        { /* Sprite is off screen, flag it as not drawable. */
+          pPlayer->vdpShadowSpriteY = SPRITE_NOT_DRAWABLE;
         }
-        else
+        else /* Partly or fully on screen. */
         {
-          pPlayer->vdpShadowEarlyClock32Left = 0;
-          pPlayer->vdpShadowSpriteX = screenX;
+          pPlayer->vdpShadowSpriteY = screenY;
+          if (screenX < 0)
+          {
+            pPlayer->vdpShadowEarlyClock32Left = 0x80;
+            pPlayer->vdpShadowSpriteX = screenX + 32;
+          }
+          else
+          {
+            pPlayer->vdpShadowEarlyClock32Left = 0;
+            pPlayer->vdpShadowSpriteX = screenX;
+          }
         }
       }
 #endif /* NABU_H */
@@ -189,7 +199,8 @@ void CopyPlayersToSprites(void)
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE && pPlayer->vdpSpriteY != 0xD0)
+    if (pPlayer->brain != BRAIN_INACTIVE &&
+    pPlayer->vdpSpriteY != SPRITE_NOT_DRAWABLE)
     {
       /* Do the main ball sprite, if on screen. */
       IO_VDPDATA = pPlayer->vdpSpriteY;
@@ -207,7 +218,7 @@ void CopyPlayersToSprites(void)
   do {
     if (pPlayer->brain != BRAIN_INACTIVE &&
     pPlayer->sparkle_anim_type != SPRITE_ANIM_NONE &&
-    pPlayer->vdpSpriteY != 0xD0)
+    pPlayer->vdpSpriteY != SPRITE_NOT_DRAWABLE)
     {
       /* Do the sparkle power-up sprite.  Same location as ball. */
       IO_VDPDATA = pPlayer->vdpSpriteY;
@@ -224,7 +235,8 @@ void CopyPlayersToSprites(void)
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE && pPlayer->vdpShadowSpriteX != 0xD0)
+    if (pPlayer->brain != BRAIN_INACTIVE &&
+    pPlayer->vdpShadowSpriteY != SPRITE_NOT_DRAWABLE)
     {
       IO_VDPDATA = pPlayer->vdpShadowSpriteY;
       IO_VDPDATA = pPlayer->vdpShadowSpriteX;

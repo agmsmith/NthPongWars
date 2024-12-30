@@ -233,14 +233,11 @@ void main(void)
     UpdateTileAnimations();
     UpdatePlayerAnimations();
 #if 1
-    /* Check for updates that took longer than a frame.  The DEBUG_VDP_INT
-       doesn't seem to work in MAME, leaving the Alert light on all the time,
-       because vdp_waitVDPReadyInt() doesn't clear the vdpIsReady flag. */
-    if (vdpIsReady)
-      playNoteDelay(2, 71, 40); /* High, short note. */
+    /* Check if our update took longer than a frame. */
+    if (vdpIsReady) /* Non-zero means we missed 1 or more frames. */
+      playNoteDelay(2, 65 + vdpIsReady /* Higher if more missed */, 40);
 #endif
     vdp_waitVDPReadyInt();
-    vdpIsReady = false;
 
     /* Do the sprites first, since they're time critical to avoid glitches. */
     CopyPlayersToSprites();

@@ -46,7 +46,7 @@
 
 /* Use this Y sprite position to mark a sprite as not drawable.  It's the same
    as the 0xD0 magic value the hardware uses to mark the end of the sprite list,
-   so it's not a value you would normally see as a VDP Y coordinate.
+   so it's not a value you would normally see as a VDP Y coordinate. */
 #define SPRITE_NOT_DRAWABLE 208
 
 #endif /* NABU_H */

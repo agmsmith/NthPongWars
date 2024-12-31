@@ -16,8 +16,8 @@
 #define _TILES_H 1
 
 /* Size of the tiles in pixels.  On the NABU, character cells are 8 pixels.
-   Might have to make these defines platform dependent. */
-#define TILE_PIXEL_HEIGHT 8
+   Might have to make these defines platform dependent.  Assume height is the
+   same as width.  */
 #define TILE_PIXEL_WIDTH 8
 
 /* The various things that a tile can be.  Empty space, or coloured to show

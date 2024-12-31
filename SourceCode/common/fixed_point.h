@@ -55,36 +55,105 @@ typedef struct fx_bits_struct {
 } fx_bits;
 
 typedef union fx_union {
-  int32_t as_int;
+  int32_t as_int32;
   /* So you can treat the whole thing as an integer to do additions in one shot,
      but best not to use this in game code in case we switch to 3 byte fx. */
   fx_bits portions;
+  uint8_t as_bytes[4];
 } fx;
 
 #define MAX_FX_FRACTION 0xFFFF
 #define MAX_FX_INT 0x7FFF
+#define MAX_FX_POSITIVE(x) {x.as_int32 = 0x7FFFFFFF;}
 
+#define COPY_FX(x, y) {y.as_int32 = x.as_int32; }
 #define _FX_UNITY_FLOAT ((float) (((int32_t) 1) << 16))
+#define FLOAT_TO_FX(fpa, x) {x.as_int32 = fpa * _FX_UNITY_FLOAT;}
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)
-#define GET_FX_FLOAT(x) (x.as_int / _FX_UNITY_FLOAT)
-#define INT_TO_FX(inta, x) (x.portions.integer = inta, x.portions.fraction = 0)
-#define INT_FRACTION_TO_FX(inta, fracb, x) (x.portions.integer = inta, x.portions.fraction = fracb)
-#define FLOAT_TO_FX(fpa, x) (x.as_int = fpa * _FX_UNITY_FLOAT)
+#define GET_FX_FLOAT(x) (x.as_int32 / _FX_UNITY_FLOAT)
+#define INT_TO_FX(inta, x) {x.portions.integer = inta; x.portions.fraction = 0; }
+#define INT_FRACTION_TO_FX(inta, fracb, x) {x.portions.integer = inta; x.portions.fraction = fracb; }
+#define ZERO_FX(x) {x.as_int32 = 0; }
 
 /* Add fx values a and b and put the result in fx value c. */
-#define ADD_FX(a, b, c) (c.as_int = a.as_int + b.as_int)
+#define ADD_FX(a, b, c) {c.as_int32 = a.as_int32 + b.as_int32; }
 
 /* Put fx value a - b into c. */
-#define SUBTRACT_FX(a, b, c) (c.as_int = a.as_int - b.as_int)
+#define SUBTRACT_FX(a, b, c) {c.as_int32 = a.as_int32 - b.as_int32; }
 
-/* Compare two values A and B, return an integer of some sort (could be byte
-   sized on the Z80, 32 bits on x86 processors) which is negative if A < B,
-   zero if A = B, positive if A > B. */
-#define COMPARE_FX(a, b) (a.as_int - b.as_int)
+/* Put fx absolute value of x into x. */
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  #define ABS_FX(x) { if (x.as_bytes[3] & 0x80) x.as_int32 = -x.as_int32; } 
+#else /* Big endian. */
+  #define ABS_FX(x) { if (x.as_int32 < 0) x.as_int32 = -x.as_int32; } 
+#endif
+
+/* Compare two POSITIVE values A and B, return a small integer which
+   is -1 if A < B, zero if A = B, +1 if A > B.  Designed to be faster Z80 code,
+   rather than the C compiler which generates lots of temporary copies of the fx
+   arguments and copies back and forth between them. */
+int8_t COMPARE_FX(fx *x, fx *y) {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+  uint8_t *pA, *pB;
+  uint8_t a, b;
+  pA = &x->as_bytes[0];
+  pB = &y->as_bytes[0];
+  a = *pA;
+  b = *pB;
+  if (a > b)
+    goto Positive;
+  if (a < b)
+    goto Negative;
+
+  pA++;
+  pB++;
+  a = *pA;
+  b = *pB;
+  if (a > b)
+    goto Positive;
+  if (a < b)
+    goto Negative;
+
+  pA++;
+  pB++;
+  a = *pA;
+  b = *pB;
+  if (a > b)
+    goto Positive;
+  if (a < b)
+    goto Negative;
+
+  pA++;
+  pB++;
+  a = *pA;
+  b = *pB;
+  if (a > b)
+    goto Positive;
+  if (a < b)
+    goto Negative;
+  return 0;
+
+Positive:
+  return 1;
+Negative:
+  return -1;
+
+#else /* Big endian */
+
+  if (x->as_int32 < y->as_int23)
+    return -1;
+  if (x->as_int32 > y->as_int23)
+    return 1;
+  return 0;
+#endif
+}
+
+/* Divide a by 2 and put into a. */
+#define DIV2_FX(a, b) {b.as_int32 = a.as_int32 / 2; }
 
 /* Divide a by 4 and put into b. */
-#define DIV4_FX(a, b) (b.as_int = a.as_int / 4)
+#define DIV4_FX(a, b) {b.as_int32 = a.as_int32 / 4; }
 
 #endif /* _FIXED_POINT_H */
 

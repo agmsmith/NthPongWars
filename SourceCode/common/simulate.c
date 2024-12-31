@@ -1,5 +1,5 @@
 /******************************************************************************
- * Nth Pong Wars, simulate.h for updating positions of moving objects.
+ * Nth Pong Wars, simulate.c for updating positions of moving objects.
  *
  * Given the player inputs and current state of the players and tiles, move
  * things around to their positions for the next frame.  Along the way, queue
@@ -9,8 +9,6 @@
  *
  * AGMS20241108 - Start this header file.
  */
-#ifndef _SIMULATE_H
-#define _SIMULATE_H 1
 
 /*******************************************************************************
  * Calculate the new position and velocity of all players.
@@ -31,7 +29,7 @@
  * is exactly in the center of a tile, we have to check it and all 8
  * surrounding tiles.  Similarly, if it is exactly at the center X but not Y,
  * we have to check two quadrants (6 tiles including the current tile).  Think
- * of a 3x3 tick-tak-toe board.
+ * of a 3x3 tic-tac-toe board.
  *
  * Player collisions with players are found by testing all combinations, 4
  * players means 6 tests (1-2, 1-3, 1-4, 2-3, 2-4, 3-4).
@@ -41,32 +39,61 @@
  * position is not inside the wall, overriding it to be just outside the wall
  * if needed (otherwise you can get balls bouncing around inside the wall - a
  * fault in the original Pong game).  For players it's a momentum conserving
- * bounce, so possibly the hit player will end up moving faster.
+ * bounce, so possibly the hit player will end up moving faster.  The effect
+ * (mostly speed changes) of the collisions in a time step are applied in the
+ * order tiles, players, walls.
  */
 void Simulate(void)
 {
-  uint8_t iPlayer;
-
+  fx absVelocity;
+  fx maxVelocity;
+  uint8_t numberOfSteps;
   uint8_t iPlayer;
   player_pointer pPlayer;
+  uint8_t stepShiftCount;
+  fx stepPlayerVelocityX[MAX_PLAYERS];
+  fx stepPlayerVelocityY[MAX_PLAYERS];
 
-  vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
+  /* Find the largest velocity component of all the players. */
 
-  iPlayer = MAX_PLAYERS - 1;
+  ZERO_FX(maxVelocity);
   pPlayer = g_player_array;
-  do {
-    if (pPlayer->brain != BRAIN_INACTIVE &&
-    pPlayer->vdpSpriteY != SPRITE_NOT_DRAWABLE)
-    {
-      /* Do the main ball sprite, if on screen. */
-      IO_VDPDATA = pPlayer->vdpSpriteY;
-      IO_VDPDATA = pPlayer->vdpSpriteX;
-      IO_VDPDATA = pPlayer->main_anim.current_name;
-      IO_VDPDATA = pPlayer->vdpEarlyClock32Left | pPlayer->main_colour;
-    }
-    pPlayer++;
-  } while (iPlayer-- != 0);
-}
+  for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      continue;
 
-#endif /* _SIMULATE_H */
+    absVelocity = pPlayer->velocity_x;
+    ABS_FX(absVelocity);
+    if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
+      maxVelocity = absVelocity;
+  }
+
+  /* Find the number of steps needed to ensure the maximum velocity is less
+     than one tile per step, or at most something like 7.999 pixels.  Can divide
+     velocity by using the stepShiftCount to get the velocity per step. */
+
+  for (numberOfSteps = 1, stepShiftCount = 0;
+  (numberOfSteps & 0x80) == 0;
+  numberOfSteps *= 2, stepShiftCount++)
+  {
+    /* See if the step size is less than a tile width. */
+    if (GET_FX_INTEGER(maxVelocity) < TILE_PIXEL_WIDTH)
+      break; /* Step size is small enough now. */
+    DIV2_FX(maxVelocity, maxVelocity);
+  }
+
+  /* Calculate the step velocity for each player. */
+
+  pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    stepPlayerVelocityX[iPlayer].as_int32 =
+      pPlayer->velocity_x.as_int32 >> stepShiftCount;
+    stepPlayerVelocityY[iPlayer].as_int32 =
+      pPlayer->velocity_y.as_int32 >> stepShiftCount;
+  }
+  /* bleeble */
+  
+}
 

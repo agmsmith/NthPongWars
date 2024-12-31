@@ -115,8 +115,8 @@ bool InitTileArray(void)
 
   /* Clear all the tiles to an empty state. */
 
-  y = TILE_PIXEL_HEIGHT / 2; /* For centers of tiles. */
-  for (row = 0; row != g_play_area_height_tiles; row++, y += TILE_PIXEL_HEIGHT)
+  y = TILE_PIXEL_WIDTH / 2; /* For centers of tiles. */
+  for (row = 0; row != g_play_area_height_tiles; row++, y += TILE_PIXEL_WIDTH)
   {
     pTile = g_tile_array_row_starts[row];
     if (pTile == NULL)

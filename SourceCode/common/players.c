@@ -7,7 +7,7 @@
 #include "players.h"
 
 #ifdef NABU_H
-#include "Art/NthPong1.h" /* Artwork data definitions. */
+#include "Art/NthPong1.h" /* Artwork data definitions for player sprites. */
 
 /* Predefined colour choices for the players, used on the NABU.  The palette is
    so limited that it's not worthwhile letting the player choose.  The first
@@ -30,6 +30,10 @@ static const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
 
 player_record g_player_array[MAX_PLAYERS];
 
+fx g_play_area_wall_bottom_y;
+fx g_play_area_wall_left_x;
+fx g_play_area_wall_right_x;
+fx g_play_area_wall_top_y;
 
 /* Set up the initial player data, mostly colours and animations. */
 void InitialisePlayers(void)
@@ -37,6 +41,25 @@ void InitialisePlayers(void)
   uint8_t iPlayer;
   uint16_t pixelCoord;
   player_pointer pPlayer;
+
+  /* Cache the positions of the walls. */
+
+  INT_TO_FX(g_play_area_height_pixels - PLAYER_PIXEL_DIAMETER_NORMAL / 2,
+    g_play_area_wall_bottom_y);
+  INT_TO_FX(PLAYER_PIXEL_DIAMETER_NORMAL / 2, g_play_area_wall_left_x);
+  INT_TO_FX(g_play_area_width_pixels - PLAYER_PIXEL_DIAMETER_NORMAL / 2,
+    g_play_area_wall_right_x);
+  INT_TO_FX(PLAYER_PIXEL_DIAMETER_NORMAL / 2, g_play_area_wall_top_y);
+
+#if 0
+printf("Walls adjusted for player size:\n");
+printf("(%f to %f, %f to %f)\n",
+  GET_FX_FLOAT(g_play_area_wall_left_x),
+  GET_FX_FLOAT(g_play_area_wall_right_x),
+  GET_FX_FLOAT(g_play_area_wall_top_y),
+  GET_FX_FLOAT(g_play_area_wall_bottom_y)
+);
+#endif
 
   pixelCoord = 32; /* Scatter players across screen. */
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;

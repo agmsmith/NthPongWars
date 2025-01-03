@@ -62,12 +62,14 @@ typedef union fx_union {
   uint8_t as_bytes[4];
 } fx;
 
-#define MAX_FX_FRACTION 0xFFFF
-#define MAX_FX_INT 0x7FFF
-#define MAX_FX_POSITIVE(x) {x.as_int32 = 0x7FFFFFFF;}
-
-#define COPY_FX(x, y) {y.as_int32 = x.as_int32; }
+/* Related constants. */
+#define _MAX_FX_FRACTION 0xFFFF
+#define _MAX_FX_INT 0x7FFF
+#define _MAX_FX_POSITIVE(x) {x.as_int32 = 0x7FFFFFFF;}
 #define _FX_UNITY_FLOAT ((float) (((int32_t) 1) << 16))
+
+/* Setting and getting values. */
+#define COPY_FX(x, y) {y.as_int32 = x.as_int32; }
 #define FLOAT_TO_FX(fpa, x) {x.as_int32 = fpa * _FX_UNITY_FLOAT;}
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)
@@ -76,6 +78,9 @@ typedef union fx_union {
 #define INT_FRACTION_TO_FX(inta, fracb, x) {x.portions.integer = inta; x.portions.fraction = fracb; }
 #define ZERO_FX(x) {x.as_int32 = 0; }
 
+/* Negate, or subtract from 0, the fx value. */
+#define NEGATE_FX(x) {x.as_int32 = -x.as_int32; }
+
 /* Add fx values a and b and put the result in fx value c. */
 #define ADD_FX(a, b, c) {c.as_int32 = a.as_int32 + b.as_int32; }
 
@@ -83,10 +88,13 @@ typedef union fx_union {
 #define SUBTRACT_FX(a, b, c) {c.as_int32 = a.as_int32 - b.as_int32; }
 
 /* Put fx absolute value of x into x. */
+#define ABS_FX(x) { if (IS_NEGATIVE_FX(x)) NEGATE_FX(x); }
+
+/* Returns TRUE if the number is negative. */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-  #define ABS_FX(x) { if (x.as_bytes[3] & 0x80) x.as_int32 = -x.as_int32; } 
+  #define IS_NEGATIVE_FX(x) (x.as_bytes[3] & 0x80)
 #else /* Big endian. */
-  #define ABS_FX(x) { if (x.as_int32 < 0) x.as_int32 = -x.as_int32; } 
+  #define IS_NEGATIVE_FX(x) (x.as_int32 < 0)
 #endif
 
 /* Compare two POSITIVE values A and B, return a small integer which

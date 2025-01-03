@@ -14,6 +14,8 @@ uint8_t g_play_area_height_tiles = 24;
 uint8_t g_play_area_width_tiles = 32;
 uint16_t g_play_area_num_tiles = 0;
 tile_pointer g_play_area_end_tile = NULL;
+uint16_t g_play_area_height_pixels = 0;
+uint16_t g_play_area_width_pixels = 0;
 
 uint8_t g_screen_height_tiles = 24;
 uint8_t g_screen_width_tiles = 32;
@@ -86,6 +88,8 @@ bool InitTileArray(void)
   if (g_play_area_num_tiles > TILES_ARRAY_SIZE)
     return false;
   g_play_area_end_tile = g_tile_array + g_play_area_num_tiles;
+  g_play_area_height_pixels = g_play_area_height_tiles * TILE_PIXEL_WIDTH;
+  g_play_area_width_pixels = g_play_area_width_tiles * TILE_PIXEL_WIDTH;
 
   /* Fill in all the row start pointers, NULL when past the end of actual data
      for easier past end handling.  Also don't have a partial row. */

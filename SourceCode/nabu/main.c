@@ -21,7 +21,7 @@
 #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
-#pragma printf = "%d %u %ld %c %s %X" /* Need these printf formats. */
+#pragma printf = "%f %d %u %ld %c %s %X" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
 #pragma define CRT_STACK_SIZE=1024
@@ -277,19 +277,11 @@ void main(void)
 #if 1
   /* Move players around and change animations. */
 
+  Simulate();
+
   for (i = 0; i < MAX_PLAYERS; i++)
   {
     player_pointer pPlayer = g_player_array + i;
-
-#if 0
-    if (pPlayer->pixel_center_x.portions.integer > 256)
-    {
-      pPlayer->pixel_center_x.portions.integer = -16;
-      pPlayer->pixel_center_y.portions.integer++;
-    }
-    else
-      pPlayer->pixel_center_x.portions.integer++;
-#endif
 
     if ((rand() & 0xff) == 0)
     {

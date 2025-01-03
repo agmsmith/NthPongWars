@@ -42,7 +42,7 @@
 /* Offset from the player screen coordinates to the top left corner of the
    sprite.  Since the players are 8 pixels in diameter, centered in the sprite
    box, the offset is 8 pixels in both X and Y. */
-#define PLAYER_SCREEN_TO_SPRITE_OFFSET 8 
+#define PLAYER_SCREEN_TO_SPRITE_OFFSET 8
 
 /* Use this Y sprite position to mark a sprite as not drawable.  It's the same
    as the 0xD0 magic value the hardware uses to mark the end of the sprite list,
@@ -94,6 +94,13 @@ typedef struct player_struct {
   fx velocity_y;
   /* The speed the player is moving, in pixels per update. */
 
+  fx step_velocity_x;
+  fx step_velocity_y;
+  /* The speed the player is moving, in pixels per step, with several steps per
+    frame update to ensure that each step doesn't advance more than one tile
+    width so that we don't skip over tiles and miss collisions.  This is a
+    temporary value used by Simulate(). */
+
   player_brain brain;
     /* What controls this player, or marks it as inactive (not drawn). */
 
@@ -120,7 +127,7 @@ typedef struct player_struct {
   uint8_t vdpShadowSpriteX;
   uint8_t vdpShadowSpriteY;
   uint8_t vdpShadowEarlyClock32Left;
-  
+
   SpriteAnimationType main_anim_type; /* Animation for the main ball sprite. */
   SpriteAnimRecord main_anim; /* A copy of the related animation data. */
 
@@ -144,6 +151,15 @@ typedef struct player_struct {
    as large as possible, and we just flag inactive players (can be
    non-sequential as joysticks are picked up or go idle). */
 extern player_record g_player_array[MAX_PLAYERS];
+
+/* Calculated by InitialisePlayers(), these are the adjusted pixel boundaries
+   of the play area.  Adjusted by the ball radius to make collision tests
+   easier.  If the ball center position beyond this value, it has hit
+   the wall. */
+extern fx g_play_area_wall_bottom_y;
+extern fx g_play_area_wall_left_x;
+extern fx g_play_area_wall_right_x;
+extern fx g_play_area_wall_top_y;
 
 extern void InitialisePlayers(void);
 /* Set up the initial player data, mostly colours and animations. */

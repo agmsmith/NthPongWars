@@ -47,12 +47,11 @@ void Simulate(void)
 {
   fx absVelocity;
   fx maxVelocity;
+  uint8_t iStep;
   uint8_t numberOfSteps;
   uint8_t iPlayer;
   player_pointer pPlayer;
   uint8_t stepShiftCount;
-  fx stepPlayerVelocityX[MAX_PLAYERS];
-  fx stepPlayerVelocityY[MAX_PLAYERS];
 
   /* Find the largest velocity component of all the players. */
 
@@ -63,15 +62,35 @@ void Simulate(void)
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
+#if 1
+printf("Player %d: (%f, %f), vel (%f, %f)\n", iPlayer,
+  GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->pixel_center_y),
+  GET_FX_FLOAT(pPlayer->velocity_x),
+  GET_FX_FLOAT(pPlayer->velocity_y)
+);
+#endif
+
     absVelocity = pPlayer->velocity_x;
+    ABS_FX(absVelocity);
+    if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
+      maxVelocity = absVelocity;
+
+    absVelocity = pPlayer->velocity_y;
     ABS_FX(absVelocity);
     if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
       maxVelocity = absVelocity;
   }
 
+#if 1
+printf("Max velocity component: %f\n",
+  GET_FX_FLOAT(maxVelocity)
+);
+#endif
+
   /* Find the number of steps needed to ensure the maximum velocity is less
      than one tile per step, or at most something like 7.999 pixels.  Can divide
-     velocity by using the stepShiftCount to get the velocity per step. */
+     velocity by using 2**stepShiftCount to get the velocity per step. */
 
   for (numberOfSteps = 1, stepShiftCount = 0;
   (numberOfSteps & 0x80) == 0;
@@ -83,17 +102,151 @@ void Simulate(void)
     DIV2_FX(maxVelocity, maxVelocity);
   }
 
+#if 1
+printf("Have %d steps, shift by %d\n", numberOfSteps, stepShiftCount);
+#endif
+
   /* Calculate the step velocity for each player. */
 
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
   {
-    stepPlayerVelocityX[iPlayer].as_int32 =
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      continue;
+    pPlayer->step_velocity_x.as_int32 =
       pPlayer->velocity_x.as_int32 >> stepShiftCount;
-    stepPlayerVelocityY[iPlayer].as_int32 =
+    pPlayer->step_velocity_y.as_int32 =
       pPlayer->velocity_y.as_int32 >> stepShiftCount;
+#if 1
+printf("Player %d: vel (%f, %f), step (%f, %f)\n", iPlayer,
+  GET_FX_FLOAT(pPlayer->velocity_x),
+  GET_FX_FLOAT(pPlayer->velocity_y),
+  GET_FX_FLOAT(pPlayer->step_velocity_x),
+  GET_FX_FLOAT(pPlayer->step_velocity_y)
+);
+#endif
   }
-  /* bleeble */
-  
+
+  /* Update the players, step by step.  Hopefully most times players are moving
+     at less than one tile per frame so we only have one step.  Top speed we
+     can simulate is 128 steps, or 128 tiles per frame, half a screen width per
+     frame, which is pretty fast and likely unplayable. */
+
+  for (iStep = 0; iStep < numberOfSteps; iStep ++)
+  {
+    /* Calculate the new position of all the players for this step; just
+       add step velocity to position.  Need to do this before checking for any
+       collisions since we could have player hitting player. */
+
+    pPlayer = g_player_array;
+    for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
+    {
+      if (pPlayer->brain == BRAIN_INACTIVE)
+        continue;
+      ADD_FX(pPlayer->pixel_center_x, pPlayer->step_velocity_x,
+        pPlayer->pixel_center_x);
+      ADD_FX(pPlayer->pixel_center_y, pPlayer->step_velocity_y,
+        pPlayer->pixel_center_y);
+#if 1
+printf("Player %d: new pos (%f, %f)\n", iPlayer,
+  GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->pixel_center_y)
+);
+#endif
+    }
+
+    /* Bounce the players off the walls. */
+
+    pPlayer = g_player_array;
+    for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
+    {
+      if (pPlayer->brain == BRAIN_INACTIVE)
+        continue;
+
+      if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_bottom_y) > 0)
+      {
+        if (!IS_NEGATIVE_FX(pPlayer->velocity_y))
+        {
+          NEGATE_FX(pPlayer->step_velocity_y);
+          NEGATE_FX(pPlayer->velocity_y);
+        }
+        pPlayer->pixel_center_y = g_play_area_wall_bottom_y;
+        playNoteDelay(0, 60, 90);
+#if 1
+printf("Player %d: Bounced bottom wall\n", iPlayer);
+printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
+  GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->velocity_x),
+  GET_FX_FLOAT(pPlayer->velocity_y),
+  GET_FX_FLOAT(pPlayer->step_velocity_x),
+  GET_FX_FLOAT(pPlayer->step_velocity_y)
+);
+#endif
+      }
+
+      if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_left_x) < 0)
+      {
+        if (IS_NEGATIVE_FX(pPlayer->velocity_x))
+        {
+          NEGATE_FX(pPlayer->step_velocity_x);
+          NEGATE_FX(pPlayer->velocity_x);
+        }
+        pPlayer->pixel_center_x = g_play_area_wall_left_x;
+        playNoteDelay(1, 61, 90);
+#if 1
+printf("Player %d: Bounced left wall\n", iPlayer);
+printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
+  GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->velocity_x),
+  GET_FX_FLOAT(pPlayer->velocity_y),
+  GET_FX_FLOAT(pPlayer->step_velocity_x),
+  GET_FX_FLOAT(pPlayer->step_velocity_y)
+);
+#endif
+      }
+
+      if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_right_x) > 0)
+      {
+        if (!IS_NEGATIVE_FX(pPlayer->velocity_x))
+        {
+          NEGATE_FX(pPlayer->step_velocity_x);
+          NEGATE_FX(pPlayer->velocity_x);
+        }
+        pPlayer->pixel_center_x = g_play_area_wall_right_x;
+        playNoteDelay(1, 62, 90);
+#if 1
+printf("Player %d: Bounced right wall\n", iPlayer);
+printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
+  GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->velocity_x),
+  GET_FX_FLOAT(pPlayer->velocity_y),
+  GET_FX_FLOAT(pPlayer->step_velocity_x),
+  GET_FX_FLOAT(pPlayer->step_velocity_y)
+);
+#endif
+      }
+
+      if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_top_y) < 0)
+      {
+        if (IS_NEGATIVE_FX(pPlayer->velocity_y))
+        {
+          NEGATE_FX(pPlayer->step_velocity_y);
+          NEGATE_FX(pPlayer->velocity_y);
+        }
+        pPlayer->pixel_center_y = g_play_area_wall_top_y;
+        playNoteDelay(0, 63, 90);
+#if 1
+printf("Player %d: Bounced top wall\n", iPlayer);
+printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
+  GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->velocity_x),
+  GET_FX_FLOAT(pPlayer->velocity_y),
+  GET_FX_FLOAT(pPlayer->step_velocity_x),
+  GET_FX_FLOAT(pPlayer->step_velocity_y)
+);
+#endif
+      }
+    }
+  }
 }
 

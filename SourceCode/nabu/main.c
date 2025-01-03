@@ -114,15 +114,23 @@ void main(void)
 { /* bleeble */
   fx X, Y;
   int8_t result;
-  INT_TO_FX(5, Y);
-  for (int i = 0; i < 10; i++)
+  for (int i = -3; i <= 3; i++)
   {
-    INT_TO_FX(i, X);
-    result = COMPARE_FX(&X, &Y);
-    printf ("%d: X is %f, Y is %f, result %d.\n",
-      GET_FX_FLOAT(X),
-      GET_FX_FLOAT(Y),
-      result);
+    INT_TO_FX(i, Y);
+    NEGATE_FX(&Y);
+    printf ("Negative %d is %f.\n", i, GET_FX_FLOAT(Y));
+    INT_TO_FX(i, Y);
+    for (int j = -3; j <= 3; j++)
+    {
+      INT_TO_FX(j, X);
+      result = COMPARE_FX(&X, &Y);
+      printf ("X %f, Y %f, result %d.  ",
+        GET_FX_FLOAT(X),
+        GET_FX_FLOAT(Y),
+        result);
+      SUBTRACT_FX(X, Y, X);
+      printf ("X - Y is %f.\n", GET_FX_FLOAT(X));
+    }
   }
   return;
 }

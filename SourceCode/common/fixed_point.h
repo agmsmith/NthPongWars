@@ -60,7 +60,7 @@ typedef union fx_union {
      but best not to use this in game code in case we switch to 3 byte fx. */
   fx_bits portions;
   uint8_t as_bytes[4];
-} fx;
+} fx, *pfx;
 
 /* Related constants. */
 #define _MAX_FX_FRACTION 0xFFFF
@@ -68,7 +68,7 @@ typedef union fx_union {
 #define _MAX_FX_POSITIVE(x) {x.as_int32 = 0x7FFFFFFF;}
 #define _FX_UNITY_FLOAT ((float) (((int32_t) 1) << 16))
 
-/* Setting and getting values. */
+/* Setting and getting.  As inline code, not too complex for 8 bit compilers. */
 #define COPY_FX(x, y) {y.as_int32 = x.as_int32; }
 #define FLOAT_TO_FX(fpa, x) {x.as_int32 = fpa * _FX_UNITY_FLOAT;}
 #define GET_FX_FRACTION(x) (x.portions.fraction)
@@ -79,7 +79,7 @@ typedef union fx_union {
 #define ZERO_FX(x) {x.as_int32 = 0; }
 
 /* Negate, or subtract from 0, the fx value. */
-#define NEGATE_FX(x) {x.as_int32 = -x.as_int32; }
+extern void NEGATE_FX(pfx x);
 
 /* Add fx values a and b and put the result in fx value c. */
 #define ADD_FX(a, b, c) {c.as_int32 = a.as_int32 + b.as_int32; }
@@ -88,74 +88,19 @@ typedef union fx_union {
 #define SUBTRACT_FX(a, b, c) {c.as_int32 = a.as_int32 - b.as_int32; }
 
 /* Put fx absolute value of x into x. */
-#define ABS_FX(x) { if (IS_NEGATIVE_FX(x)) NEGATE_FX(x); }
+#define ABS_FX(x) { if (IS_NEGATIVE_FX(x)) NEGATE_FX(&x); }
 
-/* Returns TRUE if the number is negative. */
+/* IS_NEGATIVE_FX(x) returns TRUE if the number is negative. */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   #define IS_NEGATIVE_FX(x) (x.as_bytes[3] & 0x80)
 #else /* Big endian. */
-  #define IS_NEGATIVE_FX(x) (x.as_int32 < 0)
+  #define IS_NEGATIVE_FX(x) (x.as_bytes[0] & 0x80)
 #endif
 
-/* Compare two POSITIVE values A and B, return a small integer which
-   is -1 if A < B, zero if A = B, +1 if A > B.  Designed to be faster Z80 code,
-   rather than the C compiler which generates lots of temporary copies of the fx
-   arguments and copies back and forth between them. */
-int8_t COMPARE_FX(fx *x, fx *y) {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-  uint8_t *pA, *pB;
-  uint8_t a, b;
-  pA = &x->as_bytes[0];
-  pB = &y->as_bytes[0];
-  a = *pA;
-  b = *pB;
-  if (a > b)
-    goto Positive;
-  if (a < b)
-    goto Negative;
-
-  pA++;
-  pB++;
-  a = *pA;
-  b = *pB;
-  if (a > b)
-    goto Positive;
-  if (a < b)
-    goto Negative;
-
-  pA++;
-  pB++;
-  a = *pA;
-  b = *pB;
-  if (a > b)
-    goto Positive;
-  if (a < b)
-    goto Negative;
-
-  pA++;
-  pB++;
-  a = *pA;
-  b = *pB;
-  if (a > b)
-    goto Positive;
-  if (a < b)
-    goto Negative;
-  return 0;
-
-Positive:
-  return 1;
-Negative:
-  return -1;
-
-#else /* Big endian */
-
-  if (x->as_int32 < y->as_int23)
-    return -1;
-  if (x->as_int32 > y->as_int23)
-    return 1;
-  return 0;
-#endif
-}
+/* Compare two values X & Y, return a small integer (so it can be returned in
+   a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
+   +1 if X > Y. */
+extern int8_t COMPARE_FX(pfx x, pfx y);
 
 /* Divide a by 2 and put into a. */
 #define DIV2_FX(a, b) {b.as_int32 = a.as_int32 / 2; }

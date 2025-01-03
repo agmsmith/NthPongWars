@@ -167,8 +167,8 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       {
         if (!IS_NEGATIVE_FX(pPlayer->velocity_y))
         {
-          NEGATE_FX(pPlayer->step_velocity_y);
-          NEGATE_FX(pPlayer->velocity_y);
+          NEGATE_FX(&pPlayer->step_velocity_y);
+          NEGATE_FX(&pPlayer->velocity_y);
         }
         pPlayer->pixel_center_y = g_play_area_wall_bottom_y;
         playNoteDelay(0, 60, 90);
@@ -188,8 +188,8 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
       {
         if (IS_NEGATIVE_FX(pPlayer->velocity_x))
         {
-          NEGATE_FX(pPlayer->step_velocity_x);
-          NEGATE_FX(pPlayer->velocity_x);
+          NEGATE_FX(&pPlayer->step_velocity_x);
+          NEGATE_FX(&pPlayer->velocity_x);
         }
         pPlayer->pixel_center_x = g_play_area_wall_left_x;
         playNoteDelay(1, 61, 90);
@@ -209,8 +209,8 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
       {
         if (!IS_NEGATIVE_FX(pPlayer->velocity_x))
         {
-          NEGATE_FX(pPlayer->step_velocity_x);
-          NEGATE_FX(pPlayer->velocity_x);
+          NEGATE_FX(&pPlayer->step_velocity_x);
+          NEGATE_FX(&pPlayer->velocity_x);
         }
         pPlayer->pixel_center_x = g_play_area_wall_right_x;
         playNoteDelay(1, 62, 90);
@@ -230,8 +230,8 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
       {
         if (IS_NEGATIVE_FX(pPlayer->velocity_y))
         {
-          NEGATE_FX(pPlayer->step_velocity_y);
-          NEGATE_FX(pPlayer->velocity_y);
+          NEGATE_FX(&pPlayer->step_velocity_y);
+          NEGATE_FX(&pPlayer->velocity_y);
         }
         pPlayer->pixel_center_y = g_play_area_wall_top_y;
         playNoteDelay(0, 63, 90);

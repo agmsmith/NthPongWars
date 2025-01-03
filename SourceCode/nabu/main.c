@@ -70,7 +70,7 @@ char TempBuffer[TEMPBUFFER_LEN];
 /* Our own game include files.  Comes after NABU-LIB.h has been included and
    TempBuffer defined. */
 
-#include "../common/fixed_point.h" /* Our own fixed point math. */
+#include "../common/fixed_point.c" /* Our own fixed point math. */
 #include "LoadScreenICVGM.c"
 #include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
@@ -110,6 +110,22 @@ void main(void)
   uint8_t i;
   unsigned int sTotalMem, sLargestMem;
   bool keepRunning;
+
+{ /* bleeble */
+  fx X, Y;
+  int8_t result;
+  INT_TO_FX(5, Y);
+  for (int i = 0; i < 10; i++)
+  {
+    INT_TO_FX(i, X);
+    result = COMPARE_FX(&X, &Y);
+    printf ("%d: X is %f, Y is %f, result %d.\n",
+      GET_FX_FLOAT(X),
+      GET_FX_FLOAT(Y),
+      result);
+  }
+  return;
+}
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter

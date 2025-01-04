@@ -10,6 +10,8 @@
  * AGMS20241108 - Start this header file.
  */
 
+#define DEBUG_PRINT_SIM 0 /* Turn on printfs for debugging. */
+
 /*******************************************************************************
  * Calculate the new position and velocity of all players.
  *
@@ -53,6 +55,10 @@ void Simulate(void)
   player_pointer pPlayer;
   uint8_t stepShiftCount;
 
+#if DEBUG_PRINT_SIM
+printf("\nStarting simulation step.\n");
+#endif
+
   /* Find the largest velocity component of all the players. */
 
   ZERO_FX(maxVelocity);
@@ -62,8 +68,8 @@ void Simulate(void)
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
-#if 1
-printf("Player %d: (%f, %f), vel (%f, %f)\n", iPlayer,
+#if DEBUG_PRINT_SIM
+printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
   GET_FX_FLOAT(pPlayer->pixel_center_y),
   GET_FX_FLOAT(pPlayer->velocity_x),
@@ -82,7 +88,7 @@ printf("Player %d: (%f, %f), vel (%f, %f)\n", iPlayer,
       maxVelocity = absVelocity;
   }
 
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Max velocity component: %f\n",
   GET_FX_FLOAT(maxVelocity)
 );
@@ -102,7 +108,7 @@ printf("Max velocity component: %f\n",
     DIV2_FX(maxVelocity, maxVelocity);
   }
 
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Have %d steps, shift by %d\n", numberOfSteps, stepShiftCount);
 #endif
 
@@ -117,7 +123,7 @@ printf("Have %d steps, shift by %d\n", numberOfSteps, stepShiftCount);
       pPlayer->velocity_x.as_int32 >> stepShiftCount;
     pPlayer->step_velocity_y.as_int32 =
       pPlayer->velocity_y.as_int32 >> stepShiftCount;
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Player %d: vel (%f, %f), step (%f, %f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->velocity_x),
   GET_FX_FLOAT(pPlayer->velocity_y),
@@ -134,6 +140,9 @@ printf("Player %d: vel (%f, %f), step (%f, %f)\n", iPlayer,
 
   for (iStep = 0; iStep < numberOfSteps; iStep ++)
   {
+#if DEBUG_PRINT_SIM
+printf("Substep %d\n", iStep);
+#endif
     /* Calculate the new position of all the players for this step; just
        add step velocity to position.  Need to do this before checking for any
        collisions since we could have player hitting player. */
@@ -147,7 +156,7 @@ printf("Player %d: vel (%f, %f), step (%f, %f)\n", iPlayer,
         pPlayer->pixel_center_x);
       ADD_FX(pPlayer->pixel_center_y, pPlayer->step_velocity_y,
         pPlayer->pixel_center_y);
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Player %d: new pos (%f, %f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
   GET_FX_FLOAT(pPlayer->pixel_center_y)
@@ -172,10 +181,11 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
         }
         pPlayer->pixel_center_y = g_play_area_wall_bottom_y;
         playNoteDelay(0, 60, 90);
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Player %d: Bounced bottom wall\n", iPlayer);
 printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->pixel_center_y),
   GET_FX_FLOAT(pPlayer->velocity_x),
   GET_FX_FLOAT(pPlayer->velocity_y),
   GET_FX_FLOAT(pPlayer->step_velocity_x),
@@ -193,10 +203,11 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
         }
         pPlayer->pixel_center_x = g_play_area_wall_left_x;
         playNoteDelay(1, 61, 90);
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Player %d: Bounced left wall\n", iPlayer);
 printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->pixel_center_y),
   GET_FX_FLOAT(pPlayer->velocity_x),
   GET_FX_FLOAT(pPlayer->velocity_y),
   GET_FX_FLOAT(pPlayer->step_velocity_x),
@@ -214,10 +225,11 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
         }
         pPlayer->pixel_center_x = g_play_area_wall_right_x;
         playNoteDelay(1, 62, 90);
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Player %d: Bounced right wall\n", iPlayer);
 printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->pixel_center_y),
   GET_FX_FLOAT(pPlayer->velocity_x),
   GET_FX_FLOAT(pPlayer->velocity_y),
   GET_FX_FLOAT(pPlayer->step_velocity_x),
@@ -235,10 +247,11 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
         }
         pPlayer->pixel_center_y = g_play_area_wall_top_y;
         playNoteDelay(0, 63, 90);
-#if 1
+#if DEBUG_PRINT_SIM
 printf("Player %d: Bounced top wall\n", iPlayer);
 printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
+  GET_FX_FLOAT(pPlayer->pixel_center_y),
   GET_FX_FLOAT(pPlayer->velocity_x),
   GET_FX_FLOAT(pPlayer->velocity_y),
   GET_FX_FLOAT(pPlayer->step_velocity_x),

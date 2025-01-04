@@ -69,7 +69,7 @@ printf("(%f to %f, %f to %f)\n",
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
     pixelCoord += 32;
     pPlayer->pixel_flying_height = 2;
-    INT_TO_FX(6, pPlayer->velocity_x);
+    INT_TO_FX(iPlayer * 9, pPlayer->velocity_x);
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_TO_FX(1, pPlayer->velocity_y);
 

@@ -111,30 +111,6 @@ void main(void)
   unsigned int sTotalMem, sLargestMem;
   bool keepRunning;
 
-{ /* bleeble */
-  fx X, Y;
-  int8_t result;
-  for (int i = -3; i <= 3; i++)
-  {
-    INT_TO_FX(i, Y);
-    NEGATE_FX(&Y);
-    printf ("Negative %d is %f.\n", i, GET_FX_FLOAT(Y));
-    INT_TO_FX(i, Y);
-    for (int j = -3; j <= 3; j++)
-    {
-      INT_TO_FX(j, X);
-      result = COMPARE_FX(&X, &Y);
-      printf ("X %f, Y %f, result %d.  ",
-        GET_FX_FLOAT(X),
-        GET_FX_FLOAT(Y),
-        result);
-      SUBTRACT_FX(X, Y, X);
-      printf ("X - Y is %f.\n", GET_FX_FLOAT(X));
-    }
-  }
-  return;
-}
-
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter
      area (the first 256 bytes of memory). */
@@ -217,12 +193,14 @@ void main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
+#if 0
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
     return;
   }
   z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
+#endif
 
   /* Load our game screen, with a font and sprites defined. */
 
@@ -329,11 +307,11 @@ void main(void)
     tile_pointer pTile;
 
     row++;
-    if (((s_FrameCounter >> 4) & 0x3f) == 22)
+    if ((s_FrameCounter & 2047) > 2035)
     { /* Rarely put in a power up. */
       newOwner = (rand() & 7) + OWNER_PUP_NORMAL;
     }
-    else
+    else /* Regular tile change. */
     {
       newOwner = rand() & 0x07;
       if (newOwner >= OWNER_PUP_NORMAL)

@@ -55,11 +55,14 @@ typedef struct fx_bits_struct {
 } fx_bits;
 
 typedef union fx_union {
-  int32_t as_int32;
   /* So you can treat the whole thing as an integer to do additions in one shot,
      but best not to use this in game code in case we switch to 3 byte fx. */
-  fx_bits portions;
+  int32_t as_int32;
+
+  /* Or access individual bytes in the number. */
   uint8_t as_bytes[4];
+
+  fx_bits portions;
 } fx, *pfx;
 
 /* Related constants. */
@@ -78,7 +81,7 @@ typedef union fx_union {
 #define INT_FRACTION_TO_FX(inta, fracb, x) {x.portions.integer = inta; x.portions.fraction = fracb; }
 #define ZERO_FX(x) {x.as_int32 = 0; }
 
-/* Negate, or subtract from 0, the fx value. */
+/* Negate, done by subtracting from 0 and overwriting the value. */
 extern void NEGATE_FX(pfx x);
 
 /* Add fx values a and b and put the result in fx value c. */
@@ -102,7 +105,7 @@ extern void NEGATE_FX(pfx x);
    +1 if X > Y. */
 extern int8_t COMPARE_FX(pfx x, pfx y);
 
-/* Divide a by 2 and put into a. */
+/* Divide a by 2 and put into b. */
 #define DIV2_FX(a, b) {b.as_int32 = a.as_int32 / 2; }
 
 /* Divide a by 4 and put into b. */

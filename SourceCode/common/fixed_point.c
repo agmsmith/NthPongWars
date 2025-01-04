@@ -4,7 +4,7 @@
 
 #include "fixed_point.h"
 
-/* Negate, or subtract from 0, the fx value. */
+/* Negate, done by subtracting from 0 and overwriting the value. */
 void NEGATE_FX(pfx x)
 {
 #ifdef NABU_H
@@ -75,7 +75,7 @@ int8_t COMPARE_FX(pfx x, pfx y)
   ld    a,(bc)
   sbc   a,(hl)
   ld    iyh,a
-  jp    po,NoOverflow
+  jp    po,NoOverflow /* Sadly, no jr jump relative for overflow tests. */
   xor   a,0x80    /* Signed value overflowed, sign bit is reversed, fix it. */
 NoOverflow:
   jp    p,PositiveResult
@@ -91,13 +91,15 @@ PositiveResult:
   ret
 ZeroExit:
   __endasm;
-  return 0;
+  return 0;       /* Need at least one return in C, else get warning. */
 #else /* Generic C implementation. */
-  if (x->as_int32 < y->as_int32)
+  int32_t diff;
+  diff = x->as_int32 - y->as_int32; 
+  if (diff == 0)
+    return 0;
+  if (diff < 0)
     return -1;
-  if (x->as_int32 > y->as_int32)
-    return 1;
-  return 0;
+  return 1;
 #endif
 }
 

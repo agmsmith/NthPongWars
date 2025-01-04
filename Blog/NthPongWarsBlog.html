@@ -1084,15 +1084,16 @@ physics running faster than the frame rate.
 frame all the time, so I'm going to use smaller updates steps only when needed.
 The number of updates is related to the fastest ball's speed - each step should
 advance the ball by at most 1 tile in X or Y (8 pixels in our case).  If there
-are slight rounding errors causing missed tiles, advance by 0.5 tile width.
-Since we don't want to do division, find the number of right shifts that reduce
-the fastest ball's fastest velocity coordinate to less than 1 tile, then do
-that shifting on all ball velocities to get the per step velocity for each
-ball.  We will be doing 2**(number of shifts) steps, at minimum 0 shifts, at
-most 7 shifts, corresponding to 1 to 128 steps (if a ball is moving faster than
-128 tiles per frame, some collisions will be missed).  All the balls will be
-updated with that number of steps and updated in parallel, so that balls
-crossing paths will collide at the right spot.
+are slight rounding errors causing missed tiles, I may have to cut it down to
+0.5 tile width per step.  Since we don't want to do division, find the number
+of right shifts that reduce the fastest ball's fastest velocity coordinate to
+less than 1 tile, then do that shifting on all ball velocities to get the per
+step velocity for each ball.  We will be doing 2**(number of shifts) steps, at
+minimum 0 shifts, at most 7 shifts, corresponding to 1 to 128 steps (if a ball
+is moving faster than 128 tiles per frame, some collisions will be missed, but
+that is a ridiculously fast speed for a screen that is 32 tiles wide).  All the
+balls will be updated with that number of steps and updated in parallel, so
+that balls crossing paths will collide at the right spot.
 
 <P>Each step, add the step velocity to the ball position to get the new
 position for that step.  Check tiles around that new position for collisions -
@@ -1105,8 +1106,55 @@ for the step, check for collisions between balls using centers and ball radii.
 velocity.  Maybe reduce or increase the ball velocity (but not the step
 velocity - too messy) for inelastic or explosive collisions.
 
+<HR>
+<H2><A NAME="2025.01.04"></A>2025.01.04</H2>
+
+<H3>Faster Fixed Point Math in Z80 Assembler - "I had no option"</H3>
+
+<P>After a week or so over the holidays writing physics code implementing the
+previous post's ideas, it was almost working and horribly slow.  I had a look
+at the code the C compiler generated, and was annoyed to see that most of it
+was moving data around in temporary copies of the 32 bit numbers on the stack.
+Pages and pages of <CODE>ld a,(ix+5); ld (ix+9),a</CODE> slowing math down.
+Rearranging the fixed point macros to be function calls taking a pointer
+argument fixed some of that.  But in the end I started writing my own 32 bit
+math routines for the most important functions.
+
+<P>A Negate(*X) and Compare(*X, *Y) function were the first, with some stumbles
+figuring out how arguments were passed on the stack.  Then some juggling of
+code to do a two pointer 32 bit subtraction.  It turns out the only SBC
+(subtract a byte with carry) opcode which takes a pointer, uses the HL
+register.  Yes, I spent quite a bit of time using the searchable Z80 opcode
+chart at <A HREF="https://clrhome.org/table/">https://clrhome.org/table/</A> to
+find the available instructions (also found a circa 2016 Z80 manual from Zilog,
+and I have my Osborne &amp; Associates <CITE>Z80 Assembly Language
+Programming</CITE> book from 1979).  That HL requirement triggered a bit of
+shuffling around of code when getting the parameters off the stack (using the
+HL register to walk the back-stack), to ensure the Y pointer ended up in HL.
+Yet again, a unique opcode exchanges DE and HL, no other choices exist, so to
+quote John Turner, "<A
+HREF="https://en.wikipedia.org/wiki/You_had_an_option,_sir">I had no
+option</A>" but to use that to set up HL.  Then there was a bit of rewriting
+when the Compare() results were wrong, because I forgot the number was signed,
+and a borrow at the end of the comparison didn't mean anything.  Instead, there
+is an overflow flag, and the only instruction that reads the overflow flag, is
+<CODE>jp po,dest</CODE>.  Yet another case of no option, the theme for this
+coding session.
+
+<P>Anyway, I got 4 players bouncing off walls around the screen, though with
+very little CPU time available (more than half a dozen power-ups puts it over
+the edge of 60hz updates).  I wonder if checking tiles for collisions with the
+balls will be too much, might have to go to 30 frames per second.  Time for
+writing some more assembler code and looking at compiler assembly output for
+other slowdowns.
+
+<P ALIGN=CENTER><A
+HREF="FirstBounce20250104.mp4"><IMG SRC="FirstBounce20250104.GIF" WIDTH="280"
+HEIGHT="216" ALT="[Video of Bouncing off Walls for the First Time!]"></A><BR>
+<A HREF="FirstBounce20250104.mp4">FirstBounce20250104.mp4</A>
+
 <P>- Alex
 
-<P ALIGN="CENTER">Copyright &copy; 2024 by Alexander G. M. Smith.
+<P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.
 </BODY>
 </HTML>

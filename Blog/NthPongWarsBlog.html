@@ -726,24 +726,24 @@ an 8 bit counter rather than 16 to cover all 256 numbers in a do-while.
 
 becomes 22 bytes of opcodes...
 
-  7983  29b4  0e00              	ld	c,0x00
-  7984                          l_main_00115:
-  7985  29b6  79                	ld	a, c
-  7986  29b7  d603              	sub	a,0x03
-  7987  29b9  3011              	jr	NC,l_main_00102
-  7988  29bb  110000            	ld	de,0x0000
-  7989                          l_main_00112:
-  7990  29be  7a                	ld	a, d
-  7991  29bf  d601              	sub	a,0x01
-  7992  29c1  3006              	jr	NC,l_main_00116
-  7993  29c3  7b                	ld	a, e
-  7994  29c4  d3a0              	out	(_IO_VDPDATA), a
-  7995  29c6  13                	inc	de
-  7996  29c7  18f5              	jr	l_main_00112
-  7997                          l_main_00116:
-  7998  29c9  0c                	inc	c
-  7999  29ca  18ea              	jr	l_main_00115
-  8000                          l_main_00102:
+29b4  0e00              	ld	c,0x00
+                        l_main_00115:
+29b6  79                	ld	a, c
+29b7  d603              	sub	a,0x03
+29b9  3011              	jr	NC,l_main_00102
+29bb  110000            	ld	de,0x0000
+                        l_main_00112:
+29be  7a                	ld	a, d
+29bf  d601              	sub	a,0x01
+29c1  3006              	jr	NC,l_main_00116
+29c3  7b                	ld	a, e
+29c4  d3a0              	out	(_IO_VDPDATA), a
+29c6  13                	inc	de
+29c7  18f5              	jr	l_main_00112
+                        l_main_00116:
+29c9  0c                	inc	c
+29ca  18ea              	jr	l_main_00115
+                        l_main_00102:
 
 and the do-while version
 
@@ -757,15 +757,15 @@ and the do-while version
 
 becomes 11 bytes of opcodes...
 
-  8005  29d4  0e03              	ld	c,0x03
-  8006                          l_main_00130:
-  8007  29d6  af                	xor	a, a
-  8008                          l_main_00103:
-  8009  29d7  d3a0              	out	(_IO_VDPDATA), a
-  8010  29d9  3d                	dec	a
-  8011  29da  20fb              	jr	NZ,l_main_00103
-  8012  29dc  0d                	dec	c
-  8013  29dd  20f7              	jr	NZ,l_main_00130
+29d4  0e03              	ld	c,0x03
+                        l_main_00130:
+29d6  af                	xor	a, a
+                        l_main_00103:
+29d7  d3a0              	out	(_IO_VDPDATA), a
+29d9  3d                	dec	a
+29da  20fb              	jr	NZ,l_main_00103
+29dc  0d                	dec	c
+29dd  20f7              	jr	NZ,l_main_00130
 </PRE>
 
 <HR>
@@ -1152,6 +1152,296 @@ other slowdowns.
 HREF="FirstBounce20250104.mp4"><IMG SRC="FirstBounce20250104.GIF" WIDTH="280"
 HEIGHT="216" ALT="[Video of Bouncing off Walls for the First Time!]"></A><BR>
 <A HREF="FirstBounce20250104.mp4">FirstBounce20250104.mp4</A>
+
+<HR>
+<H2><A NAME="2025.01.05"></A>2025.01.05</H2>
+
+<H3>Comparing Compiler and Assembler</H3>
+
+<P>Matthew E. on Facebook asked to see some of the assembly code, so here's a
+comparison of what the compiler makes and some code I wrote.  It's a lot better
+than it used to be now that it uses pointers rather than a macro like this:<BR>
+<CODE>#define COMPARE_FX(A, B) ((A < B) ? -1 : ((A == B) ? 0 : 1))</CODE>
+
+<P>Here's the original source code:
+
+<PRE>
+/* Compare two values X & Y, return a small integer (so it can be returned in
+   a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
+   +1 if X > Y. */
+int8_t COMPARE_FX(pfx x, pfx y)
+{
+#ifdef NABU_H
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  y;
+  __asm
+  ld    hl,2      /* Hop over return address. */
+  add   hl,sp     /* Get pointer to argument x, will put in bc. */
+  ld    c,(hl)
+  inc   hl
+  ld    b,(hl)    /* bc now has pointer to x's fx data, a 32 bit integer. */
+  inc   hl
+  ld    e,(hl)
+  inc   hl
+  ld    d,(hl)    /* de now has pointer to y's fx data. */
+  ex    de,hl     /* But need y to be in hl for only sbc a,(regpair) opcode. */
+  ld    a,(bc)    /* Do the 32 bit comparison, x - y in effect. */
+  sub   a,(hl)
+  ld    e,a       /* Collect bits to see if whole result is zero. */
+  inc   hl
+  inc   bc
+  ld    a,(bc)
+  sbc   a,(hl)
+  ld    d,a
+  inc   hl
+  inc   bc
+  ld    a,(bc)
+  sbc   a,(hl)
+  ld    iyl,a
+  inc   hl
+  inc   bc
+  ld    a,(bc)
+  sbc   a,(hl)
+  ld    iyh,a
+  jp    po,NoOverflow /* Sadly, no jr jump relative for overflow tests. */
+  xor   a,0x80    /* Signed value overflowed, sign bit is reversed, fix it. */
+NoOverflow:
+  jp    p,PositiveResult
+  ld    l,0xFF    /* Negative result, so X < Y. */
+  ret
+PositiveResult:
+  ld    a,iyh     /* See if the complete result is zero. */
+  or    a,iyl
+  or    a,d
+  or    a,e
+  jr    z,ZeroExit
+  ld    l,0x01
+  ret
+ZeroExit:
+  __endasm;
+  return 0;       /* Need at least one return in C, else get warning. */
+#else /* Generic C implementation. */
+  if (x->as_int32 < y->as_int32)
+    return -1;
+  else if (x->as_int32 == y->as_int32)
+    return 0;
+  return 1;
+#endif
+}
+</PRE>
+
+<P>And here is a comparison of what the code looks like after compiling, so
+you can see opcodes and code size:
+
+<P><TABLE BORDER="2">
+<TR><TH>SDCC C Compiler</THD><TH>Hand Made Assembler</TH><TH>Macro Expansion</TH></TR>
+<TR><TD VALIGN="TOP" ALIGN="LEFT"><PRE>
+;	---------------------------------
+; Function COMPARE_FX
+; ---------------------------------
+                        _COMPARE_FX:
+299f  dde5              	push	ix
+29a1  dd210000          	ld	ix,0
+29a5  dd39              	add	ix,sp
+29a7  21faff            	ld	hl, -6
+29aa  39                	add	hl, sp
+29ab  f9                	ld	sp, hl
+29ac  dd5e04            	ld	e,(ix+4)
+29af  dd5605            	ld	d,(ix+5)
+29b2  d5                	push	de
+29b3  210400            	ld	hl,4
+29b6  39                	add	hl, sp
+29b7  eb                	ex	de, hl
+29b8  010400            	ld	bc,0x0004
+29bb  edb0              	ldir
+29bd  d1                	pop	de
+29be  dd7e06            	ld	a,(ix+6)
+29c1  dd77fa            	ld	(ix-6),a
+29c4  dd7e07            	ld	a,(ix+7)
+29c7  dd77fb            	ld	(ix-5),a
+29ca  e1                	pop	hl
+29cb  e5                	push	hl
+29cc  4e                	ld	c, (hl)
+29cd  23                	inc	hl
+29ce  46                	ld	b, (hl)
+29cf  23                	inc	hl
+29d0  23                	inc	hl
+29d1  7e                	ld	a, (hl)
+29d2  2b                	dec	hl
+29d3  6e                	ld	l, (hl)
+29d4  67                	ld	h, a
+29d5  dd7efc            	ld	a,(ix-4)
+29d8  91                	sub	a, c
+29d9  dd7efd            	ld	a,(ix-3)
+29dc  98                	sbc	a, b
+29dd  dd7efe            	ld	a,(ix-2)
+29e0  9d                	sbc	a, l
+29e1  dd7eff            	ld	a,(ix-1)
+29e4  9c                	sbc	a, h
+29e5  e2ea29            	jp	PO, l_COMPARE_FX_00122
+29e8  ee80              	xor	a,0x80
+                        l_COMPARE_FX_00122:
+29ea  f2f129            	jp	P, l_COMPARE_FX_00104
+29ed  2eff              	ld	l,0xff
+29ef  1830              	jr	l_COMPARE_FX_00106
+                        l_COMPARE_FX_00104:
+29f1  210200            	ld	hl,2
+29f4  39                	add	hl, sp
+29f5  eb                	ex	de, hl
+29f6  010400            	ld	bc,0x0004
+29f9  edb0              	ldir
+29fb  e1                	pop	hl
+29fc  e5                	push	hl
+29fd  4e                	ld	c, (hl)
+29fe  23                	inc	hl
+29ff  46                	ld	b, (hl)
+2a00  23                	inc	hl
+2a01  5e                	ld	e, (hl)
+2a02  23                	inc	hl
+2a03  56                	ld	d, (hl)
+2a04  dd7efc            	ld	a,(ix-4)
+2a07  91                	sub	a, c
+2a08  2015              	jr	NZ,l_COMPARE_FX_00105
+2a0a  dd7efd            	ld	a,(ix-3)
+2a0d  90                	sub	a, b
+2a0e  200f              	jr	NZ,l_COMPARE_FX_00105
+2a10  dd6efe            	ld	l,(ix-2)
+2a13  dd66ff            	ld	h,(ix-1)
+2a16  bf                	cp	a, a
+2a17  ed52              	sbc	hl, de
+2a19  2004              	jr	NZ,l_COMPARE_FX_00105
+2a1b  2e00              	ld	l,0x00
+2a1d  1802              	jr	l_COMPARE_FX_00106
+                        l_COMPARE_FX_00105:
+2a1f  2e01              	ld	l,0x01
+                        l_COMPARE_FX_00106:
+2a21  ddf9              	ld	sp, ix
+2a23  dde1              	pop	ix
+2a25  c9                	ret
+
+Total 135 bytes.
+</PRE></TD>
+<TD VALIGN="TOP" ALIGN="LEFT"><PRE>
+;	---------------------------------
+; Function COMPARE_FX
+; ---------------------------------
+                        _COMPARE_FX:
+299f  210200            	ld	   hl,2
+29a2  39                	add	  hl,sp
+29a3  4e                	ld	   c,(hl)
+29a4  23                	inc	  hl
+29a5  46                	ld	   b,(hl)
+29a6  23                	inc	  hl
+29a7  5e                	ld	   e,(hl)
+29a8  23                	inc	  hl
+29a9  56                	ld	   d,(hl)
+29aa  eb                	ex	   de,hl
+29ab  0a                	ld	   a,(bc)
+29ac  96                	sub	  a,(hl)
+29ad  5f                	ld	   e,a
+29ae  23                	inc	  hl
+29af  03                	inc	  bc
+29b0  0a                	ld	   a,(bc)
+29b1  9e                	sbc	  a,(hl)
+29b2  57                	ld	   d,a
+29b3  23                	inc	  hl
+29b4  03                	inc	  bc
+29b5  0a                	ld	   a,(bc)
+29b6  9e                	sbc	  a,(hl)
+29b7  fd6f              	ld	   iyl,a
+29b9  23                	inc	  hl
+29ba  03                	inc	  bc
+29bb  0a                	ld	   a,(bc)
+29bc  9e                	sbc	  a,(hl)
+29bd  fd67              	ld	   iyh,a
+29bf  e2c429            	jp	   po,NoOverflow
+29c2  ee80              	xor	  a,0x80
+                        NoOverflow:
+29c4  f2ca29            	jp	   p,PositiveResult
+29c7  2eff              	ld	   l,0xFF
+29c9  c9                	ret
+                        PositiveResult:
+29ca  fd7c              	ld	   a,iyh
+29cc  fdb5              	or	   a,iyl
+29ce  b2                	or	   a,d
+29cf  b3                	or	   a,e
+29d0  2803              	jr	   z,ZeroExit
+29d2  2e01              	ld	   l,0x01
+29d4  c9                	ret
+                        ZeroExit:
+29d5  2e00              	ld	l,0x00
+29d7  c9                	ret
+
+Total 57 bytes.
+</PRE></TD>
+<TD VALIGN="TOP" ALIGN="LEFT"><PRE>
+C = (A.as_int32 < B.as_int32) ? -1 :
+  ((A.as_int32 == B.as_int32) ? 0 : 1);
+
+42df  dd4ef3            	ld	c,(ix-13)
+42e2  dd46f4            	ld	b,(ix-12)
+42e5  dd5ef5            	ld	e,(ix-11)
+42e8  dd56f6            	ld	d,(ix-10)
+42eb  dd7ef7            	ld	a,(ix-9)
+42ee  dd77fc            	ld	(ix-4),a
+42f1  dd7ef8            	ld	a,(ix-8)
+42f4  dd77fd            	ld	(ix-3),a
+42f7  dd7ef9            	ld	a,(ix-7)
+42fa  dd77fe            	ld	(ix-2),a
+42fd  dd7efa            	ld	a,(ix-6)
+4300  dd77ff            	ld	(ix-1),a
+4303  79                	ld	a, c
+4304  dd96fc            	sub	a,(ix-4)
+4307  78                	ld	a, b
+4308  dd9efd            	sbc	a,(ix-3)
+430b  7b                	ld	a, e
+430c  dd9efe            	sbc	a,(ix-2)
+430f  7a                	ld	a, d
+4310  dd9eff            	sbc	a,(ix-1)
+4313  e21843            	jp	PO, l_main_00474
+4316  ee80              	xor	a,0x80
+                        l_main_00474:
+4318  f21f43            	jp	P, l_main_00180
+431b  3eff              	ld	a,0xff
+431d  183f              	jr	l_main_00181
+                        l_main_00180:
+431f  dd7ef3            	ld	a,(ix-13)
+4322  dd77fc            	ld	(ix-4),a
+4325  dd7ef4            	ld	a,(ix-12)
+4328  dd77fd            	ld	(ix-3),a
+432b  dd7ef5            	ld	a,(ix-11)
+432e  dd77fe            	ld	(ix-2),a
+4331  dd7ef6            	ld	a,(ix-10)
+4334  dd77ff            	ld	(ix-1),a
+4337  dd6ef7            	ld	l,(ix-9)
+433a  dd66f8            	ld	h,(ix-8)
+433d  dd4ef9            	ld	c,(ix-7)
+4340  dd46fa            	ld	b,(ix-6)
+4343  dd5efc            	ld	e,(ix-4)
+4346  dd56fd            	ld	d,(ix-3)
+4349  bf                	cp	a, a
+434a  ed52              	sbc	hl, de
+434c  200e              	jr	NZ,l_main_00182
+434e  dd6efe            	ld	l,(ix-2)
+4351  dd66ff            	ld	h,(ix-1)
+4354  bf                	cp	a, a
+4355  ed42              	sbc	hl, bc
+4357  2003              	jr	NZ,l_main_00182
+4359  af                	xor	a, a
+435a  1802              	jr	l_main_00183
+                        l_main_00182:
+435c  3e01              	ld	a,0x01
+                        l_main_00183:
+                        l_main_00181:
+
+Total 127 bytes.
+ </PRE></TD></TR>
+</TABLE>
+
+<P>That makes me wonder if it would be better to test for zero before looking
+at the signs.  Nice to see that the C version does handle overflows in the
+comparison, rather than just looking at the high bit of the result of a virtual
+subtraction.
 
 <P>- Alex
 

@@ -75,10 +75,10 @@ int8_t COMPARE_FX(pfx x, pfx y)
   ld    a,(bc)
   sbc   a,(hl)
   ld    iyh,a
-  jp    po,NoOverflow /* Sadly, no jr jump relative for overflow tests. */
+  jp    PO,NoOverflow /* Sadly, no jr jump relative for overflow tests. */
   xor   a,0x80    /* Signed value overflowed, sign bit is reversed, fix it. */
 NoOverflow:
-  jp    p,PositiveResult
+  jp    P,PositiveResult
   ld    l,0xFF    /* Negative result, so X < Y. */
   ret
 PositiveResult:
@@ -93,12 +93,10 @@ ZeroExit:
   __endasm;
   return 0;       /* Need at least one return in C, else get warning. */
 #else /* Generic C implementation. */
-  int32_t diff;
-  diff = x->as_int32 - y->as_int32; 
-  if (diff == 0)
-    return 0;
-  if (diff < 0)
+  if (x->as_int32 < y->as_int32)
     return -1;
+  else if (x->as_int32 == y->as_int32)
+    return 0;
   return 1;
 #endif
 }

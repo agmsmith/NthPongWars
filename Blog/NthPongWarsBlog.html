@@ -1231,10 +1231,16 @@ ZeroExit:
 </PRE>
 
 <P>And here is a comparison of what the code looks like after compiling, so
-you can see opcodes and code size:
+you can see opcodes and code size.  The C compiler is SDCC patched for Z88DK,
+version 4.4.0, #14648.  The compiler command line Z88DK generates is
+<CODE>z88dk-zsdcc --constseg rodata_compiler -mz80 --no-optsdcc-in-asm --c1mode
+--emit-externs --no-c-code-in-asm --opt-code-speed --no-peep --peep-file
+...files...</CODE> (most noticably --opt-code-speed sets up frame pointer ix
+directly, if you optimise for size it calls a subroutine for that, and there
+are presumably other speed optimisations in the generated code).
 
 <P><TABLE BORDER="2">
-<TR><TH>SDCC C Compiler</THD><TH>Hand Made Assembler</TH><TH>Macro Expansion</TH></TR>
+<TR><TH>SDCC C Compiler</TH><TH>Hand Made Assembler</TH><TH>Macro Expansion SDCC</TH></TR>
 <TR><TD VALIGN="TOP" ALIGN="LEFT"><PRE>
 ;	---------------------------------
 ; Function COMPARE_FX

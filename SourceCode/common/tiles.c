@@ -249,10 +249,19 @@ void ActivateTileArrayWindow(void)
   }
 
   /* Cached values for moving sprites around to compensate for the window not
-     being at the screen top. */
+     being at the screen top, and also the sprite coordinates being the top
+     left corner of the 16x16 graphic, not the center, and the sprite hardware
+     being off by -1 in the Y axis (-1 is top of the screen, not zero). */
 
-  g_sprite_window_offset_x = g_screen_top_X_tiles * TILE_PIXEL_WIDTH;
-  g_sprite_window_offset_y = g_screen_top_Y_tiles * TILE_PIXEL_WIDTH;
+  g_sprite_window_offset_x =
+    ((int16_t) g_screen_top_X_tiles) * TILE_PIXEL_WIDTH -
+    ((int16_t) g_play_area_col_for_screen) * TILE_PIXEL_WIDTH -
+    PLAYER_SCREEN_TO_SPRITE_OFFSET;
+    
+  g_sprite_window_offset_y =
+    ((int16_t) g_screen_top_Y_tiles) * TILE_PIXEL_WIDTH -
+    ((int16_t) g_play_area_row_for_screen) * TILE_PIXEL_WIDTH -
+    PLAYER_SCREEN_TO_SPRITE_OFFSET - 1 /* For sprite hardware -1 */;
 #endif /* NABU_H */
 
   /* Force caches to be recomputed on the next update, and do a full screen

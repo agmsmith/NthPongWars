@@ -38,12 +38,6 @@
 #define PLAYER_PIXEL_DIAMETER_NORMAL 8
 
 #ifdef NABU_H
-
-/* Offset from the player screen coordinates to the top left corner of the
-   sprite.  Since the players are 8 pixels in diameter, centered in the sprite
-   box, the offset is 8 pixels in both X and Y. */
-#define PLAYER_SCREEN_TO_SPRITE_OFFSET 8
-
 /* Use this Y sprite position to mark a sprite as not drawable.  It's the same
    as the 0xD0 magic value the hardware uses to mark the end of the sprite list,
    so it's not a value you would normally see as a VDP Y coordinate. */

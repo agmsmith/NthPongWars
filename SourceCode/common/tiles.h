@@ -20,6 +20,11 @@
    same as width.  */
 #define TILE_PIXEL_WIDTH 8
 
+/* Offset from the player screen coordinates to the top left corner of the
+   sprite.  Since the players are 8 pixels in diameter, centered in the sprite
+   16x16 box, the offset is 8 pixels in both X and Y. */
+#define PLAYER_SCREEN_TO_SPRITE_OFFSET 8
+
 /* The various things that a tile can be.  Empty space, or coloured to show
    the player who owns it, or a power up.
 */

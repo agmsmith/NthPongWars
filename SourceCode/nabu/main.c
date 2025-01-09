@@ -319,16 +319,16 @@ void main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 20;
+  g_play_area_height_tiles = 22;
   g_play_area_width_tiles = 30;
 
-  g_screen_height_tiles = 20;
+  g_screen_height_tiles = 22;
   g_screen_width_tiles = 30;
   g_screen_top_X_tiles = 1;
-  g_screen_top_Y_tiles = 2;
+  g_screen_top_Y_tiles = 1;
 
-  g_play_area_col_for_screen = 0;
-  g_play_area_row_for_screen = 0;
+  g_play_area_col_for_screen = 2;
+  g_play_area_row_for_screen = 3;
 
   if (!InitTileArray())
   {
@@ -371,16 +371,16 @@ void main(void)
 #if 0
     /* Every once in a while move the screen around the play area. */
 
-    if ((s_FrameCounter & 0xff) == 0)
+    if ((s_FrameCounter & 0x1ff) == 0)
     {
-#if 0
-      if (++g_play_area_col_for_screen >= g_play_area_width_tiles)
+      g_play_area_col_for_screen += 3;
+      if (g_play_area_col_for_screen >= g_play_area_width_tiles)
       {
         g_play_area_col_for_screen = 0;
-        if (++g_play_area_row_for_screen >= g_play_area_height_tiles)
+        g_play_area_row_for_screen += 3;
+        if (g_play_area_row_for_screen >= g_play_area_height_tiles)
           g_play_area_row_for_screen = 0;
       }
-#endif
       ActivateTileArrayWindow();
     }
 #endif

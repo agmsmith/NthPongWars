@@ -154,8 +154,8 @@ extern uint8_t g_screen_top_Y_tiles;
    for moving sprites around to compensate for the window not being at the
    screen top.  Generally like g_screen_top_X_tiles * TILE_PIXEL_WIDTH */
 #ifdef NABU_H
-extern uint16_t g_sprite_window_offset_x;
-extern uint16_t g_sprite_window_offset_y;
+extern int16_t g_sprite_window_offset_x;
+extern int16_t g_sprite_window_offset_y;
 #endif
 
 /* Where the visible screen is in the play area.  It can move around to follow

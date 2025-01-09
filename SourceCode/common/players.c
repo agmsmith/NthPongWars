@@ -146,9 +146,11 @@ void UpdatePlayerAnimations(void)
 
       screenX = GET_FX_INTEGER(pPlayer->pixel_center_x);
       screenX -= PLAYER_SCREEN_TO_SPRITE_OFFSET;
+      screenX += g_sprite_window_offset_x;
 
       screenY = GET_FX_INTEGER(pPlayer->pixel_center_y);
       screenY -= PLAYER_SCREEN_TO_SPRITE_OFFSET + 1 /* VDP hardware Y oddity */;
+      screenY += g_sprite_window_offset_y;
 
       if (screenX <= -16 || screenY <= -17 || screenX >= 256 || screenY >= 191)
       { /* Sprite is off screen, flag it as not drawable. */

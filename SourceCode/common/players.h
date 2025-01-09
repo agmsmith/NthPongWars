@@ -168,7 +168,6 @@ extern void UpdatePlayerAnimations(void);
 /* Update animations for the next frame.  Also convert location of the player
    to hardware pixel coordinates. */
 
-
 #ifdef NABU_H
 extern void CopyPlayersToSprites(void);
 /* Copy all the players to hardware sprites.  Returns the number of the next

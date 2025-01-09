@@ -22,6 +22,11 @@ uint8_t g_screen_width_tiles = 32;
 uint8_t g_screen_top_X_tiles = 0;
 uint8_t g_screen_top_Y_tiles = 0;
 
+#ifdef NABU_H
+uint16_t g_sprite_window_offset_x;
+uint16_t g_sprite_window_offset_y;
+#endif
+
 uint8_t g_play_area_col_for_screen = 0;
 uint8_t g_play_area_row_for_screen = 0;
 
@@ -242,6 +247,12 @@ void ActivateTileArrayWindow(void)
       }
     }
   }
+
+  /* Cached values for moving sprites around to compensate for the window not
+     being at the screen top. */
+
+  g_sprite_window_offset_x = g_screen_top_X_tiles * TILE_PIXEL_WIDTH;
+  g_sprite_window_offset_y = g_screen_top_Y_tiles * TILE_PIXEL_WIDTH;
 #endif /* NABU_H */
 
   /* Force caches to be recomputed on the next update, and do a full screen

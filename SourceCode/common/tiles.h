@@ -145,6 +145,14 @@ extern uint8_t g_screen_width_tiles;
 extern uint8_t g_screen_top_X_tiles;
 extern uint8_t g_screen_top_Y_tiles;
 
+/* Cached values updated by ActivateTileArrayWindow(), number of pixels delta
+   for moving sprites around to compensate for the window not being at the
+   screen top.  Generally like g_screen_top_X_tiles * TILE_PIXEL_WIDTH */
+#ifdef NABU_H
+extern uint16_t g_sprite_window_offset_x;
+extern uint16_t g_sprite_window_offset_y;
+#endif
+
 /* Where the visible screen is in the play area.  It can move around to follow
    the balls if the play area is larger than the screen.  This top left corner
    in play area tiles corresponds to the top left corner of the g_screen_*

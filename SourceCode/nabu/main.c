@@ -79,6 +79,12 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "../common/players.c"
 #include "../common/simulate.c"
 
+/* Our globals and semi-global statics for floating point constants. */
+
+static bool s_KeepRunning;
+static fx sfx_Constant_One;
+static fx sfx_Constant_MinusOne;
+
 
 /*******************************************************************************
  * The usual press any key to continue prompt, in VDP graphics mode.  NULL for
@@ -89,6 +95,103 @@ static char HitAnyKey(const char *MessageText)
   vdp_newLine();
   vdp_print((char *) (MessageText ? MessageText : "Press any key to continue."));
   return getChar();
+}
+
+
+/*******************************************************************************
+ * Process Keyboard and Joystick inputs.
+ */
+static void ProcessKeyboard(void)
+{
+  while (isKeyPressed())
+  {
+    static uint8_t iControlledPlayer = 0;
+    uint8_t letter;
+
+    letter = getChar(); /* Note, may flash cursor, writing ' ' to VDP. */
+    if (letter >= 0xE0 && letter < 0xE4) /* Cursor key pressed. */
+    {
+      player_pointer pPlayer = g_player_array + iControlledPlayer;
+      if (letter == 0xE3) /* Down cursor key pressed. */
+      {
+        if (++pPlayer->pixel_center_y.portions.integer > 202)
+          pPlayer->pixel_center_y.portions.integer = -10;
+      }
+      if (letter == 0xE2) /* Up cursor key pressed. */
+      {
+        if (--pPlayer->pixel_center_y.portions.integer < -10)
+          pPlayer->pixel_center_y.portions.integer = 202;
+      }
+      if (letter == 0xE1) /* Left cursor key pressed. */
+      {
+        if (--pPlayer->pixel_center_x.portions.integer < -10)
+          pPlayer->pixel_center_x.portions.integer = 266;
+      }
+      if (letter == 0xE0) /* Right cursor key pressed. */
+      {
+        if (++pPlayer->pixel_center_x.portions.integer > 266)
+          pPlayer->pixel_center_x.portions.integer = -10;
+      }
+      printf("Player %d moved to %d, %d.\n", iControlledPlayer,
+        pPlayer->pixel_center_x.portions.integer,
+        pPlayer->pixel_center_y.portions.integer);
+    }
+    else if (letter >= 0x80) /* High bit set for joystick and NABU special keys. */
+    {
+      /* Joystick or special keys.  Ignore them, there are lots of them. */
+      /* printf("(%X)", letter); */
+    }
+    else
+    {
+      printf ("Got letter %d %c.\n", (int) letter, letter);
+      if (letter == 'q')
+      {
+        s_KeepRunning = false;
+      }
+      else if (letter == 'a' || letter == 's' || letter == 'w' ||
+      letter == 'z' || letter == '0')
+      {
+        player_pointer pPlayer = g_player_array + iControlledPlayer;
+        if (letter == 'a') /* Speed up leftwards. */
+        {
+          ADD_FX(pPlayer->velocity_x, sfx_Constant_MinusOne,
+            pPlayer->velocity_x);
+        }
+        else if (letter == 's') /* Speed up rightwards. */
+        {
+          ADD_FX(pPlayer->velocity_x, sfx_Constant_One,
+            pPlayer->velocity_x);
+        }
+        else if (letter == 'w') /* Speed up upwards. */
+        {
+          ADD_FX(pPlayer->velocity_y, sfx_Constant_MinusOne,
+            pPlayer->velocity_y);
+        }
+        else if (letter == 'z') /* Speed up downwards. */
+        {
+          ADD_FX(pPlayer->velocity_y, sfx_Constant_One,
+            pPlayer->velocity_y);
+        }
+        else if (letter == '0') /* Stop moving. */
+        {
+          ZERO_FX(pPlayer->velocity_x);
+          ZERO_FX(pPlayer->velocity_y);
+        }
+        printf("Player %d changed speed to %f, %f.\n", iControlledPlayer,
+          GET_FX_FLOAT(pPlayer->velocity_x),
+          GET_FX_FLOAT(pPlayer->velocity_y));
+      }
+      else if (letter >= '1' && letter <= '4')
+      {
+        iControlledPlayer = letter - '1';
+        printf("Now controlling player %d.\n", (int) iControlledPlayer);
+      }
+      else if (letter == 'r')
+        vdp_refreshViewPort();
+      else
+        printf ("Unhandled letter %d.\n", (int) letter);
+    }
+  }
 }
 
 
@@ -109,7 +212,11 @@ void main(void)
   /* A few local variables to force stack frame creation, sets IX register. */
   uint8_t i;
   unsigned int sTotalMem, sLargestMem;
-  bool keepRunning;
+
+  /* Initialise some fixed point number constants. */
+  INT_TO_FX(1, sfx_Constant_One);
+  COPY_FX(sfx_Constant_One, sfx_Constant_MinusOne);
+  NEGATE_FX(&sfx_Constant_MinusOne);
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter
@@ -212,13 +319,13 @@ void main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 23;
-  g_play_area_width_tiles = 32;
+  g_play_area_height_tiles = 20;
+  g_play_area_width_tiles = 30;
 
-  g_screen_height_tiles = 23;
-  g_screen_width_tiles = 32;
-  g_screen_top_X_tiles = 0;
-  g_screen_top_Y_tiles = 1;
+  g_screen_height_tiles = 20;
+  g_screen_width_tiles = 30;
+  g_screen_top_X_tiles = 1;
+  g_screen_top_Y_tiles = 2;
 
   g_play_area_col_for_screen = 0;
   g_play_area_row_for_screen = 0;
@@ -236,9 +343,9 @@ void main(void)
      go back to updating things etc. */
 
   s_FrameCounter = 0;
-  keepRunning = true;
+  s_KeepRunning = true;
   vdp_enableVDPReadyInt();
-  while (keepRunning)
+  while (s_KeepRunning)
   {
     UpdateTileAnimations();
     UpdatePlayerAnimations();
@@ -258,6 +365,8 @@ void main(void)
     utoa(s_FrameCounter, TempBuffer + 3, 10 /* base */);
     vdp_print(TempBuffer + (strlen(TempBuffer) - 3) /* Last three chars. */);
     s_FrameCounter++;
+
+    ProcessKeyboard();
 
 #if 0
     /* Every once in a while move the screen around the play area. */
@@ -348,62 +457,6 @@ void main(void)
       vdp_print("Corrupted Stack Memory!");
     }
 #endif
-    /* Process Keyboard and Joystick inputs. */
-
-    while (isKeyPressed())
-    {
-      static uint8_t iControlledPlayer = 0;
-      uint8_t letter;
-
-      letter = getChar(); /* Note, may flash cursor, writing ' ' to VDP. */
-      if (letter >= 0xE0 && letter < 0xE4) /* Cursor key pressed. */
-      {
-        player_pointer pPlayer = g_player_array + iControlledPlayer;
-        if (letter == 0xE3) /* Down cursor key pressed. */
-        {
-          if (++pPlayer->pixel_center_y.portions.integer > 202)
-            pPlayer->pixel_center_y.portions.integer = -10;
-        }
-        if (letter == 0xE2) /* Up cursor key pressed. */
-        {
-          if (--pPlayer->pixel_center_y.portions.integer < -10)
-            pPlayer->pixel_center_y.portions.integer = 202;
-        }
-        if (letter == 0xE1) /* Left cursor key pressed. */
-        {
-          if (--pPlayer->pixel_center_x.portions.integer < -10)
-            pPlayer->pixel_center_x.portions.integer = 266;
-        }
-        if (letter == 0xE0) /* Right cursor key pressed. */
-        {
-          if (++pPlayer->pixel_center_x.portions.integer > 266)
-            pPlayer->pixel_center_x.portions.integer = -10;
-        }
-        printf("Player %d moved to %d, %d.\n", iControlledPlayer,
-          pPlayer->pixel_center_x.portions.integer,
-          pPlayer->pixel_center_y.portions.integer);
-      }
-      else if (letter >= 0x80) /* High bit set for joystick and NABU special keys. */
-      {
-        /* Joystick or special keys.  Ignore them, there are lots of them. */
-        /* printf("(%X)", letter); */
-      }
-      else
-      {
-        printf ("Got letter %d %c.\n", (int) letter, letter);
-        if (letter == 'q')
-          keepRunning = false;
-        else if (letter >= '1' && letter <= '4')
-        {
-          iControlledPlayer = letter - '1';
-          printf("Now controlling player %d.\n", (int) iControlledPlayer);
-        }
-        else if (letter == 'r')
-          vdp_refreshViewPort();
-        else
-          printf ("Unhandled letter %d.\n", (int) letter);
-      }
-    }
   }
   vdp_disableVDPReadyInt();
 

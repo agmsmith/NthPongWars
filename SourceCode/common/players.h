@@ -122,8 +122,7 @@ typedef struct player_struct {
   uint8_t vdpShadowSpriteY;
   uint8_t vdpShadowEarlyClock32Left;
 
-  SpriteAnimationType main_anim_type; /* Animation for the main ball sprite. */
-  SpriteAnimRecord main_anim; /* A copy of the related animation data. */
+  SpriteAnimRecord main_anim;/* Animation for the main ball sprite. */
 
   uint8_t shadow_colour;
   /* Predefined colour for this player's shadow sprite.  We're using colours
@@ -135,7 +134,7 @@ typedef struct player_struct {
   /* Predefined colour for this player's sparkle sprite.  It's usually used for
      power-up animations and other such things around the ball.  Caches the
      values from k_PLAYER_COLOURS[player#]. */
-  SpriteAnimationType sparkle_anim_type; /* Which sparkle animation, or none. */
+
   SpriteAnimRecord sparkle_anim;
 #endif /* NABU_H */
 } player_record, *player_pointer;

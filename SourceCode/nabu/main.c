@@ -215,7 +215,7 @@ void main(void)
 
   /* Initialise some fixed point number constants. */
   INT_TO_FX(1, sfx_Constant_One);
-  COPY_FX(sfx_Constant_One, sfx_Constant_MinusOne);
+  INT_TO_FX(1, sfx_Constant_MinusOne);
   NEGATE_FX(&sfx_Constant_MinusOne);
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
@@ -319,16 +319,16 @@ void main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 22;
-  g_play_area_width_tiles = 30;
+  g_play_area_height_tiles = 21;
+  g_play_area_width_tiles = 28;
 
-  g_screen_height_tiles = 22;
-  g_screen_width_tiles = 30;
-  g_screen_top_X_tiles = 1;
-  g_screen_top_Y_tiles = 1;
+  g_screen_height_tiles = 21;
+  g_screen_width_tiles = 28;
+  g_screen_top_X_tiles = 2;
+  g_screen_top_Y_tiles = 2;
 
-  g_play_area_col_for_screen = 2;
-  g_play_area_row_for_screen = 3;
+  g_play_area_col_for_screen = 0;
+  g_play_area_row_for_screen = 0;
 
   if (!InitTileArray())
   {
@@ -392,15 +392,15 @@ void main(void)
 
   for (i = 0; i < MAX_PLAYERS; i++)
   {
-    player_pointer pPlayer = g_player_array + i;
-
     if ((rand() & 0xff) == 0)
     {
-      SpriteAnimationType NewType =
-        (s_FrameCounter & 0x80) ? SPRITE_ANIM_NONE : SPRITE_ANIM_BALL_EFFECT_FAST;
-      if (NewType != pPlayer->sparkle_anim_type)
+      SpriteAnimationType NewType;
+      player_pointer pPlayer = g_player_array + i;
+
+      NewType = (s_FrameCounter & 0x80) ? SPRITE_ANIM_NONE :
+        SPRITE_ANIM_BALL_EFFECT_FAST;
+      if (NewType != pPlayer->sparkle_anim.type)
       {
-        pPlayer->sparkle_anim_type = NewType;
         pPlayer->sparkle_anim = g_SpriteAnimData[NewType];
       }
     }

@@ -16,21 +16,24 @@ typedef enum SpriteAnimationsEnum {
 } SpriteAnimationType;
 
 typedef struct SpriteAnimStruct {
+  SpriteAnimationType type; /* Identifies the animation overall. */
   uint8_t first_name; /* Identifies the first frame of the animation. */
-  uint8_t past_last_name;
+  uint8_t past_last_name; /* Here or past and we need to restart anim. */
   uint8_t delay; /* Number of video frames per animation frame. */
-  uint8_t current_delay; /* Counts down from delay to slow frame rate. */
   uint8_t current_name; /* Name for the currently displaying frame. */
+  uint8_t current_delay; /* Counts down from delay, to slow the frame rate. */
 } SpriteAnimRecord, *SpriteAnimPointer;
 
 /* The various animations we know of.  Data is copied to a player and used
    there, so some fields will be changing in the copy, like the current frame
    name.  Note that it uses 4 characters per sprite, so multiples of 4.
+   Force it to start at the beginning with current_name 250 (update adds 4,
+   result 254 will be past end, animation restarts) and delay 0.
 */
 static const SpriteAnimRecord g_SpriteAnimData[SPRITE_ANIM_MAX] = {
-  {0, 4, 60, 0, 0}, /* SPRITE_ANIM_NONE - nothing, box test pattern shown. */
-  {4, 16, 3, 0, 0}, /* SPRITE_ANIM_BALL_ROLLING - a ball rolling. */
-  {16, 28, 2, 0, 0}, /* SPRITE_ANIM_BALL_EFFECT_FAST - halo circling around ball. */
+  {SPRITE_ANIM_NONE, 0, 4, 60, 250, 0}, /* Nothing, box test pattern shown. */
+  {SPRITE_ANIM_BALL_ROLLING, 4, 16, 3, 250, 0}, /* A ball rolling. */
+  {SPRITE_ANIM_BALL_EFFECT_FAST, 16, 28, 5, 250, 0}, /* Halo circling ball. */
 };
 #endif /* _NTHPONG1_H */
 

@@ -83,12 +83,10 @@ printf("(%f to %f, %f to %f)\n",
 #endif
 
 #ifdef NABU_H
-    pPlayer->main_anim_type = SPRITE_ANIM_BALL_ROLLING;
-    pPlayer->main_anim = g_SpriteAnimData[pPlayer->main_anim_type];
+    pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
     pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow;
     pPlayer->sparkle_colour = k_PLAYER_COLOURS[iPlayer].sparkle;
-    pPlayer->sparkle_anim_type = SPRITE_ANIM_NONE;
-    pPlayer->sparkle_anim = g_SpriteAnimData[pPlayer->sparkle_anim_type];
+    pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
   }
 }
@@ -127,7 +125,7 @@ void UpdatePlayerAnimations(void)
       UpdateOneAnimation(&pPlayer->main_anim);
 
 #ifdef NABU_H
-      if (pPlayer->sparkle_anim_type != SPRITE_ANIM_NONE)
+      if (pPlayer->sparkle_anim.type != SPRITE_ANIM_NONE)
         UpdateOneAnimation(&pPlayer->sparkle_anim);
 
       /* Update the sprite screen coordinates.  Convert from player coordinates.
@@ -240,7 +238,7 @@ void CopyPlayersToSprites(void)
   pPlayer = g_player_array;
   do {
     if (pPlayer->brain != BRAIN_INACTIVE &&
-    pPlayer->sparkle_anim_type != SPRITE_ANIM_NONE &&
+    pPlayer->sparkle_anim.type != SPRITE_ANIM_NONE &&
     pPlayer->vdpSpriteY != SPRITE_NOT_DRAWABLE)
     {
       /* Do the sparkle power-up sprite.  Same location as ball. */

@@ -154,23 +154,23 @@ static void ProcessKeyboard(void)
         player_pointer pPlayer = g_player_array + iControlledPlayer;
         if (letter == 'a') /* Speed up leftwards. */
         {
-          ADD_FX(pPlayer->velocity_x, sfx_Constant_MinusOne,
-            pPlayer->velocity_x);
+          ADD_FX(&pPlayer->velocity_x, &sfx_Constant_MinusOne,
+            &pPlayer->velocity_x);
         }
         else if (letter == 's') /* Speed up rightwards. */
         {
-          ADD_FX(pPlayer->velocity_x, sfx_Constant_One,
-            pPlayer->velocity_x);
+          ADD_FX(&pPlayer->velocity_x, &sfx_Constant_One,
+            &pPlayer->velocity_x);
         }
         else if (letter == 'w') /* Speed up upwards. */
         {
-          ADD_FX(pPlayer->velocity_y, sfx_Constant_MinusOne,
-            pPlayer->velocity_y);
+          ADD_FX(&pPlayer->velocity_y, &sfx_Constant_MinusOne,
+            &pPlayer->velocity_y);
         }
         else if (letter == 'z') /* Speed up downwards. */
         {
-          ADD_FX(pPlayer->velocity_y, sfx_Constant_One,
-            pPlayer->velocity_y);
+          ADD_FX(&pPlayer->velocity_y, &sfx_Constant_One,
+            &pPlayer->velocity_y);
         }
         else if (letter == '0') /* Stop moving. */
         {
@@ -269,7 +269,7 @@ void main(void)
   printf("Stack pointer is $%X, frame %c%X.\n",
     (int) s_StackPointer, '$', (int) s_StackFramePointer);
 #endif
-  printf ("Hit any key... ");
+/* printf ("Hit any key... ");
   printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
 
   if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
@@ -347,26 +347,26 @@ void main(void)
   vdp_enableVDPReadyInt();
   while (s_KeepRunning)
   {
+    ProcessKeyboard();
+    Simulate();
     UpdateTileAnimations();
     UpdatePlayerAnimations();
 #if 1
     /* Check if our update took longer than a frame. */
     if (vdpIsReady) /* Non-zero means we missed 1 or more frames. */
-      playNoteDelay(2, 65 + vdpIsReady /* Higher pitch if more missed */, 40);
+      playNoteDelay(2, 10 + vdpIsReady /* Higher pitch if more missed */, 40);
 #endif
     vdp_waitVDPReadyInt();
 
     /* Do the sprites first, since they're time critical to avoid glitches. */
     CopyPlayersToSprites();
-
     CopyTilesToScreen();
+
     vdp_setCursor2(27, 0);
     strcpy(TempBuffer, "000"); /* Leading zeroes. */
     utoa(s_FrameCounter, TempBuffer + 3, 10 /* base */);
     vdp_print(TempBuffer + (strlen(TempBuffer) - 3) /* Last three chars. */);
     s_FrameCounter++;
-
-    ProcessKeyboard();
 
 #if 0
     /* Every once in a while move the screen around the play area. */
@@ -385,11 +385,10 @@ void main(void)
     }
 #endif
 
-#if 1
   /* Move players around and change animations. */
 
-  Simulate();
 
+#if 0
   for (i = 0; i < MAX_PLAYERS; i++)
   {
     if ((rand() & 0xff) == 0)
@@ -443,7 +442,7 @@ void main(void)
   }
 #endif
 
-#if 1 /* Check for corrupted memory. */
+#if 0 /* Check for corrupted memory. */
     if (memcmp(s_OriginalLocationZeroMemory, NULL,
     sizeof(s_OriginalLocationZeroMemory)) != 0)
     {

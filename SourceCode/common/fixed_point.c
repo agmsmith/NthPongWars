@@ -38,6 +38,119 @@ void NEGATE_FX(pfx x)
 #endif
 }
 
+
+/* Add fx values x and y and put the result in fx value z (which can safely
+   overwrite x or y if it is the same address as them). */
+void ADD_FX(pfx x, pfx y, pfx z)
+{
+#ifdef NABU_H
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  y;
+  z;
+  __asm
+  ld    hl,2      /* Hop over return address. */
+  add   hl,sp     /* Get pointer to argument x, will put in bc. */
+  ld    c,(hl)
+  inc   hl
+  ld    b,(hl)    /* bc now has pointer to x's fx data, a 32 bit integer. */
+  inc   hl
+  ld    e,(hl)
+  inc   hl
+  ld    d,(hl)    /* Temporarily de has pointer to y's fx data. */
+  inc   hl
+  ld    a,(hl)
+  inc   hl
+  ld    h,(hl)    /* Yes, you can do that, mangle hl with (hl) data. */
+  ld    l,a       /* Temporarily hl has pointer to z's fx data. */
+  ex    de,hl     /* de has z, hl has y, needed for add a,(hl) instruction. */
+  ld    a,(bc)    /* Do the 32 bit addition, x + y = z in effect. */
+  add   a,(hl)
+  ld    (de),a    /* Save result in z, can overwrite x or y, but that's OK. */
+  inc   hl
+  inc   bc
+  inc   de
+  ld    a,(bc)
+  adc   a,(hl)
+  ld    (de),a
+  inc   hl
+  inc   bc
+  inc   de
+  ld    a,(bc)
+  adc   a,(hl)
+  ld    (de),a
+  inc   hl
+  inc   bc
+  inc   de
+  ld    a,(bc)
+  adc   a,(hl)
+  ld    (de),a
+  __endasm;
+#else /* Generic C implementation. */
+  z->as_int32 = x->as_int32 + y->as_int32;
+#endif
+}
+
+
+/* Put fx value x - y into z (which can safely overwrite x or y even if they
+   have the same address as z). */
+void SUBTRACT_FX(pfx x, pfx y, pfx z)
+{
+#ifdef NABU_H
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  y;
+  z;
+  __asm
+  ld    hl,2      /* Hop over return address. */
+  add   hl,sp     /* Get pointer to argument x, will put in bc. */
+  ld    c,(hl)
+  inc   hl
+  ld    b,(hl)    /* bc now has pointer to x's fx data, a 32 bit integer. */
+  inc   hl
+  ld    e,(hl)
+  inc   hl
+  ld    d,(hl)    /* Temporarily de has pointer to y's fx data. */
+  inc   hl
+  ld    a,(hl)
+  inc   hl
+  ld    h,(hl)    /* Yes, you can do that, mangle hl with (hl) data. */
+  ld    l,a       /* Temporarily hl has pointer to z's fx data. */
+  ex    de,hl     /* de has z, hl has y, needed for sbc a,(hl) instruction. */
+  ld    a,(bc)    /* Do the 32 bit subtraction, x - y = z in effect. */
+  sub   a,(hl)
+  ld    (de),a    /* Save result in z, can overwrite x or y, but that's OK. */
+  inc   hl
+  inc   bc
+  inc   de
+  ld    a,(bc)
+  sbc   a,(hl)
+  ld    (de),a
+  inc   hl
+  inc   bc
+  inc   de
+  ld    a,(bc)
+  sbc   a,(hl)
+  ld    (de),a
+  inc   hl
+  inc   bc
+  inc   de
+  ld    a,(bc)
+  sbc   a,(hl)
+  ld    (de),a
+  __endasm;
+#else /* Generic C implementation. */
+  z->as_int32 = x->as_int32 - y->as_int32;
+#endif
+}
+
+
+/* Put fx absolute value of x into x. */
+void ABS_FX(pfx x)
+{
+  if (IS_NEGATIVE_FX(x))
+    NEGATE_FX(x);
+}
+
+
 /* Compare two values X & Y, return a small integer (so it can be returned in
    a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
    +1 if X > Y. */

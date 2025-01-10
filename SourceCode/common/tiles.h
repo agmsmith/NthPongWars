@@ -177,7 +177,7 @@ extern uint8_t g_play_area_row_for_screen;
   of time to update the screen within one frame.  But it's still faster than the
   full screen scan, so use double that.
 */
-#define MAX_ANIMATED_CACHE 65
+#define MAX_ANIMATED_CACHE 60
 extern tile_pointer g_cache_animated_tiles[MAX_ANIMATED_CACHE];
 extern uint8_t g_cache_animated_tiles_index; /* Next free cache entry. */
 
@@ -190,7 +190,7 @@ extern uint8_t g_cache_animated_tiles_index; /* Next free cache entry. */
    In practice, a lot of the animations are slower (else too fast to see), so
    the dirty cache doesn't have to be as big as the animation cache.
 */
-#define MAX_DIRTY_SCREEN_CACHE 50
+#define MAX_DIRTY_SCREEN_CACHE 40
 extern tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];
 extern uint8_t g_cache_dirty_screen_tiles_index; /* Next free cache entry. */
 

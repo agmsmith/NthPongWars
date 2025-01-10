@@ -10,7 +10,7 @@
  * AGMS20241108 - Start this header file.
  */
 
-#define DEBUG_PRINT_SIM 0 /* Turn on printfs for debugging. */
+#define DEBUG_PRINT_SIM 0 /* Turn on debug printfs, uses floating point. */
 
 /*******************************************************************************
  * Calculate the new position and velocity of all players.
@@ -56,7 +56,7 @@ void Simulate(void)
   uint8_t stepShiftCount;
 
 #if DEBUG_PRINT_SIM
-printf("\nStarting simulation step.\n");
+printf("\nStarting simulation update.\n");
 #endif
 
   /* Find the largest velocity component of all the players. */
@@ -78,12 +78,12 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
 #endif
 
     absVelocity = pPlayer->velocity_x;
-    ABS_FX(absVelocity);
+    ABS_FX(&absVelocity);
     if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
       maxVelocity = absVelocity;
 
     absVelocity = pPlayer->velocity_y;
-    ABS_FX(absVelocity);
+    ABS_FX(&absVelocity);
     if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
       maxVelocity = absVelocity;
   }
@@ -124,7 +124,7 @@ printf("Have %d steps, shift by %d\n", numberOfSteps, stepShiftCount);
     pPlayer->step_velocity_y.as_int32 =
       pPlayer->velocity_y.as_int32 >> stepShiftCount;
 #if DEBUG_PRINT_SIM
-printf("Player %d: vel (%f, %f), step (%f, %f)\n", iPlayer,
+printf("Player %d: vel (%f, %f), step vel (%f, %f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->velocity_x),
   GET_FX_FLOAT(pPlayer->velocity_y),
   GET_FX_FLOAT(pPlayer->step_velocity_x),
@@ -141,7 +141,7 @@ printf("Player %d: vel (%f, %f), step (%f, %f)\n", iPlayer,
   for (iStep = 0; iStep < numberOfSteps; iStep ++)
   {
 #if DEBUG_PRINT_SIM
-printf("Substep %d\n", iStep);
+printf("Substep %d:\n", iStep);
 #endif
     /* Calculate the new position of all the players for this step; just
        add step velocity to position.  Need to do this before checking for any
@@ -152,10 +152,10 @@ printf("Substep %d\n", iStep);
     {
       if (pPlayer->brain == BRAIN_INACTIVE)
         continue;
-      ADD_FX(pPlayer->pixel_center_x, pPlayer->step_velocity_x,
-        pPlayer->pixel_center_x);
-      ADD_FX(pPlayer->pixel_center_y, pPlayer->step_velocity_y,
-        pPlayer->pixel_center_y);
+      ADD_FX(&pPlayer->pixel_center_x, &pPlayer->step_velocity_x,
+        &pPlayer->pixel_center_x);
+      ADD_FX(&pPlayer->pixel_center_y, &pPlayer->step_velocity_y,
+        &pPlayer->pixel_center_y);
 #if DEBUG_PRINT_SIM
 printf("Player %d: new pos (%f, %f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
@@ -163,6 +163,10 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
 );
 #endif
     }
+
+    /* Check for tile collisions. */
+
+/* bleeble */
 
     /* Bounce the players off the walls. */
 
@@ -174,10 +178,10 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
 
       if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_bottom_y) > 0)
       {
-        if (!IS_NEGATIVE_FX(pPlayer->velocity_y))
+        if (!IS_NEGATIVE_FX(&pPlayer->velocity_y))
         {
-          NEGATE_FX(&pPlayer->step_velocity_y);
           NEGATE_FX(&pPlayer->velocity_y);
+          NEGATE_FX(&pPlayer->step_velocity_y);
         }
         pPlayer->pixel_center_y = g_play_area_wall_bottom_y;
         playNoteDelay(0, 60, 90);
@@ -196,10 +200,10 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
 
       if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_left_x) < 0)
       {
-        if (IS_NEGATIVE_FX(pPlayer->velocity_x))
+        if (IS_NEGATIVE_FX(&pPlayer->velocity_x))
         {
-          NEGATE_FX(&pPlayer->step_velocity_x);
           NEGATE_FX(&pPlayer->velocity_x);
+          NEGATE_FX(&pPlayer->step_velocity_x);
         }
         pPlayer->pixel_center_x = g_play_area_wall_left_x;
         playNoteDelay(1, 61, 90);
@@ -218,10 +222,10 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
 
       if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_right_x) > 0)
       {
-        if (!IS_NEGATIVE_FX(pPlayer->velocity_x))
+        if (!IS_NEGATIVE_FX(&pPlayer->velocity_x))
         {
-          NEGATE_FX(&pPlayer->step_velocity_x);
           NEGATE_FX(&pPlayer->velocity_x);
+          NEGATE_FX(&pPlayer->step_velocity_x);
         }
         pPlayer->pixel_center_x = g_play_area_wall_right_x;
         playNoteDelay(1, 62, 90);
@@ -240,10 +244,10 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
 
       if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_top_y) < 0)
       {
-        if (IS_NEGATIVE_FX(pPlayer->velocity_y))
+        if (IS_NEGATIVE_FX(&pPlayer->velocity_y))
         {
-          NEGATE_FX(&pPlayer->step_velocity_y);
           NEGATE_FX(&pPlayer->velocity_y);
+          NEGATE_FX(&pPlayer->step_velocity_y);
         }
         pPlayer->pixel_center_y = g_play_area_wall_top_y;
         playNoteDelay(0, 63, 90);

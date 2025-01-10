@@ -84,20 +84,22 @@ typedef union fx_union {
 /* Negate, done by subtracting from 0 and overwriting the value. */
 extern void NEGATE_FX(pfx x);
 
-/* Add fx values a and b and put the result in fx value c. */
-#define ADD_FX(a, b, c) {c.as_int32 = a.as_int32 + b.as_int32; }
+/* Add fx values x and y and put the result in fx value z (which can safely
+   overwrite x or y if it is the same address as them). */
+extern void ADD_FX(pfx x, pfx y, pfx z);
 
-/* Put fx value a - b into c. */
-#define SUBTRACT_FX(a, b, c) {c.as_int32 = a.as_int32 - b.as_int32; }
+/* Put fx value x - y into z (which can safely overwrite x or y even if they
+   have the same address as z). */
+extern void SUBTRACT_FX(pfx x, pfx y, pfx z);
 
 /* Put fx absolute value of x into x. */
-#define ABS_FX(x) { if (IS_NEGATIVE_FX(x)) NEGATE_FX(&x); }
+extern void ABS_FX(pfx x);
 
-/* IS_NEGATIVE_FX(x) returns TRUE if the number is negative. */
+/* IS_NEGATIVE_FX(pfx x) returns TRUE if the number is negative. */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-  #define IS_NEGATIVE_FX(x) (x.as_bytes[3] & 0x80)
+  #define IS_NEGATIVE_FX(x) ((x)->as_bytes[3] & 0x80)
 #else /* Big endian. */
-  #define IS_NEGATIVE_FX(x) (x.as_bytes[0] & 0x80)
+  #define IS_NEGATIVE_FX(x) ((x)->as_bytes[0] & 0x80)
 #endif
 
 /* Compare two values X & Y, return a small integer (so it can be returned in

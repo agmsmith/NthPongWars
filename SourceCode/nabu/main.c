@@ -353,7 +353,7 @@ void main(void)
     UpdatePlayerAnimations();
 #if 1
     /* Check if our update took longer than a frame. */
-    if (vdpIsReady) /* Non-zero means we missed 1 or more frames. */
+    if (vdpIsReady >= 2) /* Non-zero means we missed 1 or more frames. */
       playNoteDelay(2, 10 + vdpIsReady /* Higher pitch if more missed */, 40);
 #endif
     vdp_waitVDPReadyInt();
@@ -388,7 +388,7 @@ void main(void)
   /* Move players around and change animations. */
 
 
-#if 0
+#if 1
   for (i = 0; i < MAX_PLAYERS; i++)
   {
     if ((rand() & 0xff) == 0)

@@ -1449,6 +1449,33 @@ at the signs.  Nice to see that the C version does handle overflows in the
 comparison, rather than just looking at the high bit of the result of a virtual
 subtraction.
 
+<HR>
+<H2><A NAME="2025.01.12"></A>2025.01.12</H2>
+
+<H3>Tile Collisions</H3>
+
+<P>I got the first attempt at doing tile collisions working today.  It takes
+into account the tile and ball width, which is why it makes trails of two tiles
+wide when a ball moves.  I think it would look better if it was only one tile
+wide, and the game would last longer.
+
+<P>Also, it picks the side of the tile to bounce off by looking for the largest
+velocity component.  That means that it pretty much always goes in one
+direction.  I'll have to rethink bouncing.  The trouble is that I want
+something that doesn't do anything more complex than subtraction, so no vector
+dot products.
+
+<P>Obviously a bit of rethinking needed here.  Also, the frame rate has dropped
+to 30 frames per second, or even less if balls are moving super fast (more
+physics steps for that so that each step is one tile at most).  Fortunately
+there aren't too many more CPU draining features to add to the game.  Well,
+except for networking?
+
+<P ALIGN=CENTER><A
+HREF="TileBounces20250112.mp4"><IMG SRC="TileBounces20250112.GIF" WIDTH="280"
+HEIGHT="216" ALT="[Video of Players Bouncing off Tiles for the First Time!]"></A><BR>
+<A HREF="TileBounces20250112.mp4">TileBounces20250112.mp4</A>
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

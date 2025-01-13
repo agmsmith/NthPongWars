@@ -164,9 +164,167 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
 #endif
     }
 
-    /* Check for tile collisions. */
+    /* Check for player to tile collisions.  Like a tic-tac-toe board, examine
+       9 tiles around the player, unless too close to the side of the board
+       then it's less. */
 
-/* bleeble */
+    pPlayer = g_player_array;
+    for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
+    {
+      uint8_t startCol, endCol, curCol, playerCol;
+      uint8_t startRow, endRow, curRow, playerRow;
+      int16_t playerX, playerY;
+      
+      playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
+      playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+      playerCol = playerX / TILE_PIXEL_WIDTH;
+      playerRow = playerY / TILE_PIXEL_WIDTH;
+
+#if DEBUG_PRINT_SIM
+printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
+#endif
+      if (playerCol > 0)
+        startCol = playerCol - 1;
+      else /* Player near left side of board, no tiles past edge. */
+        startCol = 0;
+
+      if (playerCol < g_play_area_width_tiles - 1)
+        endCol = playerCol + 1;
+      else /* Player is at right edge of board, no tiles past there to check. */
+        endCol = g_play_area_width_tiles - 1;
+
+      if (playerRow > 0)
+        startRow = playerRow - 1;
+      else /* Player near top side of board, no tiles past edge. */
+        startRow = 0;
+
+      if (playerRow < g_play_area_height_tiles - 1)
+        endRow = playerRow + 1;
+      else /* Player near bottom side of board, no tiles past edge. */
+        endRow = g_play_area_height_tiles - 1;
+
+      for (curRow = startRow; curRow <= endRow; curRow++)
+      {
+        tile_pointer pTile;
+        pTile = g_tile_array_row_starts[curRow];
+        if (pTile == NULL)
+        {
+#if DEBUG_PRINT_SIM
+printf("Failed to find tile (%d,%d) for player %d.\n", curCol, curRow, iPlayer);
+#endif
+          break; /* Shouldn't happen. */
+        }
+
+        pTile += startCol;
+        for (curCol = startCol; curCol <= endCol; curCol++, pTile++)
+        {
+          int8_t deltaPosX, deltaPosY;
+          bool velXIsTowardsTile, velYIsTowardsTile;
+          int16_t velocityX, velocityXAbsolute;
+          int16_t velocityY, velocityYAbsolute;
+
+          /* Find relative (delta) position of player to tile, positive X values
+             if player is to the right of tile, or positive Y if player below
+             tile.  Can fit in a byte since we're only a few pixels away from
+             the tile.  Theoretically should use the FX fixed point positions
+             and velocities, but that's too much computation for a Z80 to do,
+             so we use integer pixels. */
+
+#define SIM_MISS_DISTANCE ((TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2)
+
+          deltaPosX = playerX - pTile->pixel_center_x;
+          if (deltaPosX >= SIM_MISS_DISTANCE || deltaPosX <= -SIM_MISS_DISTANCE)
+            continue; /* Too far away, missed. */
+
+          deltaPosY = playerY - pTile->pixel_center_y;
+          if (deltaPosY >= SIM_MISS_DISTANCE || deltaPosY <= -SIM_MISS_DISTANCE)
+            continue; /* Too far away, missed. */
+
+#if DEBUG_PRINT_SIM
+printf("Player %d: Hit tile at (%d,%d)\n", iPlayer, curCol, curRow);
+#endif
+          if (pTile->owner == OWNER_EMPTY)
+          {
+#if DEBUG_PRINT_SIM
+printf("Player %d: Took over empty tile (%d,%d)\n", iPlayer, curCol, curRow);
+#endif
+            SetTileOwner(pTile, OWNER_PLAYER_1 + iPlayer);
+            continue; /* Don't collide, just keep going over empty tiles. */
+          }
+
+          if (pTile->owner == OWNER_PLAYER_1 + iPlayer)
+            continue; /* One of our tiles, just pass through, no collision. */
+
+          /* Hit someone else's tile, take it over. */
+
+#if DEBUG_PRINT_SIM
+printf("Player %d: Took over occupied tile (%d,%d)\n", iPlayer, curCol, curRow);
+#endif
+          SetTileOwner(pTile, OWNER_PLAYER_1 + iPlayer);
+
+          /* Do the bouncing.  First find out which side of the tile was hit,
+             based on the direction the player was moving.  No bounce if the
+             player is moving away. */
+
+          velocityX = GET_FX_INTEGER(pPlayer->velocity_x);
+          if (velocityX < 0)
+          { /* Moving leftwards. */
+            velocityXAbsolute = -velocityX;
+            /* If moving left, and to right of the tile, can be a hit. */
+            velXIsTowardsTile = (deltaPosX >= 0);
+          }
+          else if (velocityX > 0)
+          { /* Moving rightwards. */
+            velocityXAbsolute = velocityX;
+            /* If moving right, and to left of the tile, can be a hit. */
+            velXIsTowardsTile = (deltaPosX < 0);
+          }
+          else /* Not moving much. */
+          {
+            velocityXAbsolute = 0;
+            velXIsTowardsTile = false;
+          }
+
+          velocityY = GET_FX_INTEGER(pPlayer->velocity_y);
+          if (velocityY < 0)
+          { /* Moving upwards. */
+            velocityYAbsolute = -velocityY;
+            /* If moving up, and below the tile, can be a hit. */
+            velYIsTowardsTile = (deltaPosY >= 0);
+          }
+          else if (velocityY > 0)
+          { /* Moving downwards. */
+            velocityYAbsolute = velocityY;
+            /* If moving down, and above the tile, can be a hit. */
+            velYIsTowardsTile = (deltaPosY < 0);
+          }
+          else /* Not moving much. */
+          {
+            velocityYAbsolute = 0;
+            velYIsTowardsTile = false;
+          }
+
+          /* Which side of the tile was hit?  Look for a velocity component
+             going towards the tile, and if both components are towards the
+             tile then use the larger one.  The tile side which that velocity
+             runs into will be the bounce side and reflect that velocity
+             component.  Do nothing if moving away in both directions. */
+
+          if (velXIsTowardsTile && velocityXAbsolute >= velocityYAbsolute)
+          { /* Bounce off left or right side. */
+            playNoteDelay(0, 50, 30);
+            NEGATE_FX(&pPlayer->velocity_x);
+            NEGATE_FX(&pPlayer->step_velocity_x);
+          }
+          else if (velYIsTowardsTile)
+          { /* Bounce off top or bottom side. */
+            playNoteDelay(1, 55, 30);
+            NEGATE_FX(&pPlayer->velocity_y);
+            NEGATE_FX(&pPlayer->step_velocity_y);
+          }
+        }
+      }
+    }
 
     /* Bounce the players off the walls. */
 
@@ -185,17 +343,6 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
         }
         pPlayer->pixel_center_y = g_play_area_wall_bottom_y;
         playNoteDelay(0, 60, 90);
-#if DEBUG_PRINT_SIM
-printf("Player %d: Bounced bottom wall\n", iPlayer);
-printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
-  GET_FX_FLOAT(pPlayer->pixel_center_x),
-  GET_FX_FLOAT(pPlayer->pixel_center_y),
-  GET_FX_FLOAT(pPlayer->velocity_x),
-  GET_FX_FLOAT(pPlayer->velocity_y),
-  GET_FX_FLOAT(pPlayer->step_velocity_x),
-  GET_FX_FLOAT(pPlayer->step_velocity_y)
-);
-#endif
       }
 
       if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_left_x) < 0)
@@ -207,17 +354,6 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
         }
         pPlayer->pixel_center_x = g_play_area_wall_left_x;
         playNoteDelay(1, 61, 90);
-#if DEBUG_PRINT_SIM
-printf("Player %d: Bounced left wall\n", iPlayer);
-printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
-  GET_FX_FLOAT(pPlayer->pixel_center_x),
-  GET_FX_FLOAT(pPlayer->pixel_center_y),
-  GET_FX_FLOAT(pPlayer->velocity_x),
-  GET_FX_FLOAT(pPlayer->velocity_y),
-  GET_FX_FLOAT(pPlayer->step_velocity_x),
-  GET_FX_FLOAT(pPlayer->step_velocity_y)
-);
-#endif
       }
 
       if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_right_x) > 0)
@@ -229,17 +365,6 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
         }
         pPlayer->pixel_center_x = g_play_area_wall_right_x;
         playNoteDelay(1, 62, 90);
-#if DEBUG_PRINT_SIM
-printf("Player %d: Bounced right wall\n", iPlayer);
-printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
-  GET_FX_FLOAT(pPlayer->pixel_center_x),
-  GET_FX_FLOAT(pPlayer->pixel_center_y),
-  GET_FX_FLOAT(pPlayer->velocity_x),
-  GET_FX_FLOAT(pPlayer->velocity_y),
-  GET_FX_FLOAT(pPlayer->step_velocity_x),
-  GET_FX_FLOAT(pPlayer->step_velocity_y)
-);
-#endif
       }
 
       if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_top_y) < 0)
@@ -251,17 +376,6 @@ printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
         }
         pPlayer->pixel_center_y = g_play_area_wall_top_y;
         playNoteDelay(0, 63, 90);
-#if DEBUG_PRINT_SIM
-printf("Player %d: Bounced top wall\n", iPlayer);
-printf("Player %d: Pos (%f, %f), Vel (%f,%f), Step (%f,%f)\n", iPlayer,
-  GET_FX_FLOAT(pPlayer->pixel_center_x),
-  GET_FX_FLOAT(pPlayer->pixel_center_y),
-  GET_FX_FLOAT(pPlayer->velocity_x),
-  GET_FX_FLOAT(pPlayer->velocity_y),
-  GET_FX_FLOAT(pPlayer->step_velocity_x),
-  GET_FX_FLOAT(pPlayer->step_velocity_y)
-);
-#endif
       }
     }
   }

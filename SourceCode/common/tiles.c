@@ -46,7 +46,7 @@ uint8_t g_cache_dirty_screen_tiles_index = 0;
 const char *g_TileAnimData[OWNER_MAX] =
 {
 #ifdef NABU_H
-  "\x02", /* OWNER_EMPTY */
+  "\x02", /* OWNER_EMPTY, colourful characters from a custom font. */
   "\x03", /* OWNER_PLAYER_1 */
   "\x04", /* OWNER_PLAYER_2 */
   "\x05", /* OWNER_PLAYER_3 */

@@ -84,7 +84,7 @@ printf("(%f to %f, %f to %f)\n",
 
 #ifdef NABU_H
     pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
-    pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow;
+    /* Now just using VDP_BLACK pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow; */
     pPlayer->sparkle_colour = k_PLAYER_COLOURS[iPlayer].sparkle;
     pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
@@ -262,7 +262,7 @@ void CopyPlayersToSprites(void)
       IO_VDPDATA = pPlayer->vdpShadowSpriteY;
       IO_VDPDATA = pPlayer->vdpShadowSpriteX;
       IO_VDPDATA = pPlayer->main_anim.current_name;
-      IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | pPlayer->shadow_colour;
+      IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | VDP_BLACK;
     }
     pPlayer++;
   } while (iPlayer-- != 0);

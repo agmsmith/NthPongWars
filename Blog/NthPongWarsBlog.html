@@ -916,7 +916,8 @@ moving balls changing lots of tiles may be difficult.
 <P ALIGN=CENTER><A HREF="NthPongVideoTilesWorkingSlowly20241211.mp4"><IMG
 SRC="NthPongVideoTilesWorkingSlowly20241211.png" WIDTH="280" HEIGHT="224"
 ALT="[Video of Tiles Animating]"></A><BR>
-<A HREF="NthPongVideoTilesWorkingSlowly20241211.mp4">NthPongVideoTilesWorkingSlowly20241211.mp4</A><BR>
+<A HREF="NthPongVideoTilesWorkingSlowly20241211.mp4">NthPongVideoTilesWorkingSlowly20241211.mp4</A>
+video with sound and narration.<BR>
 <A HREF="NthPongVideoTilesWorkingSlowly20241211.txt">Script</A>
 
 <HR>
@@ -1151,7 +1152,8 @@ other slowdowns.
 <P ALIGN=CENTER><A
 HREF="FirstBounce20250104.mp4"><IMG SRC="FirstBounce20250104.GIF" WIDTH="280"
 HEIGHT="216" ALT="[Video of Bouncing off Walls for the First Time!]"></A><BR>
-<A HREF="FirstBounce20250104.mp4">FirstBounce20250104.mp4</A>
+<A HREF="FirstBounce20250104.mp4">FirstBounce20250104.mp4</A> video
+with sound and narration.
 
 <HR>
 <H2><A NAME="2025.01.05"></A>2025.01.05</H2>
@@ -1474,7 +1476,40 @@ except for networking?
 <P ALIGN=CENTER><A
 HREF="TileBounces20250112.mp4"><IMG SRC="TileBounces20250112.GIF" WIDTH="280"
 HEIGHT="216" ALT="[Video of Players Bouncing off Tiles for the First Time!]"></A><BR>
-<A HREF="TileBounces20250112.mp4">TileBounces20250112.mp4</A>
+<A HREF="TileBounces20250112.mp4">TileBounces20250112.mp4</A> video
+with sound.
+
+<HR>
+<H2><A NAME="2025.01.14"></A>2025.01.14</H2>
+
+<H3>Better Visible Colours, Rethinking Tile Collisions</H3>
+
+<P>First, and simplest, I need to change the colours so that the players show
+up on the screen!  They're usually moving over tiles of their own colour.  So
+change tiles to use the darker tint of the player colour, and make the ball
+shadow black.
+
+<P ALIGN=CENTER><A
+HREF="TileColoursBounce20250114.mp4"><IMG SRC="TileColoursBounce20250114.GIF"
+WIDTH="280" HEIGHT="216"
+ALT="[Video of More Colourful Players Bouncing off Tiles]"></A><BR>
+<A HREF="TileColoursBounce20250114.mp4">TileColoursBounce20250114.mp4</A> video
+with sound.
+
+<P>Next time, redo collisions - I want the ball trails to be narrower (the wide
+trail could be a power up?), and the bounces to be a bit more varied in
+direction.  The
+<A HREF="https://github.com/vnglst/pong-wars/blob/main/index.html">Koen van
+Gilst code</A> doesn't consider ball and tile widths as much, but tests in a
+circle (half a square in radius) around the ball's position (in 45 degree
+increments) for tiles that aren't owned by the player.  Then use the angle
+tested to pick the side of the tile to bounce off - comparing cos and sin and
+using the larger one (so the more head-on side of the tile is used for
+bouncing).  All tiles in the circle are tested, so there could be several
+bounces.  And then there's a velocity randomness function that changes ball
+speed up or down by at most 1% every frame, bounded by minimum and maximum
+speeds.  Interesting inspiration, but I'll have to think about how to do
+something similar without sin, cos, multiply, divide and so on.
 
 <P>- Alex
 

@@ -124,6 +124,7 @@ typedef struct player_struct {
 
   SpriteAnimRecord main_anim;/* Animation for the main ball sprite. */
 
+/* Now just using VDP_BLACK for extra contrast.
   uint8_t shadow_colour;
   /* Predefined colour for this player's shadow sprite.  We're using colours
      which have a darker version of the same colour, so that can be a

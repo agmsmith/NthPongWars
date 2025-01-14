@@ -319,13 +319,13 @@ void main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 21;
-  g_play_area_width_tiles = 28;
+  g_play_area_height_tiles = 22;
+  g_play_area_width_tiles = 30;
 
-  g_screen_height_tiles = 21;
-  g_screen_width_tiles = 28;
-  g_screen_top_X_tiles = 2;
-  g_screen_top_Y_tiles = 2;
+  g_screen_height_tiles = 22;
+  g_screen_width_tiles = 30;
+  g_screen_top_X_tiles = 1;
+  g_screen_top_Y_tiles = 1;
 
   g_play_area_col_for_screen = 0;
   g_play_area_row_for_screen = 0;
@@ -389,14 +389,14 @@ void main(void)
 
 
 #if 1
-  for (i = 0; i < MAX_PLAYERS; i++)
+  if ((s_FrameCounter & 0xff) == 23)
   {
-    if ((rand() & 0xff) == 0)
+    for (i = 0; i < MAX_PLAYERS; i++)
     {
       SpriteAnimationType NewType;
       player_pointer pPlayer = g_player_array + i;
 
-      NewType = (s_FrameCounter & 0x80) ? SPRITE_ANIM_NONE :
+      NewType = (rand() & 0x80) ? SPRITE_ANIM_NONE :
         SPRITE_ANIM_BALL_EFFECT_FAST;
       if (NewType != pPlayer->sparkle_anim.type)
       {
@@ -409,13 +409,14 @@ void main(void)
 #if 1
   /* Draw some new tiles once in a while, randomly moving around. */
 
+  if ((s_FrameCounter & 31) == 19)
   {
     static uint8_t row, col;
     tile_owner newOwner;
     tile_pointer pTile;
 
     row++;
-    if ((s_FrameCounter & 2047) > 2035)
+    if ((rand() & 255) > 200)
     { /* Rarely put in a power up. */
       newOwner = (rand() & 7) + OWNER_PUP_NORMAL;
     }

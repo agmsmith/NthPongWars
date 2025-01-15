@@ -165,7 +165,7 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
     }
 
     /* Check for player to tile collisions.  Like a tic-tac-toe board, examine
-       9 tiles around the player, unless too close to the side of the board
+       9 tiles around the player, unless too close to the side of the play area
        then it's less. */
 
     pPlayer = g_player_array;
@@ -174,11 +174,16 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       uint8_t startCol, endCol, curCol, playerCol;
       uint8_t startRow, endRow, curRow, playerRow;
       int16_t playerX, playerY;
-      
+      int8_t velocityX, velocityY;
+
       playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
       playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
       playerCol = playerX / TILE_PIXEL_WIDTH;
       playerRow = playerY / TILE_PIXEL_WIDTH;
+
+      /* Just need the +1/0/-1 for direction of velocity. */
+      velocityX = COMPARE_FX(&pPlayer->velocity_x, &gfx_Constant_Zero);
+      velocityY = COMPARE_FX(&pPlayer->velocity_y, &gfx_Constant_Zero);
 
 #if DEBUG_PRINT_SIM
 printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
@@ -210,7 +215,8 @@ printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
         if (pTile == NULL)
         {
 #if DEBUG_PRINT_SIM
-printf("Failed to find tile (%d,%d) for player %d.\n", curCol, curRow, iPlayer);
+printf("Bug: Failed to find tile (%d,%d) for player %d.\n",
+  curCol, curRow, iPlayer);
 #endif
           break; /* Shouldn't happen. */
         }
@@ -220,8 +226,6 @@ printf("Failed to find tile (%d,%d) for player %d.\n", curCol, curRow, iPlayer);
         {
           int8_t deltaPosX, deltaPosY;
           bool velXIsTowardsTile, velYIsTowardsTile;
-          int16_t velocityX, velocityXAbsolute;
-          int16_t velocityY, velocityYAbsolute;
 
           /* Find relative (delta) position of player to tile, positive X values
              if player is to the right of tile, or positive Y if player below
@@ -230,7 +234,11 @@ printf("Failed to find tile (%d,%d) for player %d.\n", curCol, curRow, iPlayer);
              and velocities, but that's too much computation for a Z80 to do,
              so we use integer pixels. */
 
+#if 0 /* Realistic mode, hits many nearby tiles. */
 #define SIM_MISS_DISTANCE ((TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2)
+#else /* Game mode, thinner streak of hit tiles left behind moving ball. */
+#define SIM_MISS_DISTANCE (TILE_PIXEL_WIDTH / 2 + 1)
+#endif
 
           deltaPosX = playerX - pTile->pixel_center_x;
           if (deltaPosX >= SIM_MISS_DISTANCE || deltaPosX <= -SIM_MISS_DISTANCE)
@@ -249,7 +257,7 @@ printf("Player %d: Hit tile at (%d,%d)\n", iPlayer, curCol, curRow);
 printf("Player %d: Took over empty tile (%d,%d)\n", iPlayer, curCol, curRow);
 #endif
             SetTileOwner(pTile, OWNER_PLAYER_1 + iPlayer);
-            continue; /* Don't collide, just keep going over empty tiles. */
+            continue; /* Don't collide, just keep moving over empty tiles. */
           }
 
           if (pTile->owner == OWNER_PLAYER_1 + iPlayer)
@@ -266,57 +274,46 @@ printf("Player %d: Took over occupied tile (%d,%d)\n", iPlayer, curCol, curRow);
              based on the direction the player was moving.  No bounce if the
              player is moving away. */
 
-          velocityX = GET_FX_INTEGER(pPlayer->velocity_x);
           if (velocityX < 0)
-          { /* Moving leftwards. */
-            velocityXAbsolute = -velocityX;
-            /* If moving left, and to right of the tile, can be a hit. */
+          { /* If moving left, and to right of the tile, can be a hit. */
             velXIsTowardsTile = (deltaPosX >= 0);
           }
           else if (velocityX > 0)
-          { /* Moving rightwards. */
-            velocityXAbsolute = velocityX;
-            /* If moving right, and to left of the tile, can be a hit. */
+          { /* If moving right, and to left of the tile, can be a hit. */
             velXIsTowardsTile = (deltaPosX < 0);
           }
           else /* Not moving much. */
           {
-            velocityXAbsolute = 0;
             velXIsTowardsTile = false;
           }
 
-          velocityY = GET_FX_INTEGER(pPlayer->velocity_y);
           if (velocityY < 0)
-          { /* Moving upwards. */
-            velocityYAbsolute = -velocityY;
-            /* If moving up, and below the tile, can be a hit. */
+          { /* If moving up, and below the tile, can be a hit. */
             velYIsTowardsTile = (deltaPosY >= 0);
           }
           else if (velocityY > 0)
-          { /* Moving downwards. */
-            velocityYAbsolute = velocityY;
-            /* If moving down, and above the tile, can be a hit. */
+          { /* If moving down, and above the tile, can be a hit. */
             velYIsTowardsTile = (deltaPosY < 0);
           }
           else /* Not moving much. */
           {
-            velocityYAbsolute = 0;
             velYIsTowardsTile = false;
           }
 
           /* Which side of the tile was hit?  Look for a velocity component
              going towards the tile, and if both components are towards the
-             tile then use the larger one.  The tile side which that velocity
+             tile then use both.  The tile side which that velocity
              runs into will be the bounce side and reflect that velocity
              component.  Do nothing if moving away in both directions. */
 
-          if (velXIsTowardsTile && velocityXAbsolute >= velocityYAbsolute)
+          if (velXIsTowardsTile)
           { /* Bounce off left or right side. */
             playNoteDelay(0, 50, 30);
             NEGATE_FX(&pPlayer->velocity_x);
             NEGATE_FX(&pPlayer->step_velocity_x);
           }
-          else if (velYIsTowardsTile)
+
+          if (velYIsTowardsTile)
           { /* Bounce off top or bottom side. */
             playNoteDelay(1, 55, 30);
             NEGATE_FX(&pPlayer->velocity_y);

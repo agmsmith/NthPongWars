@@ -257,7 +257,7 @@ void ActivateTileArrayWindow(void)
     ((int16_t) g_screen_top_X_tiles) * TILE_PIXEL_WIDTH -
     ((int16_t) g_play_area_col_for_screen) * TILE_PIXEL_WIDTH -
     PLAYER_SCREEN_TO_SPRITE_OFFSET;
-    
+
   g_sprite_window_offset_y =
     ((int16_t) g_screen_top_Y_tiles) * TILE_PIXEL_WIDTH -
     ((int16_t) g_play_area_row_for_screen) * TILE_PIXEL_WIDTH -

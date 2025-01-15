@@ -4,6 +4,12 @@
 
 #include "fixed_point.h"
 
+/* Constants for global use.  Don't change them!  Game main() sets them up. */
+fx gfx_Constant_Zero;
+fx gfx_Constant_One;
+fx gfx_Constant_MinusOne;
+
+
 /* Negate, done by subtracting from 0 and overwriting the value. */
 void NEGATE_FX(pfx x)
 {

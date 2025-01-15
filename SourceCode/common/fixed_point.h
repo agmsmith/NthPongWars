@@ -70,6 +70,9 @@ typedef union fx_union {
 #define _MAX_FX_INT 0x7FFF
 #define _MAX_FX_POSITIVE(x) {x.as_int32 = 0x7FFFFFFF;}
 #define _FX_UNITY_FLOAT ((float) (((int32_t) 1) << 16))
+extern fx gfx_Constant_Zero;
+extern fx gfx_Constant_One;
+extern fx gfx_Constant_MinusOne;
 
 /* Setting and getting.  As inline code, not too complex for 8 bit compilers. */
 #define COPY_FX(x, y) {y.as_int32 = x.as_int32; }

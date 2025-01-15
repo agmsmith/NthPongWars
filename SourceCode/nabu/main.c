@@ -79,11 +79,9 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "../common/players.c"
 #include "../common/simulate.c"
 
-/* Our globals and semi-global statics for floating point constants. */
+/* Our globals and semi-global statics. */
 
 static bool s_KeepRunning;
-static fx sfx_Constant_One;
-static fx sfx_Constant_MinusOne;
 
 
 /*******************************************************************************
@@ -101,6 +99,7 @@ static char HitAnyKey(const char *MessageText)
 /*******************************************************************************
  * Process Keyboard and Joystick inputs.
  */
+#define DEBUG_KEYBOARD 0
 static void ProcessKeyboard(void)
 {
   while (isKeyPressed())
@@ -132,18 +131,24 @@ static void ProcessKeyboard(void)
         if (++pPlayer->pixel_center_x.portions.integer > 266)
           pPlayer->pixel_center_x.portions.integer = -10;
       }
+#if DEBUG_KEYBOARD
       printf("Player %d moved to %d, %d.\n", iControlledPlayer,
         pPlayer->pixel_center_x.portions.integer,
         pPlayer->pixel_center_y.portions.integer);
+#endif
     }
     else if (letter >= 0x80) /* High bit set for joystick and NABU special keys. */
     {
       /* Joystick or special keys.  Ignore them, there are lots of them. */
+#if DEBUG_KEYBOARD
       /* printf("(%X)", letter); */
+#endif
     }
     else
     {
+#if DEBUG_KEYBOARD
       printf ("Got letter %d %c.\n", (int) letter, letter);
+#endif
       if (letter == 'q')
       {
         s_KeepRunning = false;
@@ -154,22 +159,22 @@ static void ProcessKeyboard(void)
         player_pointer pPlayer = g_player_array + iControlledPlayer;
         if (letter == 'a') /* Speed up leftwards. */
         {
-          ADD_FX(&pPlayer->velocity_x, &sfx_Constant_MinusOne,
+          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne,
             &pPlayer->velocity_x);
         }
         else if (letter == 's') /* Speed up rightwards. */
         {
-          ADD_FX(&pPlayer->velocity_x, &sfx_Constant_One,
+          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One,
             &pPlayer->velocity_x);
         }
         else if (letter == 'w') /* Speed up upwards. */
         {
-          ADD_FX(&pPlayer->velocity_y, &sfx_Constant_MinusOne,
+          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne,
             &pPlayer->velocity_y);
         }
         else if (letter == 'z') /* Speed up downwards. */
         {
-          ADD_FX(&pPlayer->velocity_y, &sfx_Constant_One,
+          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One,
             &pPlayer->velocity_y);
         }
         else if (letter == '0') /* Stop moving. */
@@ -177,19 +182,27 @@ static void ProcessKeyboard(void)
           ZERO_FX(pPlayer->velocity_x);
           ZERO_FX(pPlayer->velocity_y);
         }
+#if DEBUG_KEYBOARD
         printf("Player %d changed speed to %f, %f.\n", iControlledPlayer,
           GET_FX_FLOAT(pPlayer->velocity_x),
           GET_FX_FLOAT(pPlayer->velocity_y));
+#endif
       }
       else if (letter >= '1' && letter <= '4')
       {
         iControlledPlayer = letter - '1';
+#if DEBUG_KEYBOARD
         printf("Now controlling player %d.\n", (int) iControlledPlayer);
+#endif
       }
       else if (letter == 'r')
         vdp_refreshViewPort();
       else
+      {
+#if DEBUG_KEYBOARD
         printf ("Unhandled letter %d.\n", (int) letter);
+#endif
+      }
     }
   }
 }
@@ -214,9 +227,10 @@ void main(void)
   unsigned int sTotalMem, sLargestMem;
 
   /* Initialise some fixed point number constants. */
-  INT_TO_FX(1, sfx_Constant_One);
-  INT_TO_FX(1, sfx_Constant_MinusOne);
-  NEGATE_FX(&sfx_Constant_MinusOne);
+  ZERO_FX(gfx_Constant_Zero);
+  INT_TO_FX(1, gfx_Constant_One);
+  INT_TO_FX(1, gfx_Constant_MinusOne);
+  NEGATE_FX(&gfx_Constant_MinusOne);
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter

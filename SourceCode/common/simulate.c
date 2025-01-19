@@ -175,6 +175,7 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       uint8_t startRow, endRow, curRow, playerRow;
       int16_t playerX, playerY;
       int8_t velocityX, velocityY;
+      bool bounceOffX, bounceOffY;
 
       playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
       playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
@@ -208,6 +209,13 @@ printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
       else /* Player near bottom side of board, no tiles past edge. */
         endRow = g_play_area_height_tiles - 1;
 
+      /* Keep track of the kind of bouncing the player will do.  Want to avoid
+         bouncing an even number of times in the same direction, otherwise the
+         player goes through tiles.  So just collect one bounce in each axis. */
+
+      bounceOffX = false;
+      bounceOffY = false;
+
       for (curRow = startRow; curRow <= endRow; curRow++)
       {
         tile_pointer pTile;
@@ -215,8 +223,8 @@ printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
         if (pTile == NULL)
         {
 #if DEBUG_PRINT_SIM
-printf("Bug: Failed to find tile (%d,%d) for player %d.\n",
-  curCol, curRow, iPlayer);
+printf("Bug: Failed to find tile on row %d for player %d.\n",
+  curRow, iPlayer);
 #endif
           break; /* Shouldn't happen. */
         }
@@ -226,6 +234,7 @@ printf("Bug: Failed to find tile (%d,%d) for player %d.\n",
         {
           int8_t deltaPosX, deltaPosY;
           bool velXIsTowardsTile, velYIsTowardsTile;
+          tile_owner previousOwner;
 
           /* Find relative (delta) position of player to tile, positive X values
              if player is to the right of tile, or positive Y if player below
@@ -248,28 +257,24 @@ printf("Bug: Failed to find tile (%d,%d) for player %d.\n",
           if (deltaPosY >= SIM_MISS_DISTANCE || deltaPosY <= -SIM_MISS_DISTANCE)
             continue; /* Too far away, missed. */
 
+          previousOwner = SetTileOwner(pTile, OWNER_PLAYER_1 + iPlayer);
+
 #if DEBUG_PRINT_SIM
-printf("Player %d: Hit tile at (%d,%d)\n", iPlayer, curCol, curRow);
+printf("Player %d: Hit tile %s at (%d,%d)\n",
+  iPlayer, g_TileOwnerNames[previousOwner], curCol, curRow);
 #endif
-          if (pTile->owner == OWNER_EMPTY)
+          if (previousOwner == OWNER_EMPTY ||
+          previousOwner == OWNER_PLAYER_1 + iPlayer)
           {
-#if DEBUG_PRINT_SIM
-printf("Player %d: Took over empty tile (%d,%d)\n", iPlayer, curCol, curRow);
-#endif
-            SetTileOwner(pTile, OWNER_PLAYER_1 + iPlayer);
-            continue; /* Don't collide, just keep moving over empty tiles. */
+            continue; /* Don't collide, keep moving over empty or own tiles. */
           }
 
-          if (pTile->owner == OWNER_PLAYER_1 + iPlayer)
-            continue; /* One of our tiles, just pass through, no collision. */
-
-          /* Hit someone else's tile, take it over. */
+          /* Hit someone else's tile, bounce off it. */
 
 #if DEBUG_PRINT_SIM
-printf("Player %d: Took over occupied tile (%d,%d)\n", iPlayer, curCol, curRow);
+printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
+  iPlayer, curCol, curRow);
 #endif
-          SetTileOwner(pTile, OWNER_PLAYER_1 + iPlayer);
-
           /* Do the bouncing.  First find out which side of the tile was hit,
              based on the direction the player was moving.  No bounce if the
              player is moving away. */
@@ -307,19 +312,27 @@ printf("Player %d: Took over occupied tile (%d,%d)\n", iPlayer, curCol, curRow);
              component.  Do nothing if moving away in both directions. */
 
           if (velXIsTowardsTile)
-          { /* Bounce off left or right side. */
-            playNoteDelay(0, 50, 30);
-            NEGATE_FX(&pPlayer->velocity_x);
-            NEGATE_FX(&pPlayer->step_velocity_x);
-          }
+            bounceOffX = true;
 
           if (velYIsTowardsTile)
-          { /* Bounce off top or bottom side. */
-            playNoteDelay(1, 55, 30);
-            NEGATE_FX(&pPlayer->velocity_y);
-            NEGATE_FX(&pPlayer->step_velocity_y);
-          }
+            bounceOffY = true;
         }
+      }
+
+      /* Now do the bouncing based on the directions we hit. */
+
+      if (bounceOffX)
+      { /* Bounce off left or right side. */
+        playNoteDelay(0, 50, 30);
+        NEGATE_FX(&pPlayer->velocity_x);
+        NEGATE_FX(&pPlayer->step_velocity_x);
+      }
+
+      if (bounceOffY)
+      { /* Bounce off top or bottom side. */
+        playNoteDelay(1, 55, 30);
+        NEGATE_FX(&pPlayer->velocity_y);
+        NEGATE_FX(&pPlayer->step_velocity_y);
       }
     }
 

@@ -10,6 +10,20 @@
 tile_record g_tile_array[TILES_ARRAY_SIZE];
 tile_pointer g_tile_array_row_starts[TILES_MAX_ROWS];
 
+const char * g_TileOwnerNames[OWNER_MAX] = {
+  "Empty", /* OWNER_EMPTY */
+  "P1", /* OWNER_PLAYER_1 */
+  "P2", /* OWNER_PLAYER_2 */
+  "P3", /* OWNER_PLAYER_3 */
+  "P4", /* OWNER_PLAYER_4 */
+  "Normal", /* OWNER_PUP_NORMAL */
+  "Fast", /* OWNER_PUP_FAST */
+  "Slow", /* OWNER_PUP_SLOW */
+  "Stop", /* OWNER_PUP_STOP */
+  "Through", /* OWNER_PUP_RUN_THROUGH */
+  "Wider", /* OWNER_PUP_WIDER */
+};
+
 uint8_t g_play_area_height_tiles = 24;
 uint8_t g_play_area_width_tiles = 32;
 uint16_t g_play_area_num_tiles = 0;
@@ -56,6 +70,7 @@ const char *g_TileAnimData[OWNER_MAX] =
   "SSSSlllloooowwww    ", /* OWNER_PUP_SLOW */
   "Stop. . . .", /* OWNER_PUP_STOP */
   "Through ", /* OWNER_PUP_RUN_THROUGH */
+  "Wider", /* OWNER_PUP_WIDER */
 #else /* Curses just uses plain characters. */
   " ", /* OWNER_EMPTY */
   "1", /* OWNER_PLAYER_1 */
@@ -67,6 +82,7 @@ const char *g_TileAnimData[OWNER_MAX] =
   "SSSSlllloooowwww    ", /* OWNER_PUP_SLOW */
   "Stop. . . .", /* OWNER_PUP_STOP */
   "Through", /* OWNER_PUP_RUN_THROUGH */
+  "Wider", /* OWNER_PUP_WIDER */
 #endif /* NABU_H */
 };
 
@@ -273,12 +289,17 @@ void ActivateTileArrayWindow(void)
 
 
 /* Change the owner of the tile to the given one.  Takes care of updating
-   animation stuff and getting it drawn later.
+   animation stuff, setting dirty flags, updating score.  Returns previous
+   owner.
 */
-void SetTileOwner(tile_pointer pTile, tile_owner newOwner)
+tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
 {
-  if (pTile == NULL || pTile->owner == newOwner || newOwner >= OWNER_MAX)
-    return; /* Nothing to do. */
+  tile_owner previousOwner;
+
+  if (pTile == NULL || newOwner >= OWNER_MAX)
+    return OWNER_EMPTY; /* Nothing to do. */
+
+  previousOwner = pTile->owner;
   pTile->owner = newOwner;
 
   pTile->animationIndex = 0;
@@ -293,6 +314,7 @@ void SetTileOwner(tile_pointer pTile, tile_owner newOwner)
     else if (g_cache_animated_tiles_index != 0xFF)
       g_cache_animated_tiles_index++;
   }
+  return previousOwner;
 }
 
 

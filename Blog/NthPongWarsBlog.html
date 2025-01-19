@@ -1511,6 +1511,22 @@ speed up or down by at most 1% every frame, bounded by minimum and maximum
 speeds.  Interesting inspiration, but I'll have to think about how to do
 something similar without sin, cos, multiply, divide and so on.
 
+<HR>
+<H2><A NAME="2025.01.19"></A>2025.01.19</H2>
+
+<H3>Better Bounces</H3>
+
+<P>Adjusted the bounces to be a bit better.  Now it evaluates all tiles nearby,
+ORs together the results then checks for a bounce needed in X and/or Y.  Before
+it would do a bounce for each tile collision as it checked, which could have
+several bounces in the same direction, resulting in the ball going through
+tiles if it was at the right diagonal angle.
+
+<P>I'm also starting on the scoring system.  One idea is that for extra points,
+if your tile lasts long enough, and you hit it again, it can become more mature
+and give you extra points (and change its shape).  I'm also thinking of having
+score bubbles float up as you get points, using low priority sprites.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

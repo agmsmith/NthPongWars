@@ -39,8 +39,12 @@ typedef enum tile_owner_enum {
   OWNER_PUP_SLOW, /* Power-up that makes you slower. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
   OWNER_PUP_RUN_THROUGH, /* Run through squares, rather than bouncing. */
+  OWNER_PUP_WIDER, /* Makes the player wider in effect; more tiles hit. */
   OWNER_MAX
 } tile_owner;
+
+/* List of names for each of the owner enums, mostly for debugging. */
+extern const char * g_TileOwnerNames[OWNER_MAX];
 
 /* Animations are done by changing the character displayed for a particular tile
    type.  A NUL terminated string lists the characters to be used in sequence,
@@ -208,9 +212,10 @@ extern void ActivateTileArrayWindow(void);
    clip the globals so that they fit on the real screen.  Tries to be fast, so
    you can move the window often, but it will probably cost a missed frame. */
 
-extern void SetTileOwner(tile_pointer pTile, tile_owner newOwner);
+extern tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner);
 /* Change the owner of the tile to the given one.  Takes care of updating
-   animation stuff and setting dirty flags. */
+   animation stuff, setting dirty flags, updating score.  Returns previous
+   owner. */
 
 extern void UpdateTileAnimations(void);
 /* Go through all the tiles and update displayedChar for the current frame,

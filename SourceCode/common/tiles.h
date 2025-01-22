@@ -217,6 +217,10 @@ extern tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner);
    animation stuff, setting dirty flags, updating score.  Returns previous
    owner. */
 
+extern void AdjustPlayerScore(uint8_t iPlayer, int8_t score_change);
+/* Add or remove points from a player's score.  Code actually part of player.c
+   code, but we need the declaration in tiles.h for use by SetTileOwner. */
+
 extern void UpdateTileAnimations(void);
 /* Go through all the tiles and update displayedChar for the current frame,
    using the animation data for each type of tile.  If the character changes,

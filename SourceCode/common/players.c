@@ -92,6 +92,15 @@ printf("(%f to %f, %f to %f)\n",
 }
 
 
+/* Add or remove points from a player's score.  Code actually part of player.c
+   code, but we need the declaration in tiles.h for use by SetTileOwner.
+*/
+void AdjustPlayerScore(uint8_t iPlayer, int8_t score_change)
+{
+  g_player_array[iPlayer].score += score_change;
+}
+
+
 static void UpdateOneAnimation(SpriteAnimPointer pAnim)
 {
   if (pAnim->current_delay == 0)

@@ -1527,6 +1527,54 @@ if your tile lasts long enough, and you hit it again, it can become more mature
 and give you extra points (and change its shape).  I'm also thinking of having
 score bubbles float up as you get points, using low priority sprites.
 
+<HR>
+<H2><A NAME="2025.01.21"></A>2025.01.21</H2>
+
+<H3>Head Banging Bugs with itoa()</H3>
+
+<P>I was trying to display scores, which means converting a number into text,
+then drawing the text on the screen.  I had a nice separate DrawScore()
+function, except it kept on crashing the computer quite badly.
+
+<P>After an afternoon of debugging with printf()s to a telnet session (so it
+doesn't mess up the Nabu's screen), I found that my local variables were
+changed after a call to utoa() - a system provided function to convert an
+unsigned number to ASCII text string.  The more commonly used itoa() -
+integer number to string - also malfunctions the same way.  What is going on?
+Also, my head figuratively hurts after an afternoon of banging against a wall
+to find out what the problem was.
+
+<P ALIGN=CENTER><IMG SRC="PrintfDebugging20250121.png"
+ALT="[Screen shot of printf() debugging to find out where corruption happens]"
+WIDTH="489" HEIGHT="428">
+
+<P>Turns out the Z88DK/SDCC library code for stdlib.h (which includes itoa() and
+other variations) eventually calls an assembler function in asm_utoa.asm which
+uses all the usual registers, plus ix, plus alternate register sets.  And ix is
+used for keeping track of the local variables when compiling for speed, one of
+those locals is a pointer to the score text buffer (so the score gets written
+to somewhere unexpected in memory - crash!).  That could be it, and explain
+other mysterious things that were happening in previous versions of my program
+(I was using utoa() to display the frame number).
+
+<P>A day later, I ended up replacing the general purpose utoa() with another
+simpler one I found in l_fast_utoa.asm that only does base 10, and doesn't use
+as many registers.  After writing a bit of C glue in assembler, it works!  So
+two days later I can get back to displaying scores.
+
+<P>Looking under the hood, the utoa() operations are expensive (divides
+by a power of ten for each digit), so I'll have to avoid converting scores
+if they haven't changed since the last frame.
+
+<P>And a few hours later, the score is starting to work!
+
+<P ALIGN=CENTER><A
+HREF="ScoresWorking20250121.mp4"><IMG SRC="ScoresWorking20250121.GIF"
+WIDTH="280" HEIGHT="216"
+ALT="[Video of Scores now Working!]"></A><BR>
+<A HREF="ScoresWorking20250121.mp4">ScoresWorking20250121.mp4</A> video
+with sound.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

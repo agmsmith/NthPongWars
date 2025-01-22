@@ -67,6 +67,23 @@ typedef enum brain_enum {
 } player_brain;
 
 
+/* Joystick directions as bits.  0 means not pressed.  Whole byte is zero if
+   no buttons are pressed.  Same as NABU's JOYSTICKENUM, and our own definition
+   for other computer systems.  If you see some buttons being pressed, it means
+   a user wants to take over a player.
+*/
+#ifdef NABU_H
+  #define joystick_enum JOYSTICKENUM
+#else
+typedef enum joystick_enum {
+    Joy_Left = 0b00000001,
+    Joy_Down = 0b00000010,
+    Joy_Right = 0b00000100,
+    Joy_Up = 0b00001000,
+    Joy_Button = 0b00010000,
+  };
+#endif
+
 /* This is the main player status record.  Where they are, what they are doing.
    Inactive players also get a record, in case they join a game in progress.
 */
@@ -95,12 +112,35 @@ typedef struct player_struct {
     width so that we don't skip over tiles and miss collisions.  This is a
     temporary value used by Simulate(). */
 
+  uint8_t joystick_inputs;
+  /* What action is the player currently requesting?  See joystick_enum for
+     the various bits.  Zero if no buttons pressed. */
+
   player_brain brain;
-    /* What controls this player, or marks it as inactive (not drawn). */
+  /* What controls this player, or marks it as inactive (not drawn). */
 
   uint32_t brain_info;
-    /* Extra information about this brain.  Joystick number for joysticks,
-       network identification for remote players, algorithm stuff for AI. */
+  /* Extra information about this brain.  Joystick number for joysticks,
+     network identification for remote players, algorithm stuff for AI. */
+
+  uint16_t last_brain_activity_time;
+  /* Frame counter when the last brain activity was seen, so we can detect
+     idle players. */
+
+  uint16_t score;
+  /* Current score of each player.  Counts the number of tiles they own, plus
+    extra points for aged tiles.  Once a player has reached the goal score,
+    the game is over.  Gave up on doing it as percentages, too CPU expensive.
+    Score incremental updates are done in SetTileOwner(). */
+
+  uint16_t score_displayed;
+  /* The score value currently being shown on the display and in score_text.
+     Don't need to update the display if it's the same as score. */
+
+  char score_text[8];
+  /* Text version of the score, corresponds to score_displayed.  May have a
+     following % sign, and at most 5 digits, and a NUL.  On the NABU it can use
+     different letters in the font for coloured digits for each player. */
 
   uint8_t main_colour;
   /* Predefined colour for this player's main graphic.  On the NABU this is a

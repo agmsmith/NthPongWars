@@ -7,7 +7,7 @@
  * Optionally with --math32 for 32 bit floating point, uses 5K extra memory.
  * Use this command line to compile:
  *
- * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed main.c z80_delay_ms.asm z80_delay_tstate.asm -o "NTHPONG.COM"
+ * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM"
  *
  * To prepare to run, create the data files in the server store directory,
  * usually somewhere like Documents/NABU Internet Adapter/Store/NTHPONG/
@@ -74,10 +74,12 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "LoadScreenICVGM.c"
 #include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
+#include "l_fast_utoa.h" /* Our hacked up version of utoa() to fix bugs. */
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
 #include "../common/tiles.c"
 #include "../common/players.c"
 #include "../common/simulate.c"
+#include "../common/scores.c"
 
 /* Our globals and semi-global statics. */
 
@@ -102,15 +104,18 @@ static char HitAnyKey(const char *MessageText)
 #define DEBUG_KEYBOARD 0
 static void ProcessKeyboard(void)
 {
+  uint8_t iPlayer;
+  player_pointer pPlayer;
+
   while (isKeyPressed())
   {
-    static uint8_t iControlledPlayer = 0;
+    static uint8_t iControlledPlayer = 0; /* For UI for selecting a player. */
     uint8_t letter;
 
     letter = getChar(); /* Note, may flash cursor, writing ' ' to VDP. */
     if (letter >= 0xE0 && letter < 0xE4) /* Cursor key pressed. */
     {
-      player_pointer pPlayer = g_player_array + iControlledPlayer;
+      pPlayer = g_player_array + iControlledPlayer;
       if (letter == 0xE3) /* Down cursor key pressed. */
       {
         if (++pPlayer->pixel_center_y.portions.integer > 202)
@@ -156,7 +161,7 @@ static void ProcessKeyboard(void)
       else if (letter == 'a' || letter == 's' || letter == 'w' ||
       letter == 'z' || letter == '0')
       {
-        player_pointer pPlayer = g_player_array + iControlledPlayer;
+        pPlayer = g_player_array + iControlledPlayer;
         if (letter == 'a') /* Speed up leftwards. */
         {
           ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne,
@@ -195,14 +200,31 @@ static void ProcessKeyboard(void)
         printf("Now controlling player %d.\n", (int) iControlledPlayer);
 #endif
       }
-      else if (letter == 'r')
-        vdp_refreshViewPort();
       else
       {
 #if DEBUG_KEYBOARD
         printf ("Unhandled letter %d.\n", (int) letter);
 #endif
       }
+    }
+  }
+
+  /* Update the joystick data. */
+
+  pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    uint8_t joystickBits;
+    joystickBits = (getJoyStatus(iPlayer) & 0x1F);
+    if (pPlayer->brain == BRAIN_INACTIVE && joystickBits)
+    {
+      pPlayer->brain = BRAIN_JOYSTICK;
+      pPlayer->brain_info = iPlayer;
+      pPlayer->last_brain_activity_time = g_FrameCounter;
+    }
+    if (pPlayer->brain == BRAIN_JOYSTICK)
+    {
+      pPlayer->joystick_inputs = joystickBits;
     }
   }
 }
@@ -220,7 +242,6 @@ void main(void)
   /* Save some stack space, variables that persist in main() can be static. */
   static char s_OriginalLocationZeroMemory[16];
   static char s_OriginalStackMemory[16];
-  static uint16_t s_FrameCounter;
 
   /* A few local variables to force stack frame creation, sets IX register. */
   uint8_t i;
@@ -352,11 +373,12 @@ void main(void)
 
   InitialisePlayers();
 
+  InitialiseScores(); /* After tiles & players set up, to count for goal. */
+
   /* The main program loop.  Update things (which may take a while), then wait
      for vertical blanking to start, then copy data to the VDP quickly, then
      go back to updating things etc. */
 
-  s_FrameCounter = 0;
   s_KeepRunning = true;
   vdp_enableVDPReadyInt();
   while (s_KeepRunning)
@@ -365,27 +387,32 @@ void main(void)
     Simulate();
     UpdateTileAnimations();
     UpdatePlayerAnimations();
+    UpdateScores();
 #if 1
     /* Check if our update took longer than a frame. */
     if (vdpIsReady >= 2) /* Non-zero means we missed 1 or more frames. */
       playNoteDelay(2, 10 + vdpIsReady /* Higher pitch if more missed */, 40);
 #endif
-    vdp_waitVDPReadyInt();
+    vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */ 
 
     /* Do the sprites first, since they're time critical to avoid glitches. */
     CopyPlayersToSprites();
     CopyTilesToScreen();
+    CopyScoresToScreen();
 
-    vdp_setCursor2(27, 0);
-    strcpy(TempBuffer, "000"); /* Leading zeroes. */
-    utoa(s_FrameCounter, TempBuffer + 3, 10 /* base */);
-    vdp_print(TempBuffer + (strlen(TempBuffer) - 3) /* Last three chars. */);
-    s_FrameCounter++;
+    /* Frame has been completed.  On to the next one.  Wrap after 10000 since
+       we only have a four decimal digit display. */
+
+    if (++g_FrameCounter >= 10000)
+      g_FrameCounter = 0;
+
+    if ((g_FrameCounter & 0x1F) == 0)
+      g_ScoreGoal--; /* Fake decreasing of the goal about once per second. */
 
 #if 0
     /* Every once in a while move the screen around the play area. */
 
-    if ((s_FrameCounter & 0x1ff) == 0)
+    if ((g_FrameCounter & 0x1ff) == 0)
     {
       g_play_area_col_for_screen += 3;
       if (g_play_area_col_for_screen >= g_play_area_width_tiles)
@@ -403,7 +430,7 @@ void main(void)
 
 
 #if 1
-  if ((s_FrameCounter & 0xff) == 23)
+  if ((g_FrameCounter & 0xff) == 23)
   {
     for (i = 0; i < MAX_PLAYERS; i++)
     {
@@ -423,7 +450,7 @@ void main(void)
 #if 1
   /* Draw some new tiles once in a while, randomly moving around. */
 
-  if ((s_FrameCounter & 31) == 19)
+  if ((g_FrameCounter & 31) == 19)
   {
     static uint8_t row, col;
     tile_owner newOwner;
@@ -476,7 +503,7 @@ void main(void)
 
   UpdateTileAnimations(); /* So we can see some dirty flags. */
   DumpTilesToTerminal();
-  printf ("Frame count: %d\n", s_FrameCounter);
+  printf ("Frame count: %d\n", g_FrameCounter);
 
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
   sizeof(s_OriginalLocationZeroMemory)) != 0)

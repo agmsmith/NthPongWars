@@ -302,6 +302,11 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
   previousOwner = pTile->owner;
   pTile->owner = newOwner;
 
+  if (previousOwner <= OWNER_PLAYER_4 && previousOwner >= OWNER_PLAYER_1)
+    AdjustPlayerScore(previousOwner - OWNER_PLAYER_1, -1);
+  if (newOwner <= OWNER_PLAYER_4 && newOwner >= OWNER_PLAYER_1)
+    AdjustPlayerScore(newOwner - OWNER_PLAYER_1, 1);
+
   pTile->animationIndex = 0;
   if (!pTile->animated)
   {

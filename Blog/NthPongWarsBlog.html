@@ -491,6 +491,10 @@ support and the newer compiler.  But keep an eye on NABU-LIB for useful code.
     at once play out.
   <LI>Background music, probably not possible in the game on the NABU with all
     those sound effects, but definitely for the menus.
+  <LI>Score bubbles.  Rise from the spot where the points are gained, fall from
+    the spot where points are lost (just use the player's current position).
+    Maybe only show score changes over a limit, to avoid clutter and not have
+    to make too many different sprite bubble graphics.
 </UL>
 
 <H3>Code Design</H3>
@@ -1574,6 +1578,45 @@ WIDTH="280" HEIGHT="216"
 ALT="[Video of Scores now Working!]"></A><BR>
 <A HREF="ScoresWorking20250121.mp4">ScoresWorking20250121.mp4</A> video
 with sound.
+
+<HR>
+<H2><A NAME="2025.01.22"></A>2025.01.22</H2>
+
+<H3>Driving Around versus Thrusting</H3>
+
+<P>The conventional version of this game (because it is easily implemented)
+drives the players around like objects in outer space.  Great if you're making
+a Lunar Lander game, with joystick controlled rocket acceleration and friction
+free space drifting.  I'd prefer to have a bit of steering, like you do with a
+car, with more direct control since it's less frustrating.  The big rule is
+that you can change direction, and the velocity stays the same.  But how to
+rotate a velocity vector to simulate steering when you have to avoid
+multiplication / division / square roots for speed?
+
+<P>If you go very fast, there should also be a bit of friction to slow you
+down.  Otherwise the game will slow down when it has to run extra physics steps
+to accurately track the player speed!  I'm not sure if the friction stops at
+some slower velocity, or if the players always have a little bit of thrust
+available.
+
+<P>Actually, I'd like to keep the rocket thrust experience for the fire button
+and use a nifty scoring trick I thought of.  Hold the button down and move the
+joystick in a direction and it will use up tiles of your own colour to power
+your acceleration (tiles disappear, speed increases).  For extra fun, we can
+have partial tiles which get converted to fuller tiles every time you drift
+over them (there's so much time spent doing that, might as well make it
+meaningful), and the fuller tiles will give more thrust when harvested.  No
+need to keep track of the order of tiles encountered or age of tiles, just
+burn the tiles you are currently colliding with (adds a bit of gameplay to
+seek linear streaks of your colour for higher speeds).  If you don't specify
+a direction while holding down the button, the thrust will be in a direction
+to slow you down.
+
+<P>In general, power-ups will be passive objects, not something you have to
+control (no more buttons left, and it would make things too complex for the
+casual user).  You just collide with the power-up to start it.  They may affect
+your speed, your width (hit more tiles), and maybe even height above ground
+(skip over tiles).  They should all time out after a certain amount of use.
 
 <P>- Alex
 

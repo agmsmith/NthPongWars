@@ -94,8 +94,17 @@ void UpdateScores(void)
   {
     if (pPlayer->score != pPlayer->score_displayed)
     {
-      Write3DigitColourfulNumber(pPlayer->score, pPlayer->score_text,
-        fontOffset /* Font offset to a colour digit set */);
+      if (pPlayer->brain == BRAIN_INACTIVE)
+      {
+        /* Just display some dots in the player's colour. */
+        memset(pPlayer->score_text, '0' + 10 + fontOffset, 3); 
+        pPlayer->score_text[3] = 0;
+      }
+      else /* Display a colourful score number. */
+      {
+        Write3DigitColourfulNumber(pPlayer->score, pPlayer->score_text,
+          fontOffset /* Font offset to a colour digit set */);
+      }
     }
     fontOffset += 11; /* Next batch of colourful digits and % sign. */
   }

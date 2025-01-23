@@ -177,6 +177,9 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       int8_t velocityX, velocityY;
       bool bounceOffX, bounceOffY;
 
+      if (pPlayer->brain == BRAIN_INACTIVE)
+        continue;
+
       playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
       playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
       playerCol = playerX / TILE_PIXEL_WIDTH;

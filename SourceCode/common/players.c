@@ -73,7 +73,7 @@ printf("(%f to %f, %f to %f)\n",
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_TO_FX(1, pPlayer->velocity_y);
 
-    pPlayer->brain = BRAIN_INACTIVE + 1 /* bleeble so all drawn */;
+    pPlayer->brain = BRAIN_INACTIVE;
     pPlayer->brain_info = 0;
     pPlayer->main_colour =
 #ifdef NABU_H

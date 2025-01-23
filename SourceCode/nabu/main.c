@@ -5,9 +5,13 @@
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a usable .COM file),
  * Optionally with --math32 for 32 bit floating point, uses 5K extra memory.
- * Use this command line to compile:
+ * Use this command line to compile, possibly without --fverbose-asm or the
+ * various optimisation options for speedier compiles:
  *
- * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc --opt-code-speed main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM"
+ * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node200000 --fverbose-asm --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM"
+ *
+ * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips
+ * on writing code that the compiler likes and optimizer settings.
  *
  * To prepare to run, create the data files in the server store directory,
  * usually somewhere like Documents/NABU Internet Adapter/Store/NTHPONG/
@@ -21,6 +25,7 @@
 #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
+/* #pragma CRT_ENABLE_STDIO=0 /* Another way of removing stdio libraries. */
 #pragma printf = "%f %d %u %ld %c %s %X" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 

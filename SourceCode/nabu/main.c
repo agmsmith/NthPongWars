@@ -25,7 +25,6 @@
 #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
 /* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
-/* #pragma CRT_ENABLE_STDIO=0 /* Another way of removing stdio libraries. */
 #pragma printf = "%f %d %u %ld %c %s %X" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
@@ -58,7 +57,7 @@
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
 /* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
-/* #define DISABLE_CURSOR /* Don't flash during NABU-LIB keyboard input. */
+#define DISABLE_CURSOR /* Don't flash during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
 
@@ -112,44 +111,44 @@ static void ProcessKeyboard(void)
   uint8_t iPlayer;
   player_pointer pPlayer;
 
+  static uint8_t iControlledPlayer = 3;
+  /* Current player for cursor keys. */
+
   while (isKeyPressed())
   {
-    static uint8_t iControlledPlayer = 0; /* For UI for selecting a player. */
     uint8_t letter;
-
     letter = getChar(); /* Note, may flash cursor, writing ' ' to VDP. */
-    if (letter >= 0xE0 && letter < 0xE4) /* Cursor key pressed. */
+
+    if (letter >= 0xE0 && letter < 0xEB) /* Cursor key pressed. */
     {
-      pPlayer = g_player_array + iControlledPlayer;
-      if (letter == 0xE3) /* Down cursor key pressed. */
-      {
-        if (++pPlayer->pixel_center_y.portions.integer > 202)
-          pPlayer->pixel_center_y.portions.integer = -10;
-      }
-      if (letter == 0xE2) /* Up cursor key pressed. */
-      {
-        if (--pPlayer->pixel_center_y.portions.integer < -10)
-          pPlayer->pixel_center_y.portions.integer = 202;
-      }
-      if (letter == 0xE1) /* Left cursor key pressed. */
-      {
-        if (--pPlayer->pixel_center_x.portions.integer < -10)
-          pPlayer->pixel_center_x.portions.integer = 266;
-      }
-      if (letter == 0xE0) /* Right cursor key pressed. */
-      {
-        if (++pPlayer->pixel_center_x.portions.integer > 266)
-          pPlayer->pixel_center_x.portions.integer = -10;
-      }
-#if DEBUG_KEYBOARD
-      printf("Player %d moved to %d, %d.\n", iControlledPlayer,
-        pPlayer->pixel_center_x.portions.integer,
-        pPlayer->pixel_center_y.portions.integer);
-#endif
+      if (letter == 0xE7) /* YES key pressed, F1 in MAME. */
+        g_KeyboardFakeJoystickStatus |= Joy_Button;
+      else if (letter == 0xE3) /* Down cursor key pressed. */
+        g_KeyboardFakeJoystickStatus |= Joy_Down;
+      else if (letter == 0xE2) /* Up cursor key pressed. */
+        g_KeyboardFakeJoystickStatus |= Joy_Up;
+      else if (letter == 0xE1) /* Left cursor key pressed. */
+        g_KeyboardFakeJoystickStatus |= Joy_Left;
+      else if (letter == 0xE0) /* Right cursor key pressed. */
+        g_KeyboardFakeJoystickStatus |= Joy_Right;
+    }
+    else if (letter >= 0xF0 && letter < 0xFB) /* Cursor key released. */
+    {
+      if (letter == 0xF7) /* YES key released. */
+        g_KeyboardFakeJoystickStatus &= ~Joy_Button;
+      else if (letter == 0xF3) /* Down cursor key released. */
+        g_KeyboardFakeJoystickStatus &= ~Joy_Down;
+      else if (letter == 0xF2) /* Up cursor key released. */
+        g_KeyboardFakeJoystickStatus &= ~Joy_Up;
+      else if (letter == 0xF1) /* Left cursor key released. */
+        g_KeyboardFakeJoystickStatus &= ~Joy_Left;
+      else if (letter == 0xF0) /* Right cursor key released. */
+        g_KeyboardFakeJoystickStatus &= ~Joy_Right;
     }
     else if (letter >= 0x80) /* High bit set for joystick and NABU special keys. */
     {
-      /* Joystick or special keys.  Ignore them, there are lots of them. */
+      /* Joystick or special keys.  Ignore them, there are lots of them.
+         NABU-LIB will parse the joystick keys for us. */
 #if DEBUG_KEYBOARD
       /* printf("(%X)", letter); */
 #endif
@@ -214,22 +213,19 @@ static void ProcessKeyboard(void)
     }
   }
 
-  /* Update the joystick data. */
+  /* Update the player's control inputs with joystick or keyboard input from
+     the Human players. */
 
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
-    uint8_t joystickBits;
-    joystickBits = (getJoyStatus(iPlayer) & 0x1F);
-    if (pPlayer->brain == BRAIN_INACTIVE && joystickBits)
+    if (pPlayer->brain == BRAIN_INACTIVE || pPlayer->brain == BRAIN_JOYSTICK)
     {
-      pPlayer->brain = BRAIN_JOYSTICK;
-      pPlayer->brain_info = iPlayer;
-      pPlayer->last_brain_activity_time = g_FrameCounter;
-    }
-    if (pPlayer->brain == BRAIN_JOYSTICK)
-    {
-      pPlayer->joystick_inputs = joystickBits;
+      /* These kinds of brains use Human input devices.  So read the devices. */
+      if (iPlayer == iControlledPlayer)
+        pPlayer->joystick_inputs = g_KeyboardFakeJoystickStatus;
+      else
+        pPlayer->joystick_inputs = (getJoyStatus(iPlayer) & 0x1F);
     }
   }
 }
@@ -389,6 +385,7 @@ void main(void)
   while (s_KeepRunning)
   {
     ProcessKeyboard();
+    UpdatePlayerInputs();
     Simulate();
     UpdateTileAnimations();
     UpdatePlayerAnimations();

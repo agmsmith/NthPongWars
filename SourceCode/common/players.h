@@ -42,7 +42,6 @@
    as the 0xD0 magic value the hardware uses to mark the end of the sprite list,
    so it's not a value you would normally see as a VDP Y coordinate. */
 #define SPRITE_NOT_DRAWABLE 208
-
 #endif /* NABU_H */
 
 
@@ -50,8 +49,8 @@
 */
 typedef enum brain_enum {
   BRAIN_INACTIVE = 0, /* This player is not active, don't display it. */
-  BRAIN_KEYBOARD, /* Player controlled by a Human using the keyboard. */
-  BRAIN_JOYSTICK, /* Player controlled by a Human using a joystick. */
+  BRAIN_KEYBOARD, /* Player controlled by a Human using the local keyboard. */
+  BRAIN_JOYSTICK, /* Player controlled by a Human using joystick #n. */
   BRAIN_NETWORK, /* Player controlled by a remote entity over the network. */
   BRAIN_IDLE,
   /* This one doesn't accelerate, just drifts around.  It's used for
@@ -67,7 +66,7 @@ typedef enum brain_enum {
 } player_brain;
 
 
-/* Joystick directions as bits.  0 means not pressed.  Whole byte is zero if
+/* Joystick directions as bits.  0 bit means not pressed.  Whole byte is zero if
    no buttons are pressed.  Same as NABU's JOYSTICKENUM, and our own definition
    for other computer systems.  If you see some buttons being pressed, it means
    a user wants to take over a player.
@@ -83,6 +82,18 @@ typedef enum joystick_enum {
     Joy_Button = 0b00010000,
   };
 #endif
+
+extern uint8_t g_KeyboardFakeJoystickStatus;
+/* Your device specific keyboard code puts an emulated joystick state in this
+   global, usually reflecting the cursor keys and some other button for fire */
+
+#ifdef NABU_H
+  /* NABU-LIB already has a global with joystick status, just use it. */
+  #define g_JoystickStatus _joyStatus
+#else /* Need to collect joystick data in our own global array instead. */
+  extern uint8_t g_JoystickStatus[4];
+#endif
+
 
 /* This is the main player status record.  Where they are, what they are doing.
    Inactive players also get a record, in case they join a game in progress.
@@ -114,18 +125,22 @@ typedef struct player_struct {
 
   uint8_t joystick_inputs;
   /* What action is the player currently requesting?  See joystick_enum for
-     the various bits.  Zero if no buttons pressed. */
+     the various bits.  Zero if no buttons pressed.  Human, AI and remote
+     players all talk to the simulation code through these five bits. */
 
   player_brain brain;
   /* What controls this player, or marks it as inactive (not drawn). */
 
-  uint32_t brain_info;
+  union brain_info_union {
+    uint8_t iJoystick; /* For BRAIN_JOYSTICK, which joystick number? */
+  } brain_info;
   /* Extra information about this brain.  Joystick number for joysticks,
      network identification for remote players, algorithm stuff for AI. */
 
   uint16_t last_brain_activity_time;
-  /* Frame counter when the last brain activity was seen, so we can detect
-     idle players. */
+  /* Frame counter when the last brain activity was seen (joystick moved off
+     neutral), so we can detect idle players.  After about 30 seconds, we
+     change that player slot to idle. */
 
   uint16_t score;
   /* Current score of each player.  Counts the number of tiles they own, plus
@@ -201,6 +216,10 @@ extern void InitialisePlayers(void);
 extern void UpdatePlayerAnimations(void);
 /* Update animations for the next frame.  Also convert location of the player
    to hardware pixel coordinates. */
+
+extern void UpdatePlayerInputs(void);
+/* Process the joystick inputs to modify the player's velocities.  Also updates
+   brains to generate fake joystick inputs if needed. */
 
 #ifdef NABU_H
 extern void CopyPlayersToSprites(void);

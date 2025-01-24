@@ -5,6 +5,7 @@
  */
 
 #include "players.h"
+#include "scores.h"
 
 #ifdef NABU_H
 #include "Art/NthPong1.h" /* Artwork data definitions for player sprites. */
@@ -34,6 +35,12 @@ fx g_play_area_wall_bottom_y;
 fx g_play_area_wall_left_x;
 fx g_play_area_wall_right_x;
 fx g_play_area_wall_top_y;
+
+uint8_t g_KeyboardFakeJoystickStatus;
+#ifndef NABU_H
+  uint8_t g_JoystickStatus[4];
+#endif
+
 
 /* Set up the initial player data, mostly colours and animations. */
 void InitialisePlayers(void)
@@ -74,7 +81,6 @@ printf("(%f to %f, %f to %f)\n",
     INT_TO_FX(1, pPlayer->velocity_y);
 
     pPlayer->brain = BRAIN_INACTIVE;
-    pPlayer->brain_info = 0;
     pPlayer->main_colour =
 #ifdef NABU_H
       k_PLAYER_COLOURS[iPlayer].main;
@@ -208,6 +214,93 @@ void UpdatePlayerAnimations(void)
       }
 #endif /* NABU_H */
     }
+  }
+}
+
+/* Process the joystick inputs to modify the player's velocities.  Also updates
+   brains to generate fake joystick inputs if needed.
+*/
+void UpdatePlayerInputs(void)
+{
+  uint8_t iInput;
+  uint8_t iPlayer;
+  player_pointer pPlayer;
+  static bool input_consumed[5]; /* Joysticks [0] to [3], Keyboard is [4]. */
+
+  /* Update the player's control inputs with joystick or keyboard input from
+     the Human players or AI input. */
+
+  /* Clear flags that track which inputs we used. */
+
+  for (iInput = 0; iInput < sizeof (input_consumed); iInput++)
+    input_consumed[iInput] = false;
+
+  /* Copy inputs to player records. */
+  
+  pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    if (pPlayer->brain == BRAIN_KEYBOARD)
+    {
+      pPlayer->joystick_inputs = g_KeyboardFakeJoystickStatus;
+      input_consumed[4] = true;
+    }
+    else if (pPlayer->brain == BRAIN_JOYSTICK)
+    {
+      uint8_t iStick;
+      iStick = pPlayer->brain_info.iJoystick;
+      input_consumed[iStick] = true;
+      /* Note Nabu has high bits always set in joystick data, we want zero for
+         no input from the user. */
+      pPlayer->joystick_inputs = (g_JoystickStatus[iStick] & 0x1F);
+    }
+  }
+
+  /* Look for unconsumed inputs, and assign an idle player to them. */
+
+  for (iInput = 0; iInput < sizeof (input_consumed); iInput++)
+  {
+    uint8_t joyStickData;
+
+    if (input_consumed[iInput])
+      continue; /* Input already used up by an assigned player. */
+
+    if (iInput < 4)
+      joyStickData = (g_JoystickStatus[iInput] & 0x1F);
+    else
+      joyStickData = g_KeyboardFakeJoystickStatus;
+    if (joyStickData == 0)
+      continue; /* No buttons pressed, no activity. */
+
+    /* Find an idle player and assign it to this input. */
+
+    pPlayer = g_player_array;
+    for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+    {
+      if (pPlayer->brain != BRAIN_INACTIVE)
+        continue;
+
+      pPlayer->brain_info.iJoystick = iInput;
+      pPlayer->brain = (iInput < 4) ? BRAIN_JOYSTICK : BRAIN_KEYBOARD;
+      pPlayer->joystick_inputs = joyStickData;
+      break;
+    }
+  }
+
+  /* Process the player actions.  Do idle timeout for inactive players. */
+
+  pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      continue;
+
+    /* If idle too long (30 seconds), deactivate the player. */
+
+    if (pPlayer->joystick_inputs)
+      pPlayer->last_brain_activity_time = g_FrameCounter;
+    else if (g_FrameCounter - pPlayer->last_brain_activity_time > 30 * 30)
+      pPlayer->brain = BRAIN_INACTIVE;
   }
 }
 

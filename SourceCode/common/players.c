@@ -217,8 +217,11 @@ void UpdatePlayerAnimations(void)
   }
 }
 
-/* Process the joystick inputs to modify the player's velocities.  Also updates
-   brains to generate fake joystick inputs if needed.
+/* Process the joystick and keyboard inputs.  Input activity assigns a player
+   to the joystick or keyboard.  Also updates brains to generate fake joystick
+   inputs if needed.  Then use the joystick inputs to modify the player's
+   velocities (steering if just specifying a direction, thrusting if the fire
+   button is pressed too).
 */
 void UpdatePlayerInputs(void)
 {
@@ -228,15 +231,13 @@ void UpdatePlayerInputs(void)
   static bool input_consumed[5]; /* Joysticks [0] to [3], Keyboard is [4]. */
 
   /* Update the player's control inputs with joystick or keyboard input from
-     the Human players or AI input. */
-
-  /* Clear flags that track which inputs we used. */
+     the Human players or AI input.  Also keep track of which inputs we used. */
 
   for (iInput = 0; iInput < sizeof (input_consumed); iInput++)
     input_consumed[iInput] = false;
 
-  /* Copy inputs to player records. */
-  
+  /* Copy inputs to player records.  For AI players, generates the inputs. */
+
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
@@ -283,6 +284,12 @@ void UpdatePlayerInputs(void)
       pPlayer->brain_info.iJoystick = iInput;
       pPlayer->brain = (iInput < 4) ? BRAIN_JOYSTICK : BRAIN_KEYBOARD;
       pPlayer->joystick_inputs = joyStickData;
+#if 0
+printf("Player %d assigned to %s #%d.\n", iPlayer,
+  (pPlayer->brain == BRAIN_JOYSTICK) ? "joystick" : "keyboard",
+  pPlayer->brain_info.iJoystick);
+#endif
+
       break;
     }
   }

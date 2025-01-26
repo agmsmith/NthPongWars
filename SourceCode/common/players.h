@@ -218,8 +218,11 @@ extern void UpdatePlayerAnimations(void);
    to hardware pixel coordinates. */
 
 extern void UpdatePlayerInputs(void);
-/* Process the joystick inputs to modify the player's velocities.  Also updates
-   brains to generate fake joystick inputs if needed. */
+/* Process the joystick and keyboard inputs.  Input activity assigns a player
+   to the joystick or keyboard.  Also updates brains to generate fake joystick
+   inputs if needed.  Then use the joystick inputs to modify the player's
+   velocities (steering if just specifying a direction, thrusting if the fire
+   button is pressed too). */
 
 #ifdef NABU_H
 extern void CopyPlayersToSprites(void);

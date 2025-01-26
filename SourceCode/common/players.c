@@ -217,6 +217,14 @@ void UpdatePlayerAnimations(void)
   }
 }
 
+
+/* Figure out what joystick action the player should do based on various
+   algorithms. */
+static void BrainUpdateJoystick(player_pointer pPlayer)
+{
+  pPlayer->joystick_inputs = 0;
+}
+
 /* Process the joystick and keyboard inputs.  Input activity assigns a player
    to the joystick or keyboard.  Also updates brains to generate fake joystick
    inputs if needed.  Then use the joystick inputs to modify the player's
@@ -241,12 +249,17 @@ void UpdatePlayerInputs(void)
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      continue;
+
     if (pPlayer->brain == BRAIN_KEYBOARD)
     {
       pPlayer->joystick_inputs = g_KeyboardFakeJoystickStatus;
       input_consumed[4] = true;
+      continue;
     }
-    else if (pPlayer->brain == BRAIN_JOYSTICK)
+
+    if (pPlayer->brain == BRAIN_JOYSTICK)
     {
       uint8_t iStick;
       iStick = pPlayer->brain_info.iJoystick;
@@ -254,7 +267,11 @@ void UpdatePlayerInputs(void)
       /* Note Nabu has high bits always set in joystick data, we want zero for
          no input from the user. */
       pPlayer->joystick_inputs = (g_JoystickStatus[iStick] & 0x1F);
+      continue;
     }
+
+    /* One of the fancier brains or a remote player, do fancy update. */
+    BrainUpdateJoystick(pPlayer);
   }
 
   /* Look for unconsumed inputs, and assign an idle player to them. */
@@ -289,7 +306,6 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
   (pPlayer->brain == BRAIN_JOYSTICK) ? "joystick" : "keyboard",
   pPlayer->brain_info.iJoystick);
 #endif
-
       break;
     }
   }
@@ -299,15 +315,40 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
+    uint8_t joyStickData;
+
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
     /* If idle too long (30 seconds), deactivate the player. */
 
-    if (pPlayer->joystick_inputs)
+    joyStickData = pPlayer->joystick_inputs; 
+    if (joyStickData)
       pPlayer->last_brain_activity_time = g_FrameCounter;
     else if (g_FrameCounter - pPlayer->last_brain_activity_time > 30 * 30)
+    {
       pPlayer->brain = BRAIN_INACTIVE;
+      continue;
+    }
+
+    /* If thrusting, speed up in the joystick direction. */
+
+    if (joyStickData & Joy_Left)
+       ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne, &pPlayer->velocity_x);
+    if (joyStickData & Joy_Right)
+       ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One, &pPlayer->velocity_x);
+    if (joyStickData & Joy_Up)
+       ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne, &pPlayer->velocity_y);
+    if (joyStickData & Joy_Down)
+       ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One, &pPlayer->velocity_y);
+
+    /* Add some friction, reduce velocity. */
+    fx quarterVelocity;
+    
+    DIV256_FX(pPlayer->velocity_x, quarterVelocity); 
+    SUBTRACT_FX(&pPlayer->velocity_x, &quarterVelocity, &pPlayer->velocity_x);
+    DIV256_FX(pPlayer->velocity_y, quarterVelocity); 
+    SUBTRACT_FX(&pPlayer->velocity_y, &quarterVelocity, &pPlayer->velocity_y);
   }
 }
 

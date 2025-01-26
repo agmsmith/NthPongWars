@@ -116,5 +116,8 @@ extern int8_t COMPARE_FX(pfx x, pfx y);
 /* Divide a by 4 and put into b. */
 #define DIV4_FX(a, b) {b.as_int32 = a.as_int32 / 4; }
 
+/* Divide a by 256 and put into b. */
+#define DIV256_FX(a, b) {b.as_int32 = a.as_int32 / 256; }
+
 #endif /* _FIXED_POINT_H */
 

@@ -52,10 +52,6 @@ typedef enum brain_enum {
   BRAIN_KEYBOARD, /* Player controlled by a Human using the local keyboard. */
   BRAIN_JOYSTICK, /* Player controlled by a Human using joystick #n. */
   BRAIN_NETWORK, /* Player controlled by a remote entity over the network. */
-  BRAIN_IDLE,
-  /* This one doesn't accelerate, just drifts around.  It's used for
-     disconnected players, so they can reconnect within a time delay without
-     much happening.  But if they take too long, the player becomes inactive. */
   BRAIN_CONSTANT_SPEED,
   /* Tries to speed up to move at a constant speed in whatever direction it is
      already going in. */

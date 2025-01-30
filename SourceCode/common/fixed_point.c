@@ -8,6 +8,8 @@
 fx gfx_Constant_Zero;
 fx gfx_Constant_One;
 fx gfx_Constant_MinusOne;
+fx gfx_Constant_Eighth;
+fx gfx_Constant_MinusEighth;
 
 
 /* Negate, done by subtracting from 0 and overwriting the value. */
@@ -194,27 +196,69 @@ int8_t COMPARE_FX(pfx x, pfx y)
   ld    a,(bc)
   sbc   a,(hl)
   ld    iyh,a
-  jp    PO,NoOverflow /* Sadly, no jr jump relative for overflow tests. */
+  jp    PO,NoOverflowCompare /* Pity, no jr jump relative for overflow tests. */
   xor   a,0x80    /* Signed value overflowed, sign bit is reversed, fix it. */
-NoOverflow:
-  jp    P,PositiveResult
+NoOverflowCompare:
+  jp    P,PositiveCompare
   ld    l,0xFF    /* Negative result, so X < Y. */
   ret
-PositiveResult:
+PositiveCompare:
   ld    a,iyh     /* See if the complete result is zero. */
   or    a,iyl
   or    a,d
   or    a,e
-  jr    z,ZeroExit
+  jr    z,ZeroCompare
   ld    l,0x01
   ret
-ZeroExit:
+ZeroCompare:
   __endasm;
   return 0;       /* Need at least one return in C, else get warning. */
 #else /* Generic C implementation. */
   if (x->as_int32 < y->as_int32)
     return -1;
   else if (x->as_int32 == y->as_int32)
+    return 0;
+  return 1;
+#endif
+}
+
+
+/* Compare value X against zero and return a small integer which is
+   -1 if X < 0, zero if X == 0, +1 if X > 0. */
+int8_t TEST_FX(pfx x)
+{
+#ifdef NABU_H
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  __asm
+  ld    hl,2      /* Hop over return address. */
+  add   hl,sp     /* Get pointer to argument x, will put in bc. */
+  ld    a,(hl)
+  inc   hl
+  ld    h,(hl)
+  ld    l,a       /* hl now has pointer to x's fx data, a 32 bit integer. */
+  ld    a,(hl)    /* First, least significant, byte of data. */
+  inc   hl
+  or    a,(hl)
+  inc   hl
+  or    a,(hl)
+  inc   hl
+  or    a,(hl)
+  jr    z,ZeroTest
+  ld    a,(hl)
+  or    a,a
+  jp    P,PositiveTest
+  ld    l,0xFF    /* Negative result, so X < 0. */
+  ret
+PositiveTest:
+  ld    l,0x01
+  ret
+ZeroTest:
+  __endasm;
+  return 0;       /* Need at least one return in C, else get warning. */
+#else /* Generic C implementation. */
+  if (x->as_int32 < 0)
+    return -1;
+  else if (x->as_int32 == 0)
     return 0;
   return 1;
 #endif

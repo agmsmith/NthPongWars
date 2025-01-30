@@ -97,7 +97,7 @@ void UpdateScores(void)
       if (pPlayer->brain == BRAIN_INACTIVE)
       {
         /* Just display some dots in the player's colour. */
-        memset(pPlayer->score_text, '0' + 10 + fontOffset, 3); 
+        memset(pPlayer->score_text, '0' + 10 + fontOffset, 3);
         pPlayer->score_text[3] = 0;
       }
       else /* Display a colourful score number. */

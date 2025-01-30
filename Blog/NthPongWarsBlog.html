@@ -1584,20 +1584,19 @@ with sound.
 
 <H3>Driving Around versus Thrusting</H3>
 
-<P>The conventional version of this game (because it is easily implemented)
-drives the players around like objects in outer space.  Great if you're making
-a Lunar Lander game, with joystick controlled rocket acceleration and friction
-free space drifting.  I'd prefer to have a bit of steering, like you do with a
-car, with more direct control since it's less frustrating.  The big rule is
-that you can change direction, and the velocity stays the same.  But how to
-rotate a velocity vector to simulate steering when you have to avoid
-multiplication / division / square roots for speed?
+<P>The conventional version of this type of game (because it is easily
+implemented) drives the players around like objects in outer space.  Great if
+you're making a Lunar Lander game, with joystick controlled rocket acceleration
+and friction free space drifting.  I'd prefer to have a bit of steering, like
+you do with a car, with more direct control since it's less frustrating.  The
+big rule is that you can change direction, and the velocity stays the same.
+But how to rotate a velocity vector to simulate steering when you have to
+avoid multiplication / division / square roots for speed?
 
 <P>If you go very fast, there should also be a bit of friction to slow you
 down.  Otherwise the game will slow down when it has to run extra physics steps
-to accurately track the player speed!  I'm not sure if the friction stops at
-some slower velocity, or if the players always have a little bit of thrust
-available.
+to accurately track the player speed!  I'm not sure if the friction should stop
+at some slower velocity, or if the players always have to thrust to move.
 
 <P>Actually, I'd like to keep the rocket thrust experience for the fire button
 and use a nifty scoring trick I thought of.  Hold the button down and move the
@@ -1617,6 +1616,62 @@ control (no more buttons left, and it would make things too complex for the
 casual user).  You just collide with the power-up to start it.  They may affect
 your speed, your width (hit more tiles), and maybe even height above ground
 (skip over tiles).  They should all time out after a certain amount of use.
+
+<HR>
+<H2><A NAME="2025.01.27"></A>2025.01.27</H2>
+
+<H3>Joystick Control</H3>
+
+<P>Got player control working for the first time, hooking up the joystick
+directions to add to the velocity.  Yes, that's the floaty thrust type game
+mechanic, but it did do for testing the automatic assignment of joysticks to
+players when joystick activity is detected.  Also, with too much thrust, you
+bounce off the walls quite a lot!
+
+<HR>
+<H2><A NAME="2025.01.28"></A>2025.01.28</H2>
+
+<H3>Rotating Manhattan Velocity Vectors</H3>
+
+<P>Continuing on with the rotation without doing multiplication (let alone
+matrix multiplication by cosines and sines - the conventional way of doing
+rotation), I have an approach that may work.  The key idea is that in true
+vector rotations, the length of the vector stays the same, just the angle
+changes.  Avoiding square roots and such, we can approximate it by doing
+Manhattan distances (distances along city blocks, where you can't go
+diagonally), so rather than the usual length = sqrt(x*x + y*y), I'd like to
+try abs(x) + abs(y) = Manhattan length, using absolute values rather than
+squares and square roots.  It wouldn't look as smooth as real vector length
+(diagonal movement would be faster), but it may work well enough for a game.
+
+<P>To use it, Manhattan rotation would increase X and simultaneously decrease Y
+by the same amount (or vice versa, so that the Manhattan length doesn't change),
+though we're actually using absolute values so increasing X could be in the
+positive direction or if it was negative, increasing would be in the negative
+direction.  Same double direction possibilities for Y.  The amount to take off
+Y and add to X should be large enough to be visible but small enough that it
+takes a while to rotate in a full circle (actually a full square since it is
+Manhattan).  If it's a constant, then it will take longer to turn at higher
+speeds, otherwise the delta value would need to be related to the speed to do
+turns in constant time.
+
+<P>That doesn't actually work, unless you're already heading to the right
+(increasing X).  Also to get to positive X if you start at negative X, you have
+to head to zero X first, then to positive X.  Indeed, for each 45 degree
+direction, you have to maximize or minimize or zero each coordinate differently.
+So to keep it organised, I'm going to use angles from 0 to 7, each one being 45
+degrees, with zero heading right and increasing angles clockwise (the screen Y
+coordinate increases downwards, X to the rightwards, not quite the same as the
+usual X-Y Cartesian axis where angles increase counter-clockwise).  Conveniently
+when moving from one quadrant to the next, only one of the axis goals changes,
+so the rotation moves without glitching too much.  The goal for each axis is
+one of: make as negative as possible, move towards zero, make positive.  If
+both X and Y goals are making them as large as possible, the goal should be to
+make them equal.
+
+<P>Will it work at all?  Will Manhattan velocity rotation feel good in the
+game when driving your dot around the screen?  The easiest way to find out is
+to write the code.  Tune back in next time, to find out.
 
 <P>- Alex
 

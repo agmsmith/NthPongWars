@@ -322,7 +322,7 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
 
     /* If idle too long (30 seconds), deactivate the player. */
 
-    joyStickData = pPlayer->joystick_inputs; 
+    joyStickData = pPlayer->joystick_inputs;
     if (joyStickData)
       pPlayer->last_brain_activity_time = g_FrameCounter;
     else if (g_FrameCounter - pPlayer->last_brain_activity_time > 30 * 30)
@@ -333,22 +333,56 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
 
     /* If thrusting, speed up in the joystick direction. */
 
-    if (joyStickData & Joy_Left)
-       ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne, &pPlayer->velocity_x);
-    if (joyStickData & Joy_Right)
-       ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One, &pPlayer->velocity_x);
-    if (joyStickData & Joy_Up)
-       ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne, &pPlayer->velocity_y);
-    if (joyStickData & Joy_Down)
-       ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One, &pPlayer->velocity_y);
+    if (joyStickData & Joy_Button)
+    {
+      if (joyStickData & Joy_Left)
+         ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne, &pPlayer->velocity_x);
+      if (joyStickData & Joy_Right)
+         ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One, &pPlayer->velocity_x);
+      if (joyStickData & Joy_Up)
+         ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne, &pPlayer->velocity_y);
+      if (joyStickData & Joy_Down)
+         ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One, &pPlayer->velocity_y);
+    }
+    else /* Fire not pressed, just steer by rotating velocity direction. */
+    {
+#if 0
+      if (joyStickData & Joy_Right)
+      {
+        /* Want to increase X velocity to positive, decrease Y velocity to zero.  The invariant is abs(x) + abs(y) = constant.  So first see if X is negative, then we can move X to zero and increase Y with the residue. */
+        fx amountToMove;
+        SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &amountToMove);
+        
+        gfx_Constant_MinusEighth
+        if (IS_NEGATIVE_FX(pPlayer->velocity_x))
+        {
+          /* Reducing negative X towards zero.  Have to increase Y correspondingly. */
+          if (IS_NEGATIVE_FX(pPlayer->velocity_y))
+          {
+          
+          }
+          else
+          {
+          if (COMPARE_FX(pPlayer->velocity_y,
+          }
+        }
+        else /* Increase X as much as possible. */
+        {
+        }
+        
+        
+      }
+      // bleeble
+#endif
+    }
 
     /* Add some friction, reduce velocity. */
-    fx quarterVelocity;
-    
-    DIV256_FX(pPlayer->velocity_x, quarterVelocity); 
-    SUBTRACT_FX(&pPlayer->velocity_x, &quarterVelocity, &pPlayer->velocity_x);
-    DIV256_FX(pPlayer->velocity_y, quarterVelocity); 
-    SUBTRACT_FX(&pPlayer->velocity_y, &quarterVelocity, &pPlayer->velocity_y);
+    fx portionOfVelocity;
+
+    DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
+    SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
+    DIV256_FX(pPlayer->velocity_y, portionOfVelocity);
+    SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
   }
 }
 

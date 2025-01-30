@@ -73,6 +73,8 @@ typedef union fx_union {
 extern fx gfx_Constant_Zero;
 extern fx gfx_Constant_One;
 extern fx gfx_Constant_MinusOne;
+extern fx gfx_Constant_Eighth;
+extern fx gfx_Constant_MinusEighth;
 
 /* Setting and getting.  As inline code, not too complex for 8 bit compilers. */
 #define COPY_FX(x, y) {y.as_int32 = x.as_int32; }
@@ -109,6 +111,10 @@ extern void ABS_FX(pfx x);
    a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
    +1 if X > Y. */
 extern int8_t COMPARE_FX(pfx x, pfx y);
+
+/* Compare value X against zero and return a small integer which is
+   -1 if X < 0, zero if X == 0, +1 if X > 0. */
+extern int8_t TEST_FX(pfx x);
 
 /* Divide a by 2 and put into b. */
 #define DIV2_FX(a, b) {b.as_int32 = a.as_int32 / 2; }

@@ -253,6 +253,10 @@ void main(void)
   INT_TO_FX(1, gfx_Constant_One);
   INT_TO_FX(1, gfx_Constant_MinusOne);
   NEGATE_FX(&gfx_Constant_MinusOne);
+  INT_FRACTION_TO_FX(0 /* int */, 0x2000 /* fraction */, gfx_Constant_Eighth); 
+  COPY_FX(gfx_Constant_Eighth, gfx_Constant_MinusEighth);
+  NEGATE_FX(&gfx_Constant_MinusEighth);
+
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter

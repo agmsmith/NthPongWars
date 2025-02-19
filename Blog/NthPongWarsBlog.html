@@ -293,7 +293,8 @@ example games work.
 <H3>Regressing Z88DK to Compile NABU-LIB and DJ's Examples</H3>
 
 <P>I tried compiling <I>Brick Battle</I>, but lots of errors appear in the
-NABU-LIB code; you see this many times:
+NABU-LIB code; you see this many times (note - newer Z88DK versions circa 2025
+fix this, no need to use an older Z88DK):
 <PRE>main.c:742: warning 283: function declarator with no prototype
 main.c:855: error: syntax error
   ^---- ld ( 0xff00 ), hl
@@ -1687,9 +1688,9 @@ more printfs and continue debugging.
 
 <P>The printfs narrowed it down to a few lines, where I found the classic
 mistake of using == instead of = to assign a value.  In this case it was the
-angle (octant) to turn towards, and zero/false means rightwards.  It's working
-better on first run, but needs some edge case testing and I need a good night's
-sleep.
+angle (octant) to turn towards remaining at the default zero, which means
+rightwards.  It's working better on first run, but needs some edge case testing
+and I need a good night's sleep.
 
 <P>- Alex
 

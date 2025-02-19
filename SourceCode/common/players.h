@@ -118,6 +118,12 @@ typedef struct player_struct {
      lower boundary of the octant, the upper one is 45 degrees clockwise from
      this. */
 
+  bool velocity_octant_right_on;
+  /* Set to TRUE if the velocity is right along the velocity_octant.  Needed so
+     that we can aim for the next more counter-clockwise octant.  The octant
+     finding code carefully uses the lower bound if the velocity is exactly on
+     an octant direction. */ 
+
   fx step_velocity_x;
   fx step_velocity_y;
   /* The speed the player is moving, in pixels per step, with several steps per

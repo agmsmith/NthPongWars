@@ -13,6 +13,10 @@ extern uint16_t g_FrameCounter;
 /* The current number of points needed to win the game.  Decreases over time. */
 extern uint16_t g_ScoreGoal;
 
+/* The number of frames it took to compute the game update last time, mostly
+   for debugging as a letter code near the frame rate. */
+extern uint8_t g_ScoreFramesPerUpdate;
+
 /* Resets the goal (based on the number of tiles in the play area), recomputes
    the score for each player based on the state of the tiles in the play area,
    in case we want to reload a saved game or have pre-made scenarios. */

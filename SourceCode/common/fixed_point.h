@@ -119,6 +119,10 @@ extern int8_t COMPARE_FX(pfx x, pfx y);
    -1 if X < 0, zero if X == 0, +1 if X > 0. */
 extern int8_t TEST_FX(pfx x);
 
+/* Shift the given value arithmetic right (sign bit extended, so works with
+   negative numbers too), by the number of times specified. */
+extern DIV_N_FX(pfx x, uint8_t nShifts);
+
 /* Divide a by 2 and put into b. */
 #define DIV2_FX(a, b) {b.as_int32 = a.as_int32 / 2; }
 

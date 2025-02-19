@@ -9,10 +9,15 @@
 
 uint16_t g_FrameCounter;
 uint16_t g_ScoreGoal;
+uint8_t g_ScoreFramesPerUpdate;
 
 static char s_ScoreGoalText[8];
 static uint16_t s_ScoreGoalDisplayed;
 /* Score as last drawn on the screen.  Only need to redraw if changed. */
+
+static uint8_t s_ScoreFramesPerUpdateDisplayed;
+/* Previously displayed value, so we can skip drawing unchanged update codes. */
+
 
 /* Resets the goal (based on the number of tiles in the play area), recomputes
    the score for each player based on the state of the tiles in the play area,
@@ -36,6 +41,8 @@ void InitialiseScores(void)
 
   g_ScoreGoal = g_play_area_num_tiles;
   s_ScoreGoalDisplayed = 0xFEDC; /* Force a display update next time. */
+
+  s_ScoreFramesPerUpdateDisplayed = 255; /* Force an update. */
 
   /* Count up the tiles to get the starting score for each player. */
 
@@ -113,6 +120,7 @@ void UpdateScores(void)
     Write3DigitColourfulNumber(g_ScoreGoal, s_ScoreGoalText, 0);
 }
 
+
 /* Update the screen display with the current scores.  They're the top line
    of the screen, snowing each player's score in their colour, followed by the
    goal score to win. */
@@ -149,11 +157,22 @@ void CopyScoresToScreen(void)
   }
 
 #if 1
+  /* Display the frames per update code letter on the screen if needed,
+     Normally will be FB, but FA if faster, FC if slower than the typical 2
+     frames per update (1 missed frame typical). */
+
+  if (s_ScoreFramesPerUpdateDisplayed != g_ScoreFramesPerUpdate)
+  {
+    vdp_setWriteAddress(_vdpPatternNameTableAddr + 26);
+    s_ScoreFramesPerUpdateDisplayed = g_ScoreFramesPerUpdate;
+    IO_VDPDATA = g_ScoreFramesPerUpdate + 'A';
+  }
+
+  /* Draw the frame counter every time. */
   {
     char *pChar;
     char letter;
 
-    /* Draw the frame counter every time. */
     strcpy(TempBuffer, "0000"); /* 4 leading zeroes. */
     pChar = fast_utoa(g_FrameCounter, TempBuffer + 4) - 4; /* Last four digits. */
     vdp_setWriteAddress(_vdpPatternNameTableAddr + 28);

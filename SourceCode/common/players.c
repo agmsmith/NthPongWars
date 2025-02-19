@@ -4,6 +4,8 @@
  * AGMS20241220 - Started this code file.
  */
 
+#define DEBUG_PRINT_OCTANTS 1 /* Turn on debug printfs, uses floating point. */
+
 #include "players.h"
 #include "scores.h"
 
@@ -235,7 +237,8 @@ static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
   */
 
   int8_t xDir, yDir;
-  uint8_t octantLower;
+  uint8_t octantLower = 0xFF; /* An invalid value you should never see. */
+  bool rightOnOctant = false; /* If velocity is exactly in octant direction. */
 
   xDir = TEST_FX(&pPlayer->velocity_x);
   yDir = TEST_FX(&pPlayer->velocity_y);
@@ -245,14 +248,23 @@ static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
     if (yDir == 0) /* Y == 0 */
       octantLower = 0; /* Actually undefined, zero length vector. */
     else if (yDir >= 0) /* Y > 0, using >= test since it's faster. */
+    {
       octantLower = 2;
+      rightOnOctant = true;
+    }
     else /* Y < 0 */
+    {
       octantLower = 6;
+      rightOnOctant = true;
+    }
   }
   else if (xDir >= 0) /* X > 0 */
   {
     if (yDir == 0) /* X > 0, Y == 0 */
+    {
       octantLower = 0;
+      rightOnOctant = true;
+    }
     else if (yDir >= 0) /* X > 0, Y > 0 */
     {
       int8_t xyDelta;
@@ -260,7 +272,10 @@ static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
       if (xyDelta > 0) /* |X| > |Y| */
         octantLower = 0;
       else /* |X| <= |Y| */
+      {
         octantLower = 1;
+        rightOnOctant = (xyDelta == 0);
+      }
     }
     else /* X > 0, Y < 0 */
     {
@@ -269,7 +284,10 @@ static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
       COPY_NEGATE_FX(&pPlayer->velocity_y, &negativeY);
       xyDelta = COMPARE_FX(&pPlayer->velocity_x, &negativeY);
       if (xyDelta >= 0) /* |X| >= |Y| */
+      {
         octantLower = 7;
+        rightOnOctant = (xyDelta == 0);
+      }
       else /* |X| < |Y| */
         octantLower = 6;
     }
@@ -277,15 +295,21 @@ static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
   else /* X < 0 */
   {
     if (yDir == 0) /* X < 0, Y == 0 */
+    {
       octantLower = 4;
-    else if (yDir >= 0) /* X < 0, Y > 0 */
+      rightOnOctant = true;
+    }
+    else if (yDir >= 0) /* X < 0, Y >= 0 */
     {
       int8_t xyDelta;
       fx negativeX;
       COPY_NEGATE_FX(&pPlayer->velocity_x, &negativeX);
       xyDelta = COMPARE_FX(&negativeX, &pPlayer->velocity_y);
       if (xyDelta >= 0) /* |X| >= |Y| */
+      {
         octantLower = 3;
+        rightOnOctant = (xyDelta == 0);
+      }
       else /* |X| < |Y| */
         octantLower = 2;
     }
@@ -296,10 +320,14 @@ static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
       if (xyDelta < 0) /* |X| > |Y| */
         octantLower = 4;
       else /* |X| <= |Y| */
+      {
         octantLower = 5;
+        rightOnOctant = (xyDelta == 0);
+      }
     }
   }
   pPlayer->velocity_octant = octantLower;
+  pPlayer->velocity_octant_right_on = rightOnOctant;
 }
 
 
@@ -311,22 +339,48 @@ static void TurnVelocityTowardsOctant(player_pointer pPlayer,
 {
   uint8_t head_towards_octant = 0;
   bool head_clockwise = false;
+  bool heading_found = false;
   uint8_t currentLowerOctant, currentUpperOctant;
   currentLowerOctant = pPlayer->velocity_octant;
   currentUpperOctant = ((currentLowerOctant + 1) & 0x07);
+
+#if DEBUG_PRINT_OCTANTS
 printf("  CurrentLower %d, CurrentUpper %d, Desired %d.\n",
 currentLowerOctant, currentUpperOctant, desired_octant);
-  if (desired_octant == currentLowerOctant)
-  {
-    head_towards_octant = desired_octant;
-    head_clockwise = false;
-  }
-  else if (desired_octant == currentUpperOctant)
+#endif
+
+  if (desired_octant == currentUpperOctant)
   {
     head_towards_octant = desired_octant;
     head_clockwise = true;
+    heading_found = true;
   }
-  else /* Not currently near the desired octant, pick closest angle. */
+  else if (desired_octant == currentLowerOctant)
+  {
+    head_towards_octant = desired_octant;
+    head_clockwise = false;
+    heading_found = true;
+  }
+  else if (pPlayer->velocity_octant_right_on)
+  {
+    /* Widen the angles being considered, since we're exactly on
+       currentLowerOctant and want to go past it to the next lower octant. */
+
+    currentLowerOctant = ((currentLowerOctant - 1) & 0x07);
+#if DEBUG_PRINT_OCTANTS
+printf("  CurrentLower moved to %d.\n", currentLowerOctant);
+#endif
+    if (desired_octant == currentLowerOctant)
+    {
+      head_towards_octant = currentLowerOctant;
+      head_clockwise = false;
+      heading_found = true;
+    }
+  }
+
+  /* Not currently near the desired octant, pick closest one. */
+
+  if (!heading_found)
   {
     uint8_t lowerDelta, upperDelta;
 
@@ -335,7 +389,9 @@ currentLowerOctant, currentUpperOctant, desired_octant);
 
     /* Clockwise rotation amount from current upper to desired octant. */
     upperDelta = ((desired_octant - currentUpperOctant) & 7);
+#if DEBUG_PRINT_OCTANTS
 printf("  LowerDelta %d, UpperDelta %d.\n", lowerDelta, upperDelta);
+#endif
     if (lowerDelta < upperDelta)
     {
       head_towards_octant = currentLowerOctant;
@@ -348,8 +404,10 @@ printf("  LowerDelta %d, UpperDelta %d.\n", lowerDelta, upperDelta);
     }
   }
 
+#if DEBUG_PRINT_OCTANTS
 printf("  Head towards octant %d, clockwise %d.\n",
 head_towards_octant, head_clockwise);
+#endif
 
   fx amountToMove;
   COPY_FX(&gfx_Constant_One, &amountToMove);
@@ -380,6 +438,7 @@ head_towards_octant, head_clockwise);
       { /* Reduce positive X, add to positive Y until equal balance. */
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
@@ -389,6 +448,7 @@ head_towards_octant, head_clockwise);
       { /* Reduce positive Y, add to positive X until equal balance. */
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
@@ -420,6 +480,7 @@ head_towards_octant, head_clockwise);
       { /* Reduce positive Y, increase negative X until equal balance. */
         fx balance;
         ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
@@ -430,6 +491,7 @@ head_towards_octant, head_clockwise);
         fx balance;
         ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
         NEGATE_FX(&balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
@@ -462,6 +524,7 @@ head_towards_octant, head_clockwise);
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
         NEGATE_FX(&balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
@@ -472,6 +535,7 @@ head_towards_octant, head_clockwise);
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
         NEGATE_FX(&balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
@@ -504,6 +568,7 @@ head_towards_octant, head_clockwise);
         fx balance;
         ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
         NEGATE_FX(&balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
@@ -513,6 +578,7 @@ head_towards_octant, head_clockwise);
       { /* Reduce positive X, increase negative Y until equal balance. */
         fx balance;
         ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
           COPY_FX(&balance, &amountToMove);
         SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
@@ -690,25 +756,37 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
             desired_octant = 2;
 
         UpdatePlayerVelocityDirection(pPlayer);
-printf("Player %d Velocity (%f,%f) octant %d, desire %d.\n", iPlayer,
+#if DEBUG_PRINT_OCTANTS
+printf("Player %d Velocity (%f,%f) octant %d, right on %d, desire %d.\n",
+iPlayer,
 GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y),
-pPlayer->velocity_octant, desired_octant);
+pPlayer->velocity_octant, pPlayer->velocity_octant_right_on, desired_octant);
+#endif
 
         TurnVelocityTowardsOctant(pPlayer, desired_octant);
+#if DEBUG_PRINT_OCTANTS
 printf("  Turned velocity (%f,%f).\n",
 GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
+#endif
       }
     }
-#if 0
+
+#if 1
     /* Add some friction, to reduce excessive velocity which slows the frame
-       rate and is uncontrollable for the user. */
+       rate and is uncontrollable for the user.  But only if going so fast that
+       it would make the physics run multiple sub-steps and thus slow the frame
+       rate down.  Don't need absolute value, it will bounce off a wall soon
+       if it's going that fast. */
 
-    fx portionOfVelocity;
-
-    DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
-    SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
-    DIV256_FX(pPlayer->velocity_y, portionOfVelocity);
-    SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
+    if (GET_FX_INTEGER(pPlayer->velocity_x) >= 1 ||
+    GET_FX_INTEGER(pPlayer->velocity_y) >= 1)
+    {
+      fx portionOfVelocity;
+      DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
+      SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
+      DIV256_FX(pPlayer->velocity_y, portionOfVelocity);
+      SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
+    }
 #endif
   }
 }

@@ -10,6 +10,9 @@
  *
  * zcc +cpm -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node200000 --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM"
  *
+ * Though the faster command line to use during development is:
+ * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
+ *
  * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips
  * on writing code that the compiler likes and optimizer settings.
  *
@@ -25,7 +28,7 @@
 #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* No disk based file streams? */
 /* #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
-#pragma printf = "%f %d %u %ld %X %c %s" /* Need these printf formats. */
+#pragma printf = "%f %d %ld %X %c %s" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
 #pragma define CRT_STACK_SIZE=1024
@@ -245,7 +248,6 @@ void main(void)
   static char s_OriginalStackMemory[16];
 
   /* A few local variables to force stack frame creation, sets IX register. */
-  uint8_t i;
   unsigned int sTotalMem, sLargestMem;
 
   /* Initialise some fixed point number constants. */
@@ -294,7 +296,7 @@ void main(void)
   printf("https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n");
   printf("Compiled on " __DATE__ " at " __TIME__ ".\n");
   mallinfo(&sTotalMem, &sLargestMem);
-  printf("Heap has %u bytes free, largest %u.\n", sTotalMem, sLargestMem);
+  printf("Heap has %d bytes free, largest %d.\n", sTotalMem, sLargestMem);
   printf("Using the SDCC compiler, unknown version.\n");
 
   /* Weird bug in Z88DK where printf("$%X $$$$$%X", a, b); loses any
@@ -337,7 +339,7 @@ void main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
-#if 0
+#if 1
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
@@ -356,12 +358,12 @@ void main(void)
 
   /* Set up the tiles.  Directly map play area to screen for now. */
 
-  g_play_area_height_tiles = 22;
-  g_play_area_width_tiles = 30;
+  g_play_area_height_tiles = 23;
+  g_play_area_width_tiles = 32;
 
-  g_screen_height_tiles = 22;
-  g_screen_width_tiles = 30;
-  g_screen_top_X_tiles = 1;
+  g_screen_height_tiles = 23;
+  g_screen_width_tiles = 32;
+  g_screen_top_X_tiles = 0;
   g_screen_top_Y_tiles = 1;
 
   g_play_area_col_for_screen = 0;
@@ -393,8 +395,11 @@ void main(void)
     UpdateScores();
 #if 1
     /* Check if our update took longer than a frame. */
-    if (vdpIsReady >= 2) /* Non-zero means we missed 1 or more frames. */
-      playNoteDelay(2, 10 + vdpIsReady /* Higher pitch if more missed */, 40);
+    g_ScoreFramesPerUpdate = vdpIsReady;
+    if (g_ScoreFramesPerUpdate >= 2) /* Non-zero means we missed frames. */
+      playNoteDelay(2 /* Channel 0 to 2 */,
+        10 + g_ScoreFramesPerUpdate /* Higher pitch if more missed */,
+        40 /* Time delay to hold note. */);
 #endif
     vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */ 
 
@@ -431,10 +436,10 @@ void main(void)
 
   /* Move players around and change animations. */
 
-
-#if 1
+#if 0
   if ((g_FrameCounter & 0xff) == 23)
   {
+    uint8_t i;
     for (i = 0; i < MAX_PLAYERS; i++)
     {
       SpriteAnimationType NewType;
@@ -450,7 +455,7 @@ void main(void)
   }
 #endif
 
-#if 1
+#if 0
   /* Draw some new tiles once in a while, randomly moving around. */
 
   if ((g_FrameCounter & 31) == 19)
@@ -487,7 +492,7 @@ void main(void)
   }
 #endif
 
-#if 0 /* Check for corrupted memory. */
+#if 1 /* Check for corrupted memory. */
     if (memcmp(s_OriginalLocationZeroMemory, NULL,
     sizeof(s_OriginalLocationZeroMemory)) != 0)
     {

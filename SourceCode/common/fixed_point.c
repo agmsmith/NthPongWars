@@ -11,6 +11,12 @@ fx gfx_Constant_MinusOne;
 fx gfx_Constant_Eighth;
 fx gfx_Constant_MinusEighth;
 
+/* Copy value of X to Y.  Might be worthwhile to do a copy and negate. */
+void COPY_FX(pfx x, pfx y)
+{
+  y->as_int32 = x->as_int32;
+}
+
 
 /* Negate, done by subtracting from 0 and overwriting the value. */
 void NEGATE_FX(pfx x)
@@ -43,6 +49,49 @@ void NEGATE_FX(pfx x)
   __endasm;
 #else /* Generic C implementation. */
   x->as_int32 = -x->as_int32;
+#endif
+}
+
+
+/* Negate and copy in one step.  Y is set to -X. */
+void COPY_NEGATE_FX(pfx x, pfx y)
+{
+#ifdef NABU_H
+  x; /* Avoid warning about unused argument, doesn't add any opcodes. */
+  y;
+  __asm
+  ld    hl,5      /* Hop over return address and x and part of y. */
+  add   hl,sp     /* Get pointer to argument y, will put in bc. */
+  ld    b,(hl)
+  dec   hl
+  ld    c,(hl)
+  dec   hl
+  ld    a,(hl)
+  dec   hl
+  ld    l,(hl)
+  ld    h,a       /* hl points to argument x. */
+  xor   a,a       /* Zeroes register A, also annoyingly clears carry flag. */
+  ld    e,a       /* Save zero in e so we can rezero without clearing carry. */
+  sub   a,(hl)    /* Less bytes using "sub" than starting with 2 byte "neg". */
+  ld    (bc),a    /* Write one byte of y with the result. */
+  inc   hl
+  inc   bc
+  ld    a,e
+  sbc   a,(hl)
+  ld    (bc),a
+  inc   hl
+  inc   bc
+  ld    a,e
+  sbc   a,(hl)
+  ld    (bc),a
+  inc   hl
+  inc   bc
+  ld    a,e
+  sbc   a,(hl)
+  ld    (bc),a
+  __endasm;
+#else /* Generic C implementation. */
+  y->as_int32 = -x->as_int32;
 #endif
 }
 

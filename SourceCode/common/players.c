@@ -217,13 +217,323 @@ void UpdatePlayerAnimations(void)
   }
 }
 
+/* Convert the current velocity values into an octant angle direction.
+*/
+static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
+{
+  /* Find out which octant the velocity vector is currently in.  It will
+     actually be between two octant directions, somewhere in a 45 degree
+     segment.  So we'll come up with lower and upper angles, with the
+     upper one being 45 degrees clockwise from the lower one.  If it is
+     exactly on an octant angle, that will become the lower angle.
+
+           6
+       5  -y   7
+     4  -x o +x  0
+       3  +y   1
+           2
+  */
+
+  int8_t xDir, yDir;
+  uint8_t octantLower;
+
+  xDir = TEST_FX(&pPlayer->velocity_x);
+  yDir = TEST_FX(&pPlayer->velocity_y);
+
+  if (xDir == 0) /* X == 0 */
+  {
+    if (yDir == 0) /* Y == 0 */
+      octantLower = 0; /* Actually undefined, zero length vector. */
+    else if (yDir >= 0) /* Y > 0, using >= test since it's faster. */
+      octantLower = 2;
+    else /* Y < 0 */
+      octantLower = 6;
+  }
+  else if (xDir >= 0) /* X > 0 */
+  {
+    if (yDir == 0) /* X > 0, Y == 0 */
+      octantLower = 0;
+    else if (yDir >= 0) /* X > 0, Y > 0 */
+    {
+      int8_t xyDelta;
+      xyDelta = COMPARE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+      if (xyDelta > 0) /* |X| > |Y| */
+        octantLower = 0;
+      else /* |X| <= |Y| */
+        octantLower = 1;
+    }
+    else /* X > 0, Y < 0 */
+    {
+      int8_t xyDelta;
+      fx negativeY;
+      COPY_NEGATE_FX(&pPlayer->velocity_y, &negativeY);
+      xyDelta = COMPARE_FX(&pPlayer->velocity_x, &negativeY);
+      if (xyDelta >= 0) /* |X| >= |Y| */
+        octantLower = 7;
+      else /* |X| < |Y| */
+        octantLower = 6;
+    }
+  }
+  else /* X < 0 */
+  {
+    if (yDir == 0) /* X < 0, Y == 0 */
+      octantLower = 4;
+    else if (yDir >= 0) /* X < 0, Y > 0 */
+    {
+      int8_t xyDelta;
+      fx negativeX;
+      COPY_NEGATE_FX(&pPlayer->velocity_x, &negativeX);
+      xyDelta = COMPARE_FX(&negativeX, &pPlayer->velocity_y);
+      if (xyDelta >= 0) /* |X| >= |Y| */
+        octantLower = 3;
+      else /* |X| < |Y| */
+        octantLower = 2;
+    }
+    else /* X < 0, Y < 0 */
+    {
+      int8_t xyDelta;
+      xyDelta = COMPARE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+      if (xyDelta < 0) /* |X| > |Y| */
+        octantLower = 4;
+      else /* |X| <= |Y| */
+        octantLower = 5;
+    }
+  }
+  pPlayer->velocity_octant = octantLower;
+}
+
+
+/* Rotate the player's velocity values towards an octant angle direction.
+   Prerequisite: player's velocity_octant is up to date.
+*/
+static void TurnVelocityTowardsOctant(player_pointer pPlayer,
+  uint8_t desired_octant)
+{
+  uint8_t head_towards_octant = 0;
+  bool head_clockwise = false;
+  uint8_t currentLowerOctant, currentUpperOctant;
+  currentLowerOctant = pPlayer->velocity_octant;
+  currentUpperOctant = ((currentLowerOctant + 1) & 0x07);
+printf("  CurrentLower %d, CurrentUpper %d, Desired %d.\n",
+currentLowerOctant, currentUpperOctant, desired_octant);
+  if (desired_octant == currentLowerOctant)
+  {
+    head_towards_octant = desired_octant;
+    head_clockwise = false;
+  }
+  else if (desired_octant == currentUpperOctant)
+  {
+    head_towards_octant = desired_octant;
+    head_clockwise = true;
+  }
+  else /* Not currently near the desired octant, pick closest angle. */
+  {
+    uint8_t lowerDelta, upperDelta;
+
+    /* Counterclockwise distance from current lower to desired octant. */
+    lowerDelta = ((currentLowerOctant - desired_octant) & 7);
+
+    /* Clockwise rotation amount from current upper to desired octant. */
+    upperDelta = ((desired_octant - currentUpperOctant) & 7);
+printf("  LowerDelta %d, UpperDelta %d.\n", lowerDelta, upperDelta);
+    if (lowerDelta < upperDelta)
+    {
+      head_towards_octant = currentLowerOctant;
+      head_clockwise = false;
+    }
+    else
+    {
+      head_towards_octant = currentUpperOctant;
+      head_clockwise = true;
+    }
+  }
+
+printf("  Head towards octant %d, clockwise %d.\n",
+head_towards_octant, head_clockwise);
+
+  fx amountToMove;
+  COPY_FX(&gfx_Constant_One, &amountToMove);
+
+  switch (head_towards_octant)
+  {
+    case 0:
+      if (head_clockwise)
+      { /* Reduce negative Y towards 0, add to positive X. */
+        fx positiveY;
+        COPY_NEGATE_FX(&pPlayer->velocity_y, &positiveY);
+        if (COMPARE_FX(&positiveY, &amountToMove) < 0)
+          COPY_FX(&positiveY, &amountToMove); /* Limited by available Y. */
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      else
+      { /* Reduce positive Y towards 0, add to positive X. */
+        if (COMPARE_FX(&pPlayer->velocity_y, &amountToMove) < 0)
+          COPY_FX(&pPlayer->velocity_y, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      break;
+
+    case 1:
+      if (head_clockwise)
+      { /* Reduce positive X, add to positive Y until equal balance. */
+        fx balance;
+        SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+      }
+      else
+      { /* Reduce positive Y, add to positive X until equal balance. */
+        fx balance;
+        SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      break;
+
+    case 2:
+      if (head_clockwise)
+      { /* Reduce positive X towards 0, add to positive Y. */
+        if (COMPARE_FX(&pPlayer->velocity_x, &amountToMove) < 0)
+          COPY_FX(&pPlayer->velocity_x, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+      }
+      else
+      { /* Reduce negative X towards 0, add to positive Y. */
+        fx positiveX;
+        COPY_NEGATE_FX(&pPlayer->velocity_x, &positiveX);
+        if (COMPARE_FX(&positiveX, &amountToMove) < 0)
+          COPY_FX(&positiveX, &amountToMove);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+      }
+      break;
+
+    case 3:
+      if (head_clockwise)
+      { /* Reduce positive Y, increase negative X until equal balance. */
+        fx balance;
+        ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      else
+      { /* Reduce negative X, increase positive Y until equal balance. */
+        fx balance;
+        ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        NEGATE_FX(&balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      break;
+
+    case 4:
+      if (head_clockwise)
+      { /* Reduce positive Y towards 0, increase negative X. */
+        if (COMPARE_FX(&pPlayer->velocity_y, &amountToMove) < 0)
+          COPY_FX(&pPlayer->velocity_y, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      else
+      { /* Reduce negative Y towards 0, increase negative X. */
+        fx positiveY;
+        COPY_NEGATE_FX(&pPlayer->velocity_y, &positiveY);
+        if (COMPARE_FX(&positiveY, &amountToMove) < 0)
+          COPY_FX(&positiveY, &amountToMove);
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      break;
+
+    case 5:
+      if (head_clockwise)
+      { /* Reduce negative X, increase negative Y until equal balance. */
+        fx balance;
+        SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        NEGATE_FX(&balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+      }
+      else
+      { /* Reduce negative Y, increase negative X until equal balance. */
+        fx balance;
+        SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        NEGATE_FX(&balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      break;
+
+    case 6:
+      if (head_clockwise)
+      { /* Reduce negative X towards 0, increase negative Y. */
+        fx positiveX;
+        COPY_NEGATE_FX(&pPlayer->velocity_x, &positiveX);
+        if (COMPARE_FX(&positiveX, &amountToMove) < 0)
+          COPY_FX(&positiveX, &amountToMove);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+      }
+      else
+      { /* Reduce positive X towards 0, increase negative Y. */
+        if (COMPARE_FX(&pPlayer->velocity_x, &amountToMove) < 0)
+          COPY_FX(&pPlayer->velocity_x, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+      }
+      break;
+
+    case 7:
+      if (head_clockwise)
+      { /* Reduce negative Y, increase positive X until equal balance. */
+        fx balance;
+        ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        NEGATE_FX(&balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+      }
+      else
+      { /* Reduce positive X, increase negative Y until equal balance. */
+        fx balance;
+        ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        if (COMPARE_FX(&balance, &amountToMove) < 0)
+          COPY_FX(&balance, &amountToMove);
+        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+
 
 /* Figure out what joystick action the player should do based on various
-   algorithms. */
+   algorithms.
+*/
 static void BrainUpdateJoystick(player_pointer pPlayer)
 {
   pPlayer->joystick_inputs = 0;
 }
+
 
 /* Process the joystick and keyboard inputs.  Input activity assigns a player
    to the joystick or keyboard.  Also updates brains to generate fake joystick
@@ -244,7 +554,7 @@ void UpdatePlayerInputs(void)
   for (iInput = 0; iInput < sizeof (input_consumed); iInput++)
     input_consumed[iInput] = false;
 
-  /* Copy inputs to player records.  For AI players, generates the inputs. */
+  /* Copy inputs to player records.  For AI players, generate the inputs. */
 
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
@@ -274,7 +584,7 @@ void UpdatePlayerInputs(void)
     BrainUpdateJoystick(pPlayer);
   }
 
-  /* Look for unconsumed inputs, and assign an idle player to them. */
+  /* Look for unconsumed active inputs, and assign an idle player to them. */
 
   for (iInput = 0; iInput < sizeof (input_consumed); iInput++)
   {
@@ -284,10 +594,10 @@ void UpdatePlayerInputs(void)
       continue; /* Input already used up by an assigned player. */
 
     if (iInput < 4)
-      joyStickData = (g_JoystickStatus[iInput] & 0x1F);
+      joyStickData = g_JoystickStatus[iInput];
     else
       joyStickData = g_KeyboardFakeJoystickStatus;
-    if (joyStickData == 0)
+    if ((joyStickData & 0x1F) == 0)
       continue; /* No buttons pressed, no activity. */
 
     /* Find an idle player and assign it to this input. */
@@ -301,7 +611,7 @@ void UpdatePlayerInputs(void)
       pPlayer->brain_info.iJoystick = iInput;
       pPlayer->brain = (iInput < 4) ? BRAIN_JOYSTICK : BRAIN_KEYBOARD;
       pPlayer->joystick_inputs = joyStickData;
-#if 0
+#if 1
 printf("Player %d assigned to %s #%d.\n", iPlayer,
   (pPlayer->brain == BRAIN_JOYSTICK) ? "joystick" : "keyboard",
   pPlayer->brain_info.iJoystick);
@@ -331,58 +641,75 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
       continue;
     }
 
-    /* If thrusting, speed up in the joystick direction. */
+    /* Apply joystick actions.  Or just drift if not specifying a direction
+       or using the fire button. */
 
-    if (joyStickData & Joy_Button)
+    if (joyStickData)
     {
-      if (joyStickData & Joy_Left)
-         ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne, &pPlayer->velocity_x);
-      if (joyStickData & Joy_Right)
-         ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One, &pPlayer->velocity_x);
-      if (joyStickData & Joy_Up)
-         ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne, &pPlayer->velocity_y);
-      if (joyStickData & Joy_Down)
-         ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One, &pPlayer->velocity_y);
-    }
-    else /* Fire not pressed, just steer by rotating velocity direction. */
-    {
-#if 0
-      if (joyStickData & Joy_Right)
-      {
-        /* Want to increase X velocity to positive, decrease Y velocity to zero.  The invariant is abs(x) + abs(y) = constant.  So first see if X is negative, then we can move X to zero and increase Y with the residue. */
-        fx amountToMove;
-        SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &amountToMove);
-        
-        gfx_Constant_MinusEighth
-        if (IS_NEGATIVE_FX(pPlayer->velocity_x))
-        {
-          /* Reducing negative X towards zero.  Have to increase Y correspondingly. */
-          if (IS_NEGATIVE_FX(pPlayer->velocity_y))
-          {
-          
-          }
-          else
-          {
-          if (COMPARE_FX(pPlayer->velocity_y,
-          }
-        }
-        else /* Increase X as much as possible. */
-        {
-        }
-        
-        
+      if (joyStickData & Joy_Button)
+      { /* If thrusting, speed up in the joystick direction. */
+        if (joyStickData & Joy_Left)
+          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne,
+            &pPlayer->velocity_x);
+        if (joyStickData & Joy_Right)
+          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One,
+          &pPlayer->velocity_x);
+        if (joyStickData & Joy_Up)
+          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne,
+            &pPlayer->velocity_y);
+        if (joyStickData & Joy_Down)
+          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One,
+            &pPlayer->velocity_y);
       }
-      // bleeble
-#endif
-    }
+      else /* Fire not pressed, just steer by rotating velocity direction. */
+      {
+        /* Convert the joystick inputs to a direction in octants. */
 
-    /* Add some friction, reduce velocity. */
+        uint8_t desired_octant = 0;
+        if (joyStickData & Joy_Left)
+        {
+          if (joyStickData & Joy_Up)
+            desired_octant = 5;
+          else if (joyStickData & Joy_Down)
+            desired_octant = 3;
+          else
+            desired_octant = 4;
+        }
+        else if (joyStickData & Joy_Right)
+        {
+          if (joyStickData & Joy_Up)
+            desired_octant = 7;
+          else if (joyStickData & Joy_Down)
+            desired_octant = 1;
+          else
+            desired_octant = 0;
+        }
+        else if (joyStickData & Joy_Up)
+            desired_octant = 6;
+        else if (joyStickData & Joy_Down)
+            desired_octant = 2;
+
+        UpdatePlayerVelocityDirection(pPlayer);
+printf("Player %d Velocity (%f,%f) octant %d, desire %d.\n", iPlayer,
+GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y),
+pPlayer->velocity_octant, desired_octant);
+
+        TurnVelocityTowardsOctant(pPlayer, desired_octant);
+printf("  Turned velocity (%f,%f).\n",
+GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
+      }
+    }
+#if 0
+    /* Add some friction, to reduce excessive velocity which slows the frame
+       rate and is uncontrollable for the user. */
+
     fx portionOfVelocity;
 
     DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
     SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
     DIV256_FX(pPlayer->velocity_y, portionOfVelocity);
     SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
+#endif
   }
 }
 

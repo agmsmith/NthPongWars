@@ -1670,8 +1670,26 @@ both X and Y goals are making them as large as possible, the goal should be to
 make them equal.
 
 <P>Will it work at all?  Will Manhattan velocity rotation feel good in the
-game when driving your dot around the screen?  The easiest way to find out is
-to write the code.  Tune back in next time, to find out.
+game when driving your dot around the screen?  The easiest way to see is
+to write the code.  Tune in next time, to find out if this square idea works.
+
+<HR>
+<H2><A NAME="2025.02.18"></A>2025.02.18</H2>
+
+<H3>Argh!  Equals signs!</H3>
+
+<P>After lots of wondering why the steering wasn't doing much other than making
+the ball go left and right, I added lots of printfs to print out intermediate
+values, ran out of memory, then hacked up the NABU-LIB library to not have a 2K
+full screen text buffer (we're not using the redundant text refresh
+functionality, which Cloud CP/M already has built-in).  Finally I could add yet
+more printfs and continue debugging.
+
+<P>The printfs narrowed it down to a few lines, where I found the classic
+mistake of using == instead of = to assign a value.  In this case it was the
+angle (octant) to turn towards, and zero/false means rightwards.  It's working
+better on first run, but needs some edge case testing and I need a good night's
+sleep.
 
 <P>- Alex
 

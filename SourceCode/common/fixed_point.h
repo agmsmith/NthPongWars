@@ -76,8 +76,8 @@ extern fx gfx_Constant_MinusOne;
 extern fx gfx_Constant_Eighth;
 extern fx gfx_Constant_MinusEighth;
 
-/* Setting and getting.  As inline code, not too complex for 8 bit compilers. */
-#define COPY_FX(x, y) {y.as_int32 = x.as_int32; }
+/* Setting and getting.  Mostly inline code, limited by 8 bit compilers. */
+extern void COPY_FX(pfx x, pfx y);
 #define FLOAT_TO_FX(fpa, x) {x.as_int32 = fpa * _FX_UNITY_FLOAT;}
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)
@@ -88,6 +88,9 @@ extern fx gfx_Constant_MinusEighth;
 
 /* Negate, done by subtracting from 0 and overwriting the value. */
 extern void NEGATE_FX(pfx x);
+
+/* Negate and copy in one step.  Y is set to -X. */
+extern void COPY_NEGATE_FX(pfx x, pfx y);
 
 /* Add fx values x and y and put the result in fx value z (which can safely
    overwrite x or y if it is the same address as them). */

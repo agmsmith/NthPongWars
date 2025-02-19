@@ -8,7 +8,7 @@
  * Use this command line to compile, possibly without --fverbose-asm or the
  * various optimisation options for speedier compiles:
  *
- * zcc +cpm --list -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node200000 --fverbose-asm --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM"
+ * zcc +cpm -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node200000 --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM"
  *
  * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips
  * on writing code that the compiler likes and optimizer settings.
@@ -23,9 +23,9 @@
 
 #pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
 #pragma output noredir /* No command line file redirection. */
-/* #pragma output nostreams /* Remove disk IO, can still use stdout and stdin. */
-/* #pragma output nofileio /* Remove stdout, stdin also.  See "-lndos" too. */
-#pragma printf = "%f %d %u %ld %c %s %X" /* Need these printf formats. */
+/* #pragma output nostreams /* No disk based file streams? */
+/* #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
+#pragma printf = "%f %d %u %ld %X %c %s" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
 #pragma define CRT_STACK_SIZE=1024
@@ -251,12 +251,9 @@ void main(void)
   /* Initialise some fixed point number constants. */
   ZERO_FX(gfx_Constant_Zero);
   INT_TO_FX(1, gfx_Constant_One);
-  INT_TO_FX(1, gfx_Constant_MinusOne);
-  NEGATE_FX(&gfx_Constant_MinusOne);
+  COPY_NEGATE_FX(&gfx_Constant_One, &gfx_Constant_MinusOne);
   INT_FRACTION_TO_FX(0 /* int */, 0x2000 /* fraction */, gfx_Constant_Eighth); 
-  COPY_FX(gfx_Constant_Eighth, gfx_Constant_MinusEighth);
-  NEGATE_FX(&gfx_Constant_MinusEighth);
-
+  COPY_NEGATE_FX(&gfx_Constant_Eighth, &gfx_Constant_MinusEighth);
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
      letter and user may affect this since they're in the CP/M parameter
@@ -330,7 +327,7 @@ void main(void)
 
   vdp_init(VDP_MODE_G2, VDP_WHITE /* fgColor not applicable */,
     VDP_BLACK /* bgColor */, true /* bigSprites 16x16 pixels but fewer names */,
-    false /* magnify */, true /* autoScroll */, true /* splitThirds */);
+    false /* magnify */, true /* splitThirds */);
   /* Sets up the TMS9918A Video Display Processor with this memory map:
     _vdpPatternGeneratorTableAddr = 0x00; 6K or 0x1800 long, ends 0x1800.
     _vdpPatternNameTableAddr = 0x1800; 768 or 0x300 bytes long, ends 0x1B00.

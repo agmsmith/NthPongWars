@@ -112,6 +112,12 @@ typedef struct player_struct {
   fx velocity_y;
   /* The speed the player is moving, in pixels per update. */
 
+  uint8_t velocity_octant;
+  /* Direction the velocity is going in, calculated from velocity x,y but only
+     when needed, by UpdatePlayerVelocityDirection().  Actually this is the
+     lower boundary of the octant, the upper one is 45 degrees clockwise from
+     this. */
+
   fx step_velocity_x;
   fx step_velocity_y;
   /* The speed the player is moving, in pixels per step, with several steps per

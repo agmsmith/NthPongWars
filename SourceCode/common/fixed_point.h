@@ -77,7 +77,7 @@ extern fx gfx_Constant_Eighth;
 extern fx gfx_Constant_MinusEighth;
 
 /* Setting and getting.  Mostly inline code, limited by 8 bit compilers. */
-extern void COPY_FX(pfx x, pfx y);
+extern void COPY_FX(pfx x, pfx y); /* Copy value of X to Y. */
 #define FLOAT_TO_FX(fpa, x) {x.as_int32 = fpa * _FX_UNITY_FLOAT;}
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)
@@ -119,12 +119,11 @@ extern int8_t COMPARE_FX(pfx x, pfx y);
    -1 if X < 0, zero if X == 0, +1 if X > 0. */
 extern int8_t TEST_FX(pfx x);
 
-/* Shift the given value arithmetic right (sign bit extended, so works with
-   negative numbers too), by the number of times specified. */
-extern DIV_N_FX(pfx x, uint8_t nShifts);
-
-/* Divide a by 2 and put into b. */
-#define DIV2_FX(a, b) {b.as_int32 = a.as_int32 / 2; }
+/* Divide the FX by two.  Same as shifting the given value arithmetic right
+   (sign bit extended, so works with negative numbers too) by one bit.  May
+   have to do an N bits version later, but 1 bit is extra efficient in that
+   we can shift in memory. */
+extern void DIV2_FX(pfx x);
 
 /* Divide a by 4 and put into b. */
 #define DIV4_FX(a, b) {b.as_int32 = a.as_int32 / 4; }

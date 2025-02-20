@@ -438,21 +438,35 @@ head_towards_octant, head_clockwise);
       { /* Reduce positive X, add to positive Y until equal balance. */
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
-        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y|
+             Note that we can't just subtract/add the half balance from both,
+             since there could be rounding errors in the last bit. */
+          DIV2_FX(&balance);
+          SUBTRACT_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
+          COPY_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+        }
+        else
+        {
+          SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+          ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        }
       }
       else
       { /* Reduce positive Y, add to positive X until equal balance. */
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
-        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
+          DIV2_FX(&balance);
+          SUBTRACT_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
+          COPY_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+        }
+        else
+        {
+          SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+          ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        }
       }
       break;
 
@@ -480,22 +494,34 @@ head_towards_octant, head_clockwise);
       { /* Reduce positive Y, increase negative X until equal balance. */
         fx balance;
         ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
-        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
+          DIV2_FX(&balance);
+          SUBTRACT_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
+          COPY_NEGATE_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+        }
+        else
+        {
+          SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+          SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        }
       }
       else
       { /* Reduce negative X, increase positive Y until equal balance. */
         fx balance;
         ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
         NEGATE_FX(&balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
-        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
+          DIV2_FX(&balance);
+          ADD_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
+          COPY_NEGATE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+        }
+        else
+        {
+          ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+          ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        }
       }
       break;
 
@@ -524,22 +550,34 @@ head_towards_octant, head_clockwise);
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
         NEGATE_FX(&balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
-        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
+          DIV2_FX(&balance);
+          ADD_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
+          COPY_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+        }
+        else
+        {
+          ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+          SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        }
       }
       else
       { /* Reduce negative Y, increase negative X until equal balance. */
         fx balance;
         SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
         NEGATE_FX(&balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
-        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
+          DIV2_FX(&balance);
+          ADD_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
+          COPY_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+        }
+        else
+        {
+          ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+          SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        }
       }
       break;
 
@@ -568,21 +606,33 @@ head_towards_octant, head_clockwise);
         fx balance;
         ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
         NEGATE_FX(&balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
-        ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
+          DIV2_FX(&balance);
+          ADD_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
+          COPY_NEGATE_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+        }
+        else
+        {
+          ADD_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+          ADD_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+        }
       }
       else
       { /* Reduce positive X, increase negative Y until equal balance. */
         fx balance;
         ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
-        // DIV2_FX(balance, balance);
         if (COMPARE_FX(&balance, &amountToMove) < 0)
-          COPY_FX(&balance, &amountToMove);
-        SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
-        SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
+          DIV2_FX(&balance);
+          SUBTRACT_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
+          COPY_NEGATE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+        }
+        else
+        {
+          SUBTRACT_FX(&pPlayer->velocity_y, &amountToMove, &pPlayer->velocity_y);
+          SUBTRACT_FX(&pPlayer->velocity_x, &amountToMove, &pPlayer->velocity_x);
+        }
       }
       break;
 

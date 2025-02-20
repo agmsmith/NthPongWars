@@ -11,7 +11,7 @@ fx gfx_Constant_MinusOne;
 fx gfx_Constant_Eighth;
 fx gfx_Constant_MinusEighth;
 
-/* Copy value of X to Y.  Might be worthwhile to do a copy and negate. */
+/* Copy value of X to Y. */
 void COPY_FX(pfx x, pfx y)
 {
   y->as_int32 = x->as_int32;
@@ -64,7 +64,7 @@ void COPY_NEGATE_FX(pfx x, pfx y)
   add   hl,sp     /* Get pointer to argument y, will put in bc. */
   ld    b,(hl)
   dec   hl
-  ld    c,(hl)
+  ld    c,(hl)    /* bc points to argument y. */
   dec   hl
   ld    a,(hl)
   dec   hl
@@ -310,6 +310,38 @@ ZeroTest:
   else if (x->as_int32 == 0)
     return 0;
   return 1;
+#endif
+}
+
+
+/* Divide the FX by two.  Same as shifting the given value arithmetic right
+   (sign bit extended, so works with negative numbers too) by one bit.  May
+   have to do an N bits version later, but 1 bit is extra efficient in that
+   we can shift in memory.
+*/
+void DIV2_FX(pfx x)
+{
+#ifdef NABU_H
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  __asm
+  pop   de        /* Get return address into de. */
+  pop   hl        /* Get pointer to argument x, will put in hl. */
+  push  hl        /* Put it back so caller can clean up stack as expected. */
+  inc   hl        /* Add 3 to hl, to start at most significant byte of x. */
+  inc   hl
+  inc   hl
+  sra   (hl)      /* Shift right, duplicating high sign bit, modifies memory. */
+  dec   hl
+  rr    (hl)      /* Rotate right, using the carry bit from previous shift. */
+  dec   hl
+  rr    (hl)
+  dec   hl
+  rr    (hl)      /* Last rotation and we're done.  Result already in memory. */
+  ex    de,hl
+  jp    (hl)      /* Return using saved return address. */
+  __endasm;
+#else
+  x->as_int32 >>= 1;
 #endif
 }
 

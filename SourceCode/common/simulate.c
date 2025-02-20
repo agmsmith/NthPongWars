@@ -105,7 +105,7 @@ printf("Max velocity component: %f\n",
     /* See if the step size is less than a tile width. */
     if (GET_FX_INTEGER(maxVelocity) < TILE_PIXEL_WIDTH)
       break; /* Step size is small enough now. */
-    DIV2_FX(maxVelocity, maxVelocity);
+    DIV2_FX(&maxVelocity);
   }
 
 #if DEBUG_PRINT_SIM

@@ -4,7 +4,7 @@
  * AGMS20241220 - Started this code file.
  */
 
-#define DEBUG_PRINT_OCTANTS 1 /* Turn on debug printfs, uses floating point. */
+#define DEBUG_PRINT_OCTANTS 0 /* Turn on debug printfs, uses floating point. */
 
 #include "players.h"
 #include "scores.h"
@@ -409,8 +409,10 @@ printf("  Head towards octant %d, clockwise %d.\n",
 head_towards_octant, head_clockwise);
 #endif
 
+  /* Set the maximum amount to move between axis.  0.5 pixels per update seems
+     like a nice speed for doing a turn by steering. */
   fx amountToMove;
-  COPY_FX(&gfx_Constant_One, &amountToMove);
+  INT_FRACTION_TO_FX(0, 0x8000, amountToMove);
 
   switch (head_towards_octant)
   {

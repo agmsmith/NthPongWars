@@ -339,7 +339,7 @@ void main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
-#if 1
+#if 0
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
@@ -436,7 +436,7 @@ void main(void)
 
   /* Move players around and change animations. */
 
-#if 0
+#if 1
   if ((g_FrameCounter & 0xff) == 23)
   {
     uint8_t i;
@@ -492,7 +492,7 @@ void main(void)
   }
 #endif
 
-#if 1 /* Check for corrupted memory. */
+#if 0 /* Check for corrupted memory. */
     if (memcmp(s_OriginalLocationZeroMemory, NULL,
     sizeof(s_OriginalLocationZeroMemory)) != 0)
     {

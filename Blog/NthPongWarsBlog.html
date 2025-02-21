@@ -923,7 +923,8 @@ SRC="NthPongVideoTilesWorkingSlowly20241211.png" WIDTH="280" HEIGHT="224"
 ALT="[Video of Tiles Animating]"></A><BR>
 <A HREF="NthPongVideoTilesWorkingSlowly20241211.mp4">NthPongVideoTilesWorkingSlowly20241211.mp4</A>
 video with sound and narration.<BR>
-<A HREF="NthPongVideoTilesWorkingSlowly20241211.txt">Script</A>
+<A HREF="NthPongVideoTilesWorkingSlowly20241211.txt">Script.txt</A> about tiles
+starting to work.
 
 <HR>
 <H2><A NAME="2024.12.16"></A>2024.12.16</H2>
@@ -1691,6 +1692,54 @@ mistake of using == instead of = to assign a value.  In this case it was the
 angle (octant) to turn towards remaining at the default zero, which means
 rightwards.  It's working better on first run, but needs some edge case testing
 and I need a good night's sleep.
+
+<HR>
+<H2><A NAME="2025.02.20"></A>2025.02.20</H2>
+
+<H3>Exactly Equal Diagonal Steering</H3>
+
+<P>One last niggle was to get steering working on diagonals. When moving the
+joystick to the diagonal, it would often steer by alternating horizontal and
+then vertical moves, rather than truly going diagonal.
+
+<P>The Manhattan Vector Rotation subtracts a number (1.0 if moving fast, or the
+difference between X and Y if that is less than 1.0) from one axis and adds it
+to the other axis of the vector.  That's fine for horizontal or vertical
+(turning right for example, reduces Y and increases X by the same small amount,
+repeat until Y is 0 then you are going exactly rightwards), but for diagonals
+it overshoots.
+
+<P>To be exactly on the diagonal octants we need |X| == |Y|, so the amount to
+move between X and Y should be the difference (|X| - |Y|) divided by two, rather
+than the whole difference.  But if we just add/subtract the half difference
+from both X and Y, we don't always get |X| == |Y| due to the half distance being
+rounded off by a least significant bit in the fraction (that messes up the turn,
+which fails to proceed from octant angle to adjacent octant, if it never gets
+exactly on the octant).  The work-around is to calculate the larger of X or Y
+to be on the diagonal and then copy (and maybe negate if needed) the value to
+Y or X.  That UW course on numerical computation (rounding errors and all that)
+paid off!
+
+<P ALIGN=CENTER><A
+HREF="Steering20250220.mp4"><IMG SRC="Steering20250220.GIF"
+WIDTH="280" HEIGHT="216"
+ALT="[Video of Steering now Working!]"></A><BR>
+<A HREF="Steering20250220.mp4">Steering20250220.mp4</A> video
+with sound and narration.<BR>
+Script <A HREF="Steering20250220.txt">Steering20250220.txt</A> about steering.
+
+<P>Steering works nicely, with sharp turns when going slow and slower larger
+turns when going fast.  It does change the game-play, since now you can target
+squares and bounce around them, while previously with thrusting, you'd bounce
+off and it would take a while (Lunar Lander style) to use thrust to turn
+around.  Anyway, I'll make thrust rarer, getting thrust via power ups or
+hitting your own tiles (consuming them).  The rest of the time you'll gradually
+slow down to a speed limit (carefully set to avoid doing extra physics updates
+for fast objects) and can just cruise around at that slower speed, steering
+easily.
+
+<P>Now that we have velocity angles for the players, should I have the sprites
+be directional (need a pointy end) and point in the direction of movement?
 
 <P>- Alex
 

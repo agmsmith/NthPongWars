@@ -1,0 +1,9 @@
+I've finished writing code for doing steering.
+But first, we have normal thrust acceleration to get up some speed.
+Then we add a second blue player just drifting around.
+And now I use steering to direct the green player to hit the blue squares.
+And you can see it changing direction without losing speed, the advantage of steering over simple thrusting.
+It can even go in circles, again without losing speed.
+That also changes the game play, making it easier to target blue squares.
+This is the February 2025 version of Nth Pong Wars by Alexander G. M. Smith.
+

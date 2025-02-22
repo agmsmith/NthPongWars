@@ -19,9 +19,10 @@ If you want to compile it, see the top of the
 [SourceCode/nabu/main.c](SourceCode/nabu/main.c) file for the command line to
 use and how to compile the data files.
 
-Also have a look at [the Blog](Blog/NthPongWarsBlog.html) for the procedure for
-setting up Z88DK, NABU-LIB (a custom version) and the rest of the development
-environment.
+Also have a look at
+[the Blog](https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html)
+for the procedure for setting up Z88DK, NABU-LIB (a custom version) and the rest
+of the development environment.
 
 ## License
 

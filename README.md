@@ -26,7 +26,7 @@ of the development environment.
 
 ## License
 
-The public version of the reputation system is licensed under the GNU General
+The public version of Nth Pong Wars is licensed under the GNU General
 Public License version 3.  The general idea is that if you improve the code, you
 should contribute your changes back to the public.  See [LICENSE](LICENSE)
 for details.

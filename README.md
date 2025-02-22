@@ -19,6 +19,10 @@ If you want to compile it, see the top of the
 [SourceCode/nabu/main.c](SourceCode/nabu/main.c) file for the command line to
 use and how to compile the data files.
 
+Also have a look at [the Blog](NthPongWarsBlog.html) for the procedure for
+setting up Z88DK, NABU-LIB (a custom version) and the rest of the development
+environment.
+
 ## License
 
 The public version of the reputation system is licensed under the GNU General

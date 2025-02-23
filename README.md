@@ -28,6 +28,6 @@ of the development environment.
 
 The public version of Nth Pong Wars is licensed under the GNU General
 Public License version 3.  The general idea is that if you improve the code, you
-should contribute your changes back to the public.  See [LICENSE](LICENSE)
+should contribute your changes back to the public.  See [LICENSE](LICENSE.md)
 for details.
 

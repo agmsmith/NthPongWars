@@ -1753,6 +1753,25 @@ If you want to compile it, see the top of the SourceCode/nabu/main.c file for
 the command line to use and how to compile the data files.  Guess I'll have to
 write a README.MD file too!
 
+<HR>
+<H2><A NAME="2025.02.23"></A>2025.02.23</H2>
+
+<H3>Code Cleanup and Tile Power</H3>
+
+<P>Looks like my coding style for C is a bit inconsistent; I should fix that.
+But for more fun (unlike perfecting vector math details which takes ages to pay
+off), add power to the tiles.
+
+<P>The idea is that when you hold down the thrust button, rather than being
+free, it gets power from consuming the tiles you run into, if they're your
+tiles.  If you run into a tile without trying to thrust, it turns into your
+colour, then on subsequent collisions gets more solidly your colour over
+several stages of colourfulness.  Then when you harvest that tile by thrusting,
+you get more thrust if it is a more solid colour.  So bouncing backwards and
+forwards over the same area no longer seems like a waste of time - you're
+enriching your tiles.  Would also be nice to have pop-up numbers (as sprites)
+showing the change in score as you collect tiles or lose them to other players.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

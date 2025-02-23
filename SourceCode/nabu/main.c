@@ -1,25 +1,38 @@
 /* Nth Pong Wars - the multiplayer Pong inspired game.
+ * Copyright © 2025 by Alexander G. M. Smith.
  *
  * AGMS20240721 Start a NABU version of the game, just doing the basic bouncing
  * ball using VDP video memory direct access, and our fixed point math.
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a usable .COM file),
  * Optionally with --math32 for 32 bit floating point, uses 5K extra memory.
- * Use this command line to compile, possibly without --fverbose-asm or the
- * various optimisation options for speedier compiles:
+ * Use this command line to compile the final version:
  *
  * zcc +cpm -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node200000 --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM"
  *
  * Though the faster command line to use during development is:
  * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
  *
- * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips
- * on writing code that the compiler likes and optimizer settings.
+ * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips on
+ * writing code that the compiler likes and optimizer settings.
  *
  * To prepare to run, create the data files in the server store directory,
  * usually somewhere like Documents/NABU Internet Adapter/Store/NTHPONG/
  * The Art/*.PC2 files are copied as is, the *.DAT text files edited by ICVGM
  * are copied and renamed *.ICV (TODO: convert them to binary for speed).
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 /* Various options to tell the Z88DK compiler system what to include. */
@@ -289,11 +302,14 @@ void main(void)
      Or if you've redirected output to a remote device (telnet server), you can
      see it there and it doesn't mess up the screen. */
 
-  printf("Welcome to the Nth Pong Wars NABU game.\n");
-  printf("By Alexander G. M. Smith, contact me at\n");
-  printf("agmsmith@ncf.ca.  Project started\n");
-  printf("February 2024, see the blog at\n");
-  printf("https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n");
+  printf("Welcome to the Nth Pong Wars NABU game.\n"
+    "Copyright 2025 by Alexander G. M. Smith,\n"
+    "contact me at agmsmith@ncf.ca.  Started\n"
+    "February 2024, see the blog at\n"
+    "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n"
+    "Released under the GNU General Public\n"
+    "License version 3.\n");
+
   printf("Compiled on " __DATE__ " at " __TIME__ ".\n");
   mallinfo(&sTotalMem, &sLargestMem);
   printf("Heap has %d bytes free, largest %d.\n", sTotalMem, sLargestMem);

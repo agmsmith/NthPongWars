@@ -144,6 +144,16 @@ typedef struct player_struct {
     width so that we don't skip over tiles and miss collisions.  This is a
     temporary value used by Simulate(). */
 
+  bool thrust_active;
+    /* Set to TRUE when thrust is busy harvesting tiles.  Means the fire button
+       is pressed and  a direction is specified.  Saves having to read the
+       buttons repeatedly during simulation. */
+
+  uint8_t thrust_harvested;
+    /* How much extra thrust (pixels per update) you get from using Thrust (fire
+       button plus a direction) while going over your own tiles, harvesting
+       them.  Gets added to velocity after the simulation step. */
+
   uint8_t joystick_inputs;
   /* What action is the player currently requesting?  See joystick_enum for
      the various bits.  Zero if no buttons pressed.  Human, AI and remote

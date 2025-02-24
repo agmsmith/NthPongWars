@@ -111,6 +111,12 @@ typedef struct tile_struct {
      changes, this needs updating.  Tiles with a one frame animation get this
      set to FALSE after the first update. */
 
+  unsigned int age : 3;
+  /* Age of the tile owned by the player.  0 means new, 7 is the oldest (has
+     been travelled over 7 extra times).  Will affect the graphic drawn for the
+     tile (gets more solid the older it is) and the thrust available from
+     harvesting it. */
+
 #ifdef NABU_H
   uint16_t vdp_address;
   /* Location of this tile in NABU video memory.  Points to the name table
@@ -224,6 +230,10 @@ extern void ActivateTileArrayWindow(void);
    Call this after you change those globals to move the window around.  Will
    clip the globals so that they fit on the real screen.  Tries to be fast, so
    you can move the window often, but it will probably cost a missed frame. */
+
+extern void RequestTileRedraw(tile_pointer pTile);
+/* Request redraw of a tile.  Takes care of updating animation stuff, setting
+   dirty flags. */
 
 extern tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner);
 /* Change the owner of the tile to the given one.  Takes care of updating

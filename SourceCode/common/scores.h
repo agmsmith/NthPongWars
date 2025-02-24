@@ -19,15 +19,17 @@
 #ifndef _SCORES_H
 #define _SCORES_H 1
 
-/* Counts the number of frames drawn on screen.  Also used as a general timer
-   for things like aging tiles.  Will be at most 60hz, but typically 20hz. */
+/* Counts the number of frames drawn on screen, never reset.  Also used as a
+   general timer for things like aging tiles.  Will run at best at 60hz,
+   but typically 30hz or even 20hz if a lot is happening on screen. */
 extern uint16_t g_FrameCounter;
 
 /* The current number of points needed to win the game.  Decreases over time. */
 extern uint16_t g_ScoreGoal;
 
 /* The number of frames it took to compute the game update last time, mostly
-   for debugging as a letter code near the frame rate. */
+   for debugging as a letter near the frame rate.  Varies upwards from 1,
+   will usually be 2 (30hz frame rate). */
 extern uint8_t g_ScoreFramesPerUpdate;
 
 /* Resets the goal (based on the number of tiles in the play area), recomputes

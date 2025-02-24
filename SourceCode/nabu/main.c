@@ -372,7 +372,8 @@ void main(void)
     return;
   }
 
-  /* Set up the tiles.  Directly map play area to screen for now. */
+  /* Set up the tiles.  Directly map play area to screen for now rather than
+     using a scrolling window, which is quite slow. */
 
   g_play_area_height_tiles = 23;
   g_play_area_width_tiles = 32;
@@ -393,11 +394,12 @@ void main(void)
 
   InitialisePlayers();
 
-  InitialiseScores(); /* After tiles & players set up, to count for goal. */
+  InitialiseScores(); /* Do after tiles & players set up: calc initial score. */
 
   /* The main program loop.  Update things (which may take a while), then wait
      for vertical blanking to start, then copy data to the VDP quickly, then
-     go back to updating things etc. */
+     go back to updating things, etc.  Unfortunately we don't have enough time
+     to do everything in one frame, so it's usually 30 frames per second. */
 
   s_KeepRunning = true;
   vdp_enableVDPReadyInt();
@@ -409,10 +411,13 @@ void main(void)
     UpdateTileAnimations();
     UpdatePlayerAnimations();
     UpdateScores();
+
+    /* Check if our update took longer than a frame.  vdpIsReady counts number
+       of vertical blank starts missed. */
+
+    g_ScoreFramesPerUpdate = vdpIsReady + 1;
 #if 1
-    /* Check if our update took longer than a frame. */
-    g_ScoreFramesPerUpdate = vdpIsReady;
-    if (g_ScoreFramesPerUpdate >= 2) /* Non-zero means we missed frames. */
+    if (g_ScoreFramesPerUpdate > 2) /* Non-zero means we missed frames. */
       playNoteDelay(2 /* Channel 0 to 2 */,
         10 + g_ScoreFramesPerUpdate /* Higher pitch if more missed */,
         40 /* Time delay to hold note. */);

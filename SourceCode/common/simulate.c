@@ -72,7 +72,9 @@ void Simulate(void)
 printf("\nStarting simulation update.\n");
 #endif
 
-  /* Find the largest velocity component of all the players. */
+  /* Find the largest velocity component (X or Y) of all the players.  Also
+     reset thrust harvested, which gets accumulated during collisions with
+     tiles and gets used to increase velocity on the next update. */
 
   ZERO_FX(maxVelocity);
   pPlayer = g_player_array;
@@ -80,6 +82,8 @@ printf("\nStarting simulation update.\n");
   {
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
+
+    pPlayer->thrust_harvested = 0;
 
 #if DEBUG_PRINT_SIM
 printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
@@ -113,7 +117,7 @@ printf("Max velocity component: %f\n",
 
   for (numberOfSteps = 1, stepShiftCount = 0;
   (numberOfSteps & 0x80) == 0;
-  numberOfSteps *= 2, stepShiftCount++)
+  numberOfSteps += numberOfSteps, stepShiftCount++)
   {
     /* See if the step size is less than a tile width. */
     if (GET_FX_INTEGER(maxVelocity) < TILE_PIXEL_WIDTH)
@@ -199,8 +203,8 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       playerRow = playerY / TILE_PIXEL_WIDTH;
 
       /* Just need the +1/0/-1 for direction of velocity. */
-      velocityX = COMPARE_FX(&pPlayer->velocity_x, &gfx_Constant_Zero);
-      velocityY = COMPARE_FX(&pPlayer->velocity_y, &gfx_Constant_Zero);
+      velocityX = TEST_FX(&pPlayer->velocity_x);
+      velocityY = TEST_FX(&pPlayer->velocity_y);
 
 #if DEBUG_PRINT_SIM
 printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
@@ -279,10 +283,32 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
 printf("Player %d: Hit tile %s at (%d,%d)\n",
   iPlayer, g_TileOwnerNames[previousOwner], curCol, curRow);
 #endif
-          if (previousOwner == OWNER_EMPTY ||
-          previousOwner == OWNER_PLAYER_1 + iPlayer)
-          {
-            continue; /* Don't collide, keep moving over empty or own tiles. */
+          /* Collided with empty tile? */
+
+          if (previousOwner == OWNER_EMPTY)
+            continue; /* Just glide over empty tiles. */
+
+          /* Did we run over our existing tile? */
+
+          if (previousOwner == OWNER_PLAYER_1 + iPlayer)
+          { /* Ran over our own tile again. */
+            uint8_t age;
+            age = pTile->age;
+            if (pPlayer->thrust_active) /* If harvesting tiles for thrust. */
+            {
+              pPlayer->thrust_harvested += age + 1;
+              SetTileOwner(pTile, OWNER_EMPTY);
+            }
+            else /* Just running over tiles, increase their age. */
+            {
+              if (age < 7)
+              {
+                age++;
+                pTile->age = age;
+                RequestTileRedraw(pTile);
+              }
+            }
+            continue; /* Don't collide, keep moving over own tiles. */
           }
 
           /* Hit someone else's tile, bounce off it. */

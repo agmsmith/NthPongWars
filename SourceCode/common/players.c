@@ -775,22 +775,31 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
     /* Apply joystick actions.  Or just drift if not specifying a direction
        or using the fire button. */
 
+    pPlayer->thrust_active = false;
     if (joyStickData)
     {
-      if (joyStickData & Joy_Button)
-      { /* If thrusting, speed up in the joystick direction. */
+      /* If thrusting, using points harvested from the last update, speed up in
+         the joystick direction. */
+
+      if (pPlayer->thrust_harvested)
+      {
+        fx thrustAmount;
+        INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
+
         if (joyStickData & Joy_Left)
-          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne,
-            &pPlayer->velocity_x);
+          SUBTRACT_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
         if (joyStickData & Joy_Right)
-          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One,
-          &pPlayer->velocity_x);
+          ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
         if (joyStickData & Joy_Up)
-          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne,
-            &pPlayer->velocity_y);
+          SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
         if (joyStickData & Joy_Down)
-          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One,
-            &pPlayer->velocity_y);
+          ADD_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+      }
+
+      if (joyStickData & Joy_Button)
+      { /* Fire button starts harvesting mode, need direction too. */
+        if ((joyStickData & (Joy_Left | Joy_Down | Joy_Right | Joy_Up)))
+          pPlayer->thrust_active = true; /* Harvest tiles we pass over. */
       }
       else /* Fire not pressed, just steer by rotating velocity direction. */
       {

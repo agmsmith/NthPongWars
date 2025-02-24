@@ -178,7 +178,7 @@ void CopyScoresToScreen(void)
   {
     vdp_setWriteAddress(_vdpPatternNameTableAddr + 26);
     s_ScoreFramesPerUpdateDisplayed = g_ScoreFramesPerUpdate;
-    IO_VDPDATA = g_ScoreFramesPerUpdate + 'A';
+    IO_VDPDATA = g_ScoreFramesPerUpdate + ('A' - 1);
   }
 
   /* Draw the frame counter every time. */

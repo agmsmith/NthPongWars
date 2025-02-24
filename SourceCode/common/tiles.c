@@ -73,11 +73,11 @@ uint8_t g_cache_dirty_screen_tiles_index = 0;
 const char *g_TileAnimData[OWNER_MAX] =
 {
 #ifdef NABU_H
-  "\x02", /* OWNER_EMPTY, colourful characters from a custom font. */
-  "\x03", /* OWNER_PLAYER_1 */
-  "\x04", /* OWNER_PLAYER_2 */
-  "\x05", /* OWNER_PLAYER_3 */
-  "\x06", /* OWNER_PLAYER_4 */
+  " ", /* OWNER_EMPTY */
+  "\xE0\xE4\xE8\xEC\xF0\xF4\xF8\xFC", /* OWNER_PLAYER_1, custom font. */
+  "\xE1\xE5\xE9\xED\xF1\xF5\xF9\xFD", /* OWNER_PLAYER_2 */
+  "\xE2\xE6\xEA\xEE\xF2\xF6\xFA\xFE", /* OWNER_PLAYER_3 */
+  "\xE3\xE7\xEB\xEF\xF3\xF7\xFB\xFF", /* OWNER_PLAYER_4 */
   "NNoorrmmaall  ", /* OWNER_PUP_NORMAL */
   "Fast", /* OWNER_PUP_FAST */
   "SSSSlllloooowwww    ", /* OWNER_PUP_SLOW */
@@ -301,25 +301,11 @@ void ActivateTileArrayWindow(void)
 }
 
 
-/* Change the owner of the tile to the given one.  Takes care of updating
-   animation stuff, setting dirty flags, updating score.  Returns previous
-   owner.
+/* Request redraw of a tile.  Takes care of updating animation stuff, setting
+   dirty flags.
 */
-tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
+void RequestTileRedraw(tile_pointer pTile)
 {
-  tile_owner previousOwner;
-
-  if (pTile == NULL || newOwner >= OWNER_MAX)
-    return OWNER_EMPTY; /* Nothing to do. */
-
-  previousOwner = pTile->owner;
-  pTile->owner = newOwner;
-
-  if (previousOwner <= OWNER_PLAYER_4 && previousOwner >= OWNER_PLAYER_1)
-    AdjustPlayerScore(previousOwner - OWNER_PLAYER_1, -1);
-  if (newOwner <= OWNER_PLAYER_4 && newOwner >= OWNER_PLAYER_1)
-    AdjustPlayerScore(newOwner - OWNER_PLAYER_1, 1);
-
   pTile->animationIndex = 0;
   if (!pTile->animated)
   {
@@ -332,6 +318,36 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
     else if (g_cache_animated_tiles_index != 0xFF)
       g_cache_animated_tiles_index++;
   }
+}
+
+
+/* Change the owner of the tile to the given one.  Takes care of updating
+   animation stuff, setting dirty flags, updating score.  Returns previous
+   owner.
+*/
+tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
+{
+  tile_owner previousOwner;
+
+  if (pTile == NULL || newOwner >= OWNER_MAX)
+    return OWNER_EMPTY; /* Nothing to do. */
+
+  previousOwner = pTile->owner;
+  if (previousOwner == newOwner)
+    return previousOwner;
+
+  pTile->owner = newOwner;
+
+  if (previousOwner <= OWNER_PLAYER_4 && previousOwner >= OWNER_PLAYER_1)
+    AdjustPlayerScore(previousOwner - OWNER_PLAYER_1, -1);
+  if (newOwner <= OWNER_PLAYER_4 && newOwner >= OWNER_PLAYER_1)
+  {
+    AdjustPlayerScore(newOwner - OWNER_PLAYER_1, 1);
+    pTile->age = 0; /* Freshly taken over ownership of tile, reset age. */
+  }
+
+  RequestTileRedraw(pTile);
+
   return previousOwner;
 }
 
@@ -348,16 +364,26 @@ static void UpdateOneTileAnimation(tile_pointer pTile)
   uint8_t animIndex;
 
   pAnimString = g_TileAnimData[pTile->owner];
-  animIndex = pTile->animationIndex;
-  newChar = pAnimString[++animIndex];
-  if (newChar == 0) /* End of animation string, go back to start. */
-  {
-    newChar = pAnimString[0];
-    if (animIndex <= 1) /* Only one frame of animation, not really animated. */
-      pTile->animated = false;
-    animIndex = 0;
+
+  if (0 && pTile->owner >= OWNER_PLAYER_1 && pTile->owner <= OWNER_PLAYER_4) // bleeble
+  { /* Just show a static character based on player owned tile's age. */
+    animIndex = pTile->age;
+    pTile->animated = false;
+    newChar = pAnimString[animIndex];
   }
-  pTile->animationIndex = animIndex;
+  else
+  {
+    animIndex = pTile->animationIndex;
+    newChar = pAnimString[animIndex];
+    if (newChar == 0) /* End of animation string, go back to start. */
+    {
+      newChar = pAnimString[0];
+      if (animIndex <= 1) /* Only one frame of animation, not really animated. */
+        pTile->animated = false;
+      animIndex = 0;
+    }
+    pTile->animationIndex = animIndex;
+  }
 
   if (pTile->displayedChar != newChar)
   {
@@ -541,7 +567,7 @@ void DumpTilesToTerminal(void)
 
   printf("Tile data dump...\n");
 
-#if 0
+#if 1
   /* Dump all tiles in the tile array. */
   tile_pointer pTile;
   for (pTile = g_tile_array; pTile != g_play_area_end_tile; pTile++)

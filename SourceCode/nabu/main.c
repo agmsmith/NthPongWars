@@ -417,7 +417,7 @@ void main(void)
 
     g_ScoreFramesPerUpdate = vdpIsReady + 1;
 #if 1
-    if (g_ScoreFramesPerUpdate > 2) /* Non-zero means we missed frames. */
+    if (g_ScoreFramesPerUpdate >= 4) /* Non-zero means we missed frames. */
       playNoteDelay(2 /* Channel 0 to 2 */,
         10 + g_ScoreFramesPerUpdate /* Higher pitch if more missed */,
         40 /* Time delay to hold note. */);

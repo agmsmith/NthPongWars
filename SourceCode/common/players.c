@@ -95,7 +95,7 @@ printf("(%f to %f, %f to %f)\n",
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_TO_FX(1, pPlayer->velocity_y);
 
-    pPlayer->brain = ((player_brain) BRAIN_INACTIVE);
+    pPlayer->brain = ((player_brain) BRAIN_KEYBOARD); /* Everybody at once! */
     pPlayer->main_colour =
 #ifdef NABU_H
       k_PLAYER_COLOURS[iPlayer].main;
@@ -744,7 +744,7 @@ void UpdatePlayerInputs(void)
         ((player_brain) BRAIN_JOYSTICK) :
         ((player_brain) BRAIN_KEYBOARD);
       pPlayer->joystick_inputs = joyStickData;
-#if 1
+#if 0
 printf("Player %d assigned to %s #%d.\n", iPlayer,
   (pPlayer->brain == ((player_brain) BRAIN_JOYSTICK)) ? "joystick" : "keyboard",
   pPlayer->brain_info.iJoystick);
@@ -856,8 +856,8 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
        rate down.  Don't need absolute value, it will bounce off a wall soon
        if it's going that fast. */
 
-    if (true || GET_FX_INTEGER(pPlayer->velocity_x) >= 1 ||
-    GET_FX_INTEGER(pPlayer->velocity_y) >= 1)
+    if (GET_FX_INTEGER(pPlayer->velocity_x) >= 2 ||
+    GET_FX_INTEGER(pPlayer->velocity_y) >= 2)
     {
       fx portionOfVelocity;
       DIV256_FX(pPlayer->velocity_x, portionOfVelocity);

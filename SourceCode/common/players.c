@@ -95,7 +95,7 @@ printf("(%f to %f, %f to %f)\n",
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_TO_FX(1, pPlayer->velocity_y);
 
-    pPlayer->brain = BRAIN_INACTIVE;
+    pPlayer->brain = ((player_brain) BRAIN_INACTIVE);
     pPlayer->main_colour =
 #ifdef NABU_H
       k_PLAYER_COLOURS[iPlayer].main;
@@ -150,12 +150,12 @@ void UpdatePlayerAnimations(void)
   pPlayer = g_player_array;
   for (iPlayer = MAX_PLAYERS; iPlayer-- != 0; pPlayer++)
   {
-    if (pPlayer->brain != BRAIN_INACTIVE)
+    if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE))
     {
       UpdateOneAnimation(&pPlayer->main_anim);
 
 #ifdef NABU_H
-      if (pPlayer->sparkle_anim.type != SPRITE_ANIM_NONE)
+      if (pPlayer->sparkle_anim.type != ((SpriteAnimationType) SPRITE_ANIM_NONE))
         UpdateOneAnimation(&pPlayer->sparkle_anim);
 
       /* Update the sprite screen coordinates.  Convert from player coordinates.
@@ -690,17 +690,17 @@ void UpdatePlayerInputs(void)
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
-    if (pPlayer->brain == BRAIN_INACTIVE)
+    if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
       continue;
 
-    if (pPlayer->brain == BRAIN_KEYBOARD)
+    if (pPlayer->brain == ((player_brain) BRAIN_KEYBOARD))
     {
       pPlayer->joystick_inputs = g_KeyboardFakeJoystickStatus;
       input_consumed[4] = true;
       continue;
     }
 
-    if (pPlayer->brain == BRAIN_JOYSTICK)
+    if (pPlayer->brain == ((player_brain) BRAIN_JOYSTICK))
     {
       uint8_t iStick;
       iStick = pPlayer->brain_info.iJoystick;
@@ -736,15 +736,17 @@ void UpdatePlayerInputs(void)
     pPlayer = g_player_array;
     for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
     {
-      if (pPlayer->brain != BRAIN_INACTIVE)
+      if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE))
         continue;
 
       pPlayer->brain_info.iJoystick = iInput;
-      pPlayer->brain = (iInput < 4) ? BRAIN_JOYSTICK : BRAIN_KEYBOARD;
+      pPlayer->brain = (iInput < 4) ?
+        ((player_brain) BRAIN_JOYSTICK) :
+        ((player_brain) BRAIN_KEYBOARD);
       pPlayer->joystick_inputs = joyStickData;
 #if 1
 printf("Player %d assigned to %s #%d.\n", iPlayer,
-  (pPlayer->brain == BRAIN_JOYSTICK) ? "joystick" : "keyboard",
+  (pPlayer->brain == ((player_brain) BRAIN_JOYSTICK)) ? "joystick" : "keyboard",
   pPlayer->brain_info.iJoystick);
 #endif
       break;
@@ -758,7 +760,7 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
   {
     uint8_t joyStickData;
 
-    if (pPlayer->brain == BRAIN_INACTIVE)
+    if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
       continue;
 
     /* If idle too long (30 seconds), deactivate the player. */
@@ -768,7 +770,7 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
       pPlayer->last_brain_activity_time = g_FrameCounter;
     else if (g_FrameCounter - pPlayer->last_brain_activity_time > 30 * 30)
     {
-      pPlayer->brain = BRAIN_INACTIVE;
+      pPlayer->brain = ((player_brain) BRAIN_INACTIVE);
       continue;
     }
 
@@ -778,13 +780,15 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
     pPlayer->thrust_active = false;
     if (joyStickData)
     {
-      /* If thrusting, using points harvested from the last update, speed up in
-         the joystick direction. */
+      /* If thrusted in the last frame and harvested some points, speed up in
+         the joystick direction.  Number of tiles harvested is converted to a
+         fraction of pixel per update velocity (else things go way too fast). */
 
       if (pPlayer->thrust_harvested)
       {
         fx thrustAmount;
-        INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
+        INT_FRACTION_TO_FX(0, pPlayer->thrust_harvested * (int) 1024,
+          thrustAmount);
 
         if (joyStickData & Joy_Left)
           SUBTRACT_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
@@ -852,7 +856,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
        rate down.  Don't need absolute value, it will bounce off a wall soon
        if it's going that fast. */
 
-    if (GET_FX_INTEGER(pPlayer->velocity_x) >= 1 ||
+    if (true || GET_FX_INTEGER(pPlayer->velocity_x) >= 1 ||
     GET_FX_INTEGER(pPlayer->velocity_y) >= 1)
     {
       fx portionOfVelocity;
@@ -862,6 +866,27 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
       SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
     }
 #endif
+
+    /* Update special effect animations and other things. */
+    
+    /* Thrust animation is shown when some acceleration points are harvested.
+       But we only get thrust points every other frame as it oscillates while
+       sitting over a tile creating then destroying ownership (unless it's
+       moving really fast).  Show the animation when the buttons are held
+       down, and force it to be static (not advancing) if no harvest. */
+
+    SpriteAnimationType newAnimType;
+    newAnimType = pPlayer->thrust_active ? 
+      (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST :
+      (SpriteAnimationType) SPRITE_ANIM_NONE;
+    if (newAnimType != pPlayer->sparkle_anim.type)
+      pPlayer->sparkle_anim = g_SpriteAnimData[newAnimType];
+    else /* Current animation is continuing to play. */
+    {
+      if (newAnimType == (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST &&
+      pPlayer->thrust_harvested < 4)
+        pPlayer->sparkle_anim.current_delay++; /* Stop the clock ticking. */
+    }
   }
 }
 
@@ -883,7 +908,7 @@ void CopyPlayersToSprites(void)
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE &&
+    if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE) &&
     pPlayer->vdpSpriteY != SPRITE_NOT_DRAWABLE)
     {
       /* Do the main ball sprite, if on screen. */
@@ -900,8 +925,8 @@ void CopyPlayersToSprites(void)
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE &&
-    pPlayer->sparkle_anim.type != SPRITE_ANIM_NONE &&
+    if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE) &&
+    pPlayer->sparkle_anim.type != ((SpriteAnimationType) SPRITE_ANIM_NONE) &&
     pPlayer->vdpSpriteY != SPRITE_NOT_DRAWABLE)
     {
       /* Do the sparkle power-up sprite.  Same location as ball. */
@@ -919,7 +944,7 @@ void CopyPlayersToSprites(void)
   iPlayer = MAX_PLAYERS - 1;
   pPlayer = g_player_array;
   do {
-    if (pPlayer->brain != BRAIN_INACTIVE &&
+    if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE) &&
     pPlayer->vdpShadowSpriteY != SPRITE_NOT_DRAWABLE)
     {
       IO_VDPDATA = pPlayer->vdpShadowSpriteY;

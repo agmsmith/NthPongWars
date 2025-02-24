@@ -72,7 +72,8 @@ typedef enum brain_enum {
   /* Tries to go towards another player at a constant speed.  Other player
      choice changes sequentially every 10 seconds. */
   BRAIN_MAX
-} player_brain;
+};
+typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
 
 
 /* Joystick directions as bits.  0 bit means not pressed.  Whole byte is zero if

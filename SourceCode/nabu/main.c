@@ -403,7 +403,7 @@ void main(void)
 
   s_KeepRunning = true;
   vdp_enableVDPReadyInt();
-  while (s_KeepRunning)
+  while (true)
   {
     ProcessKeyboard();
     UpdatePlayerInputs();
@@ -422,6 +422,14 @@ void main(void)
         10 + g_ScoreFramesPerUpdate /* Higher pitch if more missed */,
         40 /* Time delay to hold note. */);
 #endif
+
+    /* Check for game exit here, after the updates have been done, but before
+       the dirty flags have been cleared, so we can see what's taking up all
+       the time being drawn. */
+
+    if (!s_KeepRunning)
+      break;
+
     vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */ 
 
     /* Do the sprites first, since they're time critical to avoid glitches. */
@@ -453,27 +461,6 @@ void main(void)
       }
       ActivateTileArrayWindow();
     }
-#endif
-
-  /* Move players around and change animations. */
-
-#if 1
-  if ((g_FrameCounter & 0xff) == 23)
-  {
-    uint8_t i;
-    for (i = 0; i < MAX_PLAYERS; i++)
-    {
-      SpriteAnimationType NewType;
-      player_pointer pPlayer = g_player_array + i;
-
-      NewType = (rand() & 0x80) ? SPRITE_ANIM_NONE :
-        SPRITE_ANIM_BALL_EFFECT_FAST;
-      if (NewType != pPlayer->sparkle_anim.type)
-      {
-        pPlayer->sparkle_anim = g_SpriteAnimData[NewType];
-      }
-    }
-  }
 #endif
 
 #if 0
@@ -530,7 +517,6 @@ void main(void)
   }
   vdp_disableVDPReadyInt();
 
-  UpdateTileAnimations(); /* So we can see some dirty flags. */
   DumpTilesToTerminal();
   printf ("Frame count: %d\n", g_FrameCounter);
 

@@ -54,7 +54,9 @@ typedef enum tile_owner_enum {
   OWNER_PUP_RUN_THROUGH, /* Run through squares, rather than bouncing. */
   OWNER_PUP_WIDER, /* Makes the player wider in effect; more tiles hit. */
   OWNER_MAX
-} tile_owner;
+};
+typedef uint8_t tile_owner; /* Want 8 bits, not a 16 bit enum. */
+
 
 /* List of names for each of the owner enums, mostly for debugging. */
 extern const char * g_TileOwnerNames[OWNER_MAX];
@@ -96,22 +98,24 @@ typedef struct tile_struct {
      the Curses display, so we can tell if it needs updating.  Set to 0 to force
      an update; we never use that font entry. */
 
-  unsigned int dirty_screen : 1;
+  unsigned char dirty_screen : 1;
   /* Set to TRUE if this tile needs to be redrawn on the next screen update.
-     Only relevant for tiles that are on screen, ignored elsewhere. */
+     Only relevant for tiles that are on screen, ignored elsewhere.
+     Using an extra unsigned char rather than unsigned int, otherwise
+     intermediate values blow up to 16 bits. */
 
-  unsigned int dirty_remote : 1;
+  unsigned char dirty_remote : 1;
   /* Set to TRUE if this tile needs to be sent to remote players on the next
      network update.  Relevant for all tiles in the play area, which can be
      bigger than the screen. */
 
-  unsigned int animated : 1;
+  unsigned char animated : 1;
   /* Set to TRUE if this tile has an animation and needs to be updated every
      frame.  The animation is related to the tile's owner, so if the owner
      changes, this needs updating.  Tiles with a one frame animation get this
      set to FALSE after the first update. */
 
-  unsigned int age : 3;
+  unsigned char age : 3;
   /* Age of the tile owned by the player.  0 means new, 7 is the oldest (has
      been travelled over 7 extra times).  Will affect the graphic drawn for the
      tile (gets more solid the older it is) and the thrust available from

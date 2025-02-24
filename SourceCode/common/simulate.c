@@ -277,7 +277,8 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
           if (deltaPosY >= SIM_MISS_DISTANCE || deltaPosY <= -SIM_MISS_DISTANCE)
             continue; /* Too far away, missed. */
 
-          previousOwner = SetTileOwner(pTile, OWNER_PLAYER_1 + iPlayer);
+          previousOwner = SetTileOwner(pTile,
+            iPlayer + (tile_owner) OWNER_PLAYER_1);
 
 #if DEBUG_PRINT_SIM
 printf("Player %d: Hit tile %s at (%d,%d)\n",
@@ -285,12 +286,12 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
 #endif
           /* Collided with empty tile? */
 
-          if (previousOwner == OWNER_EMPTY)
+          if (previousOwner == (tile_owner) OWNER_EMPTY)
             continue; /* Just glide over empty tiles. */
 
           /* Did we run over our existing tile? */
 
-          if (previousOwner == OWNER_PLAYER_1 + iPlayer)
+          if (previousOwner == iPlayer + (tile_owner) OWNER_PLAYER_1)
           { /* Ran over our own tile again. */
             uint8_t age;
             age = pTile->age;
@@ -311,7 +312,7 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             continue; /* Don't collide, keep moving over own tiles. */
           }
 
-          /* Hit someone else's tile, bounce off it. */
+          /* Hit someone else's tile or a power-up, bounce off it. */
 
 #if DEBUG_PRINT_SIM
 printf("Player %d: Bouncing off occupied tile (%d,%d).\n",

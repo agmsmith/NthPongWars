@@ -68,9 +68,10 @@ void InitialiseScores(void)
     {
       tile_owner owner;
       owner = pTile->owner;
-      if (owner < OWNER_PLAYER_1 || owner > OWNER_PLAYER_4)
+      if (owner < (tile_owner) OWNER_PLAYER_1 ||
+      owner > (tile_owner) OWNER_PLAYER_4)
         continue;
-      iPlayer = owner - OWNER_PLAYER_1;
+      iPlayer = owner - (tile_owner) OWNER_PLAYER_1;
       g_player_array[iPlayer].score += 1;
     }
   }

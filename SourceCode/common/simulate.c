@@ -182,7 +182,7 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
     }
 
     /* Check for player to tile collisions.  Like a tic-tac-toe board, examine
-       9 tiles around the player, unless too close to the side of the play area
+       9 tiles around the player, unless too close to the side of the play area,
        then it's less. */
 
     pPlayer = g_player_array;
@@ -193,6 +193,7 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       int16_t playerX, playerY;
       int8_t velocityX, velocityY;
       bool bounceOffX, bounceOffY;
+      tile_owner player_self_owner;
 
       if (pPlayer->brain == BRAIN_INACTIVE)
         continue;
@@ -201,6 +202,7 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
       playerCol = playerX / TILE_PIXEL_WIDTH;
       playerRow = playerY / TILE_PIXEL_WIDTH;
+      player_self_owner = iPlayer + (tile_owner) OWNER_PLAYER_1;
 
       /* Just need the +1/0/-1 for direction of velocity. */
       velocityX = TEST_FX(&pPlayer->velocity_x);
@@ -277,9 +279,7 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
           if (deltaPosY >= SIM_MISS_DISTANCE || deltaPosY <= -SIM_MISS_DISTANCE)
             continue; /* Too far away, missed. */
 
-          previousOwner = SetTileOwner(pTile,
-            iPlayer + (tile_owner) OWNER_PLAYER_1);
-
+          previousOwner = pTile->owner;
 #if DEBUG_PRINT_SIM
 printf("Player %d: Hit tile %s at (%d,%d)\n",
   iPlayer, g_TileOwnerNames[previousOwner], curCol, curRow);
@@ -288,22 +288,22 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
 
           if (previousOwner == (tile_owner) OWNER_EMPTY)
           {
-            if (pPlayer->thrust_active)
-            {
-              /* If we are harvesting, don't take over the tile, we extracted
-                nothing from it, put it back to empty.  Else we get a little
-                oscillation as the stationary player takes a tile, then
-                harvests it back to empty the next update, making the
-                score flicker. */
-              SetTileOwner(pTile, (tile_owner) OWNER_EMPTY);
-            }
+            /* If we are harvesting, don't take over the tile, we extracted
+              nothing from it, leave it empty.  Otherwise we get a little
+              oscillation as the stationary player takes a tile, then
+              harvests it back to empty the next update, making the
+              score flicker.  If not harvesting, it becomes our tile. */
+
+            if (!pPlayer->thrust_active)
+              SetTileOwner(pTile, player_self_owner);
+
             continue; /* Just glide over empty tiles, no bouncing. */
           }
 
           /* Did we run over our existing tile? */
 
-          if (previousOwner == iPlayer + (tile_owner) OWNER_PLAYER_1)
-          { /* Ran over our own tile. */
+          if (previousOwner == player_self_owner)
+          {
             uint8_t age;
             age = pTile->age;
             if (pPlayer->thrust_active) /* If harvesting tiles for thrust. */
@@ -313,7 +313,12 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             }
             else /* Just running over our tiles, increase their age. */
             {
-              if (age < 7)
+              /* Only increase age every 4th frame, else some of the
+                 intermediate animation states are missed.  To even out the
+                 update drawing time load on the system, only draw on the frame
+                 corresponding to the player number. */
+
+              if (age < 7 && ((uint8_t) g_FrameCounter & 3) == iPlayer)
               {
                 age++;
                 pTile->age = age;
@@ -323,7 +328,15 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             continue; /* Don't collide, keep moving over own tiles. */
           }
 
-          /* Hit someone else's tile or a power-up, bounce off it. */
+          /* Hit someone else's tile or a power-up.  In harvest mode we don't
+             gain any points from it, and it becomes empty.  Regular mode, it
+             becomes the player's tile.  In both cases, power up effects are
+             applied to the player. */
+
+          if (pPlayer->thrust_active)
+            SetTileOwner(pTile, OWNER_EMPTY);
+          else
+            SetTileOwner(pTile, player_self_owner);
 
 #if DEBUG_PRINT_SIM
 printf("Player %d: Bouncing off occupied tile (%d,%d).\n",

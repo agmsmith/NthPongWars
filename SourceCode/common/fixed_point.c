@@ -375,10 +375,10 @@ void DIV2_FX(pfx x)
        3  +y   1
            2
 */
-int8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
+uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
 {
   int8_t xDir, yDir;
-  int8_t octantLower = -1; /* An invalid value you should never see. */
+  uint8_t octantLower = 0xFF; /* An invalid value you should never see. */
   bool rightOnOctant = false; /* If velocity is exactly in octant direction. */
 
   xDir = TEST_FX(vector_x);
@@ -467,8 +467,9 @@ int8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
       }
     }
   }
+
   if (rightOnOctant)
-    return octantLower | 0x80;
+    octantLower |= 0x80;
   return octantLower;
 }
 

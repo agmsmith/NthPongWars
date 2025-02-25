@@ -651,10 +651,10 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
 
     if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
       continue;
+    joyStickData = pPlayer->joystick_inputs;
 
     /* If idle too long (30 seconds), deactivate the player. */
 
-    joyStickData = pPlayer->joystick_inputs;
     if (joyStickData)
       pPlayer->last_brain_activity_time = g_FrameCounter;
     else if (g_FrameCounter - pPlayer->last_brain_activity_time > 30 * 30)
@@ -663,71 +663,76 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
       continue;
     }
 
-    /* Apply joystick actions.  Or just drift if not specifying a direction
-       or using the fire button. */
+    /* Update the direction the player's velocity is pointing in.  It's only
+       used here for modifying velocity direction, not in the physics
+       simulation.  Needed for applying harvest, and for steering. */
 
-    pPlayer->thrust_active = false;
-    if (joyStickData)
+    uint8_t player_velocity_octant = 0;
+    if (pPlayer->thrust_harvested ||
+    (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left)))
     {
-      /* If thrusted in the last frame and harvested some points, speed up in
-         the joystick direction.  Number of tiles harvested is converted to a
-         fraction of pixel per update velocity (else things go way too fast). */
+      player_velocity_octant = VECTOR_FX_TO_OCTANT(
+        &pPlayer->velocity_x, &pPlayer->velocity_y);
+      pPlayer->velocity_octant_right_on = ((player_velocity_octant & 0x80) != 0);
+      player_velocity_octant &= 7; /* Low 3 bits contain octant number. */
+      pPlayer->velocity_octant = player_velocity_octant;
+    }
 
-      if (pPlayer->thrust_harvested)
+    /* If thrusted in the last frame and harvested some points, speed up in
+       the current velocity direction.  Number of tiles harvested is converted
+       to a fraction of pixel per update velocity (else things go way too
+       fast and the frame rate slows down a lot as the physics keeps up). */
+
+    if (pPlayer->thrust_harvested)
+    {
+      fx thrustAmount;
+      INT_FRACTION_TO_FX(0, pPlayer->thrust_harvested * 2048, thrustAmount);
+
+      if (player_velocity_octant <= 1 || player_velocity_octant == 7)
+        ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
+      else if (player_velocity_octant >= 3 && player_velocity_octant <= 5)
+        SUBTRACT_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
+
+      if (player_velocity_octant >= 1 && player_velocity_octant <= 3)
+        ADD_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+      else if (player_velocity_octant >= 5)
+        SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+    }
+
+    /* Apply joystick actions.  Fire does harvesting.  Directional buttons
+       steer.  Or just drift if not specifying a direction or firing (and since
+       not harvesting or steering, don't need to update the velocity octant). */
+
+    pPlayer->thrust_active = (joyStickData & Joy_Button);
+
+    if (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left))
+    {
+      /* Convert the joystick inputs to a direction in octants. */
+
+      uint8_t desired_octant = 0;
+      if (joyStickData & Joy_Left)
       {
-        fx thrustAmount;
-        INT_FRACTION_TO_FX(0, pPlayer->thrust_harvested * (int) 1024,
-          thrustAmount);
-
-        if (joyStickData & Joy_Left)
-          SUBTRACT_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
-        if (joyStickData & Joy_Right)
-          ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
         if (joyStickData & Joy_Up)
-          SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
-        if (joyStickData & Joy_Down)
-          ADD_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
-      }
-
-      if (joyStickData & Joy_Button)
-      { /* Fire button starts harvesting mode, need direction too. */
-        if ((joyStickData & (Joy_Left | Joy_Down | Joy_Right | Joy_Up)))
-          pPlayer->thrust_active = true; /* Harvest tiles we pass over. */
-      }
-      else /* Fire not pressed, just steer by rotating velocity direction. */
-      {
-        /* Convert the joystick inputs to a direction in octants. */
-
-        uint8_t desired_octant = 0;
-        if (joyStickData & Joy_Left)
-        {
-          if (joyStickData & Joy_Up)
-            desired_octant = 5;
-          else if (joyStickData & Joy_Down)
-            desired_octant = 3;
-          else
-            desired_octant = 4;
-        }
-        else if (joyStickData & Joy_Right)
-        {
-          if (joyStickData & Joy_Up)
-            desired_octant = 7;
-          else if (joyStickData & Joy_Down)
-            desired_octant = 1;
-          else
-            desired_octant = 0;
-        }
-        else if (joyStickData & Joy_Up)
-            desired_octant = 6;
+          desired_octant = 5;
         else if (joyStickData & Joy_Down)
-            desired_octant = 2;
+          desired_octant = 3;
+        else
+          desired_octant = 4;
+      }
+      else if (joyStickData & Joy_Right)
+      {
+        if (joyStickData & Joy_Up)
+          desired_octant = 7;
+        else if (joyStickData & Joy_Down)
+          desired_octant = 1;
+        else
+          desired_octant = 0;
+      }
+      else if (joyStickData & Joy_Up)
+          desired_octant = 6;
+      else if (joyStickData & Joy_Down)
+          desired_octant = 2;
 
-        /* Get the direction the player's velocity is pointing in. */
-
-        int8_t player_octant = VECTOR_FX_TO_OCTANT(
-          &pPlayer->velocity_x, &pPlayer->velocity_y);
-        pPlayer->velocity_octant_right_on = (player_octant < 0);
-        pPlayer->velocity_octant = (player_octant & 7);
 #if DEBUG_PRINT_OCTANTS
 printf("Player %d Velocity (%f,%f) octant %d, right on %d, desire %d.\n",
 iPlayer,
@@ -735,12 +740,13 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y),
 pPlayer->velocity_octant, pPlayer->velocity_octant_right_on, desired_octant);
 #endif
 
-        TurnVelocityTowardsOctant(pPlayer, desired_octant);
+      /* Modify the velocity direction to be closer to our desired_octant. */
+
+      TurnVelocityTowardsOctant(pPlayer, desired_octant);
 #if DEBUG_PRINT_OCTANTS
 printf("  Turned velocity (%f,%f).\n",
 GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
 #endif
-      }
     }
 
 #if 1
@@ -778,7 +784,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
     else /* Current animation is continuing to play. */
     {
       if (newAnimType == (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST &&
-      pPlayer->thrust_harvested < 4)
+      pPlayer->thrust_harvested == 0)
         pPlayer->sparkle_anim.current_delay++; /* Stop the clock ticking. */
     }
   }

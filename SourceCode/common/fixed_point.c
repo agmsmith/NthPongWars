@@ -358,3 +358,117 @@ void DIV2_FX(pfx x)
 #endif
 }
 
+
+/* Convert a 2D vector into an octant angle direction.  Returns octant number
+   in lower 3 bits of the result.  Result high bit is set if the vector is
+   exactly on the angle, else zero.
+
+   Find out which octant the vector is in.  It will actually be between two
+   octant directions, somewhere in a 45 degree segment.  So we'll come up with
+   lower and upper angles, with the upper one being 45 degrees clockwise from
+   the lower one.  If it is exactly on an octant angle, that will become the
+   lower angle and we'll return a bit saying so.
+
+           6
+       5  -y   7
+     4  -x o +x  0
+       3  +y   1
+           2
+*/
+int8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
+{
+  int8_t xDir, yDir;
+  int8_t octantLower = -1; /* An invalid value you should never see. */
+  bool rightOnOctant = false; /* If velocity is exactly in octant direction. */
+
+  xDir = TEST_FX(vector_x);
+  yDir = TEST_FX(vector_y);
+
+  if (xDir == 0) /* X == 0 */
+  {
+    if (yDir == 0) /* Y == 0 */
+      octantLower = 0; /* Actually undefined, zero length vector. */
+    else if (yDir >= 0) /* Y > 0, using >= test since it's faster. */
+    {
+      octantLower = 2;
+      rightOnOctant = true;
+    }
+    else /* Y < 0 */
+    {
+      octantLower = 6;
+      rightOnOctant = true;
+    }
+  }
+  else if (xDir >= 0) /* X > 0 */
+  {
+    if (yDir == 0) /* X > 0, Y == 0 */
+    {
+      octantLower = 0;
+      rightOnOctant = true;
+    }
+    else if (yDir >= 0) /* X > 0, Y > 0 */
+    {
+      int8_t xyDelta;
+      xyDelta = COMPARE_FX(vector_x, vector_y);
+      if (xyDelta > 0) /* |X| > |Y| */
+        octantLower = 0;
+      else /* |X| <= |Y| */
+      {
+        octantLower = 1;
+        rightOnOctant = (xyDelta == 0);
+      }
+    }
+    else /* X > 0, Y < 0 */
+    {
+      int8_t xyDelta;
+      fx negativeY;
+      COPY_NEGATE_FX(vector_y, &negativeY);
+      xyDelta = COMPARE_FX(vector_x, &negativeY);
+      if (xyDelta >= 0) /* |X| >= |Y| */
+      {
+        octantLower = 7;
+        rightOnOctant = (xyDelta == 0);
+      }
+      else /* |X| < |Y| */
+        octantLower = 6;
+    }
+  }
+  else /* X < 0 */
+  {
+    if (yDir == 0) /* X < 0, Y == 0 */
+    {
+      octantLower = 4;
+      rightOnOctant = true;
+    }
+    else if (yDir >= 0) /* X < 0, Y >= 0 */
+    {
+      int8_t xyDelta;
+      fx negativeX;
+      COPY_NEGATE_FX(vector_x, &negativeX);
+      xyDelta = COMPARE_FX(&negativeX, vector_y);
+      if (xyDelta >= 0) /* |X| >= |Y| */
+      {
+        octantLower = 3;
+        rightOnOctant = (xyDelta == 0);
+      }
+      else /* |X| < |Y| */
+        octantLower = 2;
+    }
+    else /* X < 0, Y < 0 */
+    {
+      int8_t xyDelta;
+      xyDelta = COMPARE_FX(vector_x, vector_y);
+      if (xyDelta < 0) /* |X| > |Y| */
+        octantLower = 4;
+      else /* |X| <= |Y| */
+      {
+        octantLower = 5;
+        rightOnOctant = (xyDelta == 0);
+      }
+    }
+  }
+  if (rightOnOctant)
+    return octantLower | 0x80;
+  return octantLower;
+}
+

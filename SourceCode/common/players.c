@@ -232,117 +232,6 @@ void UpdatePlayerAnimations(void)
   }
 }
 
-/* Convert the current velocity values into an octant angle direction.
-*/
-static void UpdatePlayerVelocityDirection(player_pointer pPlayer)
-{
-  /* Find out which octant the velocity vector is currently in.  It will
-     actually be between two octant directions, somewhere in a 45 degree
-     segment.  So we'll come up with lower and upper angles, with the
-     upper one being 45 degrees clockwise from the lower one.  If it is
-     exactly on an octant angle, that will become the lower angle.
-
-           6
-       5  -y   7
-     4  -x o +x  0
-       3  +y   1
-           2
-  */
-
-  int8_t xDir, yDir;
-  uint8_t octantLower = 0xFF; /* An invalid value you should never see. */
-  bool rightOnOctant = false; /* If velocity is exactly in octant direction. */
-
-  xDir = TEST_FX(&pPlayer->velocity_x);
-  yDir = TEST_FX(&pPlayer->velocity_y);
-
-  if (xDir == 0) /* X == 0 */
-  {
-    if (yDir == 0) /* Y == 0 */
-      octantLower = 0; /* Actually undefined, zero length vector. */
-    else if (yDir >= 0) /* Y > 0, using >= test since it's faster. */
-    {
-      octantLower = 2;
-      rightOnOctant = true;
-    }
-    else /* Y < 0 */
-    {
-      octantLower = 6;
-      rightOnOctant = true;
-    }
-  }
-  else if (xDir >= 0) /* X > 0 */
-  {
-    if (yDir == 0) /* X > 0, Y == 0 */
-    {
-      octantLower = 0;
-      rightOnOctant = true;
-    }
-    else if (yDir >= 0) /* X > 0, Y > 0 */
-    {
-      int8_t xyDelta;
-      xyDelta = COMPARE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
-      if (xyDelta > 0) /* |X| > |Y| */
-        octantLower = 0;
-      else /* |X| <= |Y| */
-      {
-        octantLower = 1;
-        rightOnOctant = (xyDelta == 0);
-      }
-    }
-    else /* X > 0, Y < 0 */
-    {
-      int8_t xyDelta;
-      fx negativeY;
-      COPY_NEGATE_FX(&pPlayer->velocity_y, &negativeY);
-      xyDelta = COMPARE_FX(&pPlayer->velocity_x, &negativeY);
-      if (xyDelta >= 0) /* |X| >= |Y| */
-      {
-        octantLower = 7;
-        rightOnOctant = (xyDelta == 0);
-      }
-      else /* |X| < |Y| */
-        octantLower = 6;
-    }
-  }
-  else /* X < 0 */
-  {
-    if (yDir == 0) /* X < 0, Y == 0 */
-    {
-      octantLower = 4;
-      rightOnOctant = true;
-    }
-    else if (yDir >= 0) /* X < 0, Y >= 0 */
-    {
-      int8_t xyDelta;
-      fx negativeX;
-      COPY_NEGATE_FX(&pPlayer->velocity_x, &negativeX);
-      xyDelta = COMPARE_FX(&negativeX, &pPlayer->velocity_y);
-      if (xyDelta >= 0) /* |X| >= |Y| */
-      {
-        octantLower = 3;
-        rightOnOctant = (xyDelta == 0);
-      }
-      else /* |X| < |Y| */
-        octantLower = 2;
-    }
-    else /* X < 0, Y < 0 */
-    {
-      int8_t xyDelta;
-      xyDelta = COMPARE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
-      if (xyDelta < 0) /* |X| > |Y| */
-        octantLower = 4;
-      else /* |X| <= |Y| */
-      {
-        octantLower = 5;
-        rightOnOctant = (xyDelta == 0);
-      }
-    }
-  }
-  pPlayer->velocity_octant = octantLower;
-  pPlayer->velocity_octant_right_on = rightOnOctant;
-}
-
 
 /* Rotate the player's velocity values towards an octant angle direction.
    Prerequisite: player's velocity_octant is up to date.
@@ -833,7 +722,12 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
         else if (joyStickData & Joy_Down)
             desired_octant = 2;
 
-        UpdatePlayerVelocityDirection(pPlayer);
+        /* Get the direction the player's velocity is pointing in. */
+
+        int8_t player_octant = VECTOR_FX_TO_OCTANT(
+          &pPlayer->velocity_x, &pPlayer->velocity_y);
+        pPlayer->velocity_octant_right_on = (player_octant < 0);
+        pPlayer->velocity_octant = (player_octant & 7);
 #if DEBUG_PRINT_OCTANTS
 printf("Player %d Velocity (%f,%f) octant %d, right on %d, desire %d.\n",
 iPlayer,

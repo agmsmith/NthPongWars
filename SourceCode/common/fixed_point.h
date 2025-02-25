@@ -144,5 +144,24 @@ extern void DIV2_FX(pfx x);
 /* Divide a by 256 and put into b. */
 #define DIV256_FX(a, b) {b.as_int32 = a.as_int32 / 256; }
 
+/* Convert a 2D vector into an octant angle direction.  Returns octant number
+   in lower 3 bits of the result.  Result high bit is set if the vector is
+   exactly on the angle, else zero.
+
+   Find out which octant the vector is in.  It will actually be between two
+   octant directions, somewhere in a 45 degree segment.  So we'll come up with
+   lower and upper angles, with the upper one being 45 degrees clockwise from
+   the lower one.  If it is exactly on an octant angle, that will become the
+   lower angle and we'll return a bit saying so.
+
+           6
+       5  -y   7
+     4  -x o +x  0
+       3  +y   1
+           2
+  */
+
+extern int8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y);
+
 #endif /* _FIXED_POINT_H */
 

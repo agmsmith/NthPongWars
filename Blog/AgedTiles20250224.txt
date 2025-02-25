@@ -1,0 +1,6 @@
+This is Nth Pong Wars by Alexander G. M. Smith, the February 24th 2025 version.
+Notice the green player, who is building up an area of green tiles.
+When he has enough, he can start harvesting them for acceleration.
+When he's harvesting, you'll see a graphic of little sweeper lines rotating around the player.
+They spin faster when more thrust is being harvested, and of course the player speeds up in the joystick specified direction at the same time.
+

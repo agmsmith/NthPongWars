@@ -287,12 +287,23 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
           /* Collided with empty tile? */
 
           if (previousOwner == (tile_owner) OWNER_EMPTY)
-            continue; /* Just glide over empty tiles. */
+          {
+            if (pPlayer->thrust_active)
+            {
+              /* If we are harvesting, don't take over the tile, we extracted
+                nothing from it, put it back to empty.  Else we get a little
+                oscillation as the stationary player takes a tile, then
+                harvests it back to empty the next update, making the
+                score flicker. */
+              SetTileOwner(pTile, (tile_owner) OWNER_EMPTY);
+            }
+            continue; /* Just glide over empty tiles, no bouncing. */
+          }
 
           /* Did we run over our existing tile? */
 
           if (previousOwner == iPlayer + (tile_owner) OWNER_PLAYER_1)
-          { /* Ran over our own tile again. */
+          { /* Ran over our own tile. */
             uint8_t age;
             age = pTile->age;
             if (pPlayer->thrust_active) /* If harvesting tiles for thrust. */
@@ -300,7 +311,7 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
               pPlayer->thrust_harvested += age + 1;
               SetTileOwner(pTile, OWNER_EMPTY);
             }
-            else /* Just running over tiles, increase their age. */
+            else /* Just running over our tiles, increase their age. */
             {
               if (age < 7)
               {

@@ -338,17 +338,23 @@ void playNoteDelay(uint8_t channel, uint8_t note, uint16_t delayLength)
 
 void SoundTest(void)
 {
+  printf("Three notes sequentially.\n");
   /* channel (0 to 2), note (0 to 71), delayLength (0 to 64K-1) */
-  playNoteDelay(0, 0, 0xFFFF);
-  z80_delay_ms(1000);
-  playNoteDelay(1, 35, 0x8000);
-  z80_delay_ms(1000);
-  playNoteDelay(2, 71, 0x4000);
+  playNoteDelay(0, 0, 100);
+  z80_delay_ms(2000);
+  playNoteDelay(1, 35, 200);
+  z80_delay_ms(2000);
+  playNoteDelay(2, 71, 300);
   z80_delay_ms(5000);
 
-  playNoteDelay(0, 0, 0xFFFF);
-  playNoteDelay(1, 35, 0x8000);
-  playNoteDelay(2, 71, 0x4000);
+  printf("Three notes at once.\n");
+  playNoteDelay(0, 0, 100);
+  playNoteDelay(1, 35, 200);
+  playNoteDelay(2, 71, 300);
+  printf("playNoteDelay does one note at a time!\n");
+
+
+  printf("Finished with playing notes.\n");
 }
 
 

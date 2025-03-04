@@ -15,6 +15,8 @@
 #include <stdio.h>
 /* #include <fcntl.h> /* For lower level file open, read, close and FDs. */
 #include <math.h>
+#include <stdint.h>
+#include <stdbool.h>
 
 extern void z80_delay_ms(uint16_t ms);
 /* Busy wait exactly the number of milliseconds, which includes the
@@ -336,6 +338,94 @@ void playNoteDelay(uint8_t channel, uint8_t note, uint16_t delayLength)
 }
 
 
+/* Recreating the sound code from Leo Binkowski's NABU Pacman. */
+
+typedef struct SoundStateStruct {
+  bool active; /* WACFLG or CKAFLG */
+  bool alt; /* Alternates updates on every other frame. */
+  uint16_t fineCoarse; /* Period of note to be played. */
+  uint8_t controlLoop;
+  uint8_t wait;
+  uint8_t waitDelay; /* WKDEL or WKDEL1 */
+  uint16_t initialFineCoarse;
+  uint16_t plusNote1;
+  uint16_t plusNote2;
+} SoundState;
+
+void Wacka(void)
+{
+  SoundState Wa, Cka, *WackaPntr;
+
+  Wa.initialFineCoarse = 0x252;
+  Wa.waitDelay = 2;
+  Wa.plusNote1 = -0xC8;
+  Wa.plusNote2 = 0x64;
+
+  Cka.initialFineCoarse = 0x54;
+  Cka.waitDelay = 4;
+  Cka.plusNote1 = 0xAA;
+  Cka.plusNote2 = -0x50;
+
+  /* Run the sound loop for a few seconds, then exit. */
+
+  uint16_t frameCounter;
+  for (frameCounter = 500; frameCounter != 0; frameCounter--)
+  {
+    if ((frameCounter & 63) == 0) /* Once a second, start Wa sound. */
+      Wa.active = true;
+
+    if ((frameCounter & 63) == 32) /* Once a second, start Cka sound. */
+      Cka.active = true;
+
+    for (WackaPntr = &Wa; WackaPntr != NULL;
+    WackaPntr = ((WackaPntr == &Wa) ? &Cka : NULL))
+    {
+      if (WackaPntr->active)
+      {
+        if (WackaPntr->wait == 0) /* Starting up/playing the sound. */
+        {
+          ayWrite(9, 0x0E); /* Set volume on channel B to 14/15. */
+          WackaPntr->alt = !WackaPntr->alt;
+          if (WackaPntr->alt)
+          {
+            WackaPntr->fineCoarse = WackaPntr->fineCoarse + WackaPntr->plusNote1;
+#if 0
+            ayWrite(2, WackaPntr->fineCoarse);
+            ayWrite(3, WackaPntr->fineCoarse >> 8);
+            z80_delay_ms(8); /* Not in original Pacman code, can't hear this! */
+#endif
+            WackaPntr->fineCoarse = WackaPntr->fineCoarse + WackaPntr->plusNote2;
+            ayWrite(2, WackaPntr->fineCoarse);
+            ayWrite(3, WackaPntr->fineCoarse >> 8);
+            if (++WackaPntr->controlLoop >= 4)
+            { /* Silence the sound. */
+              ayWrite(3, 0);
+              ayWrite(9, 0);
+              WackaPntr->wait++; /* Start the waiting portion. */
+            }
+          }
+        }
+        else /* Letting silence reign, wait a while. */
+        {
+          WackaPntr->wait++;
+          if (WackaPntr->wait >= WackaPntr->waitDelay)
+          {
+            /* Finshed waiting, reset for next time. */
+            WackaPntr->active = false;
+            WackaPntr->controlLoop = 0;
+            WackaPntr->wait = 0;
+            WackaPntr->fineCoarse = WackaPntr->initialFineCoarse;
+            WackaPntr->alt = false;
+          }
+        }
+      }
+    }
+
+    z80_delay_ms(16);
+  }
+}
+
+
 void SoundTest(void)
 {
   printf("Three notes sequentially.\n");
@@ -345,16 +435,20 @@ void SoundTest(void)
   playNoteDelay(1, 35, 200);
   z80_delay_ms(2000);
   playNoteDelay(2, 71, 300);
-  z80_delay_ms(5000);
+  z80_delay_ms(2000);
 
   printf("Three notes at once.\n");
   playNoteDelay(0, 0, 100);
   playNoteDelay(1, 35, 200);
   playNoteDelay(2, 71, 300);
   printf("playNoteDelay does one note at a time!\n");
-
+  z80_delay_ms(2000);
 
   printf("Finished with playing notes.\n");
+
+  printf("Starting Pacman sounds.\n");
+  Wacka();
+  printf("Finished Pacman sounds.\n");
 }
 
 

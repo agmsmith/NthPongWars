@@ -1,0 +1,6 @@
+I'm looking into doing fancier sounds for Nth Pong Wars, and started with a few tests.
+Plain notes are by NabuLib.
+I resurrected Pacman sound effects from Leo Binkowski's assembler code.
+The second version adds a delay so you can hear some overwritten sounds.
+And then here's the version they used.
+

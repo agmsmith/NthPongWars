@@ -1800,6 +1800,55 @@ which makes the game a lot more nicer to play.  Also adjusted the tile aging
 speed so you can see all the tile animations, and fixed a few leftover
 non-empty tile problems when harvesting.
 
+<HR>
+<H2><A NAME="2025.03.04"></A>2025.03.04</H2>
+
+<H3>Sound Tests</H3>
+
+<P>It's time to look at (listen to?) sound effects.  I'm currently using NabuLib
+code for playing pure notes, though I discovered that it only plays one note at
+a time, shutting down all other channels when it starts a new note, though
+that's likely because it's using the envelope feature which is shared between
+all channels.
+
+<P>I also wanted to look at some other examples, since I'm not familiar with the
+<A HREF="https://en.wikipedia.org/wiki/General_Instrument_AY-3-8910">AY-3-8910</A>
+sound making chip.  I decided to have a look at Leo Binkowski's assembler code
+for Pacman; conveniently most of the sound effects are in <A
+HREF="https://github.com/LeoBinkowski/NABU/blob/main/nabu-pacman/PACSOUND.MAC">PACSOUND.MAC</A>.
+
+<P ALIGN=CENTER><A HREF="SoundTests20250304.mp4"><IMG SRC="SoundTests20250304.png"
+WIDTH="280" HEIGHT="224"
+ALT="[Video of Sound Tests running]"></A><BR>
+<A HREF="SoundTests20250304.mp4">SoundTests20250304.mp4</A> video
+with <A HREF="SoundTests20250304.mp3">SoundTests20250304.mp3</A> sound and
+narration.<BR>
+Short script <A HREF="SoundTests20250304.txt">SoundTests20250304.txt</A>.
+
+<P>In particular, the wacka-wacka sound of Pacman moving was my starting point,
+with the relevant code mostly near the WACKA: label.  I converted it from
+assembler spaghetti to C spaghetti in the Wacka() function in my test
+<A HREF="https://github.com/agmsmith/NthPongWars/blob/main/Hello/main.c">Hello
+program</A>.  There was one oddity, he writes different frequency values to the
+sound chip twice.  I thought that the second write mere microseconds after the
+first one would overwrite it, and did some tests to confirm that it sounds the
+same without the first write.  I wondered if it was leftover code, and added a
+delay to hear the two frequencies, and it does indeed sound different.  Checking
+the actual Nabu Pacman, it sounds like the simple version of the sound, so they
+probably used the listed code, wasting time doing calculations with an inaudible
+write to the frequency register.
+
+<P>The takeaway from that is you can use the 60hz interrupt to change the sound
+and make it more interesting than a plain tone.  Still, I'd like to see what you
+can do with just the noise and envelope features of the chip (I see AlphaBlast
+and Miner 2049er do use the noise register).  Maybe I can get away without doing
+sound modification on the fly and save on CPU power.  I just need bounces off
+the walls, tile getting and consuming sounds, and collision sounds.
+
+<P>One trick may be to have a background sound like Pacman (a subtle whoo-whoo),
+not quite music, which would be a bit of work to set up, but better than
+nothing.  Thanks to Leo, I can steal from the best!
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

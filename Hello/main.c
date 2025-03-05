@@ -8,6 +8,12 @@
  * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm -o "HELLO.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
 */
 
+#define NUMBER_TEST 0
+#define CPM_READ_TEST 0
+#define NOTE_TEST 0
+#define WACKA_TEST 1
+#define NTH_SOUND_TEST 1
+
 #pragma printf = "%f %d %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 #pragma output noprotectmsdos /* No need for MS-DOS warning code. */
@@ -24,7 +30,7 @@ extern void z80_delay_ms(uint16_t ms);
 
 static char Buffer[129]; /* CP/M reads in 128 byte chunks. */
 
-
+#if NUMBER_TEST
 signed short FixedPoint16Test(signed short NumA, signed short NumB)
 {
   signed short NumC;
@@ -50,11 +56,14 @@ float Float32Test(float NumA, float NumB)
   NumC = NumA + NumB;
   return NumC;
 }
+#endif /* NUMBER_TEST */
 
+
+#if CPM_READ_TEST
 void ReadTest(void)
 {
   int DataFile = -1;
-  const char *FileName = "TESTDATA.BIN";
+  const char *FileName = "FORTUNES.TXT";
   ssize_t AmountRead;
   ssize_t TotalRead;
 
@@ -80,7 +89,7 @@ void ReadTest(void)
     if (AmountRead > 0 && AmountRead < sizeof(Buffer))
     {
       Buffer[AmountRead] = 0;
-      printf("%s", Buffer);
+      printf("\nRead %d bytes: %s", AmountRead, Buffer);
       TotalRead += AmountRead;
     }
     else
@@ -93,6 +102,7 @@ void ReadTest(void)
   close (DataFile);
   printf("File closed.\n");
 }
+#endif /* CPM_READ_TEST */
 
 
 /*******************************************************************************
@@ -338,6 +348,7 @@ void playNoteDelay(uint8_t channel, uint8_t note, uint16_t delayLength)
 }
 
 
+#if WACKA_TEST
 /* Recreating the sound code from Leo Binkowski's NABU Pacman. */
 
 typedef struct SoundStateStruct {
@@ -356,20 +367,26 @@ void Wacka(void)
 {
   SoundState Wa, Cka, *WackaPntr;
 
+  initNABULIBAudio();
+
   Wa.initialFineCoarse = 0x252;
   Wa.waitDelay = 2;
-  Wa.plusNote1 = -0xC8;
+  Wa.plusNote1 = (uint16_t) (-0xC8);
   Wa.plusNote2 = 0x64;
 
   Cka.initialFineCoarse = 0x54;
   Cka.waitDelay = 4;
   Cka.plusNote1 = 0xAA;
-  Cka.plusNote2 = -0x50;
+  Cka.plusNote2 = (uint16_t) (-0x50);
+
+  /* Stuff for the background ambient whooo-whooo sound, non-music music. */
+  uint16_t AmbientPeriod = 0; /* Note frequency to play, using channel C. */
+  uint8_t AmbientState = 255; /* Counts up and different things happen. */
 
   /* Run the sound loop for a few seconds, then exit. */
 
   uint16_t frameCounter;
-  for (frameCounter = 500; frameCounter != 0; frameCounter--)
+  for (frameCounter = 600; frameCounter != 0; frameCounter--)
   {
     if ((frameCounter & 63) == 0) /* Once a second, start Wa sound. */
       Wa.active = true;
@@ -389,10 +406,10 @@ void Wacka(void)
           if (WackaPntr->alt)
           {
             WackaPntr->fineCoarse = WackaPntr->fineCoarse + WackaPntr->plusNote1;
-#if 0
+#if 0 /* Leftover code which writes frequency twice. */
             ayWrite(2, WackaPntr->fineCoarse);
             ayWrite(3, WackaPntr->fineCoarse >> 8);
-            z80_delay_ms(8); /* Not in original Pacman code, can't hear this! */
+            z80_delay_ms(8); /* Not in Pacman code, else can't hear this! */
 #endif
             WackaPntr->fineCoarse = WackaPntr->fineCoarse + WackaPntr->plusNote2;
             ayWrite(2, WackaPntr->fineCoarse);
@@ -421,13 +438,75 @@ void Wacka(void)
       }
     }
 
-    z80_delay_ms(16);
+    /* Make ambient sounds, which is a soft siren going up and down in the
+    background, simpler than having background music. */
+
+    if (AmbientState < 23)
+      AmbientPeriod -= 25;
+    else if (AmbientState < 46)
+      AmbientPeriod += 25;
+    else /* Start a new cycle. */
+    {
+      AmbientState = 0;
+      AmbientPeriod = 0x2BC;
+      ayWrite(10, 8); /* Set channel C to low volume. */
+    }
+
+    AmbientState++;
+    ayWrite(4, AmbientPeriod); /* Change frequency of channel C. */
+    ayWrite(5, AmbientPeriod >> 8);
+
+    z80_delay_ms(16); /* Time delay to simulate 60hz vertical blanking. */
   }
 }
+#endif /* WACKA_TEST */
+
+
+#if NTH_SOUND_TEST
+void NthPongSounds(void)
+{
+  /* Stuff for the background ambient sound, non-music music. */
+  uint16_t AmbientPeriod = 0; /* Note frequency to play, using channel C. */
+  uint8_t AmbientState = 255; /* Counts up and different things happen at times. */
+
+  initNABULIBAudio();
+
+  /* Run the sound loop for a few seconds, then exit. */
+
+  uint16_t frameCounter;
+  for (frameCounter = 1000; frameCounter != 0; frameCounter--)
+  {
+    /* Make ambient sounds, which is a soft noise warbling around, simpler
+       than having background music. */
+
+    if (AmbientState < 16)
+      AmbientPeriod -= 20;
+    else if (AmbientState < 96)
+      AmbientPeriod += (AmbientState & 31) - 17;
+    else if (AmbientPeriod < 700) /* Get back to original frequency to loop. */
+      AmbientPeriod += 7;
+    else /* Start a new cycle. */
+    {
+      AmbientState = 0;
+      AmbientPeriod = 700;
+      ayWrite(10, 8); /* Set channel C to low volume. */
+    }
+
+    AmbientState++;
+    ayWrite(4, AmbientPeriod); /* Change frequency of channel C. */
+    ayWrite(5, AmbientPeriod >> 8);
+
+    z80_delay_ms(16); /* Simulated 60hz vertical blank delay. */
+  }
+}
+#endif /* NTH_SOUND_TEST */
 
 
 void SoundTest(void)
 {
+#if NOTE_TEST
+  initNABULIBAudio();
+
   printf("Three notes sequentially.\n");
   /* channel (0 to 2), note (0 to 71), delayLength (0 to 64K-1) */
   playNoteDelay(0, 0, 100);
@@ -441,14 +520,22 @@ void SoundTest(void)
   playNoteDelay(0, 0, 100);
   playNoteDelay(1, 35, 200);
   playNoteDelay(2, 71, 300);
-  printf("playNoteDelay does one note at a time!\n");
   z80_delay_ms(2000);
 
   printf("Finished with playing notes.\n");
+#endif /* NOTE_TEST */
 
+#if WACKA_TEST
   printf("Starting Pacman sounds.\n");
   Wacka();
   printf("Finished Pacman sounds.\n");
+#endif
+
+#if NTH_SOUND_TEST
+  printf("Starting Nth Pong Wars sounds.\n");
+  NthPongSounds();
+  printf("Finished Nth Pong Wars sounds.\n");
+#endif /* NTH_SOUND_TEST */
 }
 
 
@@ -458,7 +545,7 @@ int main(void)
 
   printf("Hello World %d!\n", i);
 
-#if 0
+#if NUMBER_TEST
   printf ("Test for computation speed by AGMS20240304.\n");
 
   for (i = 0; i < 50000; i++)
@@ -478,13 +565,14 @@ int main(void)
     Float32Test(2.1, 1.7);
   }
   printf ("Float 32 done.\n");
-#endif
+#endif /* NUMBER_TEST */
 
-#if 0
+#if CPM_READ_TEST
   ReadTest();
-#endif
+#endif /* CPM_READ_TEST */
 
   SoundTest();
 
+  printf("Tests complete, exiting to CP/M.\n");
   return 0;
 }

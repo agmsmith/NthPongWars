@@ -1849,6 +1849,30 @@ the walls, tile getting and consuming sounds, and collision sounds.
 not quite music, which would be a bit of work to set up, but better than
 nothing.  Thanks to Leo, I can steal from the best!
 
+<HR>
+<H2><A NAME="2025.03.10"></A>2025.03.10</H2>
+
+<H3>Looking into Music</H3>
+
+<P>Can we do background music with sound effects while the game is running?
+Something better than the ambient siren noises of Pacman.
+
+<P>There are several music players available for the AY-8910 sound chip.
+Z88DK includes WYZ Player and Vortex Tracker (plays ProTracker PT3 files, and
+other formats) for the Nabu platform.  WYZ looks better since it can do sound
+effects as well as music.  But how to make the music?  There was little
+documentation for XYZ, except comments in Spanish in the WYZ player code and
+a .mus file extension, no idea of how you create those files.  Vortex has a
+<A HREF="https://bulba.untergrund.net/vortex_e.htm">Vortex Tracker II page</A>
+which does have copious docs in the download, a web site programmer's page with
+source code and file formats, and includes a Windows music editor executable,
+though you could also use ProTracker3.
+
+<P>I also found a smaller editor and player called
+<A HREF="http://cngsoft.no-ip.org/chipnsfx.htm">CHIPNSFX</A>.  It includes
+source code for the editor, so I can compile it for Linux or Windows.  I'll
+give that a shot first.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

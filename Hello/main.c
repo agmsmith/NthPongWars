@@ -5,7 +5,7 @@
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a hard disk image and a
  * usable .COM file, --math32 for floating point) with:
- * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm -o "HELLO.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
+ * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm CHIPNSFX.asm -o "HELLO.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
 */
 
 #define NUMBER_TEST 0

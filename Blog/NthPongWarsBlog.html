@@ -1871,7 +1871,26 @@ though you could also use ProTracker3.
 <P>I also found a smaller editor and player called
 <A HREF="http://cngsoft.no-ip.org/chipnsfx.htm">CHIPNSFX</A>.  It includes
 source code for the editor, so I can compile it for Linux or Windows.  I'll
-give that a shot first.
+give that a shot first.  Just had to install SDL2 and compiling for Linux was
+then straight forward after telling the compiler to stop complaining about
+coding style.
+
+<P>Ah ha, CHIPNSFX has documentation on how to use the Tracker and the Player
+in a .txt file, hidden amongst hundreds of example music files.  Sound effect
+mode is essentially a second song which overrides the music song when it is
+making noise.  You can also set individual channels (of the 3 hardware channels)
+to play a particular tune block, which would be good for triggering sound
+effects.
+
+<H3><A NAME="2025.03.16"></A>2025.03.16</H3>
+
+<P>Continuing on, it looks like the Z88DK assembler can understand the macros
+(lots of "if" statements for conditional assembly for all sorts of options).
+Will try to get it to assemble the Player.  Had to write the writepsg()
+function to set sound chip registers on the Nabu, with a special case for
+register 7 which controls dangerous IO ports on the AY chip as well as sound
+related functionality.  It assembles!  Now I need to create some music files.
+I noticed some non-music opcodes which may let you call code from the music?!
 
 <P>- Alex
 

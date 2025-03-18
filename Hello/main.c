@@ -5,7 +5,7 @@
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a hard disk image and a
  * usable .COM file, --math32 for floating point) with:
- * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm CHIPNSFX.asm -o "HELLO.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
+ * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 main.c z80_delay_ms.asm z80_delay_tstate.asm CHIPNSFX.asm FOLLINOX.asm -o "HELLO.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
 */
 
 #define NUMBER_TEST 0
@@ -13,6 +13,7 @@
 #define NOTE_TEST 0
 #define WACKA_TEST 1
 #define NTH_SOUND_TEST 1
+#define CHIPNSFX_SOUND_TEST 0
 
 #pragma printf = "%f %d %ld %c %s %X %lX" /* Need these printf formats. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
@@ -502,6 +503,32 @@ void NthPongSounds(void)
 #endif /* NTH_SOUND_TEST */
 
 
+#if CHIPNSFX_SOUND_TEST
+extern void CSFX_stop(void);
+extern void CSFX_song(void *SongPntr);
+extern void CSFX_chan(uint8_t Channel, void *TrackPntr);
+extern void CSFX_play(void);
+
+extern char Follinox[]; /* The song data, stored in an assembler file. */
+
+void ChipnSFXSounds(void)
+{
+  initNABULIBAudio();
+  CSFX_stop();
+  CSFX_song(&Follinox);
+
+  /* Run the sound loop for a few seconds, then exit. */
+
+  uint16_t frameCounter;
+  for (frameCounter = 1000; frameCounter != 0; frameCounter--)
+  {
+    CSFX_play();
+    z80_delay_ms(16); /* Simulated 60hz vertical blank delay. */
+  }
+}
+#endif /* CHIPNSFX_SOUND_TEST */
+
+
 void SoundTest(void)
 {
 #if NOTE_TEST
@@ -536,6 +563,12 @@ void SoundTest(void)
   NthPongSounds();
   printf("Finished Nth Pong Wars sounds.\n");
 #endif /* NTH_SOUND_TEST */
+
+#if CHIPNSFX_SOUND_TEST
+  printf("Starting CHIPNSFX sounds.\n");
+  ChipnSFXSounds();
+  printf("Finished CHIPNSFX sounds.\n");
+#endif /* CHIPNSFX_SOUND_TEST */
 }
 
 

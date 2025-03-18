@@ -37,6 +37,11 @@ CHIPNSFX_FLAG = 1+2 ; Build all features, for Nabu Nth Pong Wars, AGMS20250316.
 ; EXTERNAL chipnsfx =target location or =chip_base
 ; EXTERNAL chipnsfx_bss =temp: DEFS CHIPNSFX_TOTAL
 
+PUBLIC chip_stop
+PUBLIC chip_song
+PUBLIC chip_chan
+PUBLIC chip_play
+
 writepsg: ; A=VALUE,C=INDEX; -  Access sound hardware on Nabu PC, AGMS20250316.
   PUSH BC
   LD B,A
@@ -1131,3 +1136,41 @@ chip_calcs: ; AMSTRAD CPC/ZX SPECTRUM+MSX1: 1.00MHz/1.78MHz; INT(.5+62500/(440*(
 chip_last:
 
 ; ========================================================================
+
+; Glue code for C, copying arguments off stack and into registers.
+
+; void CSFX_stop(void);
+PUBLIC _CSFX_stop
+_CSFX_stop: ; -; AFBCDEHL!
+  jp    chip_stop
+
+; void CSFX_song(void *SongPntr);
+PUBLIC _CSFX_song
+_CSFX_song: ; HL=^HEADER,[CF?SFX:BGM]; HL+++,AFBCDE!
+   pop  af  ; Skip over return address.
+   pop  hl  ; Get the argument from C caller, want it in hl.
+   push hl  ; Restore stack to original state.
+   push af  ; Put back the return address.
+   xor  a,a ; Clear carry flag.
+   jp   chip_song
+
+; void CSFX_chan(uint8_t Channel, void *TrackPntr);
+PUBLIC _CSFX_chan
+_CSFX_chan: ; A=CHANNEL[0-2/0-5],DE=^TRACK; AFBC!
+   ld   hl,2  ; Skip over return address.
+   add  hl,sp
+   ld   a,(hl)
+   inc  hl
+   ld   d,(hl)
+   inc  hl
+   ld   e,(hl)
+   jp   chip_chan
+
+; void CSFX_play(void);
+PUBLIC _CSFX_play
+_CSFX_play: ; -; AFBCDEHLIX!
+  push  ix ; Save stack frame pointer from C world.
+  call  chip_play
+  pop   ix
+  ret
+

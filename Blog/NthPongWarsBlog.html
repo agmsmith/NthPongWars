@@ -80,8 +80,9 @@ already been packaged.
 <CODE>dnf install mame mame-data-software-lists mame-doc mame-tools</CODE>
 
 <P>Note that stock MAME 0.270 is the last working version in Fedora 41 Linux,
-versions 0.271 and 0.272 don't work (serial port connection to the NABU fake
-server doesn't go through).
+versions 0.271 and 0.275 don't work (serial port connection to the NABU fake
+server doesn't go through).  Actually, it turns out that if you bump the
+serial port stop bits to 2, it works in those later versions.
 
 <H4>C Compiler</H4>
 
@@ -193,6 +194,10 @@ USB keyboard just to press that button.
 <A HREF="https://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=122002">https://forums.bannister.org/ubbthreads.php?ubb=showflat&Number=122002</A>
 says 111900 baud in both directions, 8 bits, no parity, 1 stop bit, no flow
 control.  Still didn't work.
+
+<P>Later on, with MAME 0.271 and later, you need 2 stop bits for some reason.
+And since it's simulated, might as well pick the fastest serial port speed the
+emulated hardware can run at (115200 baud).
 
 <H3>Start Over!</H3>
 
@@ -1891,6 +1896,16 @@ function to set sound chip registers on the Nabu, with a special case for
 register 7 which controls dangerous IO ports on the AY chip as well as sound
 related functionality.  It assembles!  Now I need to create some music files.
 I noticed some non-music opcodes which may let you call code from the music?!
+
+<H3><A NAME="2025.03.18"></A>2025.03.18</H3>
+
+<P>Figured out how to use the Tracker and make music.  Got the player code to
+assemble, but the link fails with a cryptic <CODE>type != TYPE_COMPUTED</CODE>
+message, without saying where it is or what symbols are involved.  May have to
+hack the assembler to print more details in that situation.  Found the
+assertion in z88dk/src/z80asm/src/c/expr1.c, where it wants to convert a
+TYPE_COMPUTED into a constant, and fails since the other parts of the
+expression have a TYPE_COMPUTED value.  Ugh.
 
 <P>- Alex
 

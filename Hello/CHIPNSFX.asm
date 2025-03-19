@@ -318,7 +318,8 @@ chip_play: ; -; AFBCDEHLIX!
 			ld l,a
 		else ; !READ_ONLY
 			ld l,0
-chip_addnoise = $-1-chip_base+chipnsfx
+; Simplify expression for z88dk-z80asm.  chip_addnoise = $-1-chip_base+chipnsfx
+chip_addnoise = $-1
 		endif ; READ_ONLY.
 		ld de,chip_ld_noise
 		if CHIPNSFX_FLAG&16 ; SLIDELESS?
@@ -354,7 +355,8 @@ chip_addnoise = $-1-chip_base+chipnsfx
 			call writepsg
 		else ; !READ_ONLY
 			ld a,0 ; patch 20191109: reduce mixer clobbering
-chip_ld_mixer = $-1-chip_base+chipnsfx
+; Simplify expression for z88dk-z80asm.  chip_ld_mixer = $-1-chip_base+chipnsfx
+chip_ld_mixer = $-1
 			cp 0 ; cache!
 chip_cp_mixer = $-1
 			ld (chip_cp_mixer-chip_base+chipnsfx),a ; *!* SELF-MODIFYING CODE!!
@@ -367,7 +369,8 @@ chip_cp_mixer = $-1
 			ld a,(chip_ld_noise)
 		else ; !READ_ONLY
 			ld a,0
-chip_ld_noise = $-1-chip_base+chipnsfx
+; Simplify expression for z88dk-z80asm.  chip_ld_noise = $-1-chip_base+chipnsfx
+chip_ld_noise = $-1
 			cp 0 ; cache!
 chip_cp_noise = $-1
 			ret z

@@ -80,7 +80,7 @@ already been packaged.
 <CODE>dnf install mame mame-data-software-lists mame-doc mame-tools</CODE>
 
 <P>Note that stock MAME 0.270 is the last working version in Fedora 41 Linux,
-versions 0.271 and 0.275 don't work (serial port connection to the NABU fake
+versions 0.271 to 0.275 don't work (serial port connection to the NABU fake
 server doesn't go through).  Actually, it turns out that if you bump the
 serial port stop bits to 2, it works in those later versions.
 
@@ -1901,11 +1901,33 @@ I noticed some non-music opcodes which may let you call code from the music?!
 
 <P>Figured out how to use the Tracker and make music.  Got the player code to
 assemble, but the link fails with a cryptic <CODE>type != TYPE_COMPUTED</CODE>
-message, without saying where it is or what symbols are involved.  May have to
+assert, without saying where it is or what symbols are involved.  May have to
 hack the assembler to print more details in that situation.  Found the
 assertion in z88dk/src/z80asm/src/c/expr1.c, where it wants to convert a
 TYPE_COMPUTED into a constant, and fails since the other parts of the
 expression have a TYPE_COMPUTED value.  Ugh.
+
+<H3><A NAME="2025.03.19"></A>2025.03.19</H3>
+
+<P>I hacked up the z88dk-z80asm code for expression parsing to print out the
+file and line where the expression was, and found it to be lines that look like
+<CODE>chip_addnoise = $-1-chip_base+chipnsfx</CODE>.  Since we're not making a
+ROM version, chip_base == chipnsfx and simplifying the line to
+<CODE>chip_addnoise = $-1</CODE> gets it past the assembler, at the cost of
+breaking ROM compile functionality.  Whew!  By the way, if you remove the
+assert, it generates bad code for that expression.
+
+One of the included music scores was the sound track to Square Roots, by
+"tometjerry" in demo group Vanity, a
+<A HREF="https://www.pouet.net/prod.php?which=85287">demo for the Amstrad CPC</A>.
+Here's what it sounds like in the included player (likely too fast, 60hz vs
+50hz in Europe).
+
+<P ALIGN=CENTER><A HREF="ChipNSfxMusic20250319.mp4"><IMG SRC="ChipNSfxMusic20250319.png"
+WIDTH="280" HEIGHT="216"
+ALT="[Video of Sound Tests running]"></A><BR>
+<A HREF="ChipNSfxMusic20250319.mp4">ChipNSfxMusic20250319.mp4</A> video
+with <A HREF="ChipNSfxMusic20250319.mp3">ChipNSfxMusic20250319.mp3</A> sound.
 
 <P>- Alex
 

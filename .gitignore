@@ -8,11 +8,17 @@
 /Key Software/*
 /3rd Party Materials/*
 /MAME/*
+
+# Ignore some automatically generated files.
 *.COM
 *.com
 *.EXE
 *.exe
 *.img
 *.lis
+*.lst
 *.map
 *.sym
+
+# Ignore some manually generated files.
+SourceCode/nabu/Art/*.asm

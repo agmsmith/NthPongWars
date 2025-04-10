@@ -25,6 +25,9 @@
 
 #define DEBUG_PRINT_SIM 0 /* Turn on debug printfs, uses floating point. */
 
+#include "sounds.h"
+
+
 /*******************************************************************************
  * Calculate the new position and velocity of all players.
  *
@@ -390,14 +393,14 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
 
       if (bounceOffX)
       { /* Bounce off left or right side. */
-        playNoteDelay(0, 50, 30);
+        PlaySound(SOUND_TILE_HIT, pPlayer);
         NEGATE_FX(&pPlayer->velocity_x);
         NEGATE_FX(&pPlayer->step_velocity_x);
       }
 
       if (bounceOffY)
       { /* Bounce off top or bottom side. */
-        playNoteDelay(1, 55, 30);
+        PlaySound(SOUND_TILE_HIT, pPlayer);
         NEGATE_FX(&pPlayer->velocity_y);
         NEGATE_FX(&pPlayer->step_velocity_y);
       }
@@ -419,7 +422,7 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
           NEGATE_FX(&pPlayer->step_velocity_y);
         }
         pPlayer->pixel_center_y = g_play_area_wall_bottom_y;
-        playNoteDelay(0, 60, 90);
+        PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
       if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_left_x) < 0)
@@ -430,7 +433,7 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
           NEGATE_FX(&pPlayer->step_velocity_x);
         }
         pPlayer->pixel_center_x = g_play_area_wall_left_x;
-        playNoteDelay(1, 61, 90);
+        PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
       if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_right_x) > 0)
@@ -441,7 +444,7 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
           NEGATE_FX(&pPlayer->step_velocity_x);
         }
         pPlayer->pixel_center_x = g_play_area_wall_right_x;
-        playNoteDelay(1, 62, 90);
+        PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
       if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_top_y) < 0)
@@ -452,7 +455,7 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
           NEGATE_FX(&pPlayer->step_velocity_y);
         }
         pPlayer->pixel_center_y = g_play_area_wall_top_y;
-        playNoteDelay(0, 63, 90);
+        PlaySound(SOUND_WALL_HIT, pPlayer);
       }
     }
   }

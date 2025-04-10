@@ -41,5 +41,9 @@ extern void CSFX_play(void);
    setting in the editor for it so you can hear what you're editing at the
    right speed). */
 
+extern bool CSFX_busy(uint8_t Channel);
+/* Returns TRUE if the given channel (0 to 2 for effects) is busy playing
+   something.  FALSE if it has finished its track instructions. */
+
 #endif /* _CHIPNSFX_H */
 

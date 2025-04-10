@@ -21,6 +21,7 @@
 
 #include "players.h"
 #include "scores.h"
+#include "sounds.h"
 
 #ifdef NABU_H
 #include "Art/NthPong1.h" /* Artwork data definitions for player sprites. */
@@ -697,6 +698,8 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
         ADD_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
       else if (player_velocity_octant >= 5)
         SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+
+      PlaySound(SOUND_HARVEST, pPlayer);
     }
 
     /* Apply joystick actions.  Fire does harvesting.  Directional buttons

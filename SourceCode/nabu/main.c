@@ -6,12 +6,10 @@
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a usable .COM file),
  * Optionally with --math32 for 32 bit floating point, uses 5K extra memory.
- * Use this command line to compile the final version:
+ * Use this command line to compile the final version (remove
+ * max-allocs-per-node for usable speed during development):
  *
- * zcc +cpm -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node200000 --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsEffects.asm -o "NTHPONG.COM"
- *
- * Though the faster command line to use during development is:
- * zcc +cpm -v --list --c-code-in-asm -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm -o "NTHPONG.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
+ * zcc +cpm -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node200000 --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsEffects.asm -o "NTHPONG.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/
  *
  * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips on
  * writing code that the compiler likes and optimizer settings.
@@ -87,8 +85,8 @@
 #define TEMPBUFFER_LEN 512
 char TempBuffer[TEMPBUFFER_LEN];
 
-/* Our own game include files.  Comes after NABU-LIB.h has been included and
-   TempBuffer defined. */
+/* Our own game include files, some are source code!  Comes after NABU-LIB.h
+   has been included and TempBuffer defined. */
 
 #include "../common/fixed_point.c" /* Our own fixed point math. */
 #include "LoadScreenICVGM.c"
@@ -102,6 +100,7 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "../common/players.c"
 #include "../common/simulate.c"
 #include "../common/scores.c"
+#include "../common/sounds.c"
 
 /* Our globals and semi-global statics. */
 

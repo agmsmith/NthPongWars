@@ -1144,48 +1144,43 @@ chip_last:
 
 ; void CSFX_stop(void);
 PUBLIC _CSFX_stop
-_CSFX_stop: ; -; AFBCDEHL!
-  jp    chip_stop
+_CSFX_stop:
+  jp  chip_stop ; -; AFBCDEHL!
 
 
-; void CSFX_start(void *EffectsPntr, void *SongPntr);
+; void CSFX_start(void *SongPntr, bool IsEffects);
 PUBLIC _CSFX_start
 _CSFX_start:
-  ld   hl,2   ; Skip over return address.
-  add  hl,sp
-  ld   e,(hl) ; Get SongPntr argument.
-  inc  hl
-  ld   d,(hl)
-  inc  hl
-  push hl
-  ex   de,hl
-  xor  a,a    ; Clear carry flag to select background music mode.
-  call chip_song ; HL=^HEADER,[CF?SFX:BGM]; HL+++,AFBCDE!
-  pop  hl
-  ld   e,(hl) ; Get EffectsPntr argument.
-  inc  hl
-  ld   d,(hl)
-  scf         ; Set carry flag for sound effects mode.
-  jp chip_song
+  ld  hl,2   ; Skip over return address.
+  add hl,sp
+  ld  e,(hl) ; Get SongPntr argument.
+  inc hl
+  ld  d,(hl)
+  inc hl
+  xor a,a    ; Zero A register.
+  sub a,(hl) ; Carry set if IsEffects is TRUE, clear otherwise.
+  ex  de,hl   
+  jp  chip_song ; HL=^HEADER,[CF?SFX:BGM]; HL+++,AFBCDE!
 
 
 ; void CSFX_chan(uint8_t Channel, void *TrackPntr);
 PUBLIC _CSFX_chan
-_CSFX_chan: ; A=CHANNEL[0-2/0-5],DE=^TRACK; AFBC!
+_CSFX_chan:
   ld   hl,2  ; Skip over return address.
   add  hl,sp
-  ld   a,(hl)
+  ld   a,(hl) ; Get Channel.
+  inc  hl
+  ld   e,(hl) ; Get TrackPntr.
   inc  hl
   ld   d,(hl)
-  inc  hl
-  ld   e,(hl)
-  jp   chip_chan
+  jp   chip_chan ; A=CHANNEL[0-2/0-5],DE=^TRACK; AFBC!
+
 
 ; void CSFX_play(void);
 PUBLIC _CSFX_play
-_CSFX_play: ; -; AFBCDEHLIX!
+_CSFX_play:
   push  ix ; Save stack frame pointer from C world.
-  call  chip_play
+  call  chip_play ; -; AFBCDEHLIX!
   pop   ix
   ret
 

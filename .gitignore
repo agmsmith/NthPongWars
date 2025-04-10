@@ -19,6 +19,3 @@
 *.lst
 *.map
 *.sym
-
-# Ignore some manually generated files.
-SourceCode/nabu/Art/*.asm

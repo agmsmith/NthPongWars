@@ -25,10 +25,16 @@ Effects Tracks, has a silence at the end of each sound so music will show throug
 Compiling
 
 Generate the data file in assembler from the .chp music file by using:
-chipnsfx -v -l NthMusic_ -L NthPongWarsMusic.chp NthPongWarsMusic.asm
-chipnsfx -v -l NthEffects_ -L NthPongWarsEffects.chp NthPongWarsEffects.asm
+chipnsfx -v -l _NthMusic_ -L NthPongWarsMusic.chp NthPongWarsMusic.asm
+chipnsfx -v -l _NthEffects_ -L NthPongWarsEffects.chp NthPongWarsEffects.asm
 
-Can convert assembler to binary data with:
+Then manually append a line at the bottom of each .asm file which exports the
+symbols for use from C, like this:
+PUBLIC _NthMusic_a_z, _NthMusic_a, _NthMusic_b, _NthMusic_c
+
+
+Optionally for loading music rather than having it built with the program, can
+convert assembler to binary data with:
 z80asm -v -l -m -b -o=NthPongWarsMusic.bin NthPongWarsMusic.asm
 z80asm -v -l -m -b -o=NthPongWarsEffects.bin NthPongWarsEffects.asm
 

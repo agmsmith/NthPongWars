@@ -22,9 +22,11 @@
 extern void CSFX_stop(void);
 /* Stop music, also used for initialising the library, so call this first. */
 
-extern void CSFX_start(void *EffectsPntr, void *SongPntr);
-/* Starts playing a given pair of songs.  The EffectsPntr one has priority,
-   with the SongPntr channels only being heard when the effects are silent. */ 
+extern void CSFX_start(void *SongPntr, bool IsEffects);
+/* Starts playing the specified song.  If IsEffects is TRUE then the song is
+ * played as special effects and has priority over background music, with the
+ * music channels only being heard when the effects are silent.  If IsEffects
+ * is FALSE then the song is played as background music. */
 
 extern void CSFX_chan(uint8_t Channel, void *TrackPntr);
 /* Play a specific track on a given channel.  Channels 0 to 2 are for effects

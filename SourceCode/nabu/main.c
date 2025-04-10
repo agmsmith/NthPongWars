@@ -95,7 +95,9 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 #include "l_fast_utoa.h" /* Our hacked up version of utoa() to fix bugs. */
+#include "CHIPNSFX.h" /* Music player glue functions. */
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
+#include "Art/NthPongWarsMusic.h" /* List of available Music loaded. */
 #include "../common/tiles.c"
 #include "../common/players.c"
 #include "../common/simulate.c"
@@ -396,6 +398,9 @@ void main(void)
 
   InitialiseScores(); /* Do after tiles & players set up: calc initial score. */
 
+  CSFX_stop(); /* Initialise the CHIPNSFX music player library. */
+  CSFX_start(NthMusic_a_z, false /* IsEffects */);
+
   /* The main program loop.  Update things (which may take a while), then wait
      for vertical blanking to start, then copy data to the VDP quickly, then
      go back to updating things, etc.  Unfortunately we don't have enough time
@@ -436,6 +441,9 @@ void main(void)
     CopyPlayersToSprites();
     CopyTilesToScreen();
     CopyScoresToScreen();
+
+    /* Update the audio hardware with the music being played. */
+    CSFX_play();
 
     /* Frame has been completed.  On to the next one.  Wrap after 10000 since
        we only have a four decimal digit display. */
@@ -516,6 +524,7 @@ void main(void)
 #endif
   }
   vdp_disableVDPReadyInt();
+  CSFX_stop();
 
   DumpTilesToTerminal();
   printf ("Frame count: %d\n", g_FrameCounter);

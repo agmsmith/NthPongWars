@@ -6,7 +6,9 @@
 #define _NTHPONGMUSIC_H 1
 
 extern char NthMusic_a_z[], NthMusic_a[], NthMusic_b[], NthMusic_c[];
-extern char NthEffects_a_z[], NthEffects_a[], NthEffects_b[], NthEffects_c[];
+
+extern char NthEffects_a_z[], NthEffectsSilence[], NthEffectsWallHit[];
+extern char NthEffectsTileHit[], NthEffectsHarvest[], NthEffectsBallOnBall[];
 
 #endif /* _NTHPONGMUSIC_H */
 

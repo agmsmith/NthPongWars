@@ -21,15 +21,15 @@
 
 typedef enum sounds_enum { /* List of all sounds, in increasing priority. */
   SOUND_NULL = 0, /* The sound of silence? */
-  SOUND_HARVEST, /* Sound of harvest mode collecting some speed. */
+  SOUND_HARVEST, /* Sound of harvest mode collecting some speed, has noise. */
   SOUND_TILE_HIT, /* Ball colliding with a tile. */
   SOUND_WALL_HIT, /* Ball colliding with a wall. */
-  SOUND_BALL_HIT, /* Ball colliding with another ball. */
+  SOUND_BALL_HIT, /* Ball colliding with another ball, has noise. */
   SOUND_MAX
   };
 typedef uint8_t sound_type; /* Want it to be 8 bits, not 16. */
 
-extern void PlaySound(sound_type type, player_pointer pPlayer);
+extern void PlaySound(sound_type sound_id, player_pointer pPlayer);
 /* Play a sound effect.  Given a player so we can customise sounds per player.
    Plays with priority if the system can't play multiple sounds at once. */
 

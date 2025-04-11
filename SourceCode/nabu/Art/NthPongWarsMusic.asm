@@ -9,7 +9,7 @@ _NthMusic_a_z:
 _NthMusic_a:
  db $00F5,3
 _NthMusic_a_l:
- db $6F+4,$00F8,$D0,$00FE,$FA,$00FA,$44,$00FF,$E8,$006C,$006C,$006C,$006C
+ db $6F+4,$00F8,$D0,$00FE,$FA,$00FA,$44,$00FF,$E8,48,$006C,$006C,$006C
   db $006C,$6F+30,$00FE,$FF,$00FA,$CC,$00FF,$7E,$006C,$6F+2,$006F
  db $00F2
   dw _NthMusic_a_l-$-2

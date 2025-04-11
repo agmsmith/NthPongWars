@@ -14,7 +14,8 @@ Channel 1, 2: Purely Tone effects (there is only one noise generator).
 Music should use the same white noises only in channel 3 rule,
 for its channels 3, 4, 5.
 
-Effects Tracks, has a silence at the end of each sound so music will show through:
+Effects Tracks, has a silence at the end of each sound so music will be heard
+after the sound effect:
 0 - Empty
 1 - Wall Bip (use channel 1 or 2) 
 2 - Tile Bip (use channel 2 or 1)
@@ -27,6 +28,10 @@ Compiling
 Generate the data file in assembler from the .chp music file by using:
 chipnsfx -v -l _NthMusic_ -L NthPongWarsMusic.chp NthPongWarsMusic.asm
 chipnsfx -v -l _NthEffects_ -L NthPongWarsEffects.chp NthPongWarsEffects.asm
+
+Though for effects, put just one track per channel when saving to get a pure
+effect track data block and copy the resulting assembler for that effect into
+our NthPongWarsExtractedEffects.asm file.
 
 Then manually append a line at the bottom of each .asm file which exports the
 symbols for use from C, like this:

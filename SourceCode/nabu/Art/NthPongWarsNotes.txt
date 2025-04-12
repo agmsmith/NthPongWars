@@ -8,19 +8,20 @@ Nth Pong Wars Music and Sound Effects Assignments.
 
 Which channels play which kind of sound effects...
 
-Channel 0: White noise based effects, and tone effects.
-Channel 1, 2: Purely Tone effects (there is only one noise generator).
+Channel 0, 1: Purely Tone effects (there is only one noise generator).
+Channel 2: White noise based effects, and tone effects.
 
-Music should use the same white noises only in channel 3 rule,
-for its channels 3, 4, 5.
+Music should use the same white noises only in channel 5 rule,
+for its channels 3, 4, 5.  Though due to bugs, channel 3 doesn't work once
+sound effects start playing.  So there are only 2 music channels: 4, 5.
 
 Effects Tracks, has a silence at the end of each sound so music will be heard
 after the sound effect:
 0 - Empty
-1 - Wall Bip (use channel 1 or 2) 
-2 - Tile Bip (use channel 2 or 1)
-3 - Harvest (use channel 0)
-4 - Ball on Ball (use channel 0)
+1 - Wall Bip (use channel 0 or 1) 
+2 - Tile Bip (use channel 1 or 0)
+3 - Harvest (use channel 2)
+4 - Ball on Ball (use channel 2)
 
 
 Compiling

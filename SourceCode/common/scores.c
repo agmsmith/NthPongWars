@@ -137,7 +137,8 @@ void UpdateScores(void)
 
 /* Update the screen display with the current scores.  They're the top line
    of the screen, snowing each player's score in their colour, followed by the
-   goal score to win. */
+   goal score to win.
+*/
 void CopyScoresToScreen(void)
 {
   uint8_t iPlayer;
@@ -181,6 +182,7 @@ void CopyScoresToScreen(void)
     s_ScoreFramesPerUpdateDisplayed = g_ScoreFramesPerUpdate;
     IO_VDPDATA = g_ScoreFramesPerUpdate + ('A' - 1);
   }
+#endif
 
   /* Draw the frame counter every time. */
   {
@@ -192,6 +194,20 @@ void CopyScoresToScreen(void)
     vdp_setWriteAddress(_vdpPatternNameTableAddr + 28);
     for (; (letter = *pChar) != 0; pChar++)
       IO_VDPDATA = letter;
+  }
+
+#if 1
+  /* Debug which audio effect channels are busy playing (music is always
+     playing), display ABC on second line, or blank if that channel is quiet. */
+
+  vdp_setWriteAddress(_vdpPatternNameTableAddr + 32);
+  uint8_t iChannel;
+  for (iChannel = 0; iChannel < 3; iChannel++)
+  {
+    char letter = ' ';
+    if (CSFX_busy(iChannel))
+      letter = 'A' + iChannel;
+    IO_VDPDATA = letter;
   }
 #endif
 }

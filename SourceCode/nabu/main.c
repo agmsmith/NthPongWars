@@ -398,6 +398,7 @@ void main(void)
   InitialiseScores(); /* Do after tiles & players set up: calc initial score. */
 
   CSFX_stop(); /* Initialise the CHIPNSFX music player library. */
+  CSFX_start(NthEffects_a_z, true /* IsEffects */);
   CSFX_start(NthMusic_a_z, false /* IsEffects */);
 
   /* The main program loop.  Update things (which may take a while), then wait
@@ -416,17 +417,6 @@ void main(void)
     UpdatePlayerAnimations();
     UpdateScores();
 
-    /* Check if our update took longer than a frame.  vdpIsReady counts number
-       of vertical blank starts missed. */
-
-    g_ScoreFramesPerUpdate = vdpIsReady + 1;
-#if 1
-    if (g_ScoreFramesPerUpdate >= 4) /* Non-zero means we missed frames. */
-      playNoteDelay(2 /* Channel 0 to 2 */,
-        10 + g_ScoreFramesPerUpdate /* Higher pitch if more missed */,
-        40 /* Time delay to hold note. */);
-#endif
-
     /* Check for game exit here, after the updates have been done, but before
        the dirty flags have been cleared, so we can see what's taking up all
        the time being drawn. */
@@ -434,6 +424,10 @@ void main(void)
     if (!s_KeepRunning)
       break;
 
+    /* Wait for the next vertical blank.  Check if our update took longer than
+       a frame.  vdpIsReady counts number of vertical blank starts missed. */
+
+    g_ScoreFramesPerUpdate = vdpIsReady + 1;
     vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */ 
 
     /* Do the sprites first, since they're time critical to avoid glitches. */
@@ -441,7 +435,8 @@ void main(void)
     CopyTilesToScreen();
     CopyScoresToScreen();
 
-    /* Update the audio hardware with the music being played. */
+    /* Update the audio hardware with the music being played.  Can debug which
+       channels are busy, look in scores.c. */
     CSFX_play();
 
     /* Frame has been completed.  On to the next one.  Wrap after 10000 since

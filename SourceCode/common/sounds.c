@@ -33,7 +33,7 @@ static const bool k_WhiteNoiseSound[SOUND_MAX] = {
 };
 /* Identifies which sound effects use the white noise generator, which will be
    limited to one particular channel for all white noise sounds and music.  The
-  choice is up to the person composing the CHIPNSFX music files. */
+   choice is up to the person composing the CHIPNSFX music files. */
 
 static void *k_SoundTrackPointers[SOUND_MAX] = {
   NthEffectsSilence,
@@ -52,32 +52,32 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
 {
 #ifdef NABU_H
 /* First see which channel should play the sound.  If it has white noise, it
-   always goes in channel 0 (music is written with that rule too).  Else it
+   always goes in channel 2 (music is written with that rule too).  Else it
    goes in the next unused (quiet) or lower priority sound channel.  Then if
    the channel is playing an equal or lower priority sound, start the new sound
    in that channel. */
 
-  uint8_t channel = 0;
+  uint8_t channel;
 
   if (k_WhiteNoiseSound[sound_id])
   {
-    if (s_NowPlaying[0] != SOUND_NULL && !CSFX_busy(0))
-      s_NowPlaying[0] = SOUND_NULL;
-    channel = 0;
+    if (s_NowPlaying[2] != SOUND_NULL && !CSFX_busy(2))
+      s_NowPlaying[2] = SOUND_NULL;
+    channel = 2;
   }
   else /* Tonal sound, can go in other channels. */
   {
+    if (s_NowPlaying[0] != SOUND_NULL && !CSFX_busy(0))
+      s_NowPlaying[0] = SOUND_NULL;
     if (s_NowPlaying[1] != SOUND_NULL && !CSFX_busy(1))
       s_NowPlaying[1] = SOUND_NULL;
-    if (s_NowPlaying[2] != SOUND_NULL && !CSFX_busy(2))
-      s_NowPlaying[2] = SOUND_NULL;
 
     /* Use lowest priority channel. */
 
-    if (s_NowPlaying[1] < s_NowPlaying[2])
-      channel = 1;
+    if (s_NowPlaying[0] < s_NowPlaying[1])
+      channel = 0;
     else
-      channel = 2;
+      channel = 1;
   }
 
   /* Can we play the sound?  Need the channel to be playing something with

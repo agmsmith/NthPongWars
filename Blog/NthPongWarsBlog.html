@@ -1252,6 +1252,11 @@ version 4.4.0, #14648.  The compiler command line Z88DK generates is
 directly, if you optimise for size it calls a subroutine for that, and there
 are presumably other speed optimisations in the generated code).
 
+<P>By the way, the big improvement is using --max-allocs-per-node200000 (yes,
+no space or equals sign, default is 2000, improves register assignment and
+smartness of the compiler), which cuts code size by about 6% and presumably
+makes it faster, but balloons compile time to several minutes.
+
 <P><TABLE BORDER="2">
 <TR><TH>SDCC C Compiler</TH><TH>Hand Made Assembler</TH><TH>Macro Expansion SDCC</TH></TR>
 <TR><TD VALIGN="TOP" ALIGN="LEFT"><PRE>
@@ -1927,6 +1932,64 @@ WIDTH="280" HEIGHT="216"
 ALT="[Video of Sound Tests running]"></A><BR>
 <A HREF="ChipNSfxMusic20250319.mp4">ChipNSfxMusic20250319.mp4</A> video
 with <A HREF="ChipNSfxMusic20250319.mp3">ChipNSfxMusic20250319.mp3</A> sound.
+
+<HR>
+<H2><A NAME="2025.04.15"></A>2025.04.15</H2>
+
+<H3>Adding Music and Sound Effects to the Game Code</H3>
+
+<P>After a daunting delay to compose music (new topic for me), I gave up and
+just put in an alternating scales run with some percussion and concentrated on
+getting the code in the game.
+
+<P>It was fairly straight forward.  I ripped out the old PlayNote code and
+changed it to triggering CHIPNSFX tracks.  Now an effect can be a fancy noise
+sequence or even music.  I added a priority scheme where higher priority sound
+effects bump lower priority ones, with separation of the sounds that use the
+solitary white noise generator (only one channel of the three can make noise).
+I did run into a bug where the player stops playing the background music
+channel 0 if a sound effect plays on channel 0.  The other two channels work
+properly - going back to the music after playing a sound effect.  I just
+changed the music to only use channels 1 and 2.
+
+<P>After a bit of fine tuning, and changing steering to be sharper, this is
+the current state of the game.  The main game-play mechanic that you can control
+seems to be colouring in the board.  Fine control isn't easy at that speed, but
+you can generally get colour to a desired area of the board.  Plus there's the
+dynamic of harvesting tiles for extra speed, which has a positive feedback loop
+(you move faster and colour more tiles so you can harvest more and go yet
+faster).
+
+<P ALIGN=CENTER><A HREF="20250415 Music and SFX.mp4"><IMG
+SRC="20250415 Music and SFX.GIF" WIDTH="280" HEIGHT="224"
+ALT="[Video of Game with Music and Sound Effects]"></A><BR>
+<A HREF="20250415 Music and SFX.mp4">20250415 Music and SFX.mp4</A> video
+with <A HREF="20250415 Music and SFX.mp3">20250415 Music and SFX.mp3</A> sound
+and narration.<BR>
+Short script
+<A HREF="20250415 Music and SFX Script.txt">20250415 Music and SFX Script.txt</A>.
+
+<H3>Power-up Ideas</H3>
+
+<P>Now that I have an idea of what the game does, it's time to collect power-up
+ideas that can be implemented easily.  Can you have several at once?  Would have
+to show them as a sequence of power-up animations.  Do they expire after a set
+time, is the time remaining shown in the animation?  Do the power-ups on the
+board self destruct after a while and reappear elsewhere?
+
+<UL>
+  <LI>Fat ball - bounces off and leaves a wider streak of tiles, just do a
+      wider collision with tiles detection.
+  <LI>Sharper turning radius - very nice to have.  Affects vector rotation
+      calculation.
+  <LI>Extra speed.  Not needed since we harvest tiles for speed now.
+  <LI>Stop dead.  Kills your velocity, something to avoid.
+  <LI>Higher Speed Limit - air resistance kicks in above speed X, this power-up
+      raises that limit.  Display as a higher height above the board with
+      shadow offset increased.  Offset decreases over time until you're back
+      to normal.
+  <LI>Debouncer - go through tiles rather than bouncing off them.
+</UL>
 
 <P>- Alex
 

@@ -312,10 +312,25 @@ printf("  Head towards octant %d, clockwise %d.\n",
 head_towards_octant, head_clockwise);
 #endif
 
-  /* Set the maximum amount to move between axis.  0.5 pixels per update seems
-     like a nice speed for doing a turn by steering. */
+  /* Set the maximum amount to move between axis. */
+
   fx amountToMove;
+#if 0 /* Use 0.5 pixels per turn update, makes for wide turns at high speeds. */
   INT_FRACTION_TO_FX(0, 0x8000, amountToMove);
+#else /* More precise control, use average velocity for turning speed. */
+  {
+    COPY_FX(&pPlayer->velocity_x, &amountToMove);
+    ABS_FX(&amountToMove);
+    if (IS_NEGATIVE_FX(&pPlayer->velocity_y))
+      SUBTRACT_FX(&amountToMove, &pPlayer->velocity_y, &amountToMove);
+    else
+      ADD_FX(&amountToMove, &pPlayer->velocity_y, &amountToMove);
+    DIV2_FX(&amountToMove);
+#if 0 /* For slightly slower turns with slightly more turning radius. */
+    DIV2_FX(&amountToMove);
+#endif
+  }
+#endif
 
   switch (head_towards_octant)
   {

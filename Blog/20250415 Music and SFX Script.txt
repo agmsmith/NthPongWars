@@ -1,0 +1,8 @@
+Now with background music interrupted by sound effects.
+The ABC at the top left corner shows which sound effect channels are active.
+That rushing white noise is the harvesting sound, where players consume their own tiles for extra speed.
+Here the music is slower because the frame rate has dropped to 20 per second, as you can see from the FC rather than FB indicator.
+The green player has harvested enough to move at super fast speed, which our game code was designed to handle.
+We're using the Chips and SFX Z80 AY-3-8910 chiptune library to play the sounds.
+And that's the state of Nth Pong Wars in mid-April 2025.
+

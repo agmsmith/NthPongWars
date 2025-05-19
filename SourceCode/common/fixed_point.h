@@ -151,8 +151,9 @@ extern void DIV2_FX(pfx x);
    Find out which octant the vector is in.  It will actually be between two
    octant directions, somewhere in a 45 degree segment.  So we'll come up with
    lower and upper angles, with the upper one being 45 degrees clockwise from
-   the lower one.  If it is exactly on an octant angle, that will become the
-   lower angle and we'll return a bit saying so.
+   the lower one, and we'll just return the lower one.  If it is exactly on an
+   octant angle, that will become the lower angle and we'll set the high bit
+   in the result to show that.
 
            6
        5  -y   7

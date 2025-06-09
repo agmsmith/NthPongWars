@@ -1991,6 +1991,63 @@ board self destruct after a while and reappear elsewhere?
   <LI>Debouncer - go through tiles rather than bouncing off them.
 </UL>
 
+<HR>
+<H2><A NAME="2025.04.30"></A>2025.04.30</H2>
+
+<H3>AI Players</H3>
+
+<P>Taxes are finally done, now I have a few moments to think about AI players
+before cottage maintenance season starts and I run out of time again.  I want
+AI players to help me figure out the game-play, as well as eventually for
+keeping Human players amused.
+
+<P>The key functionality is to have an AI player head towards a specific spot
+on the screen.  On top of that you can build all sorts of behaviours - from
+players that follow a route around the screen (useful for spelling out the
+title in tile trails), to ones that chase other players, to ones which go for
+concentrations of other player's tiles.
+
+<P>How do you head for a spot?  You subtract the player position from the
+target position to get a direction vector.  Then convert that direction into an
+octant angle which is used to adjust the steering.  Also use the Manhattan
+length of the direction vector to control the speed, slowing down as you get
+near.  Or rather, since we don't have brakes, just don't speed up if you are
+near the target.  For more subtlety, we can compute a desired velocity and try
+to maintain it.  Also we can tweak the desired velocity by a difficulty or AI
+personality factor, so some AIs will be slower than others and some will be too
+fast and tend to overshoot.  To avoid using too much CPU, only update the AI
+every 4 frames (max 4 AIs, only one gets an update every frame), so typically
+1/5 of a second between updates where the AI holds the current steering
+direction and harvest mode.
+
+<P>There will also be a bit of speed control.  If the AI needs to speed up, it
+should alternate between harvesting and laying down tiles.  It could reverse,
+lay down tiles, then go towards the target again while harvesting.  Or perhaps
+do little circles, alternating laying down tiles and harvesting, then heading
+back to its target when it has enough speed.
+
+<HR>
+<H2><A NAME="2025.05.19"></A>2025.05.19</H2>
+
+<H3>Recompiling MAME 0.270 for Fedora 39</H3>
+
+<P>Back at the cottage, after getting the old PC to work semi-reliably (PCIe
+bus errors while accessing the video card (cleaned out spiders from slots), and
+virtual machine operations crash it hard too (failing CPU)), I tried to get my
+development environment working.
+
+<P>I had copied Z88DK from Fedora 41, and some missing libraries not in Fedora
+39 broke the compiler.  Time to recompile.  Of course, MAME 0.271 also doesn't
+work in Fedora 39 (NABU comm port simulation broken, doesn't work at any
+speed), so I needed to go back to 0.270, which meant an hours long recompile
+since the pre-built images didn't include that version (just 0.271 or 0.258
+were available).  Fortunately the system was stable enough for those hours long
+compiles to finish.  Guess that counts as a system burn in test too!
+
+<P>The rain has stopped and the guests are gone, so it's time to mow the
+somewhat overgrown spring lawn, before dandelions grow too tall and yet more
+rain falls.  Hopefully more Nth Pong Wars later.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

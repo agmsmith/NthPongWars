@@ -221,6 +221,16 @@ void ABS_FX(pfx x)
 }
 
 
+/* Copies the absolute value of x into y. */
+void ABS_COPY_FX(pfx x, pfx y)
+{
+  if (IS_NEGATIVE_FX(x))
+    COPY_NEGATE_FX(x, y);
+  else
+    COPY_FX(x, y);
+}
+
+
 /* Compare two values X & Y, return a small integer (so it can be returned in
    a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
    +1 if X > Y. */

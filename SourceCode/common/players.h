@@ -37,8 +37,12 @@
 
 /* The maximum number of players allowed.  On the NABU, it's limited to 4 due to
    colour palette limits and the maximum number of visible sprites (4 visible,
-   more per scan line don't get drawn, and we use sprites for balls). */
+   more per scan line don't get drawn, and we use sprites for balls).  For bit
+   masking reasons, should be a power of two. */
 #define MAX_PLAYERS 4
+
+/* For masking off a counter to have values from 0 to MAX_PLAYERS-1. */
+#define MAX_PLAYERS_MASK 3
 
 /* Variable sized balls are problematic.  Having in-between sizes doesn't add
    much to the game, just a few ones are great for sweeping out large areas.
@@ -72,17 +76,19 @@ typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
 
 
 /* When algorithms control the player, we select which algos we want for
-   different functions and can set parameters for them. */
+   different functions and can set parameters for them.  Some of these options
+   override other ones, if they conflict then the earlier one in this structure
+   controls the feature.  */
 typedef struct player_algo_struct {
-  bool move_constant_speed : 1; /* Eat tiles if slower than constant speed. */
-  bool move_eat_tiles : 1; /* Eat tiles on a 50% cycle perhaps. */
+  bool eat_always : 1; /* Eat tiles on a 50% cycle, infinite speed. */
+  bool eat_when_slow : 1; /* Eat tiles if slower than a constant speed. */
   bool steer : 1; /* TRUE to turn towards target, false to drift. */
   bool target_a_player : 1; /* Periodically set target to a player location. */
   bool target_a_list : 1; /* Global list of coordinates seq. sets targets. */
   int16_t target_pixel_x; /* Location in the game world we head towards. */
   int16_t target_pixel_y;
   int16_t target_distance; /* Updated with current distance to target. */
-  uint8_t target_player; /* Index of the player to target. */
+  uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
   uint8_t target_list_index; /* Where we are in the global list of targets. */
 } player_algo_record, *player_algo_pointer;
 
@@ -91,13 +97,13 @@ typedef struct player_algo_struct {
    a parameter for the magic.  So you can have AI players follow a path, then
    return to the beginning of the path and follow it again, or hunt a player. */
 typedef enum target_list_codes_enum {
-  TARGET_CODE_CONSTANT_SPEED = 224, /* X coordinate is 0 for off, 1 for on. */
-  TARGET_CODE_MOVE_EAT_TILES, /* X coordinate is 0 for off, 1 for on. */
-  TARGET_CODE_STEER, /* X coordinate is 0 for off, 1 for on. */
+  TARGET_CODE_NONE = 224, /* No operation and lowest number opcode. */
+  TARGET_CODE_EAT_ALWAYS, /* X coordinate is 0 for off, 1 for on. */
+  TARGET_CODE_EAT_WHEN_SLOW, /* X coordinate is 0 for off, 1 for on. */
+  TARGET_CODE_STEER, /* X coordinate is 0 for off (drift), 1 for on. */
   TARGET_CODE_TARGET_PLAYER, /* X coordinate is player number, 255 to turn off
     player targeting, 254 to target the player with the most points that's not
     the AI player itself. */
-  TARGET_CODE_DRIFT, /* Start drifting at constant speed. */
   TARGET_CODE_GOTO, /* Switch to the item at list index of X coordinate. */
   TARGET_CODE_SKIP_GT, /* Skip the next list item if the distance to the target
     is greater than the X coordinate. */
@@ -175,9 +181,8 @@ typedef struct player_struct {
 
   uint8_t velocity_octant;
   /* Direction the velocity is going in, calculated from velocity x,y but only
-     when needed, by UpdatePlayerVelocityDirection().  Actually this is the
-     lower boundary of the octant, the upper one is 45 degrees clockwise from
-     this. */
+     when needed, by UpdatePlayerInputs().  Actually this is the lower boundary
+     of the octant, the upper one is 45 degrees clockwise from this. */
 
   bool velocity_octant_right_on;
   /* Set to TRUE if the velocity is right along the velocity_octant.  Needed so
@@ -223,10 +228,10 @@ typedef struct player_struct {
      change that player slot to idle. */
 
   uint16_t score;
-  /* Current score of each player.  Counts the number of tiles they own, plus
-    extra points for aged tiles.  Once a player has reached the goal score,
-    the game is over.  Gave up on doing it as percentages, too CPU expensive.
-    Score incremental updates are done in SetTileOwner(). */
+  /* Current score of each player.  Counts the number of tiles they own.  Once
+     a player has reached the goal score, the game is over.  Gave up on doing
+     it as percentages, too CPU expensive.  Score incremental updates are done
+     in SetTileOwner(). */
 
   uint16_t score_displayed;
   /* The score value currently being shown on the display and in score_text.

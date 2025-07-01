@@ -58,7 +58,8 @@ uint8_t g_KeyboardFakeJoystickStatus;
 #endif
 
 /* List of locations for AIs to move towards, and some instructions, has a byte
-   sized index so array is currently limited to at most 256 elements. */
+   sized index in the opcodes so the array is currently limited to at most 256
+   elements. */
 target_list_item_record g_target_list[] = {
   {128, 96}, /* 0 - center screen then all four corners. */
   {8, 8},
@@ -103,14 +104,20 @@ printf("(%f to %f, %f to %f)\n",
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
     pixelCoord += 32;
     pPlayer->pixel_flying_height = 2;
-    INT_TO_FX(iPlayer * 9, pPlayer->velocity_x);
+    INT_TO_FX(iPlayer * 1, pPlayer->velocity_x);
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_TO_FX(1, pPlayer->velocity_y);
 
-    pPlayer->brain = ((player_brain) BRAIN_ALGORITHM);
+    pPlayer->brain = (iPlayer == 0)
+      ? ((player_brain) BRAIN_KEYBOARD)
+      : ((player_brain) BRAIN_ALGORITHM);
 
-    bzero(&pPlayer->brain_info, sizeof(brain_info_union));
-    pPlayer->brain_info.algo.move_constant_speed = true;
+    bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
+
+    if (iPlayer == 2)
+      pPlayer->brain_info.algo.eat_always = true;
+    else
+      pPlayer->brain_info.algo.eat_when_slow = true;
     pPlayer->brain_info.algo.steer = true;
     pPlayer->brain_info.algo.target_a_list = true;
     pPlayer->brain_info.algo.target_list_index = 0;
@@ -580,12 +587,57 @@ head_towards_octant, head_clockwise);
 }
 
 
-/* Figure out what joystick action the player should do based on various
+/* Figure out what joystick action the AI player should do based on various
    algorithms.
 */
-static void BrainUpdateJoystick(player_pointer pPlayer)
+static void BrainUpdateJoystick(player_pointer pPlayer, uint8_t iPlayer)
 {
-  pPlayer->joystick_inputs = 0;
+  uint8_t joystickOutput = 0;
+
+  /* Should the player be eating tiles / thrusting now? */
+  bool eatTiles;
+  if (pPlayer->brain_info.algo.eat_always)
+  {
+    eatTiles = true;
+  }
+  else if (pPlayer->brain_info.algo.eat_when_slow)
+  {
+    /* Eat tiles when the player's speed is too low. */
+    fx playerSpeed;
+    fx abs_vel_x;
+    fx abs_vel_y;
+
+    ABS_COPY_FX(&pPlayer->velocity_x, &abs_vel_x);
+    ABS_COPY_FX(&pPlayer->velocity_y, &abs_vel_y);
+    ADD_FX(&abs_vel_x, &abs_vel_x, &playerSpeed);
+    eatTiles = GET_FX_INTEGER(playerSpeed) < 3;
+  }
+  else
+    eatTiles = false;
+
+  if (eatTiles)
+  {
+    /* Only eat tiles half the time.  On one second (32 frames), off the next.
+       Skew by player number so they don't all thrust at the same time. */
+    if (((g_FrameCounter + 16 * iPlayer) & 32) != 0)
+      joystickOutput |= Joy_Button;
+  }
+
+#if 0
+bleeble;
+  bool eat_tiles : 1; /* Eat tiles on a 50% cycle, infinite speed. */
+  bool eat_when_slow : 1; /* Eat tiles if slower than a constant speed. */
+  bool steer : 1; /* TRUE to turn towards target, false to drift. */
+  bool target_a_player : 1; /* Periodically set target to a player location. */
+  bool target_a_list : 1; /* Global list of coordinates seq. sets targets. */
+  int16_t target_pixel_x; /* Location in the game world we head towards. */
+  int16_t target_pixel_y;
+  int16_t target_distance; /* Updated with current distance to target. */
+  uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
+  uint8_t target_list_index; /* Where we are in the global list of targets. */
+#endif
+
+  pPlayer->joystick_inputs = joystickOutput;
 }
 
 
@@ -605,7 +657,7 @@ void UpdatePlayerInputs(void)
   /* Update the player's control inputs with joystick or keyboard input from
      the Human players or AI input.  Also keep track of which inputs we used. */
 
-  for (iInput = 0; iInput < sizeof (input_consumed); iInput++)
+  for (iInput = 0; iInput < 5; iInput++)
     input_consumed[iInput] = false;
 
   /* Copy inputs to player records.  For AI players, generate the inputs. */
@@ -627,15 +679,29 @@ void UpdatePlayerInputs(void)
     {
       uint8_t iStick;
       iStick = pPlayer->brain_info.iJoystick;
-      input_consumed[iStick] = true;
-      /* Note Nabu has high bits always set in joystick data, we want zero for
-         no input from the user. */
-      pPlayer->joystick_inputs = (g_JoystickStatus[iStick] & 0x1F);
+      if (iStick < 4)
+      {
+        input_consumed[iStick] = true;
+        /* Note Nabu has high bits always set in joystick data, we want zero for
+           no input from the user. */
+        pPlayer->joystick_inputs = (g_JoystickStatus[iStick] & 0x1F);
+      }
+      else /* Bug of some sort, with a garbage joystick number. */
+        pPlayer->joystick_inputs = 0;
       continue;
     }
 
-    /* One of the fancier brains or a remote player, do fancy update. */
-    BrainUpdateJoystick(pPlayer);
+    /* One of the fancier brains, do algorithmic joystick simulation.  But only
+       update one AI each frame to save on CPU time. */
+    if (pPlayer->brain == ((player_brain) BRAIN_ALGORITHM))
+    {
+      if (iPlayer == (g_FrameCounter & MAX_PLAYERS_MASK))
+        BrainUpdateJoystick(pPlayer, iPlayer);
+      continue;
+    }
+
+    /* Unimplemented type of user input source, do nothing. */
+    pPlayer->joystick_inputs = 0;
   }
 
   /* Look for unconsumed active inputs, and assign an idle player to them. */
@@ -792,8 +858,8 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
        rate down.  Don't need absolute value, it will bounce off a wall soon
        if it's going that fast. */
 
-    if (GET_FX_INTEGER(pPlayer->velocity_x) >= 2 ||
-    GET_FX_INTEGER(pPlayer->velocity_y) >= 2)
+    if (GET_FX_INTEGER(pPlayer->velocity_x) >= 1 ||
+    GET_FX_INTEGER(pPlayer->velocity_y) >= 1)
     {
       fx portionOfVelocity;
       DIV256_FX(pPlayer->velocity_x, portionOfVelocity);

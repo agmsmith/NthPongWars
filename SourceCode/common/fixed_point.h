@@ -116,6 +116,9 @@ extern void SUBTRACT_FX(pfx x, pfx y, pfx z);
 /* Put fx absolute value of x into x. */
 extern void ABS_FX(pfx x);
 
+/* Copies the absolute value of x into y. */
+extern void ABS_COPY_FX(pfx x, pfx y);
+
 /* IS_NEGATIVE_FX(pfx x) returns TRUE if the number is negative. */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
   #define IS_NEGATIVE_FX(x) ((x)->as_bytes[3] & 0x80)

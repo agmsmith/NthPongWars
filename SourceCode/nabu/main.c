@@ -120,17 +120,12 @@ static char HitAnyKey(const char *MessageText)
 
 
 /*******************************************************************************
- * Process Keyboard and Joystick inputs.
+ * Process Keyboard inputs.  Mostly making fake joystick data from cursor keys,
+ * and checking for "q" to quit.
  */
 #define DEBUG_KEYBOARD 0
 static void ProcessKeyboard(void)
 {
-  uint8_t iPlayer;
-  player_pointer pPlayer;
-
-  static uint8_t iControlledPlayer = 3;
-  /* Current player for cursor keys. */
-
   while (isKeyPressed())
   {
     uint8_t letter;
@@ -162,14 +157,6 @@ static void ProcessKeyboard(void)
       else if (letter == 0xF0) /* Right cursor key released. */
         g_KeyboardFakeJoystickStatus &= ~Joy_Right;
     }
-    else if (letter >= 0x80) /* High bit set for joystick and NABU special keys. */
-    {
-      /* Joystick or special keys.  Ignore them, there are lots of them.
-         NABU-LIB will parse the joystick keys for us. */
-#if DEBUG_KEYBOARD
-      /* printf("(%X)", letter); */
-#endif
-    }
     else
     {
 #if DEBUG_KEYBOARD
@@ -179,70 +166,6 @@ static void ProcessKeyboard(void)
       {
         s_KeepRunning = false;
       }
-      else if (letter == 'a' || letter == 's' || letter == 'w' ||
-      letter == 'z' || letter == '0')
-      {
-        pPlayer = g_player_array + iControlledPlayer;
-        if (letter == 'a') /* Speed up leftwards. */
-        {
-          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_MinusOne,
-            &pPlayer->velocity_x);
-        }
-        else if (letter == 's') /* Speed up rightwards. */
-        {
-          ADD_FX(&pPlayer->velocity_x, &gfx_Constant_One,
-            &pPlayer->velocity_x);
-        }
-        else if (letter == 'w') /* Speed up upwards. */
-        {
-          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_MinusOne,
-            &pPlayer->velocity_y);
-        }
-        else if (letter == 'z') /* Speed up downwards. */
-        {
-          ADD_FX(&pPlayer->velocity_y, &gfx_Constant_One,
-            &pPlayer->velocity_y);
-        }
-        else if (letter == '0') /* Stop moving. */
-        {
-          ZERO_FX(pPlayer->velocity_x);
-          ZERO_FX(pPlayer->velocity_y);
-        }
-#if DEBUG_KEYBOARD
-        printf("Player %d changed speed to %f, %f.\n", iControlledPlayer,
-          GET_FX_FLOAT(pPlayer->velocity_x),
-          GET_FX_FLOAT(pPlayer->velocity_y));
-#endif
-      }
-      else if (letter >= '1' && letter <= '4')
-      {
-        iControlledPlayer = letter - '1';
-#if DEBUG_KEYBOARD
-        printf("Now controlling player %d.\n", (int) iControlledPlayer);
-#endif
-      }
-      else
-      {
-#if DEBUG_KEYBOARD
-        printf ("Unhandled letter %d.\n", (int) letter);
-#endif
-      }
-    }
-  }
-
-  /* Update the player's control inputs with joystick or keyboard input from
-     the Human players. */
-
-  pPlayer = g_player_array;
-  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
-  {
-    if (pPlayer->brain == BRAIN_INACTIVE || pPlayer->brain == BRAIN_JOYSTICK)
-    {
-      /* These kinds of brains use Human input devices.  So read the devices. */
-      if (iPlayer == iControlledPlayer)
-        pPlayer->joystick_inputs = g_KeyboardFakeJoystickStatus;
-      else
-        pPlayer->joystick_inputs = (getJoyStatus(iPlayer) & 0x1F);
     }
   }
 }

@@ -38,7 +38,8 @@
 #pragma output noredir /* No command line file redirection. */
 /* #pragma output nostreams /* No disk based file streams? */
 /* #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
-#pragma printf = "%f %d %ld %X %c %s" /* Need these printf formats. */
+#pragma printf = "%d %X %c %s" /* Need these printf formats. */
+/* #pragma printf = "%f %d %X %c %s" /* Printf formats and float for debug. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
 #pragma define CRT_STACK_SIZE=1024

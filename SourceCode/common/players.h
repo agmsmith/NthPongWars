@@ -65,15 +65,62 @@ typedef enum brain_enum {
   BRAIN_KEYBOARD, /* Player controlled by a Human using the local keyboard. */
   BRAIN_JOYSTICK, /* Player controlled by a Human using joystick #n. */
   BRAIN_NETWORK, /* Player controlled by a remote entity over the network. */
-  BRAIN_CONSTANT_SPEED,
-  /* Tries to speed up to move at a constant speed in whatever direction it is
-     already going in. */
-  BRAIN_HOMING,
-  /* Tries to go towards another player at a constant speed.  Other player
-     choice changes sequentially every 10 seconds. */
+  BRAIN_ALGORITHM, /* Player controlled by a combination of algorithms. */
   BRAIN_MAX
 };
 typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
+
+
+/* When algorithms control the player, we select which algos we want for
+   different functions and can set parameters for them. */
+typedef struct player_algo_struct {
+  bool move_constant_speed : 1; /* Eat tiles if slower than constant speed. */
+  bool move_eat_tiles : 1; /* Eat tiles on a 50% cycle perhaps. */
+  bool steer : 1; /* TRUE to turn towards target, false to drift. */
+  bool target_a_player : 1; /* Periodically set target to a player location. */
+  bool target_a_list : 1; /* Global list of coordinates seq. sets targets. */
+  int16_t target_pixel_x; /* Location in the game world we head towards. */
+  int16_t target_pixel_y;
+  int16_t target_distance; /* Updated with current distance to target. */
+  uint8_t target_player; /* Index of the player to target. */
+  uint8_t target_list_index; /* Where we are in the global list of targets. */
+} player_algo_record, *player_algo_pointer;
+
+/* When a target_list_item with a Y coordinate containing these magic values is
+   encountered, it changes the algorithm settings.  The X coordinate is often
+   a parameter for the magic.  So you can have AI players follow a path, then
+   return to the beginning of the path and follow it again, or hunt a player. */
+typedef enum target_list_codes_enum {
+  TARGET_CODE_CONSTANT_SPEED = 224, /* X coordinate is 0 for off, 1 for on. */
+  TARGET_CODE_MOVE_EAT_TILES, /* X coordinate is 0 for off, 1 for on. */
+  TARGET_CODE_STEER, /* X coordinate is 0 for off, 1 for on. */
+  TARGET_CODE_TARGET_PLAYER, /* X coordinate is player number, 255 to turn off
+    player targeting, 254 to target the player with the most points that's not
+    the AI player itself. */
+  TARGET_CODE_DRIFT, /* Start drifting at constant speed. */
+  TARGET_CODE_GOTO, /* Switch to the item at list index of X coordinate. */
+  TARGET_CODE_SKIP_GT, /* Skip the next list item if the distance to the target
+    is greater than the X coordinate. */
+  TARGET_CODE_SKIP_LT, /* Skip the next list item if the distance to the target
+    is less than the X coordinate. */
+  TARGET_CODE_SKIP_EQ, /* Skip the next list item if the distance to the target
+    is equal to the X coordinate. */
+  TARGET_CODE_MAX
+};
+typedef uint8_t target_code; /* Want it to be 8 bits, not 16. */
+
+/* There is a global list of these targets.  An AI player can be processing one
+   of these items at a time.  For plain coordinates, it heads towards that
+   location in the game world and once it gets near enough, it advances to the
+   next list item.  Some items are instruction codes, for a bit of
+   programability.  Theoretically each level you load would have a different
+   global target list.*/
+typedef struct target_list_item_struct {
+  uint8_t target_pixel_x; /* 0 to 255, game world pixel coordinates. */
+  uint8_t target_pixel_y; /* 0 to 191, with some special codes after. */
+} target_list_item_record, *target_list_item_pointer;
+
+extern target_list_item_record g_target_list[];
 
 
 /* Joystick directions as bits.  0 bit means not pressed.  Whole byte is zero if
@@ -165,6 +212,7 @@ typedef struct player_struct {
 
   union brain_info_union {
     uint8_t iJoystick; /* For BRAIN_JOYSTICK, which joystick number? */
+    player_algo_record algo; /* For BRAIN_ALGORITHM - various settings. */
   } brain_info;
   /* Extra information about this brain.  Joystick number for joysticks,
      network identification for remote players, algorithm stuff for AI. */

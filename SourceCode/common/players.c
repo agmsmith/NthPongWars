@@ -57,6 +57,17 @@ uint8_t g_KeyboardFakeJoystickStatus;
   uint8_t g_JoystickStatus[4];
 #endif
 
+/* List of locations for AIs to move towards, and some instructions, has a byte
+   sized index so array is currently limited to at most 256 elements. */
+target_list_item_record g_target_list[] = {
+  {128, 96}, /* 0 - center screen then all four corners. */
+  {8, 8},
+  {248, 8},
+  {248, 184},
+  {8, 184},
+  {0, TARGET_CODE_GOTO},
+};
+
 
 /* Set up the initial player data, mostly colours and animations. */
 void InitialisePlayers(void)
@@ -96,7 +107,14 @@ printf("(%f to %f, %f to %f)\n",
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_TO_FX(1, pPlayer->velocity_y);
 
-    pPlayer->brain = ((player_brain) BRAIN_KEYBOARD); /* Everybody at once! */
+    pPlayer->brain = ((player_brain) BRAIN_ALGORITHM);
+
+    bzero(&pPlayer->brain_info, sizeof(brain_info_union));
+    pPlayer->brain_info.algo.move_constant_speed = true;
+    pPlayer->brain_info.algo.steer = true;
+    pPlayer->brain_info.algo.target_a_list = true;
+    pPlayer->brain_info.algo.target_list_index = 0;
+
     pPlayer->main_colour =
 #ifdef NABU_H
       k_PLAYER_COLOURS[iPlayer].main;

@@ -47,7 +47,7 @@ typedef struct SpriteAnimStruct {
 static const SpriteAnimRecord g_SpriteAnimData[SPRITE_ANIM_MAX] = {
   {SPRITE_ANIM_NONE, 0, 4, 60, 250, 0}, /* Nothing, box test pattern shown. */
   {SPRITE_ANIM_BALL_ROLLING, 4, 20, 3, 250, 0}, /* A ball rolling. */
-  {SPRITE_ANIM_BALL_EFFECT_THRUST, 20, 32, 2, 250, 0}, /* Halo circling ball. */
+  {SPRITE_ANIM_BALL_EFFECT_THRUST, 20, 32, 1, 250, 0}, /* Halo circling ball. */
 };
 #endif /* _NTHPONG1_H */
 

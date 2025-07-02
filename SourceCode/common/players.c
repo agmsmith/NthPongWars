@@ -52,8 +52,11 @@ fx g_play_area_wall_left_x;
 fx g_play_area_wall_right_x;
 fx g_play_area_wall_top_y;
 
-static fx k_friction_speed; /* When player speed above this, friction used. */
-static fx k_brain_slow_speed; /* When AI speed less than this, use thrust. */
+static int16_t k_friction_speed;
+/* When player speed above this, friction used. */
+
+static int16_t k_brain_slow_speed;
+/* When AI speed less than this, use thrust. */
 
 uint8_t g_KeyboardFakeJoystickStatus;
 #ifndef NABU_H
@@ -99,11 +102,15 @@ printf("(%f to %f, %f to %f)\n",
 );
 #endif
 
-  /* Set our friction activation velocity constant. */
-  INT_FRACTION_TO_FX(0, 0xC000, k_friction_speed);
+  /* Set our friction activation velocity constant.  Needs to be under 8 pixels
+     per frame, which is when an extra physics step gets added and that slows
+     everything down. */
+  k_friction_speed = 2;
 
-  /* Set our slow speed limit for AIs.  Accelerate if slower than this. */
-  INT_FRACTION_TO_FX(0, 0xE000, k_brain_slow_speed);
+  /* Set our slow speed limit for AIs.  Accelerate if slower than this.  If
+     AI's desired speed is less than the friction speed, they may never have to
+     accelerate and thus be marked as inactive and removed from the game. */
+  k_brain_slow_speed = 3;
 
   pixelCoord = 32; /* Scatter players across screen. */
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
@@ -612,7 +619,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer, uint8_t iPlayer)
   else if (pPlayer->brain_info.algo.eat_when_slow)
   {
     /* Eat tiles when the player's speed is too low. */
-    eatTiles = (COMPARE_FX(&pPlayer->speed, &k_brain_slow_speed) < 0);
+    eatTiles = (pPlayer->speed < k_brain_slow_speed);
   }
   else
     eatTiles = false;
@@ -857,13 +864,22 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
     /* Add some friction, to reduce excessive velocity which slows the frame
        rate (physics has to run multiple steps) and is uncontrollable for the
        user.  First calculate the current speed to see if the player is moving
-       too fast. */
+       too fast.  For CPU speed limitations, use the integer pixels per update,
+       ignoring the fractional part. */
 
-    static fx tempAbsVelocity;
-    COPY_ABS_FX(&pPlayer->velocity_x, &tempAbsVelocity);
-    COPY_ABS_FX(&pPlayer->velocity_y, &pPlayer->speed);
-    ADD_FX(&tempAbsVelocity, &pPlayer->speed, &pPlayer->speed);
-    if (COMPARE_FX(&pPlayer->speed, &k_friction_speed) >= 0)
+    int16_t tempVelocity, tempSpeed;
+    tempVelocity = GET_FX_INTEGER(pPlayer->velocity_x);
+    if (tempVelocity < 0)
+      tempSpeed = -tempVelocity;
+    else
+      tempSpeed = tempVelocity;
+    tempVelocity = GET_FX_INTEGER(pPlayer->velocity_y);
+    if (tempVelocity < 0)
+      tempSpeed -= tempVelocity;
+    else
+      tempSpeed += tempVelocity;
+    pPlayer->speed = tempSpeed;
+    if (tempSpeed >= k_friction_speed)
     {
       static fx portionOfVelocity;
       DIV256_FX(pPlayer->velocity_x, portionOfVelocity);

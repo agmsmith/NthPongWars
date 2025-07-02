@@ -117,7 +117,7 @@ extern void SUBTRACT_FX(pfx x, pfx y, pfx z);
 extern void ABS_FX(pfx x);
 
 /* Copies the absolute value of x into y. */
-extern void ABS_COPY_FX(pfx x, pfx y);
+extern void COPY_ABS_FX(pfx x, pfx y);
 
 /* IS_NEGATIVE_FX(pfx x) returns TRUE if the number is negative. */
 #if __BYTE_ORDER == __LITTLE_ENDIAN

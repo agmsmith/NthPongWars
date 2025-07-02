@@ -52,6 +52,9 @@ fx g_play_area_wall_left_x;
 fx g_play_area_wall_right_x;
 fx g_play_area_wall_top_y;
 
+static fx k_friction_speed; /* When player speed above this, friction used. */
+static fx k_brain_slow_speed; /* When AI speed less than this, use thrust. */
+
 uint8_t g_KeyboardFakeJoystickStatus;
 #ifndef NABU_H
   uint8_t g_JoystickStatus[4];
@@ -96,6 +99,12 @@ printf("(%f to %f, %f to %f)\n",
 );
 #endif
 
+  /* Set our friction activation velocity constant. */
+  INT_FRACTION_TO_FX(0, 0xC000, k_friction_speed);
+
+  /* Set our slow speed limit for AIs.  Accelerate if slower than this. */
+  INT_FRACTION_TO_FX(0, 0xE000, k_brain_slow_speed);
+
   pixelCoord = 32; /* Scatter players across screen. */
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
   iPlayer++, pPlayer++)
@@ -104,9 +113,9 @@ printf("(%f to %f, %f to %f)\n",
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
     pixelCoord += 32;
     pPlayer->pixel_flying_height = 2;
-    INT_TO_FX(iPlayer * 1, pPlayer->velocity_x);
+    INT_FRACTION_TO_FX(0, iPlayer * 256, pPlayer->velocity_x);
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
-    INT_TO_FX(1, pPlayer->velocity_y);
+    INT_FRACTION_TO_FX(0, 0x1000, pPlayer->velocity_y);
 
     pPlayer->brain = (iPlayer == 0)
       ? ((player_brain) BRAIN_KEYBOARD)
@@ -114,7 +123,7 @@ printf("(%f to %f, %f to %f)\n",
 
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
 
-    if (iPlayer == 2)
+    if (iPlayer == 1)
       pPlayer->brain_info.algo.eat_always = true;
     else
       pPlayer->brain_info.algo.eat_when_slow = true;
@@ -603,14 +612,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer, uint8_t iPlayer)
   else if (pPlayer->brain_info.algo.eat_when_slow)
   {
     /* Eat tiles when the player's speed is too low. */
-    fx playerSpeed;
-    fx abs_vel_x;
-    fx abs_vel_y;
-
-    ABS_COPY_FX(&pPlayer->velocity_x, &abs_vel_x);
-    ABS_COPY_FX(&pPlayer->velocity_y, &abs_vel_y);
-    ADD_FX(&abs_vel_x, &abs_vel_x, &playerSpeed);
-    eatTiles = GET_FX_INTEGER(playerSpeed) < 3;
+    eatTiles = (COMPARE_FX(&pPlayer->speed, &k_brain_slow_speed) < 0);
   }
   else
     eatTiles = false;
@@ -853,15 +855,17 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
 
 #if 1
     /* Add some friction, to reduce excessive velocity which slows the frame
-       rate and is uncontrollable for the user.  But only if going so fast that
-       it would make the physics run multiple sub-steps and thus slow the frame
-       rate down.  Don't need absolute value, it will bounce off a wall soon
-       if it's going that fast. */
+       rate (physics has to run multiple steps) and is uncontrollable for the
+       user.  First calculate the current speed to see if the player is moving
+       too fast. */
 
-    if (GET_FX_INTEGER(pPlayer->velocity_x) >= 1 ||
-    GET_FX_INTEGER(pPlayer->velocity_y) >= 1)
+    static fx tempAbsVelocity;
+    COPY_ABS_FX(&pPlayer->velocity_x, &tempAbsVelocity);
+    COPY_ABS_FX(&pPlayer->velocity_y, &pPlayer->speed);
+    ADD_FX(&tempAbsVelocity, &pPlayer->speed, &pPlayer->speed);
+    if (COMPARE_FX(&pPlayer->speed, &k_friction_speed) >= 0)
     {
-      fx portionOfVelocity;
+      static fx portionOfVelocity;
       DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
       SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
       DIV256_FX(pPlayer->velocity_y, portionOfVelocity);

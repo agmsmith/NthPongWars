@@ -222,7 +222,7 @@ void ABS_FX(pfx x)
 
 
 /* Copies the absolute value of x into y. */
-void ABS_COPY_FX(pfx x, pfx y)
+void COPY_ABS_FX(pfx x, pfx y)
 {
   if (IS_NEGATIVE_FX(x))
     COPY_NEGATE_FX(x, y);

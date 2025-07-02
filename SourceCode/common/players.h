@@ -177,7 +177,12 @@ typedef struct player_struct {
 
   fx velocity_x;
   fx velocity_y;
-  /* The speed the player is moving, in pixels per update. */
+  /* The velocity vector the player is moving by, in pixels per update. */
+
+  fx speed;
+  /* Manhattan speed of the player, calculated in UpdatePlayerInputs just
+     before friction reduces the velocity, so it will lag a bit from the
+     real velocity.  It's abs(velocity_x) + abs(velocity_y). */
 
   uint8_t velocity_octant;
   /* Direction the velocity is going in, calculated from velocity x,y but only

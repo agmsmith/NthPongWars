@@ -2048,6 +2048,33 @@ compiles to finish.  Guess that counts as a system burn in test too!
 somewhat overgrown spring lawn, before dandelions grow too tall and yet more
 rain falls.  Hopefully more Nth Pong Wars later.
 
+<HR>
+<H2><A NAME="2025.07.09"></A>2025.07.09</H2>
+
+<H3>Getting Back to AI Players</H3>
+
+<P>Got the speed control working, though it slowed down the frame rate just by
+using fixed point 32 bit math taking the absolute values of velocity X and Y,
+adding that (giving Manhattan speed), then comparing it with the desired speed.
+I reworked it as 16 bit integers, ignoring fractions of pixels per frame, which
+is good enough for practical use, and the frame rate is back!  You can actually
+store the speed in 8 bits for use by the AI, since a speed of 255 pixels per
+frame would cross the whole screen in one frame, and you don't need to simulate
+that accurately, if it even happens.
+
+<P>Building up speed is done by laying down and then eating tiles.  You can lay
+down a long run, going back and forth to make more powerful tiles in your
+colour, then harvest them.  But it turns out you can lay down and eat very
+rapidly, just pulsing the fire button very frequently.  Is that a cheat or a
+feature?  The drawback is that you don't leave behind very many tiles so your
+score will be low.  I'll have to try out both methods in the AI, with some sort
+of pulse rate and duty cycle.  Unfortunately there isn't enough CPU to look
+ahead to see what tiles a player will encounter, unless we do something like
+have the AIs stay on purely horizontal or vertical paths.
+
+<P>Anyway, is this harvesting tiles for speed a good idea for gameplay, or
+should I chuck it?  I'll have to play it to find out!
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

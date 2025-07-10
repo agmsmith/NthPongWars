@@ -80,16 +80,16 @@ typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
    override other ones, if they conflict then the earlier one in this structure
    controls the feature.  */
 typedef struct player_algo_struct {
-  bool eat_always : 1; /* Eat tiles on a 50% cycle, infinite speed. */
-  bool eat_when_slow : 1; /* Eat tiles if slower than a constant speed. */
   bool steer : 1; /* TRUE to turn towards target, false to drift. */
-  bool target_a_player : 1; /* Periodically set target to a player location. */
-  bool target_a_list : 1; /* Global list of coordinates seq. sets targets. */
   int16_t target_pixel_x; /* Location in the game world we head towards. */
   int16_t target_pixel_y;
   int16_t target_distance; /* Updated with current distance to target. */
   uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
   uint8_t target_list_index; /* Where we are in the global list of targets. */
+  uint8_t desired_speed; /* Harvest if speed is less than this pixels/frame. */
+  uint8_t harvest_time; /* Number of frames to spend in harvest mode. */
+  uint8_t trail_time; /* Number of frames to spend trailing tiles. */
+  uint8_t time_remaining; /* Num frames remaining in harvest or trail modes. */
 } player_algo_record, *player_algo_pointer;
 
 /* When a target_list_item with a Y coordinate containing these magic values is
@@ -98,8 +98,8 @@ typedef struct player_algo_struct {
    return to the beginning of the path and follow it again, or hunt a player. */
 typedef enum target_list_codes_enum {
   TARGET_CODE_NONE = 224, /* No operation and lowest number opcode. */
-  TARGET_CODE_EAT_ALWAYS, /* X coordinate is 0 for off, 1 for on. */
-  TARGET_CODE_EAT_WHEN_SLOW, /* X coordinate is 0 for off, 1 for on. */
+  TARGET_CODE_SPEED, /* X coordinate sets desired speed, in pixels/frame. */
+  TARGET_CODE_TRAIL_TIME, /* X coordinate sets trail tiles time frame count. */
   TARGET_CODE_STEER, /* X coordinate is 0 for off (drift), 1 for on. */
   TARGET_CODE_TARGET_PLAYER, /* X coordinate is player number, 255 to turn off
     player targeting, 254 to target the player with the most points that's not
@@ -179,10 +179,9 @@ typedef struct player_struct {
   fx velocity_y;
   /* The velocity vector the player is moving by, in pixels per update. */
 
-  int16_t speed;
+  uint8_t speed;
   /* Manhattan speed of the player in pixels per frame, calculated in
-     UpdatePlayerInputs just before friction reduces the velocity, so it will
-     lag a bit from the real velocity.  It's just
+     Simulate() as part of the velocity updates, so it will lag a frame.  It's
      abs(velocity_x) + abs(velocity_y). */
 
   uint8_t velocity_octant;
@@ -210,8 +209,9 @@ typedef struct player_struct {
 
   uint8_t thrust_harvested;
     /* How much extra thrust (pixels per update) you get from using Thrust (fire
-       button plus a direction) while going over your own tiles, harvesting
-       them.  Gets added to velocity after the simulation step. */
+       button plus a direction).  Simulation sets it by counting how many of
+       your own tiles you pass over.  Gets added to velocity after the
+       simulation step. */
 
   uint8_t joystick_inputs;
   /* What action is the player currently requesting?  See joystick_enum for

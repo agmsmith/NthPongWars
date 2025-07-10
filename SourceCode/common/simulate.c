@@ -77,7 +77,10 @@ printf("\nStarting simulation update.\n");
 
   /* Find the largest velocity component (X or Y) of all the players.  Also
      reset thrust harvested, which gets accumulated during collisions with
-     tiles and gets used to increase velocity on the next update. */
+     tiles and gets used to increase velocity on the next update.  Also
+     updates players's Speed value (since we're finding absolute values of the
+     velocity here anyway), which lags by a frame since it's determined before
+     moving the player. */
 
   ZERO_FX(maxVelocity);
   pPlayer = g_player_array;
@@ -96,16 +99,30 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->velocity_y)
 );
 #endif
+    int16_t tempSpeed;
 
     absVelocity = pPlayer->velocity_x;
     ABS_FX(&absVelocity);
+    tempSpeed = GET_FX_INTEGER(absVelocity);
     if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
       maxVelocity = absVelocity;
 
     absVelocity = pPlayer->velocity_y;
     ABS_FX(&absVelocity);
+    tempSpeed += GET_FX_INTEGER(absVelocity);
     if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
       maxVelocity = absVelocity;
+
+    /* Save the Manhattan speed, into an 8 bit integer, which should be good
+       enough since it is integer pixels per frame, and 256 would be moving the
+       width of the screen every frame, way too fast to care about. */ 
+
+    if (tempSpeed < 0)
+      pPlayer->speed = 0; /* Shouldn't happen unless overflowed 16 bit speed! */
+    if (tempSpeed >= 256)
+      pPlayer->speed = 255; /* Clamp at maximum unsigned 8 bit value. */
+    else
+      pPlayer->speed = tempSpeed;
   }
 
 #if DEBUG_PRINT_SIM

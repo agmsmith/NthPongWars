@@ -52,8 +52,8 @@ fx g_play_area_wall_left_x;
 fx g_play_area_wall_right_x;
 fx g_play_area_wall_top_y;
 
-static int16_t k_friction_speed;
-/* When player speed above this, friction used. */
+static uint8_t k_friction_speed;
+/* When player speed above this in pixels/frame, friction is applied. */
 
 static int16_t k_brain_slow_speed;
 /* When AI speed less than this, use thrust. */
@@ -130,12 +130,11 @@ printf("(%f to %f, %f to %f)\n",
 
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
 
-    if (iPlayer == 1)
-      pPlayer->brain_info.algo.eat_always = true;
-    else
-      pPlayer->brain_info.algo.eat_when_slow = true;
+    pPlayer->brain_info.algo.desired_speed = 2 * iPlayer;
+    pPlayer->brain_info.algo.harvest_time = iPlayer * 2;
+    pPlayer->brain_info.algo.trail_time = iPlayer * 3;
+    pPlayer->brain_info.algo.time_remaining = 5;
     pPlayer->brain_info.algo.steer = true;
-    pPlayer->brain_info.algo.target_a_list = true;
     pPlayer->brain_info.algo.target_list_index = 0;
 
     pPlayer->main_colour =
@@ -610,41 +609,33 @@ static void BrainUpdateJoystick(player_pointer pPlayer, uint8_t iPlayer)
 {
   uint8_t joystickOutput = 0;
 
-  /* Should the player be eating tiles / thrusting now? */
-  bool eatTiles;
-  if (pPlayer->brain_info.algo.eat_always)
+  if (pPlayer->joystick_inputs & Joy_Button) /* Was harvesting last frame? */
   {
-    eatTiles = true;
+    /* Is it time to finish harvesting? */
+    if (--pPlayer->brain_info.algo.time_remaining == 0)
+    {
+      pPlayer->brain_info.algo.time_remaining =
+        pPlayer->brain_info.algo.trail_time;
+    }
   }
-  else if (pPlayer->brain_info.algo.eat_when_slow)
+  else /* Wasn't harvesting last frame, time to start? */
   {
-    /* Eat tiles when the player's speed is too low. */
-    eatTiles = (pPlayer->speed < k_brain_slow_speed);
+    if (--pPlayer->brain_info.algo.time_remaining == 0)
+    {
+      /* Check if we are below the desired speed, then start harvesting. */
+      if (pPlayer->speed < pPlayer->brain_info.algo.desired_speed)
+      {
+        pPlayer->brain_info.algo.time_remaining =
+          pPlayer->brain_info.algo.harvest_time;
+        joystickOutput |= Joy_Button;
+      }
+      else /* Moving fast enough, go back to trailing tiles. */
+      {
+        pPlayer->brain_info.algo.time_remaining =
+          pPlayer->brain_info.algo.trail_time;
+      }
+    }
   }
-  else
-    eatTiles = false;
-
-  if (eatTiles)
-  {
-    /* Only eat tiles half the time.  On one second (32 frames), off the next.
-       Skew by player number so they don't all thrust at the same time. */
-    if (((g_FrameCounter + 16 * iPlayer) & 32) != 0)
-      joystickOutput |= Joy_Button;
-  }
-
-#if 0
-bleeble;
-  bool eat_tiles : 1; /* Eat tiles on a 50% cycle, infinite speed. */
-  bool eat_when_slow : 1; /* Eat tiles if slower than a constant speed. */
-  bool steer : 1; /* TRUE to turn towards target, false to drift. */
-  bool target_a_player : 1; /* Periodically set target to a player location. */
-  bool target_a_list : 1; /* Global list of coordinates seq. sets targets. */
-  int16_t target_pixel_x; /* Location in the game world we head towards. */
-  int16_t target_pixel_y;
-  int16_t target_distance; /* Updated with current distance to target. */
-  uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
-  uint8_t target_list_index; /* Where we are in the global list of targets. */
-#endif
 
   pPlayer->joystick_inputs = joystickOutput;
 }
@@ -863,23 +854,9 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
 #if 1
     /* Add some friction, to reduce excessive velocity which slows the frame
        rate (physics has to run multiple steps) and is uncontrollable for the
-       user.  First calculate the current speed to see if the player is moving
-       too fast.  For CPU speed limitations, use the integer pixels per update,
-       ignoring the fractional part. */
+       user.  Use speed from simulation update (lags a frame). */
 
-    int16_t tempVelocity, tempSpeed;
-    tempVelocity = GET_FX_INTEGER(pPlayer->velocity_x);
-    if (tempVelocity < 0)
-      tempSpeed = -tempVelocity;
-    else
-      tempSpeed = tempVelocity;
-    tempVelocity = GET_FX_INTEGER(pPlayer->velocity_y);
-    if (tempVelocity < 0)
-      tempSpeed -= tempVelocity;
-    else
-      tempSpeed += tempVelocity;
-    pPlayer->speed = tempSpeed;
-    if (tempSpeed >= k_friction_speed)
+    if (pPlayer->speed >= k_friction_speed)
     {
       static fx portionOfVelocity;
       DIV256_FX(pPlayer->velocity_x, portionOfVelocity);

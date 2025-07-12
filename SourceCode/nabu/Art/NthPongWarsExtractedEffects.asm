@@ -24,7 +24,7 @@ _NthEffectsTileHit:
 
 _NthEffectsHarvest:
  db $00F5,4
- db $6F+3,$00F8,$F0,$00FE,$FF,$00FA,$55,$00FF,$F8,$006C,$6F+1,$006F
+ db $00F8,$F0,$00FE,$FF,$00FA,$55,$00FF,$F8,$006C,$006F
  db $00F0
 
 _NthEffectsBallOnBall:

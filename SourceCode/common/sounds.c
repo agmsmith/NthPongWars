@@ -52,10 +52,11 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
 {
 #ifdef NABU_H
 /* First see which channel should play the sound.  If it has white noise, it
-   always goes in channel 2 (music is written with that rule too).  Else it
+   always goes in channel 2 (music is written with that rule too, due to a bug
+   in the music player with white noise in channel 0 not restarting).  Else it
    goes in the next unused (quiet) or lower priority sound channel.  Then if
-   the channel is playing an equal or lower priority sound, start the new sound
-   in that channel. */
+   the channel is playing a lower priority sound, start the new sound in that
+   channel. */
 
   uint8_t channel;
 
@@ -81,10 +82,10 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
   }
 
   /* Can we play the sound?  Need the channel to be playing something with
-     equal or lower priority.  Equal makes for more reuse of a channel for
-     rapidly happening sounds, which sounds better. */
+     lower priority.  Equal makes for annoying repeated sounds, use a really
+     short sound if you want that instead of bumping equal priority sounds. */
 
-  if (s_NowPlaying[channel] <= sound_id)
+  if (s_NowPlaying[channel] < sound_id)
   {
     CSFX_chan(channel, k_SoundTrackPointers[sound_id]);
     s_NowPlaying[channel] = sound_id;

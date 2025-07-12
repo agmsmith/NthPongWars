@@ -1,6 +1,6 @@
 ; CHIPNSFX 25 Hz
 ; Nth Pong Wars Sound Effects
-; By Alexander G. M. Smith, 20250409.
+; By Alexander G. M. Smith, 20250712.
 ; ===
 _NthEffects_a_z:
  dw _NthEffectsSilence-$-2

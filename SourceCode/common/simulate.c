@@ -63,8 +63,8 @@
  */
 void Simulate(void)
 {
-  fx absVelocity;
-  fx maxVelocity;
+  int16_t absVelocity;
+  int16_t maxVelocity;
   uint8_t iStep;
   uint8_t numberOfSteps;
   uint8_t iPlayer;
@@ -75,14 +75,15 @@ void Simulate(void)
 printf("\nStarting simulation update.\n");
 #endif
 
-  /* Find the largest velocity component (X or Y) of all the players.  Also
-     reset thrust harvested, which gets accumulated during collisions with
-     tiles and gets used to increase velocity on the next update.  Also
-     updates players's Speed value (since we're finding absolute values of the
-     velocity here anyway), which lags by a frame since it's determined before
-     moving the player. */
+  /* Find the largest velocity component (X or Y) of all the players,
+     approximate it with only looking at integer portion for speed, ignoring
+     the fractional part.  Also reset thrust harvested, which gets accumulated
+     during collisions with tiles and gets used to increase velocity on the
+     next update.  Also updates players's Speed value (since we're finding
+     absolute values of the velocity here anyway), which lags by a frame since
+     it's determined before moving the player. */
 
-  ZERO_FX(maxVelocity);
+  maxVelocity = 0;
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
   {
@@ -101,16 +102,18 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
 #endif
     int16_t tempSpeed;
 
-    absVelocity = pPlayer->velocity_x;
-    ABS_FX(&absVelocity);
-    tempSpeed = GET_FX_INTEGER(absVelocity);
-    if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
+    absVelocity = GET_FX_INTEGER(pPlayer->velocity_x);
+    if (absVelocity < 0)
+      absVelocity = -absVelocity;
+    tempSpeed = absVelocity;
+    if (absVelocity > maxVelocity)
       maxVelocity = absVelocity;
 
-    absVelocity = pPlayer->velocity_y;
-    ABS_FX(&absVelocity);
-    tempSpeed += GET_FX_INTEGER(absVelocity);
-    if (COMPARE_FX(&absVelocity, &maxVelocity) > 0)
+    absVelocity = GET_FX_INTEGER(pPlayer->velocity_y);
+    if (absVelocity < 0)
+      absVelocity = -absVelocity;
+    tempSpeed += absVelocity;
+    if (absVelocity > maxVelocity)
       maxVelocity = absVelocity;
 
     /* Save the Manhattan speed, into an 8 bit integer, which should be good
@@ -126,23 +129,23 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
   }
 
 #if DEBUG_PRINT_SIM
-printf("Max velocity component: %f\n",
-  GET_FX_FLOAT(maxVelocity)
-);
+printf("Max integer velocity component: %d\n", maxVelocity);
 #endif
 
   /* Find the number of steps needed to ensure the maximum velocity is less
      than one tile per step, or at most something like 7.999 pixels.  Can divide
-     velocity by using 2**stepShiftCount to get the velocity per step. */
+     velocity by using 2**stepShiftCount to get the velocity per step.  Note
+     that the integer maxVelocity < TILE_PIXEL_WIDTH is true if the floating
+     point version (which can be slightly larger) is also < TILE_PIXEL_WIDTH. */
 
   for (numberOfSteps = 1, stepShiftCount = 0;
   (numberOfSteps & 0x80) == 0;
   numberOfSteps += numberOfSteps, stepShiftCount++)
   {
     /* See if the step size is less than a tile width. */
-    if (GET_FX_INTEGER(maxVelocity) < TILE_PIXEL_WIDTH)
+    if (maxVelocity < TILE_PIXEL_WIDTH)
       break; /* Step size is small enough now. */
-    DIV2_FX(&maxVelocity);
+    maxVelocity >>= 1;
   }
 
 #if DEBUG_PRINT_SIM

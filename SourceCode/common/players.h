@@ -88,7 +88,7 @@ typedef struct player_algo_struct {
   uint8_t target_list_index; /* Where we are in the global list of targets. */
   uint8_t desired_speed; /* Harvest if speed is less than this pixels/frame. */
   uint8_t harvest_time; /* Number of frames to spend in harvest mode. */
-  uint8_t trail_time; /* Number of frames to spend trailing tiles. */
+  uint8_t trail_time; /* Number of frames to spend just trailing tiles. */
   uint8_t time_remaining; /* Num frames remaining in harvest or trail modes. */
 } player_algo_record, *player_algo_pointer;
 

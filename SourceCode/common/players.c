@@ -52,11 +52,10 @@ fx g_play_area_wall_left_x;
 fx g_play_area_wall_right_x;
 fx g_play_area_wall_top_y;
 
-static uint8_t k_friction_speed;
-/* When player speed above this in pixels/frame, friction is applied. */
-
-static int16_t k_brain_slow_speed;
-/* When AI speed less than this, use thrust. */
+static const uint8_t k_friction_speed = 2;
+/* When player speed is greater or equal to this in pixels/frame, friction is
+   applied.  Needs to be under 8 pixels per frame, which is when an extra
+   physics step gets added and that slows everything down. */
 
 uint8_t g_KeyboardFakeJoystickStatus;
 #ifndef NABU_H
@@ -102,16 +101,6 @@ printf("(%f to %f, %f to %f)\n",
 );
 #endif
 
-  /* Set our friction activation velocity constant.  Needs to be under 8 pixels
-     per frame, which is when an extra physics step gets added and that slows
-     everything down. */
-  k_friction_speed = 2;
-
-  /* Set our slow speed limit for AIs.  Accelerate if slower than this.  If
-     AI's desired speed is less than the friction speed, they may never have to
-     accelerate and thus be marked as inactive and removed from the game. */
-  k_brain_slow_speed = 3;
-
   pixelCoord = 32; /* Scatter players across screen. */
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
   iPlayer++, pPlayer++)
@@ -130,9 +119,9 @@ printf("(%f to %f, %f to %f)\n",
 
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
 
-    pPlayer->brain_info.algo.desired_speed = 2 * iPlayer;
-    pPlayer->brain_info.algo.harvest_time = iPlayer * 2;
-    pPlayer->brain_info.algo.trail_time = iPlayer * 3;
+    pPlayer->brain_info.algo.desired_speed = 15 * iPlayer;
+    pPlayer->brain_info.algo.harvest_time = iPlayer * 3;
+    pPlayer->brain_info.algo.trail_time = iPlayer * 4;
     pPlayer->brain_info.algo.time_remaining = 5;
     pPlayer->brain_info.algo.steer = true;
     pPlayer->brain_info.algo.target_list_index = 0;
@@ -352,7 +341,8 @@ printf("  Head towards octant %d, clockwise %d.\n",
 head_towards_octant, head_clockwise);
 #endif
 
-  /* Set the maximum amount to move between axis. */
+  /* Set the maximum amount to move between axis, larger makes for faster
+     rotations. */
 
   fx amountToMove;
 #if 0 /* Use 0.5 pixels per turn update, makes for wide turns at high speeds. */
@@ -616,6 +606,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer, uint8_t iPlayer)
     {
       pPlayer->brain_info.algo.time_remaining =
         pPlayer->brain_info.algo.trail_time;
+      /* Leave Joy_Button bit of joystickOutput at zero, for no harvesting. */
     }
   }
   else /* Wasn't harvesting last frame, time to start? */
@@ -854,7 +845,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
 #if 1
     /* Add some friction, to reduce excessive velocity which slows the frame
        rate (physics has to run multiple steps) and is uncontrollable for the
-       user.  Use speed from simulation update (lags a frame). */
+       user.  Use cheap speed from simulation update (lags a frame). */
 
     if (pPlayer->speed >= k_friction_speed)
     {

@@ -21,7 +21,9 @@
 
 /* Counts the number of frames drawn on screen, never reset.  Also used as a
    general timer for things like aging tiles.  Will run at best at 60hz,
-   but typically 30hz or even 20hz if a lot is happening on screen. */
+   but typically 30hz or even 20hz if a lot is happening on screen.  Score
+   displays only last 4 digits, but it's a 16 bit counter, which is allowed to
+   wrap around so that differences work. */
 extern uint16_t g_FrameCounter;
 
 /* The current number of points needed to win the game.  Decreases over time. */

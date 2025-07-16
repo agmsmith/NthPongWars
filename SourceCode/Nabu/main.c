@@ -88,7 +88,7 @@ char TempBuffer[TEMPBUFFER_LEN];
 /* Our own game include files, some are source code!  Comes after NABU-LIB.h
    has been included and TempBuffer defined. */
 
-#include "../common/fixed_point.c" /* Our own fixed point math. */
+#include "../Common/fixed_point.c" /* Our own fixed point math. */
 #include "LoadScreenICVGM.c"
 #include "LoadScreenPC2.c"
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
@@ -96,11 +96,11 @@ char TempBuffer[TEMPBUFFER_LEN];
 #include "CHIPNSFX.h" /* Music player glue functions. */
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
 #include "Art/NthPongWarsMusic.h" /* List of available Music loaded. */
-#include "../common/tiles.c"
-#include "../common/players.c"
-#include "../common/simulate.c"
-#include "../common/scores.c"
-#include "../common/sounds.c"
+#include "../Common/tiles.c"
+#include "../Common/players.c"
+#include "../Common/simulate.c"
+#include "../Common/scores.c"
+#include "../Common/sounds.c"
 
 /* Our globals and semi-global statics. */
 
@@ -237,10 +237,11 @@ void main(void)
   printf("Compiled on " __DATE__ " at " __TIME__ ".\n");
   mallinfo(&sTotalMem, &sLargestMem);
   printf("Heap has %d bytes free, largest %d.\n", sTotalMem, sLargestMem);
-  printf("Using the SDCC compiler, unknown version.\n");
+  printf("Using Z88DK with the SDCC compiler, and D. J. Sures NABU-LIB.\n");
 
   /* Weird bug in Z88DK where printf("$%X $$$$$%X", a, b); loses any
-     number of dollar signs before the second %X. */
+     number of dollar signs before the second %X.  Turns out printing 16 bit
+     integers was corrupting the IX register, our frame pointer! */
 #if 0
   printf("Stack pointer is $%X, frame $%X.\n",
     (int) s_StackPointer, (int) s_StackFramePointer);
@@ -267,8 +268,9 @@ void main(void)
 
   initNABULib(); /* No longer can use CP/M text input or output. */
 
-  vdp_init(VDP_MODE_G2, VDP_WHITE /* fgColor not applicable */,
-    VDP_BLACK /* bgColor */, true /* bigSprites 16x16 pixels but fewer names */,
+  vdp_init(VDP_MODE_G2,
+    VDP_WHITE /* fgColor not applicable */, VDP_DARK_BLUE /* bgColor */,
+    true /* bigSprites 16x16 pixels but fewer names, each takes 4 */,
     false /* magnify */, true /* splitThirds */);
   /* Sets up the TMS9918A Video Display Processor with this memory map:
     _vdpPatternGeneratorTableAddr = 0x00; 6K or 0x1800 long, ends 0x1800.
@@ -279,7 +281,7 @@ void main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
-#if 0
+#if 1
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
@@ -322,12 +324,13 @@ void main(void)
 
   CSFX_stop(); /* Initialise the CHIPNSFX music player library. */
   CSFX_start(NthEffects_a_z, true /* IsEffects */);
-  CSFX_start(NthMusic_a_z, false /* IsEffects */);
+  CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Background music. */
 
   /* The main program loop.  Update things (which may take a while), then wait
      for vertical blanking to start, then copy data to the VDP quickly, then
      go back to updating things, etc.  Unfortunately we don't have enough time
-     to do everything in one frame, so it's usually 30 frames per second. */
+     to do everything in one frame, so it's usually 30 frames per second,
+     often dropping to 20 fps when there's lots of physics activity. */
 
   s_KeepRunning = true;
   vdp_enableVDPReadyInt();
@@ -362,11 +365,10 @@ void main(void)
        channels are busy, look in scores.c. */
     CSFX_play();
 
-    /* Frame has been completed.  On to the next one.  Wrap after 10000 since
-       we only have a four decimal digit display. */
+    /* Frame has been completed.  On to the next one.  16 bit wrap-around
+       needed so time differences past the wrap still work. */
 
-    if (++g_FrameCounter >= 10000)
-      g_FrameCounter = 0;
+    g_FrameCounter++;
 
     if ((g_FrameCounter & 0x1F) == 0)
       g_ScoreGoal--; /* Fake decreasing of the goal about once per second. */

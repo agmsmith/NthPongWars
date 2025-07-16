@@ -14,20 +14,22 @@ _NthEffectsSilence:
 
 _NthEffectsWallHit:
  db $00F5,4
- db $6F+6,$00FE,$F9,$00FD,$35,48,$6F+1,$006F
+ db $6F+5,$00FE,$F8,48,$6F+1,$006F
  db $00F0
 
 _NthEffectsTileHit:
  db $00F5,4
- db $00F8,$E0,$00FE,$E8,$00FC,$B6,60,$006F
+ db $00F8,$E0,$00FE,$E8,$00FC,$B6,60
  db $00F0
 
 _NthEffectsHarvest:
  db $00F5,4
  db $00F8,$F0,$00FE,$E8,$00FA
-_NthEffectsHarvestPlayer: ; Player number from $10 to $40 in steps of $10.
+_NthEffectsHarvestPlayer:
+; Noise pitch $01=high, to $FF low.  We map player numbers to $10 to $D0
+; in steps of $40 ($10 steps are hard to distinguish).
  db $10
- db $006C,$006F
+ db $006C
  db $00F0
 
 _NthEffectsBallOnBall:

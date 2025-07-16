@@ -196,7 +196,7 @@ void CopyScoresToScreen(void)
       IO_VDPDATA = letter;
   }
 
-#if 1
+#if 0
   /* Debug which audio effect channels are busy playing (music is always
      playing), display ABC on second line, or blank if that channel is quiet. */
 

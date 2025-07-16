@@ -111,7 +111,7 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
     if (sound_id == SOUND_HARVEST)
     {
       /* Change noise frequency from $10 (high enough) to $FF (low). */
-      NthEffectsHarvestPlayer[0] = pPlayer->player_array_index * 64 + 16; 
+      NthEffectsHarvestPlayer[0] = pPlayer->player_array_index * 64 + 16;
     }
 
     CSFX_chan(channel, k_SoundTrackPointers[sound_id]);

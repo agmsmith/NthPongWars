@@ -1,6 +1,6 @@
 ; CHIPNSFX 25 Hz
 ; Nth Pong Wars Sound Effects
-; By Alexander G. M. Smith, 20250712.
+; By Alexander G. M. Smith, 20250715.
 ; ===
 _NthEffects_a_z:
  dw _NthEffectsSilence-$-2
@@ -24,7 +24,10 @@ _NthEffectsTileHit:
 
 _NthEffectsHarvest:
  db $00F5,4
- db $00F8,$F0,$00FE,$FF,$00FA,$55,$00FF,$F8,$006C,$006F
+ db $00F8,$F0,$00FE,$E8,$00FA
+_NthEffectsHarvestPlayer: ; Player number from $10 to $40 in steps of $10.
+ db $10
+ db $006C,$006F
  db $00F0
 
 _NthEffectsBallOnBall:
@@ -38,5 +41,6 @@ PUBLIC _NthEffectsSilence
 PUBLIC _NthEffectsWallHit
 PUBLIC _NthEffectsTileHit
 PUBLIC _NthEffectsHarvest
+PUBLIC _NthEffectsHarvestPlayer
 PUBLIC _NthEffectsBallOnBall
 

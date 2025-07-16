@@ -105,6 +105,8 @@ printf("(%f to %f, %f to %f)\n",
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
   iPlayer++, pPlayer++)
   {
+    pPlayer->player_array_index = iPlayer; /* Fast convert pointer to index. */
+
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_x);
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
     pixelCoord += 32;
@@ -113,18 +115,20 @@ printf("(%f to %f, %f to %f)\n",
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_FRACTION_TO_FX(0, 0x1000, pPlayer->velocity_y);
 
-    pPlayer->brain = (iPlayer == 0)
-      ? ((player_brain) BRAIN_KEYBOARD)
-      : ((player_brain) BRAIN_ALGORITHM);
-
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
 
-    pPlayer->brain_info.algo.desired_speed = 15 * iPlayer;
-    pPlayer->brain_info.algo.harvest_time = iPlayer * 3;
-    pPlayer->brain_info.algo.trail_time = iPlayer * 4;
-    pPlayer->brain_info.algo.time_remaining = 5;
-    pPlayer->brain_info.algo.steer = true;
-    pPlayer->brain_info.algo.target_list_index = 0;
+    if (iPlayer == 0)
+      pPlayer->brain = (player_brain) BRAIN_KEYBOARD;
+    else
+    {
+      pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
+      pPlayer->brain_info.algo.desired_speed = 5 * iPlayer;
+      pPlayer->brain_info.algo.harvest_time = 5 + 2 * iPlayer;
+      pPlayer->brain_info.algo.trail_time = 8 - 2 * iPlayer;
+      pPlayer->brain_info.algo.time_remaining = 50;
+      pPlayer->brain_info.algo.steer = true;
+      pPlayer->brain_info.algo.target_list_index = 0;
+    }
 
     pPlayer->main_colour =
 #ifdef NABU_H
@@ -789,6 +793,7 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
       else if (player_velocity_octant >= 5)
         SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
 
+      /* Play a sound for harvesting.  Maybe. */
       PlaySound(SOUND_HARVEST, pPlayer);
     }
 
@@ -858,7 +863,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
 #endif
 
     /* Update special effect animations and other things. */
-    
+
     /* Thrust animation is shown when some acceleration points are harvested.
        But we only get thrust points every other frame as it oscillates while
        sitting over a tile creating then destroying ownership (unless it's
@@ -866,7 +871,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
        down, and force it to be static (not advancing) if no harvest. */
 
     SpriteAnimationType newAnimType;
-    newAnimType = pPlayer->thrust_active ? 
+    newAnimType = pPlayer->thrust_active ?
       (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST :
       (SpriteAnimationType) SPRITE_ANIM_NONE;
     if (newAnimType != pPlayer->sparkle_anim.type)

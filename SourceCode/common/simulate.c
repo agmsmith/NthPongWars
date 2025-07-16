@@ -75,6 +75,12 @@ void Simulate(void)
 printf("\nStarting simulation update.\n");
 #endif
 
+  /* Reduce adaptive harvest sound effect amount of harvest limit once per
+     frame.  New bigger harvests will bump it back up and make noise. */
+
+  if (g_harvest_sound_threshold != 0)
+    g_harvest_sound_threshold--;
+
   /* Find the largest velocity component (X or Y) of all the players,
      approximate it with only looking at integer portion for speed, ignoring
      the fractional part.  Also reset thrust harvested, which gets accumulated

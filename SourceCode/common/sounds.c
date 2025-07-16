@@ -44,12 +44,28 @@ static void *k_SoundTrackPointers[SOUND_MAX] = {
 };
 #endif /* NABU_H */
 
+uint8_t g_harvest_sound_threshold = 0;
+/* Cut down on the number of times the harvest sound is played, using an
+   adaptive scheme that keeps a running threshold going continuously.  If the
+   player's harvest isn't big enough compared to other recent harvests, don't
+   play a sound. */
+
 
 /* Play a sound effect.  Given a player so we can customise sounds per player.
    Plays with priority if the system can't play multiple sounds at once.
 */
 void PlaySound(sound_type sound_id, player_pointer pPlayer)
 {
+  /* Skip harvest sound if it isn't as big as recent harvests. */ 
+
+  if (sound_id == SOUND_HARVEST)
+  {
+    if (pPlayer->thrust_harvested <= g_harvest_sound_threshold)
+      return; /* Not a big enough harvest to make a noise. */
+
+    g_harvest_sound_threshold = pPlayer->thrust_harvested;
+  }
+
 #ifdef NABU_H
 /* First see which channel should play the sound.  If it has white noise, it
    always goes in channel 2 (music is written with that rule too, due to a bug
@@ -87,6 +103,16 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
 
   if (s_NowPlaying[channel] < sound_id)
   {
+    /* Some sounds have variations made by editing the sound data, so each
+       player gets a slightly different sound.  Note that we don't change the
+      sound data until the channel has finished playing.  Though if it is
+      playing in two channels, this scheme may fail. */
+
+    if (sound_id == SOUND_HARVEST)
+    {
+      NthEffectsHarvestPlayer[0] = pPlayer->player_array_index * 16 + 16; 
+    }
+
     CSFX_chan(channel, k_SoundTrackPointers[sound_id]);
     s_NowPlaying[channel] = sound_id;
   }

@@ -203,15 +203,20 @@ typedef struct player_struct {
     temporary value used by Simulate(). */
 
   bool thrust_active;
-    /* Set to TRUE when thrust is busy harvesting tiles.  Means the fire button
-       is pressed and  a direction is specified.  Saves having to read the
-       buttons repeatedly during simulation. */
+  /* Set to TRUE when thrust is busy harvesting tiles.  Means the fire button
+     is pressed and  a direction is specified.  Saves having to read the
+     buttons repeatedly during simulation. */
 
   uint8_t thrust_harvested;
-    /* How much extra thrust (pixels per update) you get from using Thrust (fire
-       button plus a direction).  Simulation sets it by counting how many of
-       your own tiles you pass over.  Gets added to velocity after the
-       simulation step. */
+  /* How much extra thrust (pixels per update) you get from using Thrust (fire
+     button plus a direction).  Simulation sets it by counting how many of
+     your own tiles you pass over.  Gets added to velocity after the
+     simulation step. */
+
+  uint8_t player_array_index;
+  /* The index of this player in the g_player_array.  Player number in other
+     words, used for things like deciding the sound to make for the player.
+     Avoids having code to calculate the index from a player pointer. */
 
   uint8_t joystick_inputs;
   /* What action is the player currently requesting?  See joystick_enum for

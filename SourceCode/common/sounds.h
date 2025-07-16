@@ -29,6 +29,11 @@ typedef enum sounds_enum { /* List of all sounds, in increasing priority. */
   };
 typedef uint8_t sound_type; /* Want it to be 8 bits, not 16. */
 
+extern uint8_t g_harvest_sound_threshold;
+/* Keeps track of the amount of harvesting going on in the most recent harvest
+   sound, and doesn't play other harvests this big or smaller.  Decremented
+   once per frame until it hits zero, to make it adaptive. */
+
 extern void PlaySound(sound_type sound_id, player_pointer pPlayer);
 /* Play a sound effect.  Given a player so we can customise sounds per player.
    Plays with priority if the system can't play multiple sounds at once. */

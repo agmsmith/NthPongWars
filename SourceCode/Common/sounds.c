@@ -27,9 +27,9 @@ static sound_type s_NowPlaying[MAX_SOUND_CHANNELS];
 static const bool k_WhiteNoiseSound[SOUND_MAX] = {
   false, /* SOUND_NULL */
   true,  /* SOUND_HARVEST */
+  false, /* SOUND_WALL_HIT */
   false, /* SOUND_TILE_HIT */
   false, /* SOUND_TILE_HIT_COPY */
-  false, /* SOUND_WALL_HIT */
   true,  /* SOUND_BALL_HIT */
 };
 /* Identifies which sound effects use the white noise generator, which will be
@@ -39,9 +39,9 @@ static const bool k_WhiteNoiseSound[SOUND_MAX] = {
 static void *k_SoundTrackPointers[SOUND_MAX] = {
   NthEffectsSilence,
   NthEffectsHarvest,
+  NthEffectsWallHit,
   NthEffectsTileHit,
   NthEffectsTileHitCopy, /* A copy so we can customise sound for dual plays. */
-  NthEffectsWallHit,
   NthEffectsBallOnBall,
 };
 #endif /* NABU_H */

@@ -114,7 +114,7 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
     if (sound_id == SOUND_HARVEST)
     {
       /* Change noise frequency from $10 (high enough) to $FF (low). */
-      NthEffectsHarvestPlayer[0] = pPlayer->player_array_index * 64 + 16;
+      NthEffectsHarvestPlayer[0] = pPlayer->player_array_index * 48 + 50;
     }
     else if (sound_id == SOUND_TILE_HIT)
     {
@@ -123,7 +123,7 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
          note to reflect the player hitting the tile.  Pitch is from
          0 (low, C-0) to 107=$6B (high, B#8), 12 notes per octave. */
 
-      uint8_t pitch = pPlayer->player_array_index * 12 + 60;
+      uint8_t pitch = pPlayer->player_array_index * 12 + 36;
       if (channel == 0)
       {
         sound_id = SOUND_TILE_HIT_COPY;

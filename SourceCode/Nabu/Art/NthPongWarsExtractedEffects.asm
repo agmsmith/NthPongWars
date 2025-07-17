@@ -12,7 +12,7 @@ _NthEffectsSilence:
 
 _NthEffectsWallHit:
  db $00F5,4
- db $6F+4,$00FE,$F0,84
+ db $6F+4,$00FE,$F0,16
  db $00F0
 
 _NthEffectsTileHit:

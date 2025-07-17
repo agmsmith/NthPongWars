@@ -115,20 +115,16 @@ printf("(%f to %f, %f to %f)\n",
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_FRACTION_TO_FX(0, 0x1000, pPlayer->velocity_y);
 
-    bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
+    /* Make them all AI players, since you can take over from AI easily. */
 
-    if (iPlayer == 0)
-      pPlayer->brain = (player_brain) BRAIN_KEYBOARD;
-    else
-    {
-      pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
-      pPlayer->brain_info.algo.desired_speed = 5 * iPlayer;
-      pPlayer->brain_info.algo.harvest_time = 5 + 2 * iPlayer;
-      pPlayer->brain_info.algo.trail_time = 8 - 2 * iPlayer;
-      pPlayer->brain_info.algo.time_remaining = 50;
-      pPlayer->brain_info.algo.steer = true;
-      pPlayer->brain_info.algo.target_list_index = 0;
-    }
+    bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
+    pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
+    pPlayer->brain_info.algo.desired_speed = 5 * iPlayer;
+    pPlayer->brain_info.algo.harvest_time = 5 + 2 * iPlayer;
+    pPlayer->brain_info.algo.trail_time = 8 - 2 * iPlayer;
+    pPlayer->brain_info.algo.time_remaining = 50;
+    pPlayer->brain_info.algo.steer = true;
+    pPlayer->brain_info.algo.target_list_index = 0;
 
     pPlayer->main_colour =
 #ifdef NABU_H
@@ -349,8 +345,8 @@ head_towards_octant, head_clockwise);
      rotations. */
 
   fx amountToMove;
-#if 0 /* Use 0.5 pixels per turn update, makes for wide turns at high speeds. */
-  INT_FRACTION_TO_FX(0, 0x8000, amountToMove);
+#if 1 /* Use 1.5 pixels per turn update, makes for wide turns at high speeds. */
+  INT_FRACTION_TO_FX(1, 0x8000, amountToMove);
 #else /* More precise control, use average velocity for turning speed. */
   {
     COPY_FX(&pPlayer->velocity_x, &amountToMove);
@@ -715,14 +711,27 @@ void UpdatePlayerInputs(void)
     if ((joyStickData & 0x1F) == 0)
       continue; /* No buttons pressed, no activity. */
 
-    /* Find an idle player and assign it to this input. */
+    /* Find an idle player and assign it to this input.  Or an AI player? */
 
-    pPlayer = g_player_array;
-    for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+    for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
+      iPlayer++, pPlayer++)
     {
       if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE))
         continue;
-
+      break;
+    }
+    if (iPlayer >= MAX_PLAYERS) /* Hunt down an AI player to replace. */
+    {
+      for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
+        iPlayer++, pPlayer++)
+      {
+        if (pPlayer->brain != ((player_brain) BRAIN_ALGORITHM))
+          continue;
+        break;
+      }
+    }
+    if (iPlayer < MAX_PLAYERS)
+    {
       pPlayer->brain_info.iJoystick = iInput;
       pPlayer->brain = (iInput < 4) ?
         ((player_brain) BRAIN_JOYSTICK) :
@@ -733,7 +742,6 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
   (pPlayer->brain == ((player_brain) BRAIN_JOYSTICK)) ? "joystick" : "keyboard",
   pPlayer->brain_info.iJoystick);
 #endif
-      break;
     }
   }
 

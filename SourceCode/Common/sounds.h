@@ -23,6 +23,7 @@ typedef enum sounds_enum { /* List of all sounds, in increasing priority. */
   SOUND_NULL = 0, /* The sound of silence? */
   SOUND_HARVEST, /* Sound of harvest mode collecting some speed, has noise. */
   SOUND_TILE_HIT, /* Ball colliding with a tile. */
+  SOUND_TILE_HIT_COPY, /* Internal copy for simultaneous sound, don't use. */
   SOUND_WALL_HIT, /* Ball colliding with a wall. */
   SOUND_BALL_HIT, /* Ball colliding with another ball, has noise. */
   SOUND_MAX

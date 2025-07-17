@@ -28,6 +28,7 @@ static const bool k_WhiteNoiseSound[SOUND_MAX] = {
   false, /* SOUND_NULL */
   true,  /* SOUND_HARVEST */
   false, /* SOUND_TILE_HIT */
+  false, /* SOUND_TILE_HIT_COPY */
   false, /* SOUND_WALL_HIT */
   true,  /* SOUND_BALL_HIT */
 };
@@ -39,6 +40,7 @@ static void *k_SoundTrackPointers[SOUND_MAX] = {
   NthEffectsSilence,
   NthEffectsHarvest,
   NthEffectsTileHit,
+  NthEffectsTileHitCopy, /* A copy so we can customise sound for dual plays. */
   NthEffectsWallHit,
   NthEffectsBallOnBall,
 };
@@ -105,13 +107,32 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
   {
     /* Some sounds have variations made by editing the sound data, so each
        player gets a slightly different sound.  Note that we don't change the
-      sound data until the channel has finished playing.  Though if it is
-      playing in two channels, this scheme may fail. */
+       sound data until the channel has finished playing.  Though if it is
+       playing in two channels, this scheme may fail unless a copy of the data
+       is used. */
 
     if (sound_id == SOUND_HARVEST)
     {
       /* Change noise frequency from $10 (high enough) to $FF (low). */
       NthEffectsHarvestPlayer[0] = pPlayer->player_array_index * 64 + 16;
+    }
+    else if (sound_id == SOUND_TILE_HIT)
+    {
+      /* Use a unique version of sound data for each channel, so we can play a
+         customised version in each channel.  Then hack the pitch of the
+         note to reflect the player hitting the tile.  Pitch is from
+         0 (low, C-0) to 107=$6B (high, B#8), 12 notes per octave. */
+
+      uint8_t pitch = pPlayer->player_array_index * 12 + 60;
+      if (channel == 0)
+      {
+        sound_id = SOUND_TILE_HIT_COPY;
+        NthEffectsTileHitCopyNote[0] = pitch;
+      }
+      else
+      {
+        NthEffectsTileHitNote[0] = pitch;
+      }
     }
 
     CSFX_chan(channel, k_SoundTrackPointers[sound_id]);

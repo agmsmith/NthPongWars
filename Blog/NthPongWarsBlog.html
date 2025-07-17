@@ -2075,6 +2075,24 @@ have the AIs stay on purely horizontal or vertical paths.
 <P>Anyway, is this harvesting tiles for speed a good idea for gameplay, or
 should I chuck it?  I'll have to play it to find out!
 
+<HR>
+<H2><A NAME="2025.07.16"></A>2025.07.16</H2>
+
+<H3>Better Harvest Sound Effects</H3>
+
+<P>Just fiddling around with the music and sound effects.  For harvesting,
+rather than interrupting a sound (or tune), make the sound short to start out
+with.  I found out that you don't need a Rest note at the end, just the end of
+song opcode quiets it, and that can make a 2 frame updates sound take 1 frame.
+I also hack the sound data to change the pitch for the harvest noise based on
+the player number, and added a bigger harvest has priority scheme.  So
+harvesting now sounds better and is more meaningful.
+
+<P ALIGN=CENTER><A HREF="20250716HarvestSounds.mp4"><IMG
+SRC="20250716HarvestSounds.GIF" WIDTH="280" HEIGHT="216"
+ALT="[Video of Game with New Harvest Sound Effects]"></A><BR>
+<A HREF="20250716HarvestSounds.mp4">20250716HarvestSounds.mp4</A>
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

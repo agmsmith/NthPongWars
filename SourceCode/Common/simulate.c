@@ -419,17 +419,18 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
 
       if (bounceOffX)
       { /* Bounce off left or right side. */
-        PlaySound(SOUND_TILE_HIT, pPlayer);
         NEGATE_FX(&pPlayer->velocity_x);
         NEGATE_FX(&pPlayer->step_velocity_x);
       }
 
       if (bounceOffY)
       { /* Bounce off top or bottom side. */
-        PlaySound(SOUND_TILE_HIT, pPlayer);
         NEGATE_FX(&pPlayer->velocity_y);
         NEGATE_FX(&pPlayer->step_velocity_y);
       }
+
+      if (bounceOffX || bounceOffY)
+        PlaySound(SOUND_TILE_HIT, pPlayer);
     }
 
     /* Bounce the players off the walls. */
@@ -484,6 +485,54 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
     }
+  }
+
+  /* Check for player to player collisions.  If they are close enough, do the
+     collision by exchanging velocities. */
+
+  pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      continue;
+
+    uint8_t iOtherPlayer;
+    player_pointer pOtherPlayer;
+    for (iOtherPlayer = iPlayer + 1, pOtherPlayer = pPlayer + 1;
+    iOtherPlayer < MAX_PLAYERS;
+    iOtherPlayer++, pOtherPlayer++)
+    {
+      if (pOtherPlayer->brain == BRAIN_INACTIVE)
+        continue;
+
+      /* Find out how far apart the players are.  If it's less than a ball
+         width (actually two half widths from center to center), a collision
+         has happened.  Has to touch in both X and Y. */
+
+      bool touching;
+      int16_t distance;
+
+      distance = GET_FX_INTEGER(pPlayer->pixel_center_x) -
+        GET_FX_INTEGER(pOtherPlayer->pixel_center_x);
+      touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
+        distance < PLAYER_PIXEL_DIAMETER_NORMAL);
+      if (!touching)
+        continue;
+
+      distance = GET_FX_INTEGER(pPlayer->pixel_center_y) -
+        GET_FX_INTEGER(pOtherPlayer->pixel_center_y);
+      touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
+        distance < PLAYER_PIXEL_DIAMETER_NORMAL);
+      if (!touching)
+        continue;
+
+  printf("Player %d has %s player %d, distance %d.\n",
+  iPlayer, touching ? "hit" : "missed", iOtherPlayer, distance);
+
+      /* A player on player collision has happened! */
+      PlaySound(SOUND_BALL_HIT, pPlayer);
+    }
+  // bleeble; 
   }
 }
 

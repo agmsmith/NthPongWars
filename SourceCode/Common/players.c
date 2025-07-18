@@ -119,7 +119,7 @@ printf("(%f to %f, %f to %f)\n",
 
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
     pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
-    pPlayer->brain_info.algo.desired_speed = 5 * iPlayer;
+    pPlayer->brain_info.algo.desired_speed = 3 * iPlayer + 3;
     pPlayer->brain_info.algo.harvest_time = 5 + 2 * iPlayer;
     pPlayer->brain_info.algo.trail_time = 8 - 2 * iPlayer;
     pPlayer->brain_info.algo.time_remaining = 50;

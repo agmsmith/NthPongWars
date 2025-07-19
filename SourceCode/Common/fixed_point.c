@@ -24,10 +24,69 @@ fx gfx_Constant_MinusOne;
 fx gfx_Constant_Eighth;
 fx gfx_Constant_MinusEighth;
 
+
 /* Copy value of X to Y. */
 void COPY_FX(pfx x, pfx y)
 {
+#ifdef NABU_H
+  x; /* Avoid warning about unused argument, doesn't add any opcodes. */
+  y;
+  __asm
+  ld    hl,5      /* Hop over return address and x and part of y. */
+  add   hl,sp     /* Get pointer to argument y, will put in de. */
+  ld    d,(hl)
+  dec   hl
+  ld    e,(hl)    /* de points to argument y. */
+  dec   hl
+  ld    a,(hl)
+  dec   hl
+  ld    l,(hl)
+  ld    h,a       /* hl points to argument x. */
+  ld    bc,4      /* Loop counter, 4 bytes to copy, 16 bit bc counter. */
+CopyLoop:
+  ldir            /* Copies from (hl++) to (de++), bc as counter. */
+  __endasm;
+#else /* Generic C implementation. */
   y->as_int32 = x->as_int32;
+#endif
+}
+
+
+/* Exchange values of X and Y. */
+void SWAP_FX(pfx x, pfx y)
+{
+#ifdef NABU_H
+  x; /* Avoid warning about unused argument, doesn't add any opcodes. */
+  y;
+  __asm
+  ld    hl,5      /* Hop over return address and x and part of y. */
+  add   hl,sp     /* Get pointer to argument y, will put in de. */
+  ld    d,(hl)
+  dec   hl
+  ld    e,(hl)    /* de points to argument y. */
+  dec   hl
+  ld    a,(hl)
+  dec   hl
+  ld    l,(hl)
+  ld    h,a       /* hl points to argument x. */
+  ld    b,4       /* Loop counter, 4 bytes to swap. */
+SwapLoop:
+  ld    c,(hl)
+  ld    a,(de)
+  ex    de,hl
+  ld    (hl),c
+  ld    (de),a
+  inc   de
+  inc   hl
+  djnz  SwapLoop  /* Decrement b (not bc, just b), jump if not zero. */
+  __endasm;
+#else /* Generic C implementation. */
+  fx tempFX;
+
+  tempFX.as_int32 = x->as_int32;
+  x->as_int32 = y->as_int32;
+  y->as_int32 = tempFX.as_int32;
+#endif
 }
 
 

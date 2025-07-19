@@ -297,14 +297,14 @@ typedef struct player_struct {
    non-sequential as joysticks are picked up or go idle). */
 extern player_record g_player_array[MAX_PLAYERS];
 
-/* Calculated by InitialisePlayers(), these are the adjusted pixel boundaries
-   of the play area.  Adjusted by the ball radius to make collision tests
-   easier.  If the ball center position beyond this value, it has hit
-   the wall. */
-extern fx g_play_area_wall_bottom_y;
-extern fx g_play_area_wall_left_x;
-extern fx g_play_area_wall_right_x;
-extern fx g_play_area_wall_top_y;
+/* Calculated by InitialisePlayers(), these are the adjusted game coordinates
+   pixel boundaries of the play area.  Adjusted by the ball radius to make
+   collision tests easier.  If the ball center position is beyond this value,
+   it has hit the wall. */
+extern int16_t g_play_area_wall_bottom_y;
+extern int16_t g_play_area_wall_left_x;
+extern int16_t g_play_area_wall_right_x;
+extern int16_t g_play_area_wall_top_y;
 
 extern void InitialisePlayers(void);
 /* Set up the initial player data, mostly colours and animations. */

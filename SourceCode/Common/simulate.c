@@ -60,6 +60,10 @@
  * bounce, so possibly the hit player will end up moving faster.  The effect
  * (mostly speed changes) of the collisions in a time step are applied in the
  * order tiles, players, walls.
+ *
+ * To save on compute, 16 bit integer coordinates (whole pixels) are used for
+ * collision detection, with only the more precise fixed point numbers for
+ * position and velocity calculations.
  */
 void Simulate(void)
 {
@@ -85,9 +89,9 @@ printf("\nStarting simulation update.\n");
      approximate it with only looking at integer portion for speed, ignoring
      the fractional part.  Also reset thrust harvested, which gets accumulated
      during collisions with tiles and gets used to increase velocity on the
-     next update.  Also updates players's Speed value (since we're finding
-     absolute values of the velocity here anyway), which lags by a frame since
-     it's determined before moving the player. */
+     next update.  Also updates players's Manhattan Speed value (since we're
+     finding absolute values of the velocity here anyway), which lags by a
+     frame since it's determined before moving the player. */
 
   maxVelocity = 0;
   pPlayer = g_player_array;
@@ -128,7 +132,7 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
 
     if (tempSpeed < 0)
       pPlayer->speed = 0; /* Shouldn't happen unless overflowed 16 bit speed! */
-    if (tempSpeed >= 256)
+    else if (tempSpeed >= 256)
       pPlayer->speed = 255; /* Clamp at maximum unsigned 8 bit value. */
     else
       pPlayer->speed = tempSpeed;
@@ -219,7 +223,6 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
     {
       uint8_t startCol, endCol, curCol, playerCol;
       uint8_t startRow, endRow, curRow, playerRow;
-      int16_t playerX, playerY;
       int8_t velocityX, velocityY;
       bool bounceOffX, bounceOffY;
       tile_owner player_self_owner;
@@ -227,15 +230,16 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       if (pPlayer->brain == BRAIN_INACTIVE)
         continue;
 
-      playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
-      playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+      int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
+      int16_t playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+
       playerCol = playerX / TILE_PIXEL_WIDTH;
       playerRow = playerY / TILE_PIXEL_WIDTH;
       player_self_owner = iPlayer + (tile_owner) OWNER_PLAYER_1;
 
       /* Just need the +1/0/-1 for direction of velocity. */
-      velocityX = TEST_FX(&pPlayer->velocity_x);
-      velocityY = TEST_FX(&pPlayer->velocity_y);
+      velocityX = TEST_FX(&pPlayer->step_velocity_x);
+      velocityY = TEST_FX(&pPlayer->step_velocity_y);
 
 #if DEBUG_PRINT_SIM
 printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
@@ -441,47 +445,51 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
       if (pPlayer->brain == BRAIN_INACTIVE)
         continue;
 
-      if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_bottom_y) > 0)
-      {
-        if (!IS_NEGATIVE_FX(&pPlayer->velocity_y))
-        {
-          NEGATE_FX(&pPlayer->velocity_y);
-          NEGATE_FX(&pPlayer->step_velocity_y);
-        }
-        pPlayer->pixel_center_y = g_play_area_wall_bottom_y;
-        PlaySound(SOUND_WALL_HIT, pPlayer);
-      }
+      int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
 
-      if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_left_x) < 0)
+      if (playerX < g_play_area_wall_left_x)
       {
         if (IS_NEGATIVE_FX(&pPlayer->velocity_x))
         {
           NEGATE_FX(&pPlayer->velocity_x);
           NEGATE_FX(&pPlayer->step_velocity_x);
         }
-        pPlayer->pixel_center_x = g_play_area_wall_left_x;
+        INT_TO_FX(g_play_area_wall_left_x, pPlayer->pixel_center_x);
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
-      if (COMPARE_FX(&pPlayer->pixel_center_x, &g_play_area_wall_right_x) > 0)
+      if (playerX > g_play_area_wall_right_x)
       {
         if (!IS_NEGATIVE_FX(&pPlayer->velocity_x))
         {
           NEGATE_FX(&pPlayer->velocity_x);
           NEGATE_FX(&pPlayer->step_velocity_x);
         }
-        pPlayer->pixel_center_x = g_play_area_wall_right_x;
+        INT_TO_FX(g_play_area_wall_right_x, pPlayer->pixel_center_x);
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
-      if (COMPARE_FX(&pPlayer->pixel_center_y, &g_play_area_wall_top_y) < 0)
+      int16_t playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+
+      if (playerY > g_play_area_wall_bottom_y)
+      {
+        if (!IS_NEGATIVE_FX(&pPlayer->velocity_y))
+        {
+          NEGATE_FX(&pPlayer->velocity_y);
+          NEGATE_FX(&pPlayer->step_velocity_y);
+        }
+        INT_TO_FX(g_play_area_wall_bottom_y, pPlayer->pixel_center_y);
+        PlaySound(SOUND_WALL_HIT, pPlayer);
+      }
+
+      if (playerY < g_play_area_wall_top_y)
       {
         if (IS_NEGATIVE_FX(&pPlayer->velocity_y))
         {
           NEGATE_FX(&pPlayer->velocity_y);
           NEGATE_FX(&pPlayer->step_velocity_y);
         }
-        pPlayer->pixel_center_y = g_play_area_wall_top_y;
+        INT_TO_FX(g_play_area_wall_top_y, pPlayer->pixel_center_y);
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
     }
@@ -495,6 +503,9 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
   {
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
+
+    int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
+    int16_t playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
 
     uint8_t iOtherPlayer;
     player_pointer pOtherPlayer;
@@ -512,27 +523,27 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
       bool touching;
       int16_t distance;
 
-      distance = GET_FX_INTEGER(pPlayer->pixel_center_x) -
-        GET_FX_INTEGER(pOtherPlayer->pixel_center_x);
+      distance = playerX - GET_FX_INTEGER(pOtherPlayer->pixel_center_x);
       touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
         distance < PLAYER_PIXEL_DIAMETER_NORMAL);
       if (!touching)
         continue;
 
-      distance = GET_FX_INTEGER(pPlayer->pixel_center_y) -
-        GET_FX_INTEGER(pOtherPlayer->pixel_center_y);
+      distance = playerY - GET_FX_INTEGER(pOtherPlayer->pixel_center_y);
       touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
         distance < PLAYER_PIXEL_DIAMETER_NORMAL);
       if (!touching)
         continue;
 
-  printf("Player %d has %s player %d, distance %d.\n",
-  iPlayer, touching ? "hit" : "missed", iOtherPlayer, distance);
+      /* A player on player collision has happened!  Exchange velocities. */
 
-      /* A player on player collision has happened! */
+      SWAP_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x);
+      SWAP_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y);
+      SWAP_FX(&pPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
+      SWAP_FX(&pPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
+
       PlaySound(SOUND_BALL_HIT, pPlayer);
     }
-  // bleeble; 
   }
 }
 

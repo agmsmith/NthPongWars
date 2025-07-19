@@ -91,6 +91,7 @@ extern fx gfx_Constant_MinusEighth;
 
 /* Setting and getting.  Mostly inline code, limited by 8 bit compilers. */
 extern void COPY_FX(pfx x, pfx y); /* Copy value of X to Y. */
+extern void SWAP_FX(pfx x, pfx y); /* Exchange values of X and Y. */
 #define FLOAT_TO_FX(fpa, x) {x.as_int32 = fpa * _FX_UNITY_FLOAT;}
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 #define GET_FX_INTEGER(x) (x.portions.integer)

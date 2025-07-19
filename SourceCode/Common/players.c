@@ -47,10 +47,10 @@ static const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
 
 player_record g_player_array[MAX_PLAYERS];
 
-fx g_play_area_wall_bottom_y;
-fx g_play_area_wall_left_x;
-fx g_play_area_wall_right_x;
-fx g_play_area_wall_top_y;
+int16_t g_play_area_wall_bottom_y;
+int16_t g_play_area_wall_left_x;
+int16_t g_play_area_wall_right_x;
+int16_t g_play_area_wall_top_y;
 
 static const uint8_t k_friction_speed = 2;
 /* When player speed is greater or equal to this in pixels/frame, friction is
@@ -84,20 +84,20 @@ void InitialisePlayers(void)
 
   /* Cache the positions of the walls. */
 
-  INT_TO_FX(g_play_area_height_pixels - PLAYER_PIXEL_DIAMETER_NORMAL / 2,
-    g_play_area_wall_bottom_y);
-  INT_TO_FX(PLAYER_PIXEL_DIAMETER_NORMAL / 2, g_play_area_wall_left_x);
-  INT_TO_FX(g_play_area_width_pixels - PLAYER_PIXEL_DIAMETER_NORMAL / 2,
-    g_play_area_wall_right_x);
-  INT_TO_FX(PLAYER_PIXEL_DIAMETER_NORMAL / 2, g_play_area_wall_top_y);
+  g_play_area_wall_bottom_y = g_play_area_height_pixels -
+    PLAYER_PIXEL_DIAMETER_NORMAL / 2; 
+  g_play_area_wall_left_x = PLAYER_PIXEL_DIAMETER_NORMAL / 2; 
+  g_play_area_wall_right_x = g_play_area_width_pixels -
+    PLAYER_PIXEL_DIAMETER_NORMAL / 2;
+  g_play_area_wall_top_y = PLAYER_PIXEL_DIAMETER_NORMAL / 2;
 
 #if 0
 printf("Walls adjusted for player size:\n");
-printf("(%f to %f, %f to %f)\n",
-  GET_FX_FLOAT(g_play_area_wall_left_x),
-  GET_FX_FLOAT(g_play_area_wall_right_x),
-  GET_FX_FLOAT(g_play_area_wall_top_y),
-  GET_FX_FLOAT(g_play_area_wall_bottom_y)
+printf("(%d to %d, %d to %d)\n",
+  g_play_area_wall_left_x,
+  g_play_area_wall_right_x,
+  g_play_area_wall_top_y,
+  g_play_area_wall_bottom_y
 );
 #endif
 

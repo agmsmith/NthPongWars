@@ -42,9 +42,10 @@ void COPY_FX(pfx x, pfx y)
   dec   hl
   ld    l,(hl)
   ld    h,a       /* hl points to argument x. */
-  ld    bc,4      /* Loop counter, 4 bytes to copy, 16 bit bc counter. */
-CopyLoop:
-  ldir            /* Copies from (hl++) to (de++), bc as counter. */
+  ldi             /* Copy 4 bytes, faster to do 4 ldi's than use ldir. */
+  ldi
+  ldi
+  ldi
   __endasm;
 #else /* Generic C implementation. */
   y->as_int32 = x->as_int32;

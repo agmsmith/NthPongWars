@@ -74,6 +74,7 @@ void Simulate(void)
   uint8_t iPlayer;
   player_pointer pPlayer;
   uint8_t stepShiftCount;
+  static uint8_t s_PreviousStepShiftCount = 0; /* To tell when it changes. */
 
 #if DEBUG_PRINT_SIM
 printf("\nStarting simulation update.\n");
@@ -162,6 +163,15 @@ printf("Max integer velocity component: %d\n", maxVelocity);
 printf("Have %d steps, shift by %d\n", numberOfSteps, stepShiftCount);
 #endif
 
+  /* Update our cached constant velocity change for collisions. */
+
+  if (s_PreviousStepShiftCount != stepShiftCount)
+  {
+    g_SeparationVelocityFxStepAdd.as_int32 =
+      g_SeparationVelocityFxAdd.as_int32 >> stepShiftCount;
+    s_PreviousStepShiftCount = stepShiftCount;
+  }
+
   /* Calculate the step velocity for each player. */
 
   pPlayer = g_player_array;
@@ -213,6 +223,7 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
 );
 #endif
     }
+
 
     /* Check for player to tile collisions.  Like a tic-tac-toe board, examine
        9 tiles around the player, unless too close to the side of the play area,
@@ -541,6 +552,65 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
       SWAP_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y);
       SWAP_FX(&pPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
       SWAP_FX(&pPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
+
+      /* Separate the players if they are moving too slowly - add a velocity
+         boost in the existing biggest velocity X or Y component. */
+
+      fx deltaVelXfx, deltaVelYfx;
+      SUBTRACT_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x, &deltaVelXfx);
+      SUBTRACT_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y, &deltaVelYfx);
+      fx absVelX, absVelY;
+      COPY_ABS_FX(&deltaVelXfx, &absVelX);
+      COPY_ABS_FX(&deltaVelYfx, &absVelY);
+
+      fx tooSlowSpeedFx;
+      INT_TO_FX(FRICTION_SPEED, tooSlowSpeedFx);
+
+      /* Find out which velocity component is larger. */
+      if (COMPARE_FX(&absVelX, &absVelY) >= 0)
+      {
+        /* X velocity difference is bigger than Y.  Is it big enough to make
+           the players separate already fast enough?  If it's small, tweak. */
+        if (COMPARE_FX(&absVelX, &tooSlowSpeedFx) < 0)
+        {
+          if (IS_NEGATIVE_FX(&deltaVelXfx)) /* Other player is moving right. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pOtherPlayer->velocity_x, &pOtherPlayer->velocity_x);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pOtherPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
+          }
+          else /* Player moving right, so add to its velocity to separate. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pPlayer->velocity_x, &pPlayer->velocity_x);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pPlayer->step_velocity_x, &pPlayer->step_velocity_x);
+          }
+        }
+      }
+      else /* Y velocity component is larger. */
+      {
+        /* Is it big enough to make the players separate already fast enough?
+           If it's small, tweak. */
+        if (COMPARE_FX(&absVelY, &tooSlowSpeedFx) < 0)
+        {
+          if (IS_NEGATIVE_FX(&deltaVelYfx)) /* Other player is moving down. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pOtherPlayer->velocity_y, &pOtherPlayer->velocity_y);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pOtherPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
+          }
+          else /* Player is moving down, so add to its velocity to separate. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pPlayer->velocity_y, &pPlayer->velocity_y);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pPlayer->step_velocity_y, &pPlayer->step_velocity_y);
+          }
+        }
+      }
 
       PlaySound(SOUND_BALL_HIT, pPlayer);
     }

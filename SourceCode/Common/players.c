@@ -52,10 +52,8 @@ int16_t g_play_area_wall_left_x;
 int16_t g_play_area_wall_right_x;
 int16_t g_play_area_wall_top_y;
 
-static const uint8_t k_friction_speed = 2;
-/* When player speed is greater or equal to this in pixels/frame, friction is
-   applied.  Needs to be under 8 pixels per frame, which is when an extra
-   physics step gets added and that slows everything down. */
+fx g_SeparationVelocityFxAdd;
+fx g_SeparationVelocityFxStepAdd;
 
 uint8_t g_KeyboardFakeJoystickStatus;
 #ifndef NABU_H
@@ -100,6 +98,12 @@ printf("(%d to %d, %d to %d)\n",
   g_play_area_wall_bottom_y
 );
 #endif
+
+  /* Set the constant velocity change used for separating collided players. */
+
+  INT_TO_FX(1, g_SeparationVelocityFxAdd);
+
+  /* Set up the players. */
 
   pixelCoord = 32; /* Scatter players across screen. */
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
@@ -860,7 +864,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
        rate (physics has to run multiple steps) and is uncontrollable for the
        user.  Use cheap speed from simulation update (lags a frame). */
 
-    if (pPlayer->speed >= k_friction_speed)
+    if (pPlayer->speed >= FRICTION_SPEED)
     {
       static fx portionOfVelocity;
       DIV256_FX(pPlayer->velocity_x, portionOfVelocity);

@@ -306,6 +306,18 @@ extern int16_t g_play_area_wall_left_x;
 extern int16_t g_play_area_wall_right_x;
 extern int16_t g_play_area_wall_top_y;
 
+/* When player speed is greater or equal to this in pixels/frame, friction is
+   applied.  Needs to be under 8 pixels per frame, which is when an extra
+   physics step gets added and that slows everything down. */
+#define FRICTION_SPEED 2
+
+/* Amount to add to the velocity of one of the players to separate them if
+   needed.  g_SeparationVelocityFxAdd set once in in InitialisePlayers(),
+   g_SeparationVelocityFxStepAdd updated in Simulate() when the step size
+   changes. */
+extern fx g_SeparationVelocityFxAdd;
+extern fx g_SeparationVelocityFxStepAdd;
+
 extern void InitialisePlayers(void);
 /* Set up the initial player data, mostly colours and animations. */
 

@@ -71,7 +71,7 @@
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
 /* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
-#define DISABLE_CURSOR /* Don't flash during NABU-LIB keyboard input. */
+#define DISABLE_CURSOR /* Don't flash on VDP during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
 

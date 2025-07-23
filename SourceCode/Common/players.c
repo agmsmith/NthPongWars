@@ -118,14 +118,15 @@ printf("(%d to %d, %d to %d)\n",
     INT_FRACTION_TO_FX(0, iPlayer * 256, pPlayer->velocity_x);
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_FRACTION_TO_FX(0, 0x1000, pPlayer->velocity_y);
+    pPlayer->player_collision_count = 0;
 
     /* Make them all AI players, since you can take over from AI easily. */
 
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
     pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
-    pPlayer->brain_info.algo.desired_speed = 3 * iPlayer + 3;
-    pPlayer->brain_info.algo.harvest_time = 5 + 2 * iPlayer;
-    pPlayer->brain_info.algo.trail_time = 8 - 2 * iPlayer;
+    pPlayer->brain_info.algo.desired_speed = 5 * iPlayer + 3;
+    pPlayer->brain_info.algo.harvest_time = 5 + iPlayer;
+    pPlayer->brain_info.algo.trail_time = 8 - iPlayer;
     pPlayer->brain_info.algo.time_remaining = 50;
     pPlayer->brain_info.algo.steer = true;
     pPlayer->brain_info.algo.target_list_index = 0;

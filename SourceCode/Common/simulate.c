@@ -101,7 +101,12 @@ printf("\nStarting simulation update.\n");
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
+    /* Various start of frame initialisations for all players go here. */
+
     pPlayer->thrust_harvested = 0;
+
+    if (pPlayer->player_collision_count)
+      pPlayer->player_collision_count--;
 
 #if DEBUG_PRINT_SIM
 printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
@@ -129,7 +134,7 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
 
     /* Save the Manhattan speed, into an 8 bit integer, which should be good
        enough since it is integer pixels per frame, and 256 would be moving the
-       width of the screen every frame, way too fast to care about. */ 
+       width of the screen every frame, way too fast to care about. */
 
     if (tempSpeed < 0)
       pPlayer->speed = 0; /* Shouldn't happen unless overflowed 16 bit speed! */
@@ -196,7 +201,13 @@ printf("Player %d: vel (%f, %f), step vel (%f, %f)\n", iPlayer,
   /* Update the players, step by step.  Hopefully most times players are moving
      at less than one tile per frame so we only have one step.  Top speed we
      can simulate is 128 steps, or 128 tiles per frame, half a screen width per
-     frame, which is pretty fast and likely unplayable. */
+     frame, which is pretty fast and likely unplayable.
+
+     First update the position, then do player to player collisions (since that
+     affects tile depositing - forced harvest mode after a collision), then
+     tile collisions and despositing and finally wall collisions (which ensure
+     that the player is back on the board so we don't have to worry about
+     invalid coordinates after the simulation for a step is done). */
 
   for (iStep = 0; iStep < numberOfSteps; iStep ++)
   {
@@ -224,6 +235,122 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
 #endif
     }
 
+  /* Check for player to player collisions.  If they are close enough, do the
+     collision by exchanging velocities.  Players recently collided don't
+     suffer more collisions, so they can escape from the scene without getting
+     stuck on the other player. */
+
+  pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    if (pPlayer->brain == BRAIN_INACTIVE || pPlayer->player_collision_count)
+      continue;
+
+    int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
+    int16_t playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+
+    uint8_t iOtherPlayer;
+    player_pointer pOtherPlayer;
+    for (iOtherPlayer = iPlayer + 1, pOtherPlayer = pPlayer + 1;
+    iOtherPlayer < MAX_PLAYERS;
+    iOtherPlayer++, pOtherPlayer++)
+    {
+      if (pOtherPlayer->brain == BRAIN_INACTIVE ||
+      pOtherPlayer->player_collision_count)
+        continue;
+
+      /* Find out how far apart the players are.  If it's less than a ball
+         width (actually two half widths from center to center), a collision
+         has happened.  Has to touch in both X and Y. */
+
+      bool touching;
+      int16_t distance;
+
+      distance = playerX - GET_FX_INTEGER(pOtherPlayer->pixel_center_x);
+      touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
+        distance < PLAYER_PIXEL_DIAMETER_NORMAL);
+      if (!touching)
+        continue;
+
+      distance = playerY - GET_FX_INTEGER(pOtherPlayer->pixel_center_y);
+      touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
+        distance < PLAYER_PIXEL_DIAMETER_NORMAL);
+      if (!touching)
+        continue;
+
+      /* A player on player collision has happened!  Exchange velocities. */
+
+      pPlayer->player_collision_count += 15; /* Take a while to recover. */
+      pOtherPlayer->player_collision_count += 15;
+      PlaySound(SOUND_BALL_HIT, pPlayer);
+
+      SWAP_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x);
+      SWAP_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y);
+      SWAP_FX(&pPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
+      SWAP_FX(&pPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
+
+#if 1 /* Separate the players. */
+      /* Separate the players if they are moving too slowly - add a velocity
+         boost in the existing biggest velocity X or Y component. */
+
+      fx deltaVelXfx, deltaVelYfx;
+      SUBTRACT_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x, &deltaVelXfx);
+      SUBTRACT_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y, &deltaVelYfx);
+      fx absVelX, absVelY;
+      COPY_ABS_FX(&deltaVelXfx, &absVelX);
+      COPY_ABS_FX(&deltaVelYfx, &absVelY);
+
+      fx tooSlowSpeedFx;
+      INT_TO_FX(FRICTION_SPEED, tooSlowSpeedFx);
+
+      /* Find out which velocity component is larger. */
+      if (COMPARE_FX(&absVelX, &absVelY) >= 0)
+      {
+        /* X velocity difference is bigger than Y.  Is it big enough to make
+           the players separate already fast enough?  If it's small, tweak. */
+        if (COMPARE_FX(&absVelX, &tooSlowSpeedFx) < 0)
+        {
+          if (IS_NEGATIVE_FX(&deltaVelXfx)) /* Other player is moving right. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pOtherPlayer->velocity_x, &pOtherPlayer->velocity_x);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pOtherPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
+          }
+          else /* Player moving right, so add to its velocity to separate. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pPlayer->velocity_x, &pPlayer->velocity_x);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pPlayer->step_velocity_x, &pPlayer->step_velocity_x);
+          }
+        }
+      }
+      else /* Y velocity component is larger. */
+      {
+        /* Is it big enough to make the players separate already fast enough?
+           If it's small, tweak. */
+        if (COMPARE_FX(&absVelY, &tooSlowSpeedFx) < 0)
+        {
+          if (IS_NEGATIVE_FX(&deltaVelYfx)) /* Other player is moving down. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pOtherPlayer->velocity_y, &pOtherPlayer->velocity_y);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pOtherPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
+          }
+          else /* Player is moving down, so add to its velocity to separate. */
+          {
+            ADD_FX(&g_SeparationVelocityFxAdd,
+              &pPlayer->velocity_y, &pPlayer->velocity_y);
+            ADD_FX(&g_SeparationVelocityFxStepAdd,
+              &pPlayer->step_velocity_y, &pPlayer->step_velocity_y);
+          }
+        }
+      }
+#endif /* Separate players. */
+    }
+  }
 
     /* Check for player to tile collisions.  Like a tic-tac-toe board, examine
        9 tiles around the player, unless too close to the side of the play area,
@@ -336,9 +463,12 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
               nothing from it, leave it empty.  Otherwise we get a little
               oscillation as the stationary player takes a tile, then
               harvests it back to empty the next update, making the
-              score flicker.  If not harvesting, it becomes our tile. */
+              score flicker.  If not harvesting, it becomes our tile.
+              If we have a recent collision, don't take over the tile, to
+              avoid having the player or the one it collided with bouncing
+              off the new tile repeatedly. */
 
-            if (!pPlayer->thrust_active)
+            if (!pPlayer->thrust_active && pPlayer->player_collision_count == 0)
               SetTileOwner(pTile, player_self_owner);
 
             continue; /* Just glide over empty tiles, no bouncing. */
@@ -350,7 +480,9 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
           {
             uint8_t age;
             age = pTile->age;
-            if (pPlayer->thrust_active) /* If harvesting tiles for thrust. */
+            /* If harvesting tiles for thrust, or after a collision to reduce
+               the number of tiles that players keep on bouncing off of. */
+            if (pPlayer->thrust_active || pPlayer->player_collision_count)
             {
               pPlayer->thrust_harvested += age + 1;
               SetTileOwner(pTile, OWNER_EMPTY);
@@ -372,12 +504,12 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             continue; /* Don't collide, keep moving over own tiles. */
           }
 
-          /* Hit someone else's tile or a power-up.  In harvest mode we don't
-             gain any points from it, and it becomes empty.  Regular mode, it
-             becomes the player's tile.  In both cases, power up effects are
-             applied to the player. */
+          /* Hit someone else's tile or a power-up.  In harvest mode or
+             collision mode we don't gain any points from it, and it becomes
+             empty.  Regular mode, it becomes the player's tile.  In both
+             cases, power up effects are applied to the player. */
 
-          if (pPlayer->thrust_active)
+          if (pPlayer->thrust_active || pPlayer->player_collision_count)
             SetTileOwner(pTile, OWNER_EMPTY);
           else
             SetTileOwner(pTile, player_self_owner);
@@ -448,7 +580,8 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
         PlaySound(SOUND_TILE_HIT, pPlayer);
     }
 
-    /* Bounce the players off the walls. */
+    /* Bounce the players off the walls.  Also forces their position to be on
+       the board, so do this as the last simulation action. */
 
     pPlayer = g_player_array;
     for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
@@ -503,116 +636,6 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
         INT_TO_FX(g_play_area_wall_top_y, pPlayer->pixel_center_y);
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
-    }
-  }
-
-  /* Check for player to player collisions.  If they are close enough, do the
-     collision by exchanging velocities. */
-
-  pPlayer = g_player_array;
-  for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
-  {
-    if (pPlayer->brain == BRAIN_INACTIVE)
-      continue;
-
-    int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
-    int16_t playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
-
-    uint8_t iOtherPlayer;
-    player_pointer pOtherPlayer;
-    for (iOtherPlayer = iPlayer + 1, pOtherPlayer = pPlayer + 1;
-    iOtherPlayer < MAX_PLAYERS;
-    iOtherPlayer++, pOtherPlayer++)
-    {
-      if (pOtherPlayer->brain == BRAIN_INACTIVE)
-        continue;
-
-      /* Find out how far apart the players are.  If it's less than a ball
-         width (actually two half widths from center to center), a collision
-         has happened.  Has to touch in both X and Y. */
-
-      bool touching;
-      int16_t distance;
-
-      distance = playerX - GET_FX_INTEGER(pOtherPlayer->pixel_center_x);
-      touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
-        distance < PLAYER_PIXEL_DIAMETER_NORMAL);
-      if (!touching)
-        continue;
-
-      distance = playerY - GET_FX_INTEGER(pOtherPlayer->pixel_center_y);
-      touching = (distance > -PLAYER_PIXEL_DIAMETER_NORMAL &&
-        distance < PLAYER_PIXEL_DIAMETER_NORMAL);
-      if (!touching)
-        continue;
-
-      /* A player on player collision has happened!  Exchange velocities. */
-
-      SWAP_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x);
-      SWAP_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y);
-      SWAP_FX(&pPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
-      SWAP_FX(&pPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
-
-      /* Separate the players if they are moving too slowly - add a velocity
-         boost in the existing biggest velocity X or Y component. */
-
-      fx deltaVelXfx, deltaVelYfx;
-      SUBTRACT_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x, &deltaVelXfx);
-      SUBTRACT_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y, &deltaVelYfx);
-      fx absVelX, absVelY;
-      COPY_ABS_FX(&deltaVelXfx, &absVelX);
-      COPY_ABS_FX(&deltaVelYfx, &absVelY);
-
-      fx tooSlowSpeedFx;
-      INT_TO_FX(FRICTION_SPEED, tooSlowSpeedFx);
-
-      /* Find out which velocity component is larger. */
-      if (COMPARE_FX(&absVelX, &absVelY) >= 0)
-      {
-        /* X velocity difference is bigger than Y.  Is it big enough to make
-           the players separate already fast enough?  If it's small, tweak. */
-        if (COMPARE_FX(&absVelX, &tooSlowSpeedFx) < 0)
-        {
-          if (IS_NEGATIVE_FX(&deltaVelXfx)) /* Other player is moving right. */
-          {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pOtherPlayer->velocity_x, &pOtherPlayer->velocity_x);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pOtherPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
-          }
-          else /* Player moving right, so add to its velocity to separate. */
-          {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pPlayer->velocity_x, &pPlayer->velocity_x);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pPlayer->step_velocity_x, &pPlayer->step_velocity_x);
-          }
-        }
-      }
-      else /* Y velocity component is larger. */
-      {
-        /* Is it big enough to make the players separate already fast enough?
-           If it's small, tweak. */
-        if (COMPARE_FX(&absVelY, &tooSlowSpeedFx) < 0)
-        {
-          if (IS_NEGATIVE_FX(&deltaVelYfx)) /* Other player is moving down. */
-          {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pOtherPlayer->velocity_y, &pOtherPlayer->velocity_y);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pOtherPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
-          }
-          else /* Player is moving down, so add to its velocity to separate. */
-          {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pPlayer->velocity_y, &pPlayer->velocity_y);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pPlayer->step_velocity_y, &pPlayer->step_velocity_y);
-          }
-        }
-      }
-
-      PlaySound(SOUND_BALL_HIT, pPlayer);
     }
   }
 }

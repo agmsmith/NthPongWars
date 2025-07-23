@@ -202,6 +202,15 @@ typedef struct player_struct {
     width so that we don't skip over tiles and miss collisions.  This is a
     temporary value used by Simulate(). */
 
+  uint8_t player_collision_count;
+  /* Used in the simulation code to mark players which have collided with
+     another player.  To avoid immediate bouncing around against nearby tiles
+     and hitting each other again, they stop laying down new tiles and just
+     consume any tiles while in collision mode.  After a number of frames
+     (each collision increments this counter; it gets decremented at the start
+     of the next frame), this gets back to zero and they can lay down tiles
+     again. */
+
   bool thrust_active;
   /* Set to TRUE when thrust is busy harvesting tiles.  Means the fire button
      is pressed and  a direction is specified.  Saves having to read the

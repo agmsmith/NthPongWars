@@ -2093,6 +2093,54 @@ SRC="20250716HarvestSounds.GIF" WIDTH="280" HEIGHT="216"
 ALT="[Video of Game with New Harvest Sound Effects]"></A><BR>
 <A HREF="20250716HarvestSounds.mp4">20250716HarvestSounds.mp4</A>
 
+<HR>
+<H2><A NAME="2025.07.24"></A>2025.07.24</H2>
+
+<H3>Player on Player Collisions</H3>
+
+<P>I finally got around to doing player colliding with player collision
+detection.  The detection part was easy, the action afterwards was the tricky
+part.  Sure, the physics just involves swapping velocities between the players
+(momentum conservation, assuming they're all the same mass, and we ignore the
+angle of collision and assume it is completely elastic).  I even had to write
+some assembler code to speed up swapping fixed point values; the compiler
+generated stuff was a large mess.  I did get to use the fancy ldir Z80 opcode
+(copies a byte of data, increments two pointers, counts down until done, all in
+one compact instruction), but found that four ldi instructions were faster than
+one ldir instruction, because ldir reloads that one instruction for every byte
+copied!  But afterwards, if the player balls haven't moved far enough, they
+collide again and again and sometimes get stuck on each other.
+
+<P ALIGN=CENTER><A HREF="20250724CollisionA.mp4"><IMG
+SRC="20250724CollisionA.gif" WIDTH="280" HEIGHT="216"
+ALT="[First attempt at collisions, they last too long]"></A><BR>
+<A HREF="20250724CollisionA.mp4">20250724CollisionA.mp4</A>
+
+<P>My first hack was to add a small amount of velocity to separate them on
+every collision.  It usually works, after a few (sometimes many) more
+collisions where it looks like they are fighting each other, one or both of
+them will zoom away at high speed.  But that doesn't look very elegant.
+
+<P ALIGN=CENTER><A HREF="20250724CollisionB.mp4"><IMG
+SRC="20250724CollisionB.gif" WIDTH="280" HEIGHT="216"
+ALT="[Second attempt at collisions, separation still delayed]"></A><BR>
+<A HREF="20250724CollisionB.mp4">20250724CollisionB.mp4</A>
+
+<P>The problem is that they are still laying down tiles of their own colour,
+and the other collidee hits those tiles and bounces back towards the player,
+setting up another collision.  So this time when there's a collision, for half
+a second ignore further collisions and switch the players into harvest mode,
+where they remove tiles and leave empty space.  That way they'll be able to
+depart the scene of the collision.  It almost worked, but they sometimes were
+moving too slowly and got stuck together (that velocity exchange over repeated
+collisions synchronised them), so I reapplied the first velocity addition hack
+and the collisions now don't last forever and look great!
+
+<P ALIGN=CENTER><A HREF="20250724CollisionC.mp4"><IMG
+SRC="20250724CollisionC.gif" WIDTH="280" HEIGHT="216"
+ALT="[Third attempt at collisions, they're short and sweet]"></A><BR>
+<A HREF="20250724CollisionC.mp4">20250724CollisionC.mp4</A>
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

@@ -84,7 +84,6 @@ typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
    so about 5hz, since we only update one AI each frame to save on CPU. */
 typedef struct player_algo_struct {
   bool steer : 1; /* TRUE to turn towards target, false to drift. */
-  uint8_t steer_remaining; /* AI frame countdown to next steer update. */
   int16_t target_pixel_x; /* Location in the game world we head towards. */
   int16_t target_pixel_y;
   int16_t target_distance; /* Updated with current distance to target. */

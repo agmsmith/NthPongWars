@@ -65,11 +65,15 @@ uint8_t g_KeyboardFakeJoystickStatus;
    at most 256 elements. */
 target_list_item_record g_target_list[] = {
   {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {25, TARGET_CODE_DELAY}, /* Delay 5 seconds to hang around there. */
   {9, TARGET_CODE_STEER}, /* Steer to next corner. */
-  {16, 11}, /* Head to center of screen. */
-  {255, TARGET_CODE_STEER}, /* Drift. */
-  {50, TARGET_CODE_DELAY}, /* Delay 10 seconds to drift. */
+  {25, TARGET_CODE_DELAY}, /* Delay 5 seconds to hang around there. */
+  {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {255, TARGET_CODE_STEER}, /* Drift mode. */
+  {100, TARGET_CODE_DELAY}, /* Delay 20 seconds to drift. */
   {12, TARGET_CODE_STEER}, /* Head to leading player. */
+  {25, TARGET_CODE_DELAY}, /* Delay 5 seconds to hound them. */
+  {16, 11}, /* Head to center of screen. */
   {0, TARGET_CODE_GOTO},
 };
 
@@ -697,15 +701,17 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         uint8_t iMyself = pPlayer->player_array_index;
         iMyself += currentOpcode.target_pixel_x;
         if (iMyself & 1)
-          pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH;
+          pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH / 2;
         else
           pPlayer->brain_info.algo.target_pixel_x =
-            (g_play_area_width_tiles - 2) * (int16_t) TILE_PIXEL_WIDTH;
+            g_play_area_width_tiles * (int16_t) TILE_PIXEL_WIDTH -
+            TILE_PIXEL_WIDTH / 2;
         if (iMyself & 2)
-          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH;
-        else
           pPlayer->brain_info.algo.target_pixel_y =
-            (g_play_area_height_tiles - 2) * (int16_t) TILE_PIXEL_WIDTH;
+            g_play_area_height_tiles * (int16_t) TILE_PIXEL_WIDTH -
+            TILE_PIXEL_WIDTH / 2;
+        else
+          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH / 2;
         pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
         pPlayer->brain_info.algo.steer = true;
       }

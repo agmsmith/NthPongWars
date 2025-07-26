@@ -60,15 +60,17 @@ uint8_t g_KeyboardFakeJoystickStatus;
   uint8_t g_JoystickStatus[4];
 #endif
 
-/* List of locations for AIs to move towards, and some instructions, has a byte
-   sized index in the opcodes so the array is currently limited to at most 256
-   elements. */
+/* List of column/row locations for AIs to move towards, and some instructions,
+   has a byte sized index in the opcodes so the array is currently limited to
+   at most 256 elements. */
 target_list_item_record g_target_list[] = {
-  {128, 96}, /* 0 - center screen then all four corners. */
-  {8, 8},
-  {248, 8},
-  {248, 184},
-  {8, 184},
+  {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {16, 11}, /* Head to center of screen. */
+  {0, 0}, /* Head to top left corner. */
+  {255, TARGET_CODE_STEER}, /* Drift. */
+  {50, TARGET_CODE_DELAY}, /* Delay 10 seconds to drift. */
+  {12, TARGET_CODE_STEER}, /* Head to leading player. */
+  {25, TARGET_CODE_DELAY}, /* Hound the player for a few seconds. */
   {0, TARGET_CODE_GOTO},
 };
 
@@ -124,12 +126,13 @@ printf("(%d to %d, %d to %d)\n",
 
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
     pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
-    pPlayer->brain_info.algo.desired_speed = 5 * iPlayer + 3;
-    pPlayer->brain_info.algo.harvest_time = 5 + iPlayer;
-    pPlayer->brain_info.algo.trail_time = 8 - iPlayer;
-    pPlayer->brain_info.algo.time_remaining = 50;
-    pPlayer->brain_info.algo.steer = true;
+    pPlayer->brain_info.algo.desired_speed = 4 + iPlayer;
+    pPlayer->brain_info.algo.harvest_time = 6;
+    pPlayer->brain_info.algo.trail_time = 8;
+    pPlayer->brain_info.algo.trail_remaining = 50 + iPlayer * 8;
     pPlayer->brain_info.algo.target_list_index = 0;
+    pPlayer->brain_info.algo.steer = false;
+    pPlayer->brain_info.algo.target_player = 10;
 
     pPlayer->main_colour =
 #ifdef NABU_H
@@ -265,6 +268,25 @@ void UpdatePlayerAnimations(void)
 #endif /* NABU_H */
     }
   }
+}
+
+
+/* Figure out the joystick bits which are needed to turn towards a given
+   octant angle.
+*/
+static uint8_t JoystickForOctant(uint8_t desired_octant)
+{
+  uint8_t joystickOutput = 0;
+
+  if (desired_octant <= 1 || desired_octant == 7)
+    joystickOutput |= Joy_Right;
+  else if (desired_octant >= 3 && desired_octant <= 5)
+    joystickOutput |= Joy_Left;
+  if (desired_octant >= 1 && desired_octant <= 3)
+    joystickOutput |= Joy_Down;
+  else if (desired_octant >= 5)
+    joystickOutput |= Joy_Up;
+  return joystickOutput;
 }
 
 
@@ -600,36 +622,184 @@ head_towards_octant, head_clockwise);
 /* Figure out what joystick action the AI player should do based on various
    algorithms.
 */
-static void BrainUpdateJoystick(player_pointer pPlayer, uint8_t iPlayer)
+static void BrainUpdateJoystick(player_pointer pPlayer)
 {
   uint8_t joystickOutput = 0;
 
   if (pPlayer->joystick_inputs & Joy_Button) /* Was harvesting last frame? */
   {
     /* Is it time to finish harvesting? */
-    if (--pPlayer->brain_info.algo.time_remaining == 0)
+    if (--pPlayer->brain_info.algo.trail_remaining == 0)
     {
-      pPlayer->brain_info.algo.time_remaining =
+      pPlayer->brain_info.algo.trail_remaining =
         pPlayer->brain_info.algo.trail_time;
       /* Leave Joy_Button bit of joystickOutput at zero, for no harvesting. */
     }
   }
   else /* Wasn't harvesting last frame, time to start? */
   {
-    if (--pPlayer->brain_info.algo.time_remaining == 0)
+    if (--pPlayer->brain_info.algo.trail_remaining == 0)
     {
       /* Check if we are below the desired speed, then start harvesting. */
       if (pPlayer->speed < pPlayer->brain_info.algo.desired_speed)
       {
-        pPlayer->brain_info.algo.time_remaining =
+        pPlayer->brain_info.algo.trail_remaining =
           pPlayer->brain_info.algo.harvest_time;
         joystickOutput |= Joy_Button;
       }
       else /* Moving fast enough, go back to trailing tiles. */
       {
-        pPlayer->brain_info.algo.time_remaining =
+        pPlayer->brain_info.algo.trail_remaining =
           pPlayer->brain_info.algo.trail_time;
       }
+    }
+  }
+
+  /* Update the steering direction.  A CPU intensive operation so only do about
+     once per second.  Though that also affects target nearness detection. */
+
+  if (pPlayer->brain_info.algo.steer &&
+  --pPlayer->brain_info.algo.steer_remaining == 0)
+  {
+    pPlayer->brain_info.algo.steer_remaining = 2; /* Ticks at 5hz AI rate. */
+
+    /* Update target location to the position of the player being followed, if
+       any.  Static targets just leave the target coordinates unchanged. */
+
+    if (pPlayer->brain_info.algo.target_player < MAX_PLAYERS)
+    {
+      player_pointer pTargetPlayer =
+        g_player_array + pPlayer->brain_info.algo.target_player;
+      pPlayer->brain_info.algo.target_pixel_x =
+        GET_FX_INTEGER(pTargetPlayer->pixel_center_x);
+      pPlayer->brain_info.algo.target_pixel_y =
+        GET_FX_INTEGER(pTargetPlayer->pixel_center_y);
+    }
+
+    /* How far and what direction to the target? */
+
+    int16_t deltaX = pPlayer->brain_info.algo.target_pixel_x -
+      GET_FX_INTEGER(pPlayer->pixel_center_x);
+    int16_t deltaY = pPlayer->brain_info.algo.target_pixel_y -
+      GET_FX_INTEGER(pPlayer->pixel_center_y);
+
+    int16_t targetDistance;
+    if (deltaX < 0)
+      targetDistance = -deltaX;
+    else
+      targetDistance = deltaX;
+    if (deltaY < 0)
+      targetDistance -= deltaY;
+    else
+      targetDistance += deltaY;
+    pPlayer->brain_info.algo.target_distance = targetDistance;
+
+    uint8_t steerDirection = (INT16_TO_OCTANT(deltaX, deltaY) & 7);
+    joystickOutput |= JoystickForOctant(steerDirection);
+  }
+#if 0 // bleeble
+else /* Not recalculating steering, use previous direction. */
+    joystickOutput |= (pPlayer->joystick_inputs & JOYSTICK_DIRECTION_MASK);
+#endif
+
+  /* Has the current opcode finished? */
+
+  if (pPlayer->brain_info.algo.delay_remaining != 0)
+  { /* Keep on waiting until the countdown has finished. */
+    pPlayer->brain_info.algo.delay_remaining--;
+  }
+  else if (pPlayer->brain_info.algo.target_distance >=
+  PLAYER_PIXEL_DIAMETER_NORMAL)
+  {
+    /* Not yet close enough to the target.  Continue hunting. */
+  }
+  else
+  { /* No more waiting, at target and delay has finished, do current opcode
+       actions and point to next one. */
+
+    target_list_item_record currentOpcode;
+    currentOpcode = g_target_list[pPlayer->brain_info.algo.target_list_index++];
+
+    switch (currentOpcode.target_pixel_y)
+    {
+    case TARGET_CODE_SPEED:
+      pPlayer->brain_info.algo.desired_speed = currentOpcode.target_pixel_x;
+      break;
+
+    case TARGET_CODE_STEER:
+      /* X is 0 to 7 for steering to a quadrant, 8 targets a rival,
+         9 to steer to your corner of the board, 10+ just drift. */
+      if (currentOpcode.target_pixel_x <= 7)
+      { /* Steer in the given octant direction.  Next opcode usually delay. */
+        joystickOutput = (joystickOutput & Joy_Button) |
+          JoystickForOctant(currentOpcode.target_pixel_x);
+        pPlayer->brain_info.algo.steer = false; /* Just drift. */
+      }
+      else if (currentOpcode.target_pixel_x >= 8 &&
+      currentOpcode.target_pixel_x <= 11)
+      { /* Target your own corner of the game board, or the next ones around. */
+        uint8_t iMyself = pPlayer->player_array_index;
+        iMyself += currentOpcode.target_pixel_x;
+        if (iMyself & 1)
+          pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH;
+        else
+          pPlayer->brain_info.algo.target_pixel_x =
+            (g_play_area_width_tiles - 2) * TILE_PIXEL_WIDTH;
+        if (iMyself & 2)
+          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH;
+        else
+          pPlayer->brain_info.algo.target_pixel_y =
+            (g_play_area_height_tiles - 2) * TILE_PIXEL_WIDTH;
+        pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
+        pPlayer->brain_info.algo.target_distance = 0x7FFF; /* Max positive. */
+        pPlayer->brain_info.algo.steer = true;
+      }
+      else if (currentOpcode.target_pixel_x == 12)
+      { /* Target the rival player with highest score. */
+        uint8_t iMyself = pPlayer->player_array_index;
+        uint8_t iBestPlayer = MAX_PLAYERS;
+        uint16_t maxScore = 0;
+        uint8_t iPlayer;
+        for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
+        {
+          if (iPlayer == iMyself)
+            continue;
+          uint16_t theirScore = g_player_array[iPlayer].score;
+          if (theirScore >= maxScore) /* So when scores are zero, it works. */
+          {
+            maxScore = theirScore;
+            iBestPlayer = iPlayer;
+          }
+        }
+        pPlayer->brain_info.algo.target_player = iBestPlayer;
+        pPlayer->brain_info.algo.target_distance = 0x7FFF; /* Max positive. */
+        pPlayer->brain_info.algo.steer = true;
+      }
+      else /* Unknown steering orders, just drift, specify no direction. */
+      {
+        joystickOutput = (joystickOutput & Joy_Button);
+        pPlayer->brain_info.algo.target_player = MAX_PLAYERS; 
+        pPlayer->brain_info.algo.steer = false; /* Just drift. */
+      }
+      break;
+
+    case TARGET_CODE_DELAY:
+      pPlayer->brain_info.algo.delay_remaining = currentOpcode.target_pixel_x;
+      break;
+
+    case TARGET_CODE_GOTO:
+      pPlayer->brain_info.algo.target_list_index = currentOpcode.target_pixel_x;
+      break;
+
+    default: /* Just a pair of X and Y column/row target coordinates. */
+      pPlayer->brain_info.algo.target_pixel_x =
+        currentOpcode.target_pixel_x * TILE_PIXEL_WIDTH;
+      pPlayer->brain_info.algo.target_pixel_y =
+        currentOpcode.target_pixel_y * TILE_PIXEL_WIDTH;
+      pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
+      pPlayer->brain_info.algo.target_distance = 0x7FFF; /* Max positive. */
+      pPlayer->brain_info.algo.steer = true;
+      break;
     }
   }
 
@@ -692,7 +862,7 @@ void UpdatePlayerInputs(void)
     if (pPlayer->brain == ((player_brain) BRAIN_ALGORITHM))
     {
       if (iPlayer == (g_FrameCounter & MAX_PLAYERS_MASK))
-        BrainUpdateJoystick(pPlayer, iPlayer);
+        BrainUpdateJoystick(pPlayer);
       continue;
     }
 

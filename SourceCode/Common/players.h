@@ -78,18 +78,23 @@ typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
 /* When algorithms control the player, we select which algos we want for
    different functions and can set parameters for them.  Some of these options
    override other ones, if they conflict then the earlier one in this structure
-   controls the feature.  */
+   controls the feature.
+
+   Note that AI frames happen at a quarter of the screen update frame rate,
+   so about 5hz, since we only update one AI each frame to save on CPU. */
 typedef struct player_algo_struct {
   bool steer : 1; /* TRUE to turn towards target, false to drift. */
+  uint8_t steer_remaining; /* AI frame countdown to next steer update. */
   int16_t target_pixel_x; /* Location in the game world we head towards. */
   int16_t target_pixel_y;
   int16_t target_distance; /* Updated with current distance to target. */
   uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
   uint8_t target_list_index; /* Where we are in the global list of targets. */
   uint8_t desired_speed; /* Harvest if speed is less than this pixels/frame. */
-  uint8_t harvest_time; /* Number of frames to spend in harvest mode. */
-  uint8_t trail_time; /* Number of frames to spend just trailing tiles. */
-  uint8_t time_remaining; /* Num frames remaining in harvest or trail modes. */
+  uint8_t harvest_time; /* Number of AI frames to spend in harvest mode. */
+  uint8_t trail_time; /* Number of AI frames to spend just trailing tiles. */
+  uint8_t trail_remaining; /* Num AI frames remaining in harvest or trail. */
+  uint8_t delay_remaining; /* Num AI frames remaining in time delay opcode. */
 } player_algo_record, *player_algo_pointer;
 
 /* When a target_list_item with a Y coordinate containing these magic values is
@@ -97,13 +102,14 @@ typedef struct player_algo_struct {
    a parameter for the magic.  So you can have AI players follow a path, then
    return to the beginning of the path and follow it again, or hunt a player. */
 typedef enum target_list_codes_enum {
-  TARGET_CODE_NONE = 224, /* No operation and lowest number opcode. */
+  TARGET_CODE_NONE = 240, /* No operation and lowest number opcode. */
   TARGET_CODE_SPEED, /* X coordinate sets desired speed, in pixels/frame. */
-  TARGET_CODE_TRAIL_TIME, /* X coordinate sets trail tiles time frame count. */
-  TARGET_CODE_STEER, /* X coordinate is 0 for off (drift), 1 for on. */
-  TARGET_CODE_TARGET_PLAYER, /* X coordinate is player number, 255 to turn off
-    player targeting, 254 to target the player with the most points that's not
-    the AI player itself. */
+  TARGET_CODE_STEER, /* X coordinate is 0 to 7 to steer towards a given
+    quadrant in drift mode, 8 to 11 to steer to your corner of the board or
+    next player's corner for higher numbers, 12 to target a rival player with
+    the highest score, other values make you drift rather than steer. */
+  TARGET_CODE_DELAY, /* X sets the time delay to wait for in AI frames before
+    executing the next opcode. */
   TARGET_CODE_GOTO, /* Switch to the item at list index of X coordinate. */
   TARGET_CODE_SKIP_GT, /* Skip the next list item if the distance to the target
     is greater than the X coordinate. */
@@ -122,8 +128,8 @@ typedef uint8_t target_code; /* Want it to be 8 bits, not 16. */
    programability.  Theoretically each level you load would have a different
    global target list.*/
 typedef struct target_list_item_struct {
-  uint8_t target_pixel_x; /* 0 to 255, game world pixel coordinates. */
-  uint8_t target_pixel_y; /* 0 to 191, with some special codes after. */
+  uint8_t target_pixel_x; /* 0 to 255, game world column coordinates. */
+  uint8_t target_pixel_y; /* 0 to 239 for row number, or a special opcode. */
 } target_list_item_record, *target_list_item_pointer;
 
 extern target_list_item_record g_target_list[];
@@ -145,6 +151,8 @@ typedef enum joystick_enum {
     Joy_Button = 0b00010000,
   };
 #endif
+#define JOYSTICK_DIRECTION_MASK 15 /* To get just the direction bits. */
+
 
 extern uint8_t g_KeyboardFakeJoystickStatus;
 /* Your device specific keyboard code puts an emulated joystick state in this

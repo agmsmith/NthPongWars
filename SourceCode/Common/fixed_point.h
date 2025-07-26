@@ -167,6 +167,7 @@ extern void DIV2_FX(pfx x);
   */
 
 extern uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y);
+extern uint8_t INT16_TO_OCTANT(int16_t vector_x, int16_t vector_y);
 
 #endif /* _FIXED_POINT_H */
 

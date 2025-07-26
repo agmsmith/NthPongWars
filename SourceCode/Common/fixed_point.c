@@ -544,3 +544,94 @@ uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
   return octantLower;
 }
 
+
+/* Same function, but with int16_t pixel values as the vector coordinates. */
+uint8_t INT16_TO_OCTANT(int16_t vector_x, int16_t vector_y)
+{
+  uint8_t octantLower = 0xFF; /* An invalid value you should never see. */
+  bool rightOnOctant = false; /* If velocity is exactly in octant direction. */
+
+  if (vector_x == 0) /* X == 0 */
+  {
+    if (vector_y == 0) /* Y == 0 */
+      octantLower = 0; /* Actually undefined, zero length vector. */
+    else if (vector_y >= 0) /* Y > 0, using >= test since it's faster. */
+    {
+      octantLower = 2;
+      rightOnOctant = true;
+    }
+    else /* Y < 0 */
+    {
+      octantLower = 6;
+      rightOnOctant = true;
+    }
+  }
+  else if (vector_x >= 0) /* X > 0 */
+  {
+    if (vector_y == 0) /* X > 0, Y == 0 */
+    {
+      octantLower = 0;
+      rightOnOctant = true;
+    }
+    else if (vector_y >= 0) /* X > 0, Y > 0 */
+    {
+      int16_t xyDelta;
+      xyDelta = vector_x - vector_y;
+      if (xyDelta > 0) /* |X| > |Y| */
+        octantLower = 0;
+      else /* |X| <= |Y| */
+      {
+        octantLower = 1;
+        rightOnOctant = (xyDelta == 0);
+      }
+    }
+    else /* X > 0, Y < 0 */
+    {
+      int16_t xyDelta;
+      xyDelta = vector_x + vector_y;
+      if (xyDelta >= 0) /* |X| >= |Y| */
+      {
+        octantLower = 7;
+        rightOnOctant = (xyDelta == 0);
+      }
+      else /* |X| < |Y| */
+        octantLower = 6;
+    }
+  }
+  else /* X < 0 */
+  {
+    if (vector_y == 0) /* X < 0, Y == 0 */
+    {
+      octantLower = 4;
+      rightOnOctant = true;
+    }
+    else if (vector_y >= 0) /* X < 0, Y >= 0 */
+    {
+      int16_t xyDelta;
+      xyDelta = -vector_x - vector_y;
+      if (xyDelta >= 0) /* |X| >= |Y| */
+      {
+        octantLower = 3;
+        rightOnOctant = (xyDelta == 0);
+      }
+      else /* |X| < |Y| */
+        octantLower = 2;
+    }
+    else /* X < 0, Y < 0 */
+    {
+      int16_t xyDelta;
+      xyDelta = vector_x - vector_y;
+      if (xyDelta < 0) /* |X| > |Y| */
+        octantLower = 4;
+      else /* |X| <= |Y| */
+      {
+        octantLower = 5;
+        rightOnOctant = (xyDelta == 0);
+      }
+    }
+  }
+
+  if (rightOnOctant)
+    octantLower |= 0x80;
+  return octantLower;
+}

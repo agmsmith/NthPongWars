@@ -254,10 +254,10 @@ typedef struct player_struct {
      neutral), so we can detect idle players.  After about 30 seconds, we
      change that player slot to idle. */
 
-  uint16_t score;
+  /* uint16_t score; Use player colour tile in g_TileOwnerCounts, in tiles.h */
   /* Current score of each player.  Counts the number of tiles they own.  Once
      a player has reached the goal score, the game is over.  Gave up on doing
-     it as percentages, too CPU expensive.  Score incremental updates are done
+     it as percentages, too CPU expensive.  Count incremental updates are done
      in SetTileOwner(). */
 
   uint16_t score_displayed;

@@ -34,9 +34,7 @@ extern uint16_t g_ScoreGoal;
    will usually be 2 (30hz frame rate). */
 extern uint8_t g_ScoreFramesPerUpdate;
 
-/* Resets the goal (based on the number of tiles in the play area), recomputes
-   the score for each player based on the state of the tiles in the play area,
-   in case we want to reload a saved game or have pre-made scenarios. */
+/* Resets the goal score and forces a score display redraw on next update. */
 extern void InitialiseScores(void);
 
 /* Converts the player's scores into colourful text, cached in each player.

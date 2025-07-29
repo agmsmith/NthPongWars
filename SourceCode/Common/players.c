@@ -65,15 +65,24 @@ uint8_t g_KeyboardFakeJoystickStatus;
    at most 256 elements. */
 target_list_item_record g_target_list[] = {
   {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
-  {25, TARGET_CODE_DELAY}, /* Delay 5 seconds to hang around there. */
+  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hang around there. */
   {9, TARGET_CODE_STEER}, /* Steer to next corner. */
-  {25, TARGET_CODE_DELAY}, /* Delay 5 seconds to hang around there. */
+  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hang around there. */
   {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
-  {255, TARGET_CODE_STEER}, /* Drift mode. */
+  {1, TARGET_CODE_SPEED}, /* Avoid accelerating and eating tiles. */
+  {255, TARGET_CODE_STEER}, /* Drift mode, no direction specified. */
   {100, TARGET_CODE_DELAY}, /* Delay 20 seconds to drift. */
+  {30, TARGET_CODE_SPEED}, /* Very fast to other corner. */
+  {9, TARGET_CODE_STEER}, /* Steer to next corner. */
+  {1, TARGET_CODE_SPEED}, /* Avoid accelerating and eating tiles. */
+  {255, TARGET_CODE_STEER}, /* Drift mode, no direction specified. */
+  {100, TARGET_CODE_DELAY}, /* Delay 20 seconds to drift. */
+  {20, TARGET_CODE_SPEED}, /* Fast movement towards player. */
   {12, TARGET_CODE_STEER}, /* Head to leading player. */
-  {25, TARGET_CODE_DELAY}, /* Delay 5 seconds to hound them. */
+  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hound them. */
+  {4, TARGET_CODE_SPEED}, /* Slower movement back to center. */
   {16, 11}, /* Head to center of screen. */
+  {8, TARGET_CODE_SPEED}, /* Normal speed, avoids physics slowdown. */
   {0, TARGET_CODE_GOTO},
 };
 
@@ -151,15 +160,6 @@ printf("(%d to %d, %d to %d)\n",
     pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
   }
-}
-
-
-/* Add or remove points from a player's score.  Code actually part of player.c
-   code, but we need the declaration in tiles.h for use by SetTileOwner.
-*/
-void AdjustPlayerScore(uint8_t iPlayer, int8_t score_change)
-{
-  g_player_array[iPlayer].score += score_change;
 }
 
 
@@ -698,20 +698,20 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       else if (currentOpcode.target_pixel_x >= 8 &&
       currentOpcode.target_pixel_x <= 11)
       { /* Target your own corner of the game board, or the next ones around. */
-        uint8_t iMyself = pPlayer->player_array_index;
-        iMyself += currentOpcode.target_pixel_x;
-        if (iMyself & 1)
+        uint8_t iMyself = (3 &
+          (pPlayer->player_array_index + currentOpcode.target_pixel_x));
+        if (iMyself == 0 || iMyself == 3)
           pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH / 2;
         else
           pPlayer->brain_info.algo.target_pixel_x =
             g_play_area_width_tiles * (int16_t) TILE_PIXEL_WIDTH -
             TILE_PIXEL_WIDTH / 2;
-        if (iMyself & 2)
+        if (iMyself == 0 || iMyself == 1)
+          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH / 2;
+        else
           pPlayer->brain_info.algo.target_pixel_y =
             g_play_area_height_tiles * (int16_t) TILE_PIXEL_WIDTH -
             TILE_PIXEL_WIDTH / 2;
-        else
-          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH / 2;
         pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
         pPlayer->brain_info.algo.steer = true;
       }
@@ -725,7 +725,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         {
           if (iPlayer == iMyself)
             continue;
-          uint16_t theirScore = g_player_array[iPlayer].score;
+          uint16_t theirScore = GetPlayerScore(iPlayer);
           if (theirScore >= maxScore) /* So when scores are zero, it works. */
           {
             maxScore = theirScore;

@@ -38,17 +38,14 @@ static uint8_t s_ScoreFramesPerUpdateDisplayed;
 */
 void InitialiseScores(void)
 {
-  uint8_t col, row;
   uint8_t iPlayer;
   player_pointer pPlayer;
-  tile_pointer pTile;
 
-  g_FrameCounter = 0;
+  g_FrameCounter = (uint16_t) 0; /* Bleeble -ve start to test wrap-around. */
 
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
-    pPlayer->score = 0;
     pPlayer->score_displayed = 0x4321; /* Force a display update next time. */
   }
 
@@ -56,25 +53,6 @@ void InitialiseScores(void)
   s_ScoreGoalDisplayed = 0xFEDC; /* Force a display update next time. */
 
   s_ScoreFramesPerUpdateDisplayed = 255; /* Force an update. */
-
-  /* Count up the tiles to get the starting score for each player. */
-
-  for (row = 0; row != g_play_area_height_tiles; row++)
-  {
-    pTile = g_tile_array_row_starts[row];
-    if (pTile == NULL)
-      break;
-    for (col = 0; col != g_play_area_width_tiles; col++, pTile++)
-    {
-      tile_owner owner;
-      owner = pTile->owner;
-      if (owner < (tile_owner) OWNER_PLAYER_1 ||
-      owner > (tile_owner) OWNER_PLAYER_4)
-        continue;
-      iPlayer = owner - (tile_owner) OWNER_PLAYER_1;
-      g_player_array[iPlayer].score += 1;
-    }
-  }
 }
 
 
@@ -113,17 +91,12 @@ void UpdateScores(void)
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
-    if (pPlayer->score != pPlayer->score_displayed)
+    uint16_t score = GetPlayerScore(iPlayer);
+    if (score != pPlayer->score_displayed)
     {
-      if (pPlayer->brain == BRAIN_INACTIVE)
+      /* Prepare a RAM copy of a colourful score number. */
       {
-        /* Just display some dots in the player's colour. */
-        memset(pPlayer->score_text, '0' + 10 + fontOffset, 3);
-        pPlayer->score_text[3] = 0;
-      }
-      else /* Display a colourful score number. */
-      {
-        Write3DigitColourfulNumber(pPlayer->score, pPlayer->score_text,
+        Write3DigitColourfulNumber(score, pPlayer->score_text,
           fontOffset /* Font offset to a colour digit set */);
       }
     }
@@ -149,10 +122,11 @@ void CopyScoresToScreen(void)
   {
     char *pChar;
     char letter;
+    uint16_t score = GetPlayerScore(iPlayer);
 
-    if (pPlayer->score == pPlayer->score_displayed)
+    if (score == pPlayer->score_displayed)
       continue;
-    pPlayer->score_displayed = pPlayer->score; /* Now up to date. */
+    pPlayer->score_displayed = score; /* Now up to date. */
 
     vdp_setWriteAddress(_vdpPatternNameTableAddr + iPlayer * 4);
     for (pChar = pPlayer->score_text; (letter = *pChar) != 0; pChar++)

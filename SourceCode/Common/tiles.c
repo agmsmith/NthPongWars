@@ -37,6 +37,8 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
   "Wider", /* OWNER_PUP_WIDER */
 };
 
+uint16_t g_TileOwnerCounts[OWNER_MAX];
+
 uint8_t g_play_area_height_tiles = 24;
 uint8_t g_play_area_width_tiles = 32;
 uint16_t g_play_area_num_tiles = 0;
@@ -98,6 +100,7 @@ const char *g_TileAnimData[OWNER_MAX] =
   "Wider", /* OWNER_PUP_WIDER */
 #endif /* NABU_H */
 };
+
 
 /******************************************************************************/
 
@@ -193,6 +196,9 @@ bool InitTileArray(void)
       pTile->animated = true; /* First update will recalculate this. */
     }
   }
+
+  bzero(&g_TileOwnerCounts, sizeof (g_TileOwnerCounts));
+  g_TileOwnerCounts[OWNER_EMPTY] = g_play_area_num_tiles;
 
   ActivateTileArrayWindow();
 
@@ -341,8 +347,8 @@ void RequestTileRedraw(tile_pointer pTile)
 
 
 /* Change the owner of the tile to the given one.  Takes care of updating
-   animation stuff, setting dirty flags, updating score.  Returns previous
-   owner.
+   animation stuff, setting dirty flags, updating score counts.  Returns
+   previous owner.
 */
 tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
 {
@@ -357,17 +363,14 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
 
   pTile->owner = newOwner;
   pTile->animationIndex = 0;
+  pTile->age = 0; /* Freshly taken over ownership of tile, reset age. */
   RequestTileRedraw(pTile);
 
-  if (previousOwner <= (tile_owner) OWNER_PLAYER_4 &&
-  previousOwner >= (tile_owner) OWNER_PLAYER_1)
-    AdjustPlayerScore(previousOwner - (tile_owner) OWNER_PLAYER_1, -1);
-  if (newOwner <= (tile_owner) OWNER_PLAYER_4 &&
-  newOwner >= (tile_owner) OWNER_PLAYER_1)
-  {
-    AdjustPlayerScore(newOwner - (tile_owner) OWNER_PLAYER_1, 1);
-    pTile->age = 0; /* Freshly taken over ownership of tile, reset age. */
-  }
+  /* Keeping score, and tracking kinds of tiles in play. */
+
+  if (previousOwner < (tile_owner) OWNER_MAX) /* In case of data corruption. */
+    g_TileOwnerCounts[previousOwner]--;
+  g_TileOwnerCounts[newOwner]++;
 
   return previousOwner;
 }

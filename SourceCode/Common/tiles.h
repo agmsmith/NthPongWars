@@ -61,6 +61,12 @@ typedef uint8_t tile_owner; /* Want 8 bits, not a 16 bit enum. */
 /* List of names for each of the owner enums, mostly for debugging. */
 extern const char * g_TileOwnerNames[OWNER_MAX];
 
+/* Number of each kind of tile on the screen.  Some are player tiles, some are
+   power up tiles, etc.  Score of each player is the number of their tiles,
+   also need the count of the number of each kind of power-up to determine when
+   to make a new one. */
+extern uint16_t g_TileOwnerCounts[OWNER_MAX];
+
 /* Animations are done by changing the character displayed for a particular tile
    type.  A NUL terminated string lists the characters to be used in sequence,
    once per frame.  For slower animations, repeat the character.  Animations
@@ -244,9 +250,7 @@ extern tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner);
    animation stuff, setting dirty flags, updating score.  Returns previous
    owner. */
 
-extern void AdjustPlayerScore(uint8_t iPlayer, int8_t score_change);
-/* Add or remove points from a player's score.  Code actually part of player.c
-   code, but we need the declaration in tiles.h for use by SetTileOwner. */
+#define GetPlayerScore(iPlayer) (g_TileOwnerCounts[OWNER_PLAYER_1 + iPlayer])
 
 extern void UpdateTileAnimations(void);
 /* Go through all the tiles and update displayedChar for the current frame,

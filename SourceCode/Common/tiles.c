@@ -31,11 +31,62 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
   "P4", /* OWNER_PLAYER_4 */
   "Normal", /* OWNER_PUP_NORMAL */
   "Fast", /* OWNER_PUP_FAST */
-  "Slow", /* OWNER_PUP_SLOW */
   "Stop", /* OWNER_PUP_STOP */
-  "Through", /* OWNER_PUP_RUN_THROUGH */
+  "Fly", /* OWNER_PUP_FLY */
   "Wider", /* OWNER_PUP_WIDER */
 };
+
+const char *g_TileAnimData[OWNER_MAX] =
+{
+#ifdef NABU_H
+  " ", /* OWNER_EMPTY */
+  "\xE0\xE4\xE8\xEC\xF0\xF4\xF8\xFC", /* OWNER_PLAYER_1, custom font boxes. */
+  "\xE1\xE5\xE9\xED\xF1\xF5\xF9\xFD", /* OWNER_PLAYER_2 */
+  "\xE2\xE6\xEA\xEE\xF2\xF6\xFA\xFE", /* OWNER_PLAYER_3 */
+  "\xE3\xE7\xEB\xEF\xF3\xF7\xFB\xFF", /* OWNER_PLAYER_4 */
+  "NNNorm", /* OWNER_PUP_NORMAL */
+  "FFFast", /* OWNER_PUP_FAST */
+  "SSStop", /* OWNER_PUP_STOP */
+  "UUUp", /* OWNER_PUP_FLY */
+  "WWWider", /* OWNER_PUP_WIDER */
+#else /* Curses just uses plain characters, no special font. */
+  " ", /* OWNER_EMPTY */
+  "1", /* OWNER_PLAYER_1 */
+  "2", /* OWNER_PLAYER_2 */
+  "3", /* OWNER_PLAYER_3 */
+  "4", /* OWNER_PLAYER_4 */
+  "NNNorm", /* OWNER_PUP_NORMAL */
+  "FFFast", /* OWNER_PUP_FAST */
+  "SSStop", /* OWNER_PUP_STOP */
+  "UUUp", /* OWNER_PUP_FLY */
+  "WWWider", /* OWNER_PUP_WIDER */
+#endif /* NABU_H */
+};
+
+uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
+  0, /* OWNER_EMPTY */
+  0, /* OWNER_PLAYER_1 */
+  0, /* OWNER_PLAYER_2 */
+  0, /* OWNER_PLAYER_3 */
+  0, /* OWNER_PLAYER_4 */
+  2, /* OWNER_PUP_NORMAL */
+  2, /* OWNER_PUP_FAST */
+  2, /* OWNER_PUP_STOP */
+  2, /* OWNER_PUP_FLY */
+  2, /* OWNER_PUP_WIDER */
+};
+
+static tile_owner s_TileQuotaNextIndex = OWNER_PUP_NORMAL;
+/* Lets us cycle through the power ups so we add each kind eventually. */
+
+static uint8_t s_TileQuotaNextColumn = 1;
+static uint8_t s_TileQuotaNextRow = 1;
+static uint8_t s_TileQuotaColumnIncrement = 5;
+static uint8_t s_TileQuotaRowIncrement = 3;
+/* Location of the next power up.  Will get increased by row and column
+   increments (preferably numbers co-prime to the play area size) so that there
+   is a predictable pattern for the player to deduce.  Can place a new power up
+   over an old one, replacing it. */
 
 uint16_t g_TileOwnerCounts[OWNER_MAX];
 
@@ -72,35 +123,6 @@ uint8_t g_cache_animated_tiles_index = 0;
 tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];
 uint8_t g_cache_dirty_screen_tiles_index = 0;
 
-const char *g_TileAnimData[OWNER_MAX] =
-{
-#ifdef NABU_H
-  " ", /* OWNER_EMPTY */
-  "\xE0\xE4\xE8\xEC\xF0\xF4\xF8\xFC", /* OWNER_PLAYER_1, custom font. */
-  "\xE1\xE5\xE9\xED\xF1\xF5\xF9\xFD", /* OWNER_PLAYER_2 */
-  "\xE2\xE6\xEA\xEE\xF2\xF6\xFA\xFE", /* OWNER_PLAYER_3 */
-  "\xE3\xE7\xEB\xEF\xF3\xF7\xFB\xFF", /* OWNER_PLAYER_4 */
-  "NNoorrmmaall  ", /* OWNER_PUP_NORMAL */
-  "Fast", /* OWNER_PUP_FAST */
-  "SSSSlllloooowwww    ", /* OWNER_PUP_SLOW */
-  "Stop. . . .", /* OWNER_PUP_STOP */
-  "Through ", /* OWNER_PUP_RUN_THROUGH */
-  "Wider", /* OWNER_PUP_WIDER */
-#else /* Curses just uses plain characters. */
-  " ", /* OWNER_EMPTY */
-  "1", /* OWNER_PLAYER_1 */
-  "2", /* OWNER_PLAYER_2 */
-  "3", /* OWNER_PLAYER_3 */
-  "4", /* OWNER_PLAYER_4 */
-  "NNoorrmmaall  ", /* OWNER_PUP_NORMAL */
-  "Fast", /* OWNER_PUP_FAST */
-  "SSSSlllloooowwww    ", /* OWNER_PUP_SLOW */
-  "Stop. . . .", /* OWNER_PUP_STOP */
-  "Through", /* OWNER_PUP_RUN_THROUGH */
-  "Wider", /* OWNER_PUP_WIDER */
-#endif /* NABU_H */
-};
-
 
 /******************************************************************************/
 
@@ -108,10 +130,11 @@ const char *g_TileAnimData[OWNER_MAX] =
  */
 static void DumpOneTileToTerminal(tile_pointer pTile)
 {
-  printf("(%d,%d) Owner=%d Anim=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
+  printf("(%d,%d) Owner=%d (%s) Anim=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
     (int) pTile->pixel_center_x,
     (int) pTile->pixel_center_y,
     (int) pTile->owner,
+    g_TileOwnerNames[pTile->owner],
     (int) pTile->animationIndex,
     (int) pTile->displayedChar,
     (int) pTile->dirty_screen,
@@ -373,6 +396,54 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
   g_TileOwnerCounts[newOwner]++;
 
   return previousOwner;
+}
+
+
+/* Adds a new power-up tile for ones which are under the quota set for the
+   game.  Location is in a predictable pattern on purpose.  If we are already
+   at quote for all tile types, does nothing.  Recommend calling this every
+   couple of seconds.
+*/
+void AddNextPowerUpTile(void)
+{
+  /* Find the next kind of tile that is below quota, if any. */
+
+  tile_owner quotaIndex = s_TileQuotaNextIndex;
+  bool foundUnderQuota = false;
+  do
+  {
+    if (g_TileOwnerQuotas[quotaIndex] > g_TileOwnerCounts[quotaIndex])
+    {
+      foundUnderQuota = true;
+      break;
+    }
+    if (++quotaIndex >= OWNER_MAX)
+      quotaIndex = OWNER_PUP_NORMAL;
+  } while (quotaIndex != s_TileQuotaNextIndex);
+
+  if (!foundUnderQuota)
+    return; /* Nothing under quota.  So do nothing. */
+
+  s_TileQuotaNextIndex = quotaIndex + 1;
+  if (s_TileQuotaNextIndex >= OWNER_MAX)
+    s_TileQuotaNextIndex = OWNER_PUP_NORMAL;
+
+  tile_pointer pTile = g_tile_array_row_starts[s_TileQuotaNextRow];
+  if (pTile != NULL && s_TileQuotaNextColumn < g_play_area_width_tiles)
+  {
+    pTile += s_TileQuotaNextColumn;
+    SetTileOwner(pTile, quotaIndex);
+  }
+
+  /* Advance to the next tile position, for next time. */
+
+  s_TileQuotaNextColumn += s_TileQuotaColumnIncrement;
+  if (s_TileQuotaNextColumn >= g_play_area_width_tiles)
+    s_TileQuotaNextColumn -= g_play_area_width_tiles;
+
+  s_TileQuotaNextRow += s_TileQuotaRowIncrement;
+  if (s_TileQuotaNextRow >= g_play_area_height_tiles)
+    s_TileQuotaNextRow -= g_play_area_height_tiles;
 }
 
 

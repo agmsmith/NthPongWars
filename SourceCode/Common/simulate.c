@@ -489,7 +489,11 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             }
             else /* Just running over our tiles, increase their age. */
             {
-              if (age < 7)
+              /* To save on CPU, only increase tile age occasionally.  Also
+                 avoids players picking up too much speed from harvesting
+                 rapidly, which leads to AIs bouncing around the corner but
+                 not getting into the corner. */
+              if (age < 7 && (((uint8_t) g_FrameCounter ^ iPlayer) & 3) == 0)
               {
                 age++;
                 pTile->age = age;

@@ -269,7 +269,7 @@ void main(void)
   initNABULib(); /* No longer can use CP/M text input or output. */
 
   vdp_init(VDP_MODE_G2,
-    VDP_WHITE /* fgColor not applicable */, VDP_DARK_BLUE /* bgColor */,
+    VDP_WHITE /* fgColor not applicable */, VDP_BLACK /* bgColor */,
     true /* bigSprites 16x16 pixels but fewer names, each takes 4 */,
     false /* magnify */, true /* splitThirds */);
   /* Sets up the TMS9918A Video Display Processor with this memory map:
@@ -339,6 +339,8 @@ void main(void)
     ProcessKeyboard();
     UpdatePlayerInputs();
     Simulate();
+    if ((g_FrameCounter & 0x3F) == 0)
+      AddNextPowerUpTile(); /* See coincident power-up before hitting it. */
     UpdateTileAnimations();
     UpdatePlayerAnimations();
     UpdateScores();

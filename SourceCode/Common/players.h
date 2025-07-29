@@ -234,6 +234,14 @@ typedef struct player_struct {
      your own tiles you pass over.  Gets added to velocity after the
      simulation step. */
 
+  uint8_t power_up_timer;
+  /* Counts down the number of frames for the power up to be active. */
+
+  tile_owner power_up_type;
+  /* Which type of power-up is active?  Same as the tile it hit that triggered
+     the power up.  Implies that there can only be one kind of power-up active
+     at a time. */
+
   uint8_t joystick_inputs;
   /* What action is the player currently requesting?  See joystick_enum for
      the various bits.  Zero if no buttons pressed.  Human, AI and remote

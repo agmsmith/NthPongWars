@@ -45,7 +45,10 @@ _NthEffectsHarvestPlayer:
 
 _NthEffectsBallOnBall:
  db $00F5,4
- db $6F+16,$00FE,$FF,$00FA,$CC,$00FF,$7E,$006C,$6F+1,$006F
+ db $6F+4,$00FE,$F8,$00FA,$CC,$00FF,$7E,$006C,$6F+1,$006F
+ db $006F
+ db $006F
+ db $006F
  db $00F0
 
 ; ===

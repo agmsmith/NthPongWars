@@ -47,11 +47,10 @@ typedef enum tile_owner_enum {
   OWNER_PLAYER_2,
   OWNER_PLAYER_3,
   OWNER_PLAYER_4,
-  OWNER_PUP_NORMAL, /* Power-up that makes you normal. */
+  OWNER_PUP_NORMAL, /* Power-up that makes you normal.  Also first power up. */
   OWNER_PUP_FAST, /* Power-up that makes you faster. */
-  OWNER_PUP_SLOW, /* Power-up that makes you slower. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
-  OWNER_PUP_RUN_THROUGH, /* Run through squares, rather than bouncing. */
+  OWNER_PUP_FLY, /* Run through squares, rather than bouncing. */
   OWNER_PUP_WIDER, /* Makes the player wider in effect; more tiles hit. */
   OWNER_MAX
 };
@@ -61,18 +60,23 @@ typedef uint8_t tile_owner; /* Want 8 bits, not a 16 bit enum. */
 /* List of names for each of the owner enums, mostly for debugging. */
 extern const char * g_TileOwnerNames[OWNER_MAX];
 
-/* Number of each kind of tile on the screen.  Some are player tiles, some are
-   power up tiles, etc.  Score of each player is the number of their tiles,
-   also need the count of the number of each kind of power-up to determine when
-   to make a new one. */
-extern uint16_t g_TileOwnerCounts[OWNER_MAX];
-
 /* Animations are done by changing the character displayed for a particular tile
    type.  A NUL terminated string lists the characters to be used in sequence,
    once per frame.  For slower animations, repeat the character.  Animations
    that are one character long save time - after being displayed, they no longer
    need updates. */
 extern const char *g_TileAnimData[OWNER_MAX];
+
+/* How many of each kind of power-up tile do we want on screen?  Checks every
+   few seconds and makes a new power up if below quota.  Non-power-up quotas
+   are ignored. */
+extern uint8_t g_TileOwnerQuotas[OWNER_MAX];
+
+/* Number of each kind of tile on the screen.  Some are player tiles, some are
+   power up tiles, etc.  Score of each player is the number of their tiles,
+   also need the count of the number of each kind of power-up to determine when
+   to make a new one. */
+extern uint16_t g_TileOwnerCounts[OWNER_MAX];
 
 /* This is the main tile status record.  There is one for each tile in the
    playing area, which can include off-screen tiles if the play area is bigger
@@ -251,6 +255,13 @@ extern tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner);
    owner. */
 
 #define GetPlayerScore(iPlayer) (g_TileOwnerCounts[OWNER_PLAYER_1 + iPlayer])
+/* A player's score is just a count of the number of tiles in their colour. */
+
+extern void AddNextPowerUpTile(void);
+/* Adds a new power-up tile for ones which are under the quota set for the
+   game.  Location is in a predictable pattern on purpose.  If we are already
+   at quote for all tile types, does nothing.  Recommend calling this every
+   couple of seconds. */
 
 extern void UpdateTileAnimations(void);
 /* Go through all the tiles and update displayedChar for the current frame,

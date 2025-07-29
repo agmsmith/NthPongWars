@@ -489,12 +489,7 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             }
             else /* Just running over our tiles, increase their age. */
             {
-              /* Only increase age every 4th frame, else some of the
-                 intermediate animation states are missed.  To even out the
-                 update drawing time load on the system, only draw on the frame
-                 corresponding to the player number. */
-
-              if (age < 7 && ((uint8_t) g_FrameCounter & 3) == iPlayer)
+              if (age < 7)
               {
                 age++;
                 pTile->age = age;

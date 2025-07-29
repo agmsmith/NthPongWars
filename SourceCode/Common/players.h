@@ -169,6 +169,11 @@ extern uint8_t g_KeyboardFakeJoystickStatus;
    Inactive players also get a record, in case they join a game in progress.
 */
 typedef struct player_struct {
+  uint8_t player_array_index;
+  /* The index of this player in the g_player_array.  Player number in other
+     words, used for things like deciding the sound to make for the player.
+     Avoids having code to calculate the index from a player pointer. */
+
   fx pixel_center_x;
   fx pixel_center_y;
   /* Position of the center of the player in the play area, in pixels.  Used
@@ -214,13 +219,13 @@ typedef struct player_struct {
      another player.  To avoid immediate bouncing around against nearby tiles
      and hitting each other again, they stop laying down new tiles and just
      consume any tiles while in collision mode.  After a number of frames
-     (each collision increments this counter; it gets decremented at the start
-     of the next frame), this gets back to zero and they can lay down tiles
-     again. */
+     (each collision adds some amount to this counter; it gets decremented at
+     the start of the next frame), this gets back to zero and they can lay down
+     tiles again. */
 
   bool thrust_active;
   /* Set to TRUE when thrust is busy harvesting tiles.  Means the fire button
-     is pressed and  a direction is specified.  Saves having to read the
+     is pressed and a direction is specified.  Saves having to read the
      buttons repeatedly during simulation. */
 
   uint8_t thrust_harvested;
@@ -228,11 +233,6 @@ typedef struct player_struct {
      button plus a direction).  Simulation sets it by counting how many of
      your own tiles you pass over.  Gets added to velocity after the
      simulation step. */
-
-  uint8_t player_array_index;
-  /* The index of this player in the g_player_array.  Player number in other
-     words, used for things like deciding the sound to make for the player.
-     Avoids having code to calculate the index from a player pointer. */
 
   uint8_t joystick_inputs;
   /* What action is the player currently requesting?  See joystick_enum for
@@ -350,11 +350,11 @@ extern void UpdatePlayerInputs(void);
 
 #ifdef NABU_H
 extern void CopyPlayersToSprites(void);
-/* Copy all the players to hardware sprites.  Returns the number of the next
-   free sprite.  Inactive players don't use any sprites.  Also inactive sparkle
-   animations don't use a sprite.  They are copied in priority order, all balls,
-   then sparkles, then shadows.  Should be the first thing updated as the
-   vertical blanking starts, since sprites updated during display look bad. */
+/* Copy all the players to hardware sprites.  Inactive players don't use any
+   sprites.  Also inactive sparkle animations don't use a sprite.  They are
+   copied in priority order, all balls, then sparkles, then shadows.  Should
+   be the first thing updated as the vertical blanking starts, since sprites
+   updated during display look bad. */
 #endif /* NABU_H */
 
 #endif /* _PLAYERS_H */

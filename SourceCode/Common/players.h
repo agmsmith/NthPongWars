@@ -90,8 +90,6 @@ typedef struct player_algo_struct {
   uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
   uint8_t target_list_index; /* Where we are in the global list of targets. */
   uint8_t desired_speed; /* Harvest if speed is less than this pixels/frame. */
-  uint8_t harvest_time; /* Number of AI frames to spend in harvest mode. */
-  uint8_t trail_time; /* Number of AI frames to spend just trailing tiles. */
   uint8_t trail_remaining; /* Num AI frames remaining in harvest or trail. */
   uint8_t delay_remaining; /* Num AI frames remaining in time delay opcode. */
 } player_algo_record, *player_algo_pointer;
@@ -198,8 +196,9 @@ typedef struct player_struct {
 
   uint8_t velocity_octant;
   /* Direction the velocity is going in, calculated from velocity x,y but only
-     when needed, by UpdatePlayerInputs().  Actually this is the lower boundary
-     of the octant, the upper one is 45 degrees clockwise from this. */
+     when needed (if joystick direction used or harvest succssful), by
+     UpdatePlayerInputs().  Actually this is the lower boundary of the octant,
+     the upper one is 45 degrees clockwise from this. */
 
   bool velocity_octant_right_on;
   /* Set to TRUE if the velocity is right along the velocity_octant.  Needed so

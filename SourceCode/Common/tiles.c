@@ -70,10 +70,10 @@ uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
   0, /* OWNER_PLAYER_3 */
   0, /* OWNER_PLAYER_4 */
   2, /* OWNER_PUP_NORMAL */
-  2, /* OWNER_PUP_FAST */
-  2, /* OWNER_PUP_STOP */
-  2, /* OWNER_PUP_FLY */
-  2, /* OWNER_PUP_WIDER */
+  1, /* OWNER_PUP_FAST */
+  1, /* OWNER_PUP_STOP */
+  1, /* OWNER_PUP_FLY */
+  1, /* OWNER_PUP_WIDER */
 };
 
 static tile_owner s_TileQuotaNextIndex = OWNER_PUP_NORMAL;

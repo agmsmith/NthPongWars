@@ -71,16 +71,11 @@ target_list_item_record g_target_list[] = {
   {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {1, TARGET_CODE_SPEED}, /* Avoid accelerating and eating tiles. */
   {255, TARGET_CODE_STEER}, /* Drift mode, no direction specified. */
-  {100, TARGET_CODE_DELAY}, /* Delay 20 seconds to drift. */
-  {30, TARGET_CODE_SPEED}, /* Very fast to other corner. */
-  {9, TARGET_CODE_STEER}, /* Steer to next corner. */
-  {1, TARGET_CODE_SPEED}, /* Avoid accelerating and eating tiles. */
-  {255, TARGET_CODE_STEER}, /* Drift mode, no direction specified. */
-  {100, TARGET_CODE_DELAY}, /* Delay 20 seconds to drift. */
+  {50, TARGET_CODE_DELAY}, /* Delay 10 seconds to drift. */
   {20, TARGET_CODE_SPEED}, /* Fast movement towards player. */
   {12, TARGET_CODE_STEER}, /* Head to leading player. */
   {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hound them. */
-  {4, TARGET_CODE_SPEED}, /* Slower movement back to center. */
+  {30, TARGET_CODE_SPEED}, /* Faster movement back to center. */
   {16, 11}, /* Head to center of screen. */
   {8, TARGET_CODE_SPEED}, /* Normal speed, avoids physics slowdown. */
   {0, TARGET_CODE_GOTO},
@@ -139,8 +134,6 @@ printf("(%d to %d, %d to %d)\n",
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
     pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
     pPlayer->brain_info.algo.desired_speed = 4 + iPlayer;
-    pPlayer->brain_info.algo.harvest_time = 6;
-    pPlayer->brain_info.algo.trail_time = 8;
     pPlayer->brain_info.algo.trail_remaining = 50 + iPlayer * 8;
     pPlayer->brain_info.algo.target_list_index = 0;
     pPlayer->brain_info.algo.steer = false;
@@ -629,35 +622,38 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 {
   uint8_t joystickOutput = 0;
 
-  /* Do the harvest mode vs trailing tiles mode based on time duty cycle. */
+  /* Do the harvest mode vs trailing tiles mode based on time duty cycle that
+     gets shorter if we need more speed (using the technique of laying down a
+     tile and then harvesting it in the next frame, rather than the bigger
+     picture technique of heading towards larger areas of your tiles). */
 
-  if (pPlayer->joystick_inputs & Joy_Button) /* Was harvesting last frame? */
+  if (--pPlayer->brain_info.algo.trail_remaining == 0)
   {
-    /* Is it time to finish harvesting? */
-    if (--pPlayer->brain_info.algo.trail_remaining == 0)
+    /* More rapidly alternate between harvest and lay down tiles if more
+       speed is needed.  If speed not needed, go for longer stretches of
+       laying down tiles. */
+    bool wasHarvesting = (pPlayer->joystick_inputs & Joy_Button) != 0;
+    int8_t deltaSpeed = /* Positive if more speed needed. */
+      (int8_t) pPlayer->brain_info.algo.desired_speed -
+      (int8_t) pPlayer->speed;
+    uint8_t time_to_trail; /* New time limit for the next harvest/trail mode. */
+
+    if (deltaSpeed <= 0)
     {
-      pPlayer->brain_info.algo.trail_remaining =
-        pPlayer->brain_info.algo.trail_time;
-      /* Leave Joy_Button bit of joystickOutput at zero, for no harvesting. */
+      if (wasHarvesting)
+        time_to_trail = 10; /* 10 == 2 seconds. */
+      else /* Next mode will be harvest, keep it short. */
+        time_to_trail = 1;
     }
-  }
-  else /* Wasn't harvesting last frame, time to start? */
-  {
-    if (--pPlayer->brain_info.algo.trail_remaining == 0)
-    {
-      /* Check if we are below the desired speed, then start harvesting. */
-      if (pPlayer->speed < pPlayer->brain_info.algo.desired_speed)
-      {
-        pPlayer->brain_info.algo.trail_remaining =
-          pPlayer->brain_info.algo.harvest_time;
-        joystickOutput |= Joy_Button;
-      }
-      else /* Moving fast enough, go back to trailing tiles. */
-      {
-        pPlayer->brain_info.algo.trail_remaining =
-          pPlayer->brain_info.algo.trail_time;
-      }
-    }
+    else if (deltaSpeed > 19)
+      time_to_trail = 1; /* Alternate trail and harvest every update. */
+    else /* 0 to 19 deltaSpeed. */
+      time_to_trail = 20 - deltaSpeed;
+    pPlayer->brain_info.algo.trail_remaining = time_to_trail;
+
+    /* Flip Joy_Button bit of joystickOutput to flip harvest mode. */
+    if (!wasHarvesting) /* Should we harvest in the next cycle? */
+      joystickOutput |= Joy_Button;
   }
 
   /* Has the current opcode finished?  Or is it still waiting? */
@@ -797,8 +793,12 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       targetDistance += deltaY;
     pPlayer->brain_info.algo.target_distance = targetDistance;
 
+    /* Steer in the desired direction.  Don't steer (no joystick input) if
+       already going in that direction to save on CPU. */
+
     uint8_t steerDirection = (INT16_TO_OCTANT(deltaX, deltaY) & 7);
-    joystickOutput |= JoystickForOctant(steerDirection);
+    if (pPlayer->velocity_octant != steerDirection)
+      joystickOutput |= JoystickForOctant(steerDirection);
   }
 
   pPlayer->joystick_inputs = joystickOutput;

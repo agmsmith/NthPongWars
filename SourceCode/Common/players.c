@@ -64,22 +64,42 @@ uint8_t g_KeyboardFakeJoystickStatus;
    has a byte sized index in the opcodes so the array is currently limited to
    at most 256 elements. */
 target_list_item_record g_target_list[] = {
+  {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
+  {3, 19}, /* Capital N. */
+  {2, TARGET_CODE_SPEED}, /* Slow speed. */
+  {3, 3},
+  {6, 8},
+  {7,14},
+  {10, 19},
+  {10, 3},
+  {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
+  {10, 1},
+  {30, 1},
+  {30, 21},
+  {20, TARGET_CODE_SPEED},
+  {3, 21},
+  {0, TARGET_CODE_GOTO},
   {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hang around there. */
   {9, TARGET_CODE_STEER}, /* Steer to next corner. */
   {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hang around there. */
+  {30, TARGET_CODE_SPEED}, /* Faster movement. */
   {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
-  {1, TARGET_CODE_SPEED}, /* Avoid accelerating and eating tiles. */
-  {255, TARGET_CODE_STEER}, /* Drift mode, no direction specified. */
-  {50, TARGET_CODE_DELAY}, /* Delay 10 seconds to drift. */
-  {20, TARGET_CODE_SPEED}, /* Fast movement towards player. */
+  {50, TARGET_CODE_SPEED}, /* Fast movement towards player. */
   {12, TARGET_CODE_STEER}, /* Head to leading player. */
   {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hound them. */
-  {30, TARGET_CODE_SPEED}, /* Faster movement back to center. */
+  {0, TARGET_CODE_SPEED}, /* Avoid accelerating and eating tiles. */
+  {255, TARGET_CODE_STEER}, /* Drift mode, no direction specified. */
+  {20, TARGET_CODE_DELAY}, /* Delay 4 seconds to drift. */
+  {2, TARGET_CODE_SPEED}, /* Slower movement back to center. */
   {16, 11}, /* Head to center of screen. */
   {8, TARGET_CODE_SPEED}, /* Normal speed, avoids physics slowdown. */
   {0, TARGET_CODE_GOTO},
 };
+
+/* Where to start the instructions for player 0 to player N-1. */ 
+uint8_t g_target_start_indices[MAX_PLAYERS] =
+{0, 0, 0, 0};
 
 
 /* Set up the initial player data, mostly colours and animations. */
@@ -134,8 +154,9 @@ printf("(%d to %d, %d to %d)\n",
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
     pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
     pPlayer->brain_info.algo.desired_speed = 4 + iPlayer;
-    pPlayer->brain_info.algo.trail_remaining = 50 + iPlayer * 8;
-    pPlayer->brain_info.algo.target_list_index = 0;
+    pPlayer->brain_info.algo.trail_remaining = 5 + iPlayer * 50;
+    pPlayer->brain_info.algo.target_list_index =
+      g_target_start_indices[iPlayer];
     pPlayer->brain_info.algo.steer = false;
     pPlayer->brain_info.algo.target_player = 10;
 
@@ -625,35 +646,49 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   /* Do the harvest mode vs trailing tiles mode based on time duty cycle that
      gets shorter if we need more speed (using the technique of laying down a
      tile and then harvesting it in the next frame, rather than the bigger
-     picture technique of heading towards larger areas of your tiles). */
+     picture technique of heading towards larger areas of your tiles).  If
+     speed not needed, go for longer stretches of laying down tiles.  Special
+     speed of 255(-1) means stay in harvest mode to not leave a trail. */
 
-  if (--pPlayer->brain_info.algo.trail_remaining == 0)
+  if (--pPlayer->brain_info.algo.trail_remaining != 0)
   {
-    /* More rapidly alternate between harvest and lay down tiles if more
-       speed is needed.  If speed not needed, go for longer stretches of
-       laying down tiles. */
-    bool wasHarvesting = (pPlayer->joystick_inputs & Joy_Button) != 0;
-    int8_t deltaSpeed = /* Positive if more speed needed. */
-      (int8_t) pPlayer->brain_info.algo.desired_speed -
-      (int8_t) pPlayer->speed;
-    uint8_t time_to_trail; /* New time limit for the next harvest/trail mode. */
+    /* Keep same harvest/trail mode, cycle not up yet. */
 
-    if (deltaSpeed <= 0)
-    {
-      if (wasHarvesting)
-        time_to_trail = 10; /* 10 == 2 seconds. */
-      else /* Next mode will be harvest, keep it short. */
-        time_to_trail = 1;
-    }
-    else if (deltaSpeed > 19)
-      time_to_trail = 1; /* Alternate trail and harvest every update. */
-    else /* 0 to 19 deltaSpeed. */
-      time_to_trail = 20 - deltaSpeed;
-    pPlayer->brain_info.algo.trail_remaining = time_to_trail;
+    joystickOutput |= (pPlayer->joystick_inputs & Joy_Button);
+  }
+  else /* Time for a change in harvest mode duty cycle. */
+  {
+    uint8_t desiredSpeed = pPlayer->brain_info.algo.desired_speed; 
 
-    /* Flip Joy_Button bit of joystickOutput to flip harvest mode. */
-    if (!wasHarvesting) /* Should we harvest in the next cycle? */
+    if (desiredSpeed == (uint8_t) 255)
+    { /* Code for always harvest, used for not leaving a trail. */
       joystickOutput |= Joy_Button;
+      pPlayer->brain_info.algo.trail_remaining = 10;
+    }
+    else
+    {
+      int8_t deltaSpeed = (int8_t) desiredSpeed - (int8_t) pPlayer->speed;
+        /* A positive number if more speed needed. */
+      bool wasHarvesting = (pPlayer->joystick_inputs & Joy_Button) != 0;
+      uint8_t time_to_trail; /* Time limit for the next harvest/trail mode. */
+
+      if (deltaSpeed <= 0)
+      {
+        if (wasHarvesting)
+          time_to_trail = 50; /* 50 == 10 seconds. */
+        else /* Next mode will be harvest, keep it short, don't need it. */
+          time_to_trail = 1;
+      }
+      else if (deltaSpeed > 19)
+        time_to_trail = 1; /* Alternate trail and harvest every update. */
+      else /* 0 to 19 deltaSpeed. */
+        time_to_trail = 20 - deltaSpeed;
+      pPlayer->brain_info.algo.trail_remaining = time_to_trail;
+
+      /* Flip Joy_Button bit of joystickOutput to flip harvest mode. */
+      if (!wasHarvesting) /* Should we harvest in the next cycle? */
+        joystickOutput |= Joy_Button;
+    }
   }
 
   /* Has the current opcode finished?  Or is it still waiting? */
@@ -941,11 +976,14 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
 
     /* Update the direction the player's velocity is pointing in.  It's only
        used here for modifying velocity direction, not in the physics
-       simulation.  Needed for applying harvest, and for steering. */
+       simulation.  Needed for applying harvest, and for steering.  Only update
+       it if needed, and occasionally every 16th frame to keep AI's pointed in
+       the right direction. */
 
     uint8_t player_velocity_octant = 0;
     if (pPlayer->thrust_harvested ||
-    (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left)))
+    (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left)) ||
+    ((uint8_t) g_FrameCounter & 15) == (iPlayer << 2))
     {
       player_velocity_octant = VECTOR_FX_TO_OCTANT(
         &pPlayer->velocity_x, &pPlayer->velocity_y);
@@ -1033,7 +1071,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
        rate (physics has to run multiple steps) and is uncontrollable for the
        user.  Use cheap speed from simulation update (lags a frame). */
 
-    if (pPlayer->speed >= FRICTION_SPEED)
+    if (pPlayer->speed > FRICTION_SPEED)
     {
       static fx portionOfVelocity;
       DIV256_FX(pPlayer->velocity_x, portionOfVelocity);

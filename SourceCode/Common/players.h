@@ -100,7 +100,8 @@ typedef struct player_algo_struct {
    return to the beginning of the path and follow it again, or hunt a player. */
 typedef enum target_list_codes_enum {
   TARGET_CODE_NONE = 240, /* No operation and lowest number opcode. */
-  TARGET_CODE_SPEED, /* X coordinate sets desired speed, in pixels/frame. */
+  TARGET_CODE_SPEED, /* X coordinate sets desired speed, in pixels/frame.
+    Use 255 to run in harvest mode, not leaving a trail behind. */
   TARGET_CODE_STEER, /* X coordinate is 0 to 7 to steer towards a given
     quadrant in drift mode, 8 to 11 to steer to your corner of the board or
     next player's corner for higher numbers, 12 to target a rival player with
@@ -123,13 +124,16 @@ typedef uint8_t target_code; /* Want it to be 8 bits, not 16. */
    location in the game world and once it gets near enough, it advances to the
    next list item.  Some items are instruction codes, for a bit of
    programability.  Theoretically each level you load would have a different
-   global target list.*/
+   global target list and pointers to where each particular AI player has
+   their code start. */
 typedef struct target_list_item_struct {
   uint8_t target_pixel_x; /* 0 to 255, game world column coordinates. */
   uint8_t target_pixel_y; /* 0 to 239 for row number, or a special opcode. */
 } target_list_item_record, *target_list_item_pointer;
 
 extern target_list_item_record g_target_list[];
+
+extern uint8_t g_target_start_indices[MAX_PLAYERS];
 
 
 /* Joystick directions as bits.  0 bit means not pressed.  Whole byte is zero if
@@ -329,7 +333,7 @@ extern int16_t g_play_area_wall_left_x;
 extern int16_t g_play_area_wall_right_x;
 extern int16_t g_play_area_wall_top_y;
 
-/* When player speed is greater or equal to this in pixels/frame, friction is
+/* When player speed is greater than this in pixels/frame, friction is
    applied.  Needs to be under 8 pixels per frame, which is when an extra
    physics step gets added and that slows everything down. */
 #define FRICTION_SPEED 2

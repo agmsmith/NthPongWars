@@ -2141,6 +2141,49 @@ SRC="20250724CollisionC.gif" WIDTH="280" HEIGHT="216"
 ALT="[Third attempt at collisions, they're short and sweet]"></A><BR>
 <A HREF="20250724CollisionC.mp4">20250724CollisionC.mp4</A>
 
+<HR>
+<H2><A NAME="2025.08.19"></A>2025.08.19</H2>
+
+<H3>More AI Behaviours</H3>
+
+<P>Now that I have some simple AI code working, the players can follow
+patterns and change behaviours.  They now follow a little program, with
+just a few actions:
+
+<UL>
+  <LI>Head towards a particular tile.
+  <LI>Head towards a corner of the board, each player has their own.
+  <LI>Change speed, which affects their tile harvesting timing, with more rapid
+    alternation between laying down tiles and harvesting them if it needs to go
+    faster.  Or it can just drift in harvest mode, so it doesn't lay down any
+    tiles.
+  <LI>Head towards another player, usually the one with the highest score, or
+    just the Human with highest score.
+  <LI>Delay a while, hovering around the target if that was the last action.
+  <LI>Goto a particular instruction.  No IF statements yet, though each player
+    can start running code from a different instruction location.
+</UL>
+
+<P>Unfortnately due to lack of CPU power, it can only update each AI about 5
+times per second.  So that kind of makes it fairer when playing against a Human
+:-)
+
+<P ALIGN=CENTER><A HREF="20250819AiLetterN.mp4"><IMG
+SRC="20250819AiLetterN.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of Game with New Harvest Sound Effects]"></A><BR>
+<A HREF="20250819AiLetterN.mp4">20250819AiLetterN.mp4</A><BR>
+AIs each moving along its own side, with the blue player tracing out the
+letter "N".  If a Human player appears, chase it down!
+
+<P>Next up, possibly make power-ups do things.  They are generated
+every few seconds to meet an overall quota, but currently only act
+as things to bounce off of.
+
+<P>Or perhaps make it take more effort to knock down the more solid tiles,
+then you could build a defensive wall.  That's the advantage of adding AI
+players - I can see how the larger game works, and get ideas like defensive
+walls.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

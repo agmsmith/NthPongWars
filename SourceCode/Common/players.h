@@ -102,10 +102,11 @@ typedef enum target_list_codes_enum {
   TARGET_CODE_NONE = 240, /* No operation and lowest number opcode. */
   TARGET_CODE_SPEED, /* X coordinate sets desired speed, in pixels/frame.
     Use 255 to run in harvest mode, not leaving a trail behind. */
-  TARGET_CODE_STEER, /* X coordinate is 0 to 7 to steer towards a given
-    quadrant in drift mode, 8 to 11 to steer to your corner of the board or
-    next player's corner for higher numbers, 12 to target a rival player with
-    the highest score, other values make you drift rather than steer. */
+  TARGET_CODE_STEER, /* X coordinate is 0 to 3 to steer towards a corner.  Zero
+    for your corner of the board, 1 for next player's corner, 2 for next next
+    player and 3 for the next next next player.  4 to target a rival player
+    with the highest score, 5 to target the human with the highest score,
+    other values make you drift rather than steer. */
   TARGET_CODE_DELAY, /* X sets the time delay to wait for in AI frames before
     executing the next opcode. */
   TARGET_CODE_GOTO, /* Switch to the item at list index of X coordinate. */

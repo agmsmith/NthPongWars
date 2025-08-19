@@ -65,41 +65,50 @@ uint8_t g_KeyboardFakeJoystickStatus;
    at most 256 elements. */
 target_list_item_record g_target_list[] = {
   {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
-  {3, 19}, /* Capital N. */
+  {9, 20}, /* Capital N, start at bottom left corner of letter. */
   {2, TARGET_CODE_SPEED}, /* Slow speed. */
-  {3, 3},
-  {6, 8},
-  {7,14},
-  {10, 19},
-  {10, 3},
+  {9, 11},
+  {9, 2},
+  {1, TARGET_CODE_SPEED}, /* Even slower, more solid trail. */
+  {10, 4},
+  {12, 8},
+  {14, 11},
+  {16, 15},
+  {17, 18},
+  {19, 20},
+  {2, TARGET_CODE_SPEED}, /* Slow speed. */
+  {19, 11},
+  {19, 2},
   {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
-  {10, 1},
+  {19, 1}, /* Straight up to top of screen. */
   {30, 1},
+  {20, TARGET_CODE_SPEED}, /* Speed down right side of screen. */
   {30, 21},
-  {20, TARGET_CODE_SPEED},
-  {3, 21},
+  {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
+  {9, 21}, /* Back under the starting point of the letter. */
   {0, TARGET_CODE_GOTO},
-  {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
-  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hang around there. */
-  {9, TARGET_CODE_STEER}, /* Steer to next corner. */
-  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hang around there. */
+  {0, TARGET_CODE_GOTO},
+  {0, TARGET_CODE_GOTO},
+  {0, TARGET_CODE_GOTO},
+  {0, TARGET_CODE_GOTO},
+  {0, TARGET_CODE_GOTO},
+  {0, TARGET_CODE_GOTO},
+  {0, TARGET_CODE_GOTO},
+/* Instruction 30 */
+  {7, TARGET_CODE_SPEED},
+  {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {1, TARGET_CODE_STEER}, /* Steer to next corner. */
   {30, TARGET_CODE_SPEED}, /* Faster movement. */
-  {8, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {50, TARGET_CODE_SPEED}, /* Fast movement towards player. */
-  {12, TARGET_CODE_STEER}, /* Head to leading player. */
-  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to hound them. */
-  {0, TARGET_CODE_SPEED}, /* Avoid accelerating and eating tiles. */
-  {255, TARGET_CODE_STEER}, /* Drift mode, no direction specified. */
-  {20, TARGET_CODE_DELAY}, /* Delay 4 seconds to drift. */
-  {2, TARGET_CODE_SPEED}, /* Slower movement back to center. */
-  {16, 11}, /* Head to center of screen. */
-  {8, TARGET_CODE_SPEED}, /* Normal speed, avoids physics slowdown. */
-  {0, TARGET_CODE_GOTO},
+  {5, TARGET_CODE_STEER}, /* Head to leading Human player. */
+  {5, TARGET_CODE_DELAY}, /* Delay 1 second to hound them. */
+  {30, TARGET_CODE_GOTO},
 };
 
 /* Where to start the instructions for player 0 to player N-1. */ 
 uint8_t g_target_start_indices[MAX_PLAYERS] =
-{0, 0, 0, 0};
+{30, 0, 30, 30};
 
 
 /* Set up the initial player data, mostly colours and animations. */
@@ -663,7 +672,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     if (desiredSpeed == (uint8_t) 255)
     { /* Code for always harvest, used for not leaving a trail. */
       joystickOutput |= Joy_Button;
-      pPlayer->brain_info.algo.trail_remaining = 10;
+      pPlayer->brain_info.algo.trail_remaining = 8;
     }
     else
     {
@@ -675,14 +684,14 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       if (deltaSpeed <= 0)
       {
         if (wasHarvesting)
-          time_to_trail = 50; /* 50 == 10 seconds. */
+          time_to_trail = 10; /* 10 == 2 seconds of going slow, no harvest. */
         else /* Next mode will be harvest, keep it short, don't need it. */
           time_to_trail = 1;
       }
-      else if (deltaSpeed > 19)
+      else if (deltaSpeed > 12)
         time_to_trail = 1; /* Alternate trail and harvest every update. */
-      else /* 0 to 19 deltaSpeed. */
-        time_to_trail = 20 - deltaSpeed;
+      else /* 1 to 12 deltaSpeed. */
+        time_to_trail = 13 - deltaSpeed;
       pPlayer->brain_info.algo.trail_remaining = time_to_trail;
 
       /* Flip Joy_Button bit of joystickOutput to flip harvest mode. */
@@ -697,7 +706,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   { /* Keep on waiting until the countdown has finished. */
     pPlayer->brain_info.algo.delay_remaining--;
   }
-  else if (pPlayer->brain_info.algo.target_distance >=
+  else if (pPlayer->brain_info.algo.target_distance >
   PLAYER_PIXEL_DIAMETER_NORMAL)
   {
     /* Not yet close enough to the target.  Continue hunting. */
@@ -713,21 +722,16 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     {
     case TARGET_CODE_SPEED:
       pPlayer->brain_info.algo.desired_speed = currentOpcode.target_pixel_x;
+      pPlayer->brain_info.algo.trail_remaining = 1; /* Update harvest soon. */
       break;
 
     case TARGET_CODE_STEER:
-      /* X coordinate is 0 to 7 to steer towards a given quadrant in drift
-         mode, 8 to 11 to steer to your corner of the board or next player's
-         corner for higher numbers, 12 to target a rival player with the
-         highest score, other values make you drift rather than steer. */
-      if (currentOpcode.target_pixel_x <= 7)
-      { /* Steer in the given octant direction.  Next opcode usually delays. */
-        joystickOutput = ((joystickOutput & Joy_Button) |
-          JoystickForOctant(currentOpcode.target_pixel_x));
-        pPlayer->brain_info.algo.steer = false; /* Just drift. */
-      }
-      else if (currentOpcode.target_pixel_x >= 8 &&
-      currentOpcode.target_pixel_x <= 11)
+      /* X coordinate is 0 to 3 to steer towards a corner.  Zero for your corner
+         of the board, 1 for next player's corner, 2 for next next player and 3
+         for the next next next player.  4 to target a rival player with the
+         highest score, 5 to target the human with the highest score, other
+         values make you drift rather than steer. */
+      if (currentOpcode.target_pixel_x <= 3)
       { /* Target your own corner of the game board, or the next ones around. */
         uint8_t iMyself = (3 &
           (pPlayer->player_array_index + currentOpcode.target_pixel_x));
@@ -746,25 +750,42 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
         pPlayer->brain_info.algo.steer = true;
       }
-      else if (currentOpcode.target_pixel_x == 12)
+      else if (currentOpcode.target_pixel_x == 4 ||
+      currentOpcode.target_pixel_x == 5)
       { /* Target the rival player with highest score. */
         uint8_t iMyself = pPlayer->player_array_index;
-        uint8_t iBestPlayer = MAX_PLAYERS;
+        uint8_t iBestPlayer = MAX_PLAYERS; /* Also code for don't target. */
         uint16_t maxScore = 0;
+        bool onlyHumans = (currentOpcode.target_pixel_x == 5);
         uint8_t iPlayer;
         for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
         {
           if (iPlayer == iMyself)
             continue;
           uint16_t theirScore = GetPlayerScore(iPlayer);
-          if (theirScore >= maxScore) /* So when scores are zero, it works. */
-          {
-            maxScore = theirScore;
-            iBestPlayer = iPlayer;
-          }
+          if (theirScore < maxScore) /* Note - zero can be a high score. */
+            continue;
+          if (onlyHumans && g_player_array[iPlayer].brain == BRAIN_ALGORITHM)
+            continue; /* Reject AI players. */
+
+          /* Got a better player. */
+          maxScore = theirScore;
+          iBestPlayer = iPlayer;
         }
-        pPlayer->brain_info.algo.target_player = iBestPlayer;
         pPlayer->brain_info.algo.steer = true;
+        pPlayer->brain_info.algo.target_player = iBestPlayer;
+        if (iBestPlayer >= MAX_PLAYERS)
+        {
+          /* No target player found, set current position as the static target
+             location, so that this opcode completes successfully very soon.
+             So you can target the best Human player, and if no Humans are
+             playing, the opcode will do almost nothing. */
+
+          pPlayer->brain_info.algo.target_pixel_x =
+            GET_FX_INTEGER(pPlayer->pixel_center_x);
+          pPlayer->brain_info.algo.target_pixel_y =
+            GET_FX_INTEGER(pPlayer->pixel_center_y);
+        }
       }
       else /* Unknown steering orders, just drift. */
       {
@@ -781,11 +802,13 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       pPlayer->brain_info.algo.target_list_index = currentOpcode.target_pixel_x;
       break;
 
-    default: /* Just a pair of X and Y column/row target coordinates. */
+    default:
+      /* Just a pair of X and Y column/row target coordinates, go to center of
+         that tile (any closer to walls and you bounce off the wall). */
       pPlayer->brain_info.algo.target_pixel_x =
-        currentOpcode.target_pixel_x * TILE_PIXEL_WIDTH;
+        currentOpcode.target_pixel_x * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
       pPlayer->brain_info.algo.target_pixel_y =
-        currentOpcode.target_pixel_y * TILE_PIXEL_WIDTH;
+        currentOpcode.target_pixel_y * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
       pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
       pPlayer->brain_info.algo.steer = true;
       break;
@@ -804,10 +827,16 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     {
       player_pointer pTargetPlayer =
         g_player_array + pPlayer->brain_info.algo.target_player;
-      pPlayer->brain_info.algo.target_pixel_x =
-        GET_FX_INTEGER(pTargetPlayer->pixel_center_x);
-      pPlayer->brain_info.algo.target_pixel_y =
-        GET_FX_INTEGER(pTargetPlayer->pixel_center_y);
+
+      if (pTargetPlayer->brain == ((player_brain) BRAIN_INACTIVE))
+        pPlayer->brain_info.algo.target_player = MAX_PLAYERS; /* Ignore it. */
+      else
+      {
+        pPlayer->brain_info.algo.target_pixel_x =
+          GET_FX_INTEGER(pTargetPlayer->pixel_center_x);
+        pPlayer->brain_info.algo.target_pixel_y =
+          GET_FX_INTEGER(pTargetPlayer->pixel_center_y);
+      }
     }
 
     /* How far and what direction to the target? */
@@ -816,6 +845,8 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       GET_FX_INTEGER(pPlayer->pixel_center_x);
     int16_t deltaY = pPlayer->brain_info.algo.target_pixel_y -
       GET_FX_INTEGER(pPlayer->pixel_center_y);
+
+    /* Get sum of absolute values of deltas to find distance. */
 
     int16_t targetDistance;
     if (deltaX < 0)

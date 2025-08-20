@@ -425,10 +425,6 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
         pTile += startCol;
         for (curCol = startCol; curCol <= endCol; curCol++, pTile++)
         {
-          int8_t deltaPosX, deltaPosY;
-          bool velXIsTowardsTile, velYIsTowardsTile;
-          tile_owner previousOwner;
-
           /* Find relative (delta) position of player to tile, positive X values
              if player is to the right of tile, or positive Y if player below
              tile.  Can fit in a byte since we're only a few pixels away from
@@ -441,6 +437,7 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
 #else /* Game mode, thinner streak of hit tiles left behind moving ball. */
 #define SIM_MISS_DISTANCE (TILE_PIXEL_WIDTH / 2 + 1)
 #endif
+          int8_t deltaPosX, deltaPosY;
 
           deltaPosX = playerX - pTile->pixel_center_x;
           if (deltaPosX >= SIM_MISS_DISTANCE || deltaPosX <= -SIM_MISS_DISTANCE)
@@ -450,7 +447,7 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
           if (deltaPosY >= SIM_MISS_DISTANCE || deltaPosY <= -SIM_MISS_DISTANCE)
             continue; /* Too far away, missed. */
 
-          previousOwner = pTile->owner;
+          tile_owner previousOwner = pTile->owner;
 #if DEBUG_PRINT_SIM
 printf("Player %d: Hit tile %s at (%d,%d)\n",
   iPlayer, g_TileOwnerNames[previousOwner], curCol, curRow);
@@ -474,17 +471,18 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             continue; /* Just glide over empty tiles, no bouncing. */
           }
 
-          /* Did we run over our existing tile? */
+          /* Did we run over our existing tile?  If so, age it a bit (make it
+             more solid). */
+
+          uint8_t tileAge = pTile->age;
 
           if (previousOwner == player_self_owner)
           {
-            uint8_t age;
-            age = pTile->age;
             /* If harvesting tiles for thrust, or after a collision to reduce
                the number of tiles that players keep on bouncing off of. */
             if (pPlayer->thrust_active || pPlayer->player_collision_count)
             {
-              pPlayer->thrust_harvested += age + 1;
+              pPlayer->thrust_harvested += tileAge + 1;
               SetTileOwner(pTile, OWNER_EMPTY);
             }
             else /* Just running over our tiles, increase their age. */
@@ -492,26 +490,50 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
               /* To save on CPU, only increase tile age occasionally.  Also
                  avoids players picking up too much speed from harvesting
                  rapidly, which leads to AIs bouncing around the corner but
-                 not getting into the corner. */
-              if (age < 7 && (((uint8_t) g_FrameCounter ^ iPlayer) & 3) == 0)
+                 not getting into the corner.  Note age is 3 bits, max 7. */
+              if (tileAge < 7 &&
+              (((uint8_t) g_FrameCounter ^ iPlayer) & 3) == 0)
               {
-                age++;
-                pTile->age = age;
+                tileAge++;
+                pTile->age = tileAge;
                 RequestTileRedraw(pTile);
               }
             }
             continue; /* Don't collide, keep moving over own tiles. */
           }
 
-          /* Hit someone else's tile or a power-up.  In harvest mode or
-             collision mode we don't gain any points from it, and it becomes
-             empty.  Regular mode, it becomes the player's tile.  In both
-             cases, power up effects are applied to the player. */
+          /* Hit someone else's tile or a power-up.  If it's a tile, it gets
+             weakened (age decreases) and when done it gets destroyed and
+             perhaps (depending on harvest mode) replaced by a player tile.
+             Power-ups are destroyed immediately, and have their effect applied
+             to the player and perhaps are replaced by a player tile. */
 
-          if (pPlayer->thrust_active || pPlayer->player_collision_count)
-            SetTileOwner(pTile, OWNER_EMPTY);
-          else
-            SetTileOwner(pTile, player_self_owner);
+          bool takeOverTile = false;
+          if (previousOwner >= (tile_owner) OWNER_PLAYER_1 &&
+          previousOwner <= (tile_owner) OWNER_PLAYER_4)
+          {
+            if (tileAge == 0)
+              takeOverTile = true;
+            else /* Wear down the tile. */
+            {
+              tileAge--;
+              pTile->age = tileAge;
+              RequestTileRedraw(pTile);
+            }
+          }
+          else /* A power up tile. */
+          {
+            takeOverTile = true;
+            /* TODO: Apply power up effects. */
+          }
+
+          if (takeOverTile)
+          {
+            if (pPlayer->thrust_active || pPlayer->player_collision_count)
+              SetTileOwner(pTile, OWNER_EMPTY);
+            else
+              SetTileOwner(pTile, player_self_owner);
+          }
 
 #if DEBUG_PRINT_SIM
 printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
@@ -520,6 +542,8 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
           /* Do the bouncing.  First find out which side of the tile was hit,
              based on the direction the player was moving.  No bounce if the
              player is moving away. */
+
+          bool velXIsTowardsTile, velYIsTowardsTile;
 
           if (velocityX < 0)
           { /* If moving left, and to right of the tile, can be a hit. */

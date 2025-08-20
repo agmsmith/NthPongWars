@@ -25,6 +25,7 @@ typedef enum SpriteAnimationsEnum {
   SPRITE_ANIM_NONE = 0, /* Nothing gets drawn, for invisible objects. */
   SPRITE_ANIM_BALL_ROLLING,
   SPRITE_ANIM_BALL_EFFECT_THRUST,
+  SPRITE_ANIM_BALL_EFFECT_WIDER,
   SPRITE_ANIM_MAX
 };
 typedef uint8_t SpriteAnimationType; /* Want it to be 8 bits, not 16. */
@@ -45,9 +46,20 @@ typedef struct SpriteAnimStruct {
    result 254 will be past end, animation restarts) and delay 0.
 */
 static const SpriteAnimRecord g_SpriteAnimData[SPRITE_ANIM_MAX] = {
-  {SPRITE_ANIM_NONE, 0, 4, 60, 250, 0}, /* Nothing, box test pattern shown. */
-  {SPRITE_ANIM_BALL_ROLLING, 4, 20, 3, 250, 0}, /* A ball rolling. */
-  {SPRITE_ANIM_BALL_EFFECT_THRUST, 20, 32, 1, 250, 0}, /* Halo circling ball. */
+  {SPRITE_ANIM_NONE, 0, 4, 60, 0, 0}, /* Nothing, box test pattern shown. */
+  {SPRITE_ANIM_BALL_ROLLING, 4, 20, 3, 0, 0}, /* A ball rolling. */
+  {SPRITE_ANIM_BALL_EFFECT_THRUST, 20, 32, 2, 0, 0}, /* Halo circling ball. */
+  {SPRITE_ANIM_BALL_EFFECT_WIDER, 32, 52, 3, 0, 0}, /* Expanding rings. */
 };
+
+/* One more sprite frame after SPRITE_ANIM_BALL_EFFECT_THRUST for extra
+   bold thrust indication.  Can hack the run-time animation data to play it
+   then go back to the usual frames (which is why the frame is after all other
+   animations, so that they detect that they have hit their end and restart).
+   It's animated to have the next frame be the starting frame.  Note that the
+   frame at 252 isn't useable, since adding 4 to it wraps around to zero and
+   the end of animation detection breaks. */
+#define SPRITE_ANIM_BALL_EFFECT_THRUST_BOLD_FRAME 248
+
 #endif /* _NTHPONG1_H */
 

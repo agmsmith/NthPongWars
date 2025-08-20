@@ -1112,25 +1112,34 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
     }
 #endif
 
-    /* Update special effect animations and other things. */
+    /* Update special effect animations, mostly for feedback to the player.
+       Note the priority order implied, though in future we could have more
+       sparkle animations active simultaneously. */
 
-    /* Thrust animation is shown when some acceleration points are harvested.
-       But we only get thrust points every other frame as it oscillates while
-       sitting over a tile creating then destroying ownership (unless it's
-       moving really fast).  Show the animation when the buttons are held
-       down, and force it to be static (not advancing) if no harvest. */
+    SpriteAnimationType newAnimType = (SpriteAnimationType) SPRITE_ANIM_NONE;
+    if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
+      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_WIDER;
+    else if (pPlayer->thrust_active)
+      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST;
 
-    SpriteAnimationType newAnimType;
-    newAnimType = pPlayer->thrust_active ?
-      (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST :
-      (SpriteAnimationType) SPRITE_ANIM_NONE;
+    /* Start a new animation if needed, copying the whole animation structure
+       to set the initial state.  Otherwise the previous animation continues
+       to play. */
+
     if (newAnimType != pPlayer->sparkle_anim.type)
       pPlayer->sparkle_anim = g_SpriteAnimData[newAnimType];
-    else /* Current animation is continuing to play. */
+
+    /* Switch in an extra bold harvest animation frame if they actually
+       harvested something.  Once it has played, the current animation will
+       restart from the beginning, because the override frame number is higher
+       than any animation frames. */
+
+    if (pPlayer->thrust_harvested)
     {
-      if (newAnimType == (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST &&
-      pPlayer->thrust_harvested == 0)
-        pPlayer->sparkle_anim.current_delay++; /* Stop the clock ticking. */
+       pPlayer->sparkle_anim.current_delay =
+        g_SpriteAnimData[SPRITE_ANIM_BALL_EFFECT_THRUST].delay;
+       pPlayer->sparkle_anim.current_name =
+        SPRITE_ANIM_BALL_EFFECT_THRUST_BOLD_FRAME;
     }
   }
 }

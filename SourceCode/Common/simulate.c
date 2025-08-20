@@ -108,16 +108,21 @@ printf("\nStarting simulation update.\n");
     if (pPlayer->player_collision_count)
       pPlayer->player_collision_count--;
 
-    /* Decrement all active power-up timers. */
+    /* Decrement all active power-up timers.  But only every 4th frame (so 5hz)
+       so we can get several seconds of power-up in a byte counter. */
 
-    uint8_t *pPowerUpTimer;
-    uint8_t iPowerUp;
-    pPowerUpTimer = &pPlayer->power_up_timers[OWNER_PUPS_WITH_DURATION];
-    for (iPowerUp = OWNER_PUPS_WITH_DURATION; iPowerUp < OWNER_MAX;
-    iPowerUp++, pPowerUpTimer++)
+    if (((uint8_t) g_FrameCounter & 3) == iPlayer)
     {
-      if (*pPowerUpTimer != 0)
-        *pPowerUpTimer--;
+      uint8_t *pPowerUpTimer;
+      uint8_t iPowerUp;
+      pPowerUpTimer = pPlayer->power_up_timers + OWNER_PUPS_WITH_DURATION;
+      for (iPowerUp = OWNER_PUPS_WITH_DURATION; iPowerUp < OWNER_MAX;
+      iPowerUp++, pPowerUpTimer++)
+      {
+        uint8_t clock = *pPowerUpTimer;
+        if (clock != 0)
+          *pPowerUpTimer = clock - 1;
+      }
     }
 
 #if DEBUG_PRINT_SIM
@@ -550,8 +555,9 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             takeOverTile = true;
 
             /* Activate a power up.  Since the power-up count down clock wraps
-               at 256, allow for 3 power ups in a row before the clock wraps.
-               At 20fps, 85 is a bit over 4 seconds, should be enough. */
+               at 256, and counts at a 5hz rate, allow for several power ups in
+               a row before the clock wraps.  At 5hz, 50 is 10 seconds, should
+               be enough. */
 
             if (previousOwner <= (tile_owner) OWNER_PUP_NORMAL)
             {
@@ -559,7 +565,7 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
               bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
             }
             else if (previousOwner < (tile_owner) OWNER_MAX)
-              pPlayer->power_up_timers[previousOwner] += 85;
+              pPlayer->power_up_timers[previousOwner] += 50;
           }
 
           if (takeOverTile)

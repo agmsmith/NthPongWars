@@ -48,8 +48,9 @@ typedef enum tile_owner_enum {
   OWNER_PLAYER_3,
   OWNER_PLAYER_4,
   OWNER_PUP_NORMAL, /* Power-up that makes you normal.  Also first power up. */
-  OWNER_PUP_FAST, /* Power-up that makes you faster. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
+  OWNER_PUPS_WITH_DURATION, /* Power-ups that have a timeout start here. */
+  OWNER_PUP_FAST = OWNER_PUPS_WITH_DURATION, /* Makes you faster. */
   OWNER_PUP_FLY, /* Run through squares, rather than bouncing. */
   OWNER_PUP_WIDER, /* Makes the player wider in effect; more tiles hit. */
   OWNER_MAX

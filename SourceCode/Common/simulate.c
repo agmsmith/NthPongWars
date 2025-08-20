@@ -108,6 +108,18 @@ printf("\nStarting simulation update.\n");
     if (pPlayer->player_collision_count)
       pPlayer->player_collision_count--;
 
+    /* Decrement all active power-up timers. */
+
+    uint8_t *pPowerUpTimer;
+    uint8_t iPowerUp;
+    pPowerUpTimer = &pPlayer->power_up_timers[OWNER_PUPS_WITH_DURATION];
+    for (iPowerUp = OWNER_PUPS_WITH_DURATION; iPowerUp < OWNER_MAX;
+    iPowerUp++, pPowerUpTimer++)
+    {
+      if (*pPowerUpTimer != 0)
+        *pPowerUpTimer--;
+    }
+
 #if DEBUG_PRINT_SIM
 printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
   GET_FX_FLOAT(pPlayer->pixel_center_x),
@@ -118,19 +130,29 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
 #endif
     int16_t tempSpeed;
 
-    absVelocity = GET_FX_INTEGER(pPlayer->velocity_x);
-    if (absVelocity < 0)
-      absVelocity = -absVelocity;
-    tempSpeed = absVelocity;
-    if (absVelocity > maxVelocity)
-      maxVelocity = absVelocity;
+    if (pPlayer->power_up_timers[OWNER_PUP_STOP])
+    {
+      pPlayer->power_up_timers[OWNER_PUP_STOP] = 0; /* No duration needed. */
+      ZERO_FX(pPlayer->velocity_x);
+      ZERO_FX(pPlayer->velocity_y);
+      tempSpeed = 0;
+    }
+    else
+    {
+      absVelocity = GET_FX_INTEGER(pPlayer->velocity_x);
+      if (absVelocity < 0)
+        absVelocity = -absVelocity;
+      tempSpeed = absVelocity;
+      if (absVelocity > maxVelocity)
+        maxVelocity = absVelocity;
 
-    absVelocity = GET_FX_INTEGER(pPlayer->velocity_y);
-    if (absVelocity < 0)
-      absVelocity = -absVelocity;
-    tempSpeed += absVelocity;
-    if (absVelocity > maxVelocity)
-      maxVelocity = absVelocity;
+      absVelocity = GET_FX_INTEGER(pPlayer->velocity_y);
+      if (absVelocity < 0)
+        absVelocity = -absVelocity;
+      tempSpeed += absVelocity;
+      if (absVelocity > maxVelocity)
+        maxVelocity = absVelocity;
+    }
 
     /* Save the Manhattan speed, into an 8 bit integer, which should be good
        enough since it is integer pixels per frame, and 256 would be moving the
@@ -432,19 +454,21 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
              and velocities, but that's too much computation for a Z80 to do,
              so we use integer pixels. */
 
-#if 0 /* Realistic mode, hits many nearby tiles. */
-#define SIM_MISS_DISTANCE ((TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2)
-#else /* Game mode, thinner streak of hit tiles left behind moving ball. */
-#define SIM_MISS_DISTANCE (TILE_PIXEL_WIDTH / 2 + 1)
-#endif
-          int8_t deltaPosX, deltaPosY;
+          int8_t missDistance, missMinusDistance;
+          if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
+            missDistance =
+              ((TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2);
+          else
+            missDistance = (TILE_PIXEL_WIDTH / 2 + 1);
+          missMinusDistance = -missDistance;
 
+          int8_t deltaPosX, deltaPosY;
           deltaPosX = playerX - pTile->pixel_center_x;
-          if (deltaPosX >= SIM_MISS_DISTANCE || deltaPosX <= -SIM_MISS_DISTANCE)
+          if (deltaPosX >= missDistance || deltaPosX <= missMinusDistance)
             continue; /* Too far away, missed. */
 
           deltaPosY = playerY - pTile->pixel_center_y;
-          if (deltaPosY >= SIM_MISS_DISTANCE || deltaPosY <= -SIM_MISS_DISTANCE)
+          if (deltaPosY >= missDistance || deltaPosY <= missMinusDistance)
             continue; /* Too far away, missed. */
 
           tile_owner previousOwner = pTile->owner;
@@ -524,7 +548,18 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
           else /* A power up tile. */
           {
             takeOverTile = true;
-            /* TODO: Apply power up effects. */
+
+            /* Activate a power up.  Since the power-up count down clock wraps
+               at 256, allow for 3 power ups in a row before the clock wraps.
+               At 20fps, 85 is a bit over 4 seconds, should be enough. */
+
+            if (previousOwner <= (tile_owner) OWNER_PUP_NORMAL)
+            {
+              /* Power down, go back to Normal - turn off all power-ups. */
+              bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
+            }
+            else if (previousOwner < (tile_owner) OWNER_MAX)
+              pPlayer->power_up_timers[previousOwner] += 85;
           }
 
           if (takeOverTile)

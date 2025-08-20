@@ -30,8 +30,8 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
   "P3", /* OWNER_PLAYER_3 */
   "P4", /* OWNER_PLAYER_4 */
   "Normal", /* OWNER_PUP_NORMAL */
-  "Fast", /* OWNER_PUP_FAST */
   "Stop", /* OWNER_PUP_STOP */
+  "Fast", /* OWNER_PUP_FAST */
   "Fly", /* OWNER_PUP_FLY */
   "Wider", /* OWNER_PUP_WIDER */
 };
@@ -45,8 +45,8 @@ const char *g_TileAnimData[OWNER_MAX] =
   "\xE2\xE6\xEA\xEE\xF2\xF6\xFA\xFE", /* OWNER_PLAYER_3 */
   "\xE3\xE7\xEB\xEF\xF3\xF7\xFB\xFF", /* OWNER_PLAYER_4 */
   "NNNorm", /* OWNER_PUP_NORMAL */
-  "FFFast", /* OWNER_PUP_FAST */
   "SSStop", /* OWNER_PUP_STOP */
+  "FFFast", /* OWNER_PUP_FAST */
   "UUUp", /* OWNER_PUP_FLY */
   "WWWider", /* OWNER_PUP_WIDER */
 #else /* Curses just uses plain characters, no special font. */
@@ -56,8 +56,8 @@ const char *g_TileAnimData[OWNER_MAX] =
   "3", /* OWNER_PLAYER_3 */
   "4", /* OWNER_PLAYER_4 */
   "NNNorm", /* OWNER_PUP_NORMAL */
-  "FFFast", /* OWNER_PUP_FAST */
   "SSStop", /* OWNER_PUP_STOP */
+  "FFFast", /* OWNER_PUP_FAST */
   "UUUp", /* OWNER_PUP_FLY */
   "WWWider", /* OWNER_PUP_WIDER */
 #endif /* NABU_H */
@@ -70,8 +70,8 @@ uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
   0, /* OWNER_PLAYER_3 */
   0, /* OWNER_PLAYER_4 */
   2, /* OWNER_PUP_NORMAL */
+  2, /* OWNER_PUP_STOP */
   1, /* OWNER_PUP_FAST */
-  1, /* OWNER_PUP_STOP */
   1, /* OWNER_PUP_FLY */
   1, /* OWNER_PUP_WIDER */
 };

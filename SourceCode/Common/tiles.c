@@ -44,11 +44,11 @@ const char *g_TileAnimData[OWNER_MAX] =
   "\xE1\xE5\xE9\xED\xF1\xF5\xF9\xFD", /* OWNER_PLAYER_2 */
   "\xE2\xE6\xEA\xEE\xF2\xF6\xFA\xFE", /* OWNER_PLAYER_3 */
   "\xE3\xE7\xEB\xEF\xF3\xF7\xFB\xFF", /* OWNER_PLAYER_4 */
-  "NNNorm", /* OWNER_PUP_NORMAL */
-  "SSStop", /* OWNER_PUP_STOP */
+  "\xB1\xB2\xB3\xB4\xB5\xB6", /* OWNER_PUP_NORMAL */
+  "\xB0", /* OWNER_PUP_STOP */
   "FFFast", /* OWNER_PUP_FAST */
   "UUUp", /* OWNER_PUP_FLY */
-  "WWWider", /* OWNER_PUP_WIDER */
+  "\xAC\xAD\xAE\xAF", /* OWNER_PUP_WIDER */
 #else /* Curses just uses plain characters, no special font. */
   " ", /* OWNER_EMPTY */
   "1", /* OWNER_PLAYER_1 */
@@ -130,12 +130,13 @@ uint8_t g_cache_dirty_screen_tiles_index = 0;
  */
 static void DumpOneTileToTerminal(tile_pointer pTile)
 {
-  printf("(%d,%d) Owner=%d (%s) Anim=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
+  printf("(%d,%d) Owner=%d (%s) Anim=%d Tick=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
     (int) pTile->pixel_center_x,
     (int) pTile->pixel_center_y,
     (int) pTile->owner,
     g_TileOwnerNames[pTile->owner],
     (int) pTile->animationIndex,
+    (int) pTile->animDelayCount,
     (int) pTile->displayedChar,
     (int) pTile->dirty_screen,
     (int) pTile->dirty_remote,
@@ -213,6 +214,7 @@ bool InitTileArray(void)
       pTile->pixel_center_y = y;
       pTile->owner = OWNER_EMPTY;
       pTile->animationIndex = 0;
+      pTile->animDelayCount = 0;
       pTile->displayedChar = 0;
       pTile->dirty_screen = true;
       pTile->dirty_remote = true;
@@ -386,6 +388,7 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
 
   pTile->owner = newOwner;
   pTile->animationIndex = 0;
+  pTile->animDelayCount = MAX_ANIM_DELAY_COUNT;
   pTile->age = 0; /* Freshly taken over ownership of tile, reset age. */
   RequestTileRedraw(pTile);
 
@@ -467,16 +470,26 @@ static void UpdateOneTileAnimation(tile_pointer pTile)
     pTile->animated = false;
     newChar = pAnimString[animIndex];
   }
-  else
+  else /* Advance to next character of animation, or delay a bit. */
   {
-    animIndex = pTile->animationIndex + 1;
-    newChar = pAnimString[animIndex];
-    if (newChar == 0) /* End of animation string, go back to start. */
+    if (pTile->animDelayCount)
     {
-      newChar = pAnimString[0];
-      if (animIndex <= 1) /* Only one frame of animation, not really animated. */
-        pTile->animated = false;
-      animIndex = 0;
+      pTile->animDelayCount = pTile->animDelayCount - 1;
+      animIndex = pTile->animationIndex;
+      newChar = pAnimString[animIndex];
+    }
+    else /* Delay per frame has finished. */
+    {
+      pTile->animDelayCount = MAX_ANIM_DELAY_COUNT;
+      animIndex = pTile->animationIndex + 1;
+      newChar = pAnimString[animIndex];
+      if (newChar == 0) /* End of animation string, go back to start. */
+      {
+        newChar = pAnimString[0];
+        if (animIndex <= 1) /* Only one frame of animation, not really animated. */
+          pTile->animated = false;
+        animIndex = 0;
+      }
     }
   }
   pTile->animationIndex = animIndex;

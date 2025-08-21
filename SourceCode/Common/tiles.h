@@ -38,6 +38,9 @@
    16x16 box, the offset is 8 pixels in both X and Y. */
 #define PLAYER_SCREEN_TO_SPRITE_OFFSET 8
 
+/* The maximum value for animDelayCount, which has a limited number of bits. */
+#define MAX_ANIM_DELAY_COUNT 2
+
 /* The various things that a tile can be.  Empty space, or coloured to show
    the player who owns it, or a power up.
 */
@@ -125,6 +128,11 @@ typedef struct tile_struct {
      frame.  The animation is related to the tile's owner, so if the owner
      changes, this needs updating.  Tiles with a one frame animation get this
      set to FALSE after the first update. */
+
+  unsigned char animDelayCount : 2;
+    /* Counts down to zero, then changes to the next character of the
+       animation.  Needed since animations are too fast otherwise.  Also see
+       MAX_ANIM_DELAY_COUNT. */
 
   unsigned char age : 3;
   /* Age of the tile owned by the player.  0 means new, 7 is the oldest (has

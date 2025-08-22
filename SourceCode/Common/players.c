@@ -1025,13 +1025,23 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
 
     /* If thrusted in the last frame and harvested some points, speed up in
        the current velocity direction.  Number of tiles harvested is converted
-       to a fraction of pixel per update velocity (else things go way too
-       fast and the frame rate slows down a lot as the physics keeps up). */
+       to a fraction of a pixel per update velocity (else things go way too
+       fast and the frame rate slows down as the physics adds more steps to
+       keep up).  Extra boost if you have the FAST power-up. */
 
     if (pPlayer->thrust_harvested)
     {
+      if (pPlayer->power_up_timers[OWNER_PUP_FAST])
+        pPlayer->thrust_harvested += 2;
+
       fx thrustAmount;
-      INT_FRACTION_TO_FX(0, pPlayer->thrust_harvested * 2048, thrustAmount);
+      INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
+      /* TODO: Implement DIV2Nth_FX, shift by N bits. */
+      DIV2_FX(&thrustAmount);
+      DIV2_FX(&thrustAmount);
+      DIV2_FX(&thrustAmount);
+      DIV2_FX(&thrustAmount);
+      DIV2_FX(&thrustAmount);
 
       if (player_velocity_octant <= 1 || player_velocity_octant == 7)
         ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);

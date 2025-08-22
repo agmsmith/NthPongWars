@@ -541,7 +541,7 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
           if (previousOwner >= (tile_owner) OWNER_PLAYER_1 &&
           previousOwner <= (tile_owner) OWNER_PLAYER_4)
           {
-            if (tileAge == 0)
+            if (tileAge == 0 || pPlayer->power_up_timers[OWNER_PUP_BASH_WALL])
               takeOverTile = true;
             else /* Wear down the tile. */
             {

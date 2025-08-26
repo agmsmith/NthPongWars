@@ -1036,12 +1036,7 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
 
       fx thrustAmount;
       INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
-      /* TODO: Implement DIV2Nth_FX, shift by N bits. */
-      DIV2_FX(&thrustAmount);
-      DIV2_FX(&thrustAmount);
-      DIV2_FX(&thrustAmount);
-      DIV2_FX(&thrustAmount);
-      DIV2_FX(&thrustAmount);
+      DIV2Nth_FX(&thrustAmount, 5);
 
       if (player_velocity_octant <= 1 || player_velocity_octant == 7)
         ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);

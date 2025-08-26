@@ -137,10 +137,14 @@ extern int8_t COMPARE_FX(pfx x, pfx y);
 extern int8_t TEST_FX(pfx x);
 
 /* Divide the FX by two.  Same as shifting the given value arithmetic right
-   (sign bit extended, so works with negative numbers too) by one bit.  May
-   have to do an N bits version later, but 1 bit is extra efficient in that
-   we can shift in memory. */
+   (sign bit extended, so works with negative numbers too) by one bit.  1 bit
+   is extra efficient in that we can shift directly in memory.
+*/
 extern void DIV2_FX(pfx x);
+
+/* Divide the FX by two to the Nth.  Same as shifting the given value arithmetic
+   right by N bits (sign bit extended, so works with negative numbers too) */
+extern void DIV2Nth_FX(pfx x, uint8_t n);
 
 /* Divide a by 4 and put into b. */
 #define DIV4_FX(a, b) {b.as_int32 = a.as_int32 / 4; }

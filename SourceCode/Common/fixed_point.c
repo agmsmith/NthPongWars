@@ -398,9 +398,8 @@ ZeroTest:
 
 
 /* Divide the FX by two.  Same as shifting the given value arithmetic right
-   (sign bit extended, so works with negative numbers too) by one bit.  May
-   have to do an N bits version later, but 1 bit is extra efficient in that
-   we can shift in memory.
+   (sign bit extended, so works with negative numbers too) by one bit.  1 bit
+   is extra efficient in that we can shift directly in memory.
 */
 void DIV2_FX(pfx x)
 {
@@ -425,6 +424,54 @@ void DIV2_FX(pfx x)
   __endasm;
 #else
   x->as_int32 >>= 1;
+#endif
+}
+
+
+/* Divide the FX by two to the Nth.  Same as shifting the given value arithmetic
+   right by N bits (sign bit extended, so works with negative numbers too).
+   Load 32 bits in to bc and de registers to do shifts, A counts down from N.
+*/
+void DIV2Nth_FX(pfx x, uint8_t n)
+{
+#ifdef NABU_H
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  n;
+  __asm
+  ld    hl,4      /* Hop over return address and pointer x. */
+  add   hl,sp     /* Get pointer to argument N. */
+  ld    a,(hl)    /* Store N in register A. */
+  dec   hl        /* Get high byte of pointer to x. */
+  ld    b,(hl)
+  dec   hl        /* Get low byte of pointer to x. */
+  ld    l,(hl)
+  ld    h,b       /* hl now has pointer to x's fx data, a 32 bit integer. */
+  ld    c,(hl)    /* Copy X to bcde registers, starting with low byte. */
+  inc   hl
+  ld    b,(hl)
+  inc   hl
+  ld    d,(hl)
+  inc   hl
+  ld    e,(hl)
+Div2nthLoop:
+  dec   a       /* Reduce the counter N. */
+  jp    M,Div2nthDone /* Minus means we're done.  Also works for N=0 case. */
+  sra   e       /* Shift right, duplicating high sign bit. */
+  rr    d
+  rr    b
+  rr    c
+  jr    Div2nthLoop
+Div2nthDone:
+  ld    (hl),e /* Write the result back to variable X's data area. */
+  dec   hl
+  ld    (hl),d
+  dec   hl
+  ld    (hl),b
+  dec   hl
+  ld    (hl),c
+  __endasm;
+#else
+  x->as_int32 >>= n;
 #endif
 }
 

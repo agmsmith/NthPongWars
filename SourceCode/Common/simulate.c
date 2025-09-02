@@ -131,9 +131,9 @@ printf("\nStarting simulation update.\n");
          height until it reaches a minimum.  Shadow also changes colour
          depending on the height. */
 
-      #define MAX_FLYING_HEIGHT 32
+      #define MAX_FLYING_HEIGHT 20
       #define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
-      #define FLYING_ABOVE_TILES_HEIGHT 10
+      #define FLYING_ABOVE_TILES_HEIGHT 9
 
       if (pPlayer->power_up_timers[OWNER_PUP_FLY])
       {

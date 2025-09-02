@@ -123,6 +123,24 @@ printf("\nStarting simulation update.\n");
         if (clock != 0)
           *pPowerUpTimer = clock - 1;
       }
+
+      /* Update the OWNER_PUP_FLY power up, just once every 4th frame.  Raise
+         the player's flying height (moves the shadow further away) by one pixel
+         until it reaches a maximum.  If the power-up is off, lower the player's
+         height until it reaches a minimum. */
+
+      if (pPlayer->power_up_timers[OWNER_PUP_FLY])
+      {
+        #define MAX_FLYING_HEIGHT 32
+        if (pPlayer->pixel_flying_height < MAX_FLYING_HEIGHT)
+          pPlayer->pixel_flying_height++;
+      }
+      else
+      {
+        #define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
+        if (pPlayer->pixel_flying_height > MIN_FLYING_HEIGHT)
+          pPlayer->pixel_flying_height--;
+      }
     }
 
 #if DEBUG_PRINT_SIM

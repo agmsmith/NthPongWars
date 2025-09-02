@@ -178,7 +178,7 @@ printf("(%d to %d, %d to %d)\n",
 
 #ifdef NABU_H
     pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
-    /* Now just using VDP_BLACK pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow; */
+    pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow;
     pPlayer->sparkle_colour = k_PLAYER_COLOURS[iPlayer].sparkle;
     pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
@@ -1209,7 +1209,11 @@ void CopyPlayersToSprites(void)
       IO_VDPDATA = pPlayer->vdpShadowSpriteY;
       IO_VDPDATA = pPlayer->vdpShadowSpriteX;
       IO_VDPDATA = pPlayer->main_anim.current_name;
-      IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | VDP_BLACK;
+      if (pPlayer->pixel_flying_height < 8)
+        /* Black looks better, when not flying. */
+        IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | VDP_BLACK;
+      else /* More visible shadow when flying high enough to go over tiles. */
+        IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | pPlayer->shadow_colour;
     }
     pPlayer++;
   } while (iPlayer-- != 0);

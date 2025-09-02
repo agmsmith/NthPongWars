@@ -188,7 +188,8 @@ typedef struct player_struct {
   uint8_t pixel_flying_height;
     /* How far above the board the player is.  Will draw the shadow sprite
        offset diagonally by this many pixels. 2 is a good value, 1 is hard to
-       see, 0 is hidden by the ball (ball on ground?). */
+       see, 0 is hidden by the ball (ball on ground?).  Can be larger to make
+       it look like you are flying, and perhaps not colliding with tiles.*/
 
   fx velocity_x;
   fx velocity_y;
@@ -299,11 +300,11 @@ typedef struct player_struct {
 
   SpriteAnimRecord main_anim;/* Animation for the main ball sprite. */
 
-/* Now just using VDP_BLACK for extra contrast.
   uint8_t shadow_colour;
   /* Predefined colour for this player's shadow sprite.  We're using colours
      which have a darker version of the same colour, so that can be a
-     drop-shadow.  Caches the values from k_PLAYER_COLOURS[player#].
+     drop-shadow.  Black also looks nice, but is invisible against the black
+     background when flying.  Caches the values from k_PLAYER_COLOURS[player#].
      The shadow sprite will be showing the main animation, just offset a bit. */
 
   uint8_t sparkle_colour;

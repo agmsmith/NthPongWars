@@ -90,9 +90,10 @@ printf("\nStarting simulation update.\n");
      approximate it with only looking at integer portion for speed, ignoring
      the fractional part.  Also reset thrust harvested, which gets accumulated
      during collisions with tiles and gets used to increase velocity on the
-     next update.  Also updates players's Manhattan Speed value (since we're
-     finding absolute values of the velocity here anyway), which lags by a
-     frame since it's determined before moving the player. */
+     next update.  And do other per frame updates of the player (should these
+     be in player.c or here?).  Also updates players's Manhattan Speed value
+     (since we're finding absolute values of the velocity here anyway), which
+     lags by a frame since it's determined before moving the player. */
 
   maxVelocity = 0;
   pPlayer = g_player_array;
@@ -101,7 +102,7 @@ printf("\nStarting simulation update.\n");
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
-    /* Various start of frame initialisations for all players go here. */
+    /* Various start of frame initialisations and updates for all players. */
 
     pPlayer->thrust_harvested = 0;
 
@@ -127,19 +128,30 @@ printf("\nStarting simulation update.\n");
       /* Update the OWNER_PUP_FLY power up, just once every 4th frame.  Raise
          the player's flying height (moves the shadow further away) by one pixel
          until it reaches a maximum.  If the power-up is off, lower the player's
-         height until it reaches a minimum. */
+         height until it reaches a minimum.  Shadow also changes colour
+         depending on the height. */
+
+      #define MAX_FLYING_HEIGHT 32
+      #define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
+      #define FLYING_ABOVE_TILES_HEIGHT 10
 
       if (pPlayer->power_up_timers[OWNER_PUP_FLY])
       {
-        #define MAX_FLYING_HEIGHT 32
         if (pPlayer->pixel_flying_height < MAX_FLYING_HEIGHT)
+        {
           pPlayer->pixel_flying_height++;
+          if (pPlayer->pixel_flying_height == FLYING_ABOVE_TILES_HEIGHT)
+            pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].sparkle;
+        }
       }
       else
       {
-        #define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
         if (pPlayer->pixel_flying_height > MIN_FLYING_HEIGHT)
+        {
           pPlayer->pixel_flying_height--;
+          if (pPlayer->pixel_flying_height == FLYING_ABOVE_TILES_HEIGHT - 1)
+            pPlayer->shadow_colour = VDP_BLACK;
+        }
       }
     }
 

@@ -31,13 +31,7 @@
    three are fairly distinct, though the fourth redish one is easily confused
    with others, which is why it's fourth. */
 
-typedef struct colour_triplet_struct {
-  uint8_t main;
-  uint8_t shadow;
-  uint8_t sparkle;
-} colour_triplet_record;
-
-static const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
+const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
   { VDP_MED_GREEN, VDP_DARK_GREEN, VDP_LIGHT_GREEN },
   { VDP_LIGHT_BLUE, VDP_DARK_BLUE, VDP_CYAN },
   { VDP_LIGHT_YELLOW, VDP_DARK_YELLOW, VDP_GRAY },
@@ -152,7 +146,7 @@ printf("(%d to %d, %d to %d)\n",
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_x);
     INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
     pixelCoord += 32;
-    pPlayer->pixel_flying_height = 2;
+    pPlayer->pixel_flying_height = 15;
     INT_FRACTION_TO_FX(0, iPlayer * 256, pPlayer->velocity_x);
     DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
     INT_FRACTION_TO_FX(0, 0x1000, pPlayer->velocity_y);
@@ -1209,11 +1203,7 @@ void CopyPlayersToSprites(void)
       IO_VDPDATA = pPlayer->vdpShadowSpriteY;
       IO_VDPDATA = pPlayer->vdpShadowSpriteX;
       IO_VDPDATA = pPlayer->main_anim.current_name;
-      if (pPlayer->pixel_flying_height < 8)
-        /* Black looks better, when not flying. */
-        IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | VDP_BLACK;
-      else /* More visible shadow when flying high enough to go over tiles. */
-        IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | pPlayer->shadow_colour;
+      IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | pPlayer->shadow_colour;
     }
     pPlayer++;
   } while (iPlayer-- != 0);

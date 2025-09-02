@@ -59,6 +59,16 @@
    as the 0xD0 magic value the hardware uses to mark the end of the sprite list,
    so it's not a value you would normally see as a VDP Y coordinate. */
 #define SPRITE_NOT_DRAWABLE 208
+
+/* Predefined colour choices for the players, used on the NABU. */
+
+typedef struct colour_triplet_struct {
+  uint8_t main;
+  uint8_t shadow;
+  uint8_t sparkle;
+} colour_triplet_record;
+
+extern const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS];
 #endif /* NABU_H */
 
 

@@ -141,7 +141,7 @@ printf("\nStarting simulation update.\n");
         {
           pPlayer->pixel_flying_height++;
           if (pPlayer->pixel_flying_height == FLYING_ABOVE_TILES_HEIGHT)
-            pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].sparkle;
+            pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow;
         }
       }
       else
@@ -316,6 +316,16 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       pOtherPlayer->player_collision_count)
         continue;
 
+      /* Also have to be at near the same altitude as the other player. */
+
+      int8_t deltaFlyingHeight;
+      deltaFlyingHeight = (int8_t) pPlayer->pixel_flying_height -
+        (int8_t) pOtherPlayer->pixel_flying_height;
+      if (deltaFlyingHeight < 0)
+        deltaFlyingHeight = -deltaFlyingHeight;
+      if (deltaFlyingHeight >= PLAYER_PIXEL_DIAMETER_NORMAL)
+        continue;
+
       /* Find out how far apart the players are.  If it's less than a ball
          width (actually two half widths from center to center), a collision
          has happened.  Has to touch in both X and Y. */
@@ -423,6 +433,9 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       tile_owner player_self_owner;
 
       if (pPlayer->brain == BRAIN_INACTIVE)
+        continue;
+
+      if (pPlayer->pixel_flying_height >= FLYING_ABOVE_TILES_HEIGHT)
         continue;
 
       int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);

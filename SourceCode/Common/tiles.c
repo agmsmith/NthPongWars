@@ -75,8 +75,8 @@ uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
   2, /* OWNER_PUP_NORMAL */
   2, /* OWNER_PUP_STOP */
   1, /* OWNER_PUP_FAST */
-  1, /* OWNER_PUP_FLY */
-  4, /* OWNER_PUP_WIDER */
+  2, /* OWNER_PUP_FLY */
+  3, /* OWNER_PUP_WIDER */
   1, /* OWNER_PUP_BASH_WALL */
 };
 

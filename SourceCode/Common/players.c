@@ -1025,9 +1025,6 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
 
     if (pPlayer->thrust_harvested)
     {
-      if (pPlayer->power_up_timers[OWNER_PUP_FAST])
-        pPlayer->thrust_harvested += 2;
-
       fx thrustAmount;
       INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
       DIV2Nth_FX(&thrustAmount, 5);
@@ -1116,7 +1113,9 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
        sparkle animations active simultaneously. */
 
     SpriteAnimationType newAnimType = (SpriteAnimationType) SPRITE_ANIM_NONE;
-    if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
+    if (pPlayer->power_up_timers[OWNER_PUP_BASH_WALL])
+      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_BASH;
+    else if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
       newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_WIDER;
     else if (pPlayer->thrust_active)
       newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST;
@@ -1131,7 +1130,7 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
     /* Switch in an extra bold harvest animation frame if they actually
        harvested something.  Once it has played, the current animation will
        restart from the beginning, because the override frame number is higher
-       than any animation frames. */
+       than the normal range of animation frames in every animation. */
 
     if (pPlayer->thrust_harvested)
     {

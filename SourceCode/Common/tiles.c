@@ -31,7 +31,6 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
   "P4", /* OWNER_PLAYER_4 */
   "Normal", /* OWNER_PUP_NORMAL */
   "Stop", /* OWNER_PUP_STOP */
-  "Fast", /* OWNER_PUP_FAST */
   "Fly", /* OWNER_PUP_FLY */
   "Wider", /* OWNER_PUP_WIDER */
   "Bash", /* OWNER_PUP_BASH_WALL */
@@ -47,7 +46,6 @@ const char *g_TileAnimData[OWNER_MAX] =
   "\xE3\xE7\xEB\xEF\xF3\xF7\xFB\xFF", /* OWNER_PLAYER_4 */
   "\xB1\xB2\xB3\xB4\xB5\xB6", /* OWNER_PUP_NORMAL */
   "\xB0", /* OWNER_PUP_STOP */
-  "\xC3\xC4\xC5\xC6\xC7", /* OWNER_PUP_FAST */
   "\xBC\xBD\xBE\xBF\xC0\xC1\xC2", /* OWNER_PUP_FLY */
   "\xAC\xAD\xAE\xAF", /* OWNER_PUP_WIDER */
   "\xB7\xB8\xB9\xBA\xB9\xBA\xBB", /* OWNER_PUP_BASH_WALL */
@@ -59,7 +57,6 @@ const char *g_TileAnimData[OWNER_MAX] =
   "4", /* OWNER_PLAYER_4 */
   "NNNorm", /* OWNER_PUP_NORMAL */
   "SSStop", /* OWNER_PUP_STOP */
-  "FFFast", /* OWNER_PUP_FAST */
   "UUUp", /* OWNER_PUP_FLY */
   "WWWider", /* OWNER_PUP_WIDER */
   "BBBash", /* OWNER_PUP_BASH_WALL */
@@ -74,7 +71,6 @@ uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
   0, /* OWNER_PLAYER_4 */
   2, /* OWNER_PUP_NORMAL */
   2, /* OWNER_PUP_STOP */
-  1, /* OWNER_PUP_FAST */
   2, /* OWNER_PUP_FLY */
   3, /* OWNER_PUP_WIDER */
   1, /* OWNER_PUP_BASH_WALL */

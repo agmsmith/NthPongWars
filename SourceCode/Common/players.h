@@ -247,7 +247,7 @@ typedef struct player_struct {
   /* How much extra thrust (pixels per update) you get from using Thrust (fire
      button plus a direction).  Simulation sets it by counting how many of
      your own tiles you pass over.  Gets added to velocity after the
-     simulation step.  Also used for OWNER_PUP_FAST for a speed burst. */
+     simulation step. */
 
   uint8_t power_up_timers[OWNER_MAX];
   /* Counts down the number of frames for the power up to be active.  Zero

@@ -27,6 +27,40 @@
 
 #include "sounds.h"
 
+/* The range of flying heights and what they do. */
+#define MAX_FLYING_HEIGHT 20 /* Can fly this high at most. */
+#define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
+#define FLYING_ABOVE_TILES_HEIGHT 8 /* Tile collisions skipped this high. */
+
+#ifdef NABU_H
+/* TRUE to use the player's dimmer colour for drawing the shadow when at the
+   given flying height.  FALSE to use VDP_BLACK for the shadow. */
+static const bool k_PLAYER_COLOUR_AT_HEIGHT[MAX_FLYING_HEIGHT+1] =
+{
+  false, /*  0 */
+  false, /*  1 */
+  false, /*  2 */
+  false, /*  3 */
+  false, /*  4 */
+  false, /*  5 */
+  false, /*  6 */
+  false, /*  7 */
+  true, /*  8 */
+  false,  /*  9 */
+  true, /* 10 */
+  false,  /* 11 */
+  true, /* 12 */
+  false,  /* 13 */
+  true, /* 14 */
+  true,  /* 15 */
+  false, /* 16 */
+  true,  /* 17 */
+  true,  /* 18 */
+  false, /* 19 */
+  true,  /* 20 */
+};
+#endif /* NABU_H */
+
 
 /*******************************************************************************
  * Calculate the new position and velocity of all players.
@@ -131,17 +165,13 @@ printf("\nStarting simulation update.\n");
          height until it reaches a minimum.  Shadow also changes colour
          depending on the height. */
 
-      #define MAX_FLYING_HEIGHT 20
-      #define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
-      #define FLYING_ABOVE_TILES_HEIGHT 9
-
+      bool flyingHeightChanged = false;
       if (pPlayer->power_up_timers[OWNER_PUP_FLY])
       {
         if (pPlayer->pixel_flying_height < MAX_FLYING_HEIGHT)
         {
           pPlayer->pixel_flying_height++;
-          if (pPlayer->pixel_flying_height == FLYING_ABOVE_TILES_HEIGHT)
-            pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow;
+          flyingHeightChanged = true;
         }
       }
       else
@@ -149,10 +179,26 @@ printf("\nStarting simulation update.\n");
         if (pPlayer->pixel_flying_height > MIN_FLYING_HEIGHT)
         {
           pPlayer->pixel_flying_height--;
-          if (pPlayer->pixel_flying_height == FLYING_ABOVE_TILES_HEIGHT - 1)
-            pPlayer->shadow_colour = VDP_BLACK;
+          flyingHeightChanged = true;
         }
       }
+#ifdef NABU_H
+      /* Change the player and shadow colours to reflect the height, make them
+         flash when things are happening. */
+      if (flyingHeightChanged)
+      {
+        if (k_PLAYER_COLOUR_AT_HEIGHT[pPlayer->pixel_flying_height])
+        {
+          pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow;
+          pPlayer->main_colour = k_PLAYER_COLOURS[iPlayer].sparkle;
+        }
+        else
+        {
+          pPlayer->shadow_colour = VDP_BLACK;
+          pPlayer->main_colour = k_PLAYER_COLOURS[iPlayer].main;
+        }
+      }
+#endif /* NABU_H */
     }
 
 #if DEBUG_PRINT_SIM

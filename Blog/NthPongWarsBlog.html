@@ -2184,6 +2184,74 @@ then you could build a defensive wall.  That's the advantage of adding AI
 players - I can see how the larger game works, and get ideas like defensive
 walls.
 
+<HR>
+<H2><A NAME="2025.09.03"></A>2025.09.03</H2>
+
+<H3>Adding Power-ups</H3>
+
+<P>I spent a bit of time making graphics for the power-ups, trying to be
+obvious in their meaning, but that's not easy.  I also coded the actions for
+the power-ups, including a generic power-up timer array so you could have many
+simultaneous power-ups running.  The power-ups are now these ones (unplayable
+Fast was removed):
+<OL>
+  <LI><B>Stop</B>.  A hexagonal stop sign (can't do octagonal, not enough
+    resolution).  Not animated, it's stopped!  It stops the player's motion
+    when you hit it.  The player has to start laying down and harvesting tiles
+    on the spot to get moving again.
+
+  <LI><B>Wide</B>.  A pulsing ring (or diamond due to lack of resolution) which
+    makes your player wider for a little while.  There's also a similar pulsing
+    ring sprite around the player when the effect is active.  Wide makes the
+    player lay down a wider track of tiles, and collide with more tiles.  A
+    related power-up to consider implementing is <B>Solid</B>, for laying down
+    solid tiles behind you.  No, I won't use an animated poop emoji for that!
+    Hmmm, if you look online, that's a thing.  Though that does suggest a game
+    re-skinning for a variation on cleaning up after pets...
+
+  <LI><B>Normal</B>.  A slumping colour cycling mountain.  Deactivates all
+    power-ups you currently have.  Maybe I should simplify things and combine
+    it with Stop?
+
+  <LI><B>Bash</B>.  A sideways pair of lines expanding, not the best graphic,
+    got any ideas for 8x8 pixel animations with few colours?  There's a similar
+    sprite animation around the player.  It makes you destroy an enemy tile
+    with one bounce, useful for the more solid tiles which otherwise take more
+    bounces to destroy.  Combine Wide and Bash and you can quickly wipe out
+    another player's tiles.  Though we only have one sprite to show the
+    power-up, so the more significant effect is shown (could use more sprites
+    &amp; CPU time, or make combo graphics, if I have time to put it in).
+
+  <LI><B>Fly</B>.  A pair of white wings flying upwards on a gray body,
+    surrounded by a small blue cloud moving with the wings.  The blue cloud
+    idea is that you can distinguish a splash of colour more quickly than a
+    shape, so the power-ups should all have a distinctive easily visible colour
+    area.  It makes the player fly.  When they are high enough, they no longer
+    collide with the tiles (or lay them down) and also miss other players, so
+    long as their height difference is big enough.  The shadow is moved away
+    from the player to show the height, and changes colour (and blinks fast
+    when close to tile height) when the player is above tile collision height.
+    Though I'm thinking of leaving the shadow black and just changing the
+    player's ball colour when they get above tile height.
+</OL>
+
+<P ALIGN=CENTER><A HREF="20250903PowerUpGamePlay.mp4"><IMG
+SRC="20250903PowerUpGamePlay.GIF" WIDTH="280" HEIGHT="216"
+ALT="[Video of Power-Ups being used]"></A><BR>
+<A HREF="20250903PowerUpGamePlay.mp4">20250903PowerUpGamePlay.mp4</A>
+video with sound and narration.<BR>
+<A HREF="20250903PowerUpGamePlay.txt">Script.txt</A> about what the power-ups are doing.
+
+<P>Fly would be more useful to get to inaccessible areas of the board.  Which suggests the idea of walls.  Implemented as tiles that don't get destroyed.
+Maybe also have indestructable power-ups to make designed levels with.  And
+that suggests we need a way of loading levels, so you can progress from simple
+ones which are all open to ones with enclosed areas.  And gotchas like new
+power-up locations not spawning in a wall, since that would make a hole that
+players could get through.
+
+<P>So I need to come up with a file format for saving levels.  Likely a text file of some sort for easy editing.  Maybe also have separate music for each level, rather than compiling it into the code?  High scores for each level, and a total score too.  Also need to implement end of level detection, winners, score keeping, and lots of related stuff.  Maybe even a title screen!  I might have to drop CP/M support (saves 10 kilobytes) and use NABU PAK segment files to fit it all into
+memory.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

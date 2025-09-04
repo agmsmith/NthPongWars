@@ -1,0 +1,27 @@
+Here are the new power-ups I have added to the game.
+
+Notice how the green Human controlled player tries out the Stop power-up, which simply stops them dead.
+
+Here is the Fly power-up, which lifts you up over tiles and non-flying players.
+
+The attacking yellow player has the bash through tiles power-up.
+
+The green player gets the circular wide trail power-up, while being hit by the yellow player.
+
+The green player hits another wide power-up, adding to the duration of the wide trail effect.
+
+That slumping mountain removes all power-up effects on the green player.
+
+If you get bash and wide power ups, you can bash through twice as many tiles, though due to limits we can only show one power up activity sprite on the player.
+
+Stopped again.
+
+More bashing duration, so you can take out an enemy tile in one bounce no matter how solid it is.
+
+Back to wide bashing for the green player.  A good way to get many points.
+
+When you're going that fast, you have less steering control with wider bounces.
+
+Collisions temporarily turn on harvest mode, eating your own tiles.
+
+And that's enough for now.

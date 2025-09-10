@@ -34,6 +34,7 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
   "Fly", /* OWNER_PUP_FLY */
   "Wider", /* OWNER_PUP_WIDER */
   "Bash", /* OWNER_PUP_BASH_WALL */
+  "Solid", /* OWNER_PUP_SOLID */
 };
 
 const char *g_TileAnimData[OWNER_MAX] =
@@ -49,6 +50,7 @@ const char *g_TileAnimData[OWNER_MAX] =
   "\xBC\xBD\xBE\xBF\xC0\xC1\xC2", /* OWNER_PUP_FLY */
   "\xAC\xAD\xAE\xAF", /* OWNER_PUP_WIDER */
   "\xB7\xB8\xB9\xBA\xB9\xBA\xBB", /* OWNER_PUP_BASH_WALL */
+  "\x8A\x95\xA0\xAB", /* OWNER_PUP_SOLID */
 #else /* Curses just uses plain characters, no special font. */
   " ", /* OWNER_EMPTY */
   "1", /* OWNER_PLAYER_1 */
@@ -60,6 +62,7 @@ const char *g_TileAnimData[OWNER_MAX] =
   "UUUp", /* OWNER_PUP_FLY */
   "WWWider", /* OWNER_PUP_WIDER */
   "BBBash", /* OWNER_PUP_BASH_WALL */
+  "sOOOlid", /* OWNER_PUP_SOLID */
 #endif /* NABU_H */
 };
 
@@ -69,11 +72,12 @@ uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
   0, /* OWNER_PLAYER_2 */
   0, /* OWNER_PLAYER_3 */
   0, /* OWNER_PLAYER_4 */
-  2, /* OWNER_PUP_NORMAL */
-  2, /* OWNER_PUP_STOP */
+  1, /* OWNER_PUP_NORMAL */
+  4, /* OWNER_PUP_STOP */
   2, /* OWNER_PUP_FLY */
-  3, /* OWNER_PUP_WIDER */
-  1, /* OWNER_PUP_BASH_WALL */
+  2, /* OWNER_PUP_WIDER */
+  2, /* OWNER_PUP_BASH_WALL */
+  2, /* OWNER_PUP_SOLID */
 };
 
 static tile_owner s_TileQuotaNextIndex = OWNER_PUP_NORMAL;

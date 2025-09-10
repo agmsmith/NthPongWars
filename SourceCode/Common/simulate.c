@@ -608,9 +608,12 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
               /* To save on CPU, only increase tile age occasionally.  Also
                  avoids players picking up too much speed from harvesting
                  rapidly, which leads to AIs bouncing around the corner but
-                 not getting into the corner.  Note age is 3 bits, max 7. */
+                 not getting into the corner.  Though the OWNER_PUP_SOLID
+                 power-up overrides this and increases age every frame.  Note
+                 age is 3 bits in the tile record, so maximum 7. */
               if (tileAge < 7 &&
-              (((uint8_t) g_FrameCounter ^ iPlayer) & 3) == 0)
+              (((((uint8_t) g_FrameCounter ^ iPlayer) & 3) == 0) ||
+              (pPlayer->power_up_timers[OWNER_PUP_SOLID])))
               {
                 tileAge++;
                 pTile->age = tileAge;

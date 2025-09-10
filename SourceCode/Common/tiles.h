@@ -56,6 +56,7 @@ typedef enum tile_owner_enum {
   OWNER_PUP_FLY = OWNER_PUPS_WITH_DURATION, /* Fly over squares. */
   OWNER_PUP_WIDER, /* Makes the player wider in effect; more tiles hit. */
   OWNER_PUP_BASH_WALL, /* Bashes through walls in one bounce. */
+  OWNER_PUP_SOLID, /* Leaves behind more tiles make a solid trail. */
   OWNER_MAX
 };
 typedef uint8_t tile_owner; /* Want 8 bits, not a 16 bit enum. */

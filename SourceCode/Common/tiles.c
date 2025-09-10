@@ -50,7 +50,7 @@ const char *g_TileAnimData[OWNER_MAX] =
   "\xBC\xBD\xBE\xBF\xC0\xC1\xC2", /* OWNER_PUP_FLY */
   "\xAC\xAD\xAE\xAF", /* OWNER_PUP_WIDER */
   "\xB7\xB8\xB9\xBA\xB9\xBA\xBB", /* OWNER_PUP_BASH_WALL */
-  "\x8A\x95\xA0\xAB", /* OWNER_PUP_SOLID */
+  "\xC3\xC4\xC5\xC6", /* OWNER_PUP_SOLID */
 #else /* Curses just uses plain characters, no special font. */
   " ", /* OWNER_EMPTY */
   "1", /* OWNER_PLAYER_1 */

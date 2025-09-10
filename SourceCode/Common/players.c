@@ -1115,6 +1115,8 @@ GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
     SpriteAnimationType newAnimType = (SpriteAnimationType) SPRITE_ANIM_NONE;
     if (pPlayer->power_up_timers[OWNER_PUP_BASH_WALL])
       newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_BASH;
+    else if (pPlayer->power_up_timers[OWNER_PUP_SOLID])
+      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_SOLID;
     else if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
       newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_WIDER;
     else if (pPlayer->thrust_active)
@@ -1202,7 +1204,10 @@ void CopyPlayersToSprites(void)
       IO_VDPDATA = pPlayer->vdpShadowSpriteY;
       IO_VDPDATA = pPlayer->vdpShadowSpriteX;
       IO_VDPDATA = pPlayer->main_anim.current_name;
+      /* Confusing for player to change the shadow colour, leave it black.
       IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | pPlayer->shadow_colour;
+      */
+      IO_VDPDATA = pPlayer->vdpShadowEarlyClock32Left | VDP_BLACK;
     }
     pPlayer++;
   } while (iPlayer-- != 0);

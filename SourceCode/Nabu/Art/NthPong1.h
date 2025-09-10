@@ -27,6 +27,7 @@ typedef enum SpriteAnimationsEnum {
   SPRITE_ANIM_BALL_EFFECT_THRUST,
   SPRITE_ANIM_BALL_EFFECT_WIDER,
   SPRITE_ANIM_BALL_EFFECT_BASH,
+  SPRITE_ANIM_BALL_EFFECT_SOLID,
   SPRITE_ANIM_MAX
 };
 typedef uint8_t SpriteAnimationType; /* Want it to be 8 bits, not 16. */
@@ -51,7 +52,8 @@ static const SpriteAnimRecord g_SpriteAnimData[SPRITE_ANIM_MAX] = {
   {SPRITE_ANIM_BALL_ROLLING, 4, 20, 3, 250, 0}, /* A ball rolling. */
   {SPRITE_ANIM_BALL_EFFECT_THRUST, 20, 32, 2, 250, 0}, /* Halo circling ball. */
   {SPRITE_ANIM_BALL_EFFECT_WIDER, 32, 48, 3, 250, 0}, /* Expanding rings. */
-  {SPRITE_ANIM_BALL_EFFECT_BASH, 48, 68, 2, 250, 0}, /* Expanding bars. */
+  {SPRITE_ANIM_BALL_EFFECT_BASH, 48, 68, 2, 250, 0}, /* Moving fist. */
+  {SPRITE_ANIM_BALL_EFFECT_SOLID, 68, 84, 2, 250, 0}, /* Filling squares. */
 };
 
 /* One more sprite frame after SPRITE_ANIM_BALL_EFFECT_THRUST for extra

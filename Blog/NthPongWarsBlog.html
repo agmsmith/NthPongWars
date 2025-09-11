@@ -2249,8 +2249,41 @@ ones which are all open to ones with enclosed areas.  And gotchas like new
 power-up locations not spawning in a wall, since that would make a hole that
 players could get through.
 
-<P>So I need to come up with a file format for saving levels.  Likely a text file of some sort for easy editing.  Maybe also have separate music for each level, rather than compiling it into the code?  High scores for each level, and a total score too.  Also need to implement end of level detection, winners, score keeping, and lots of related stuff.  Maybe even a title screen!  I might have to drop CP/M support (saves 10 kilobytes) and use NABU PAK segment files to fit it all into
-memory.
+<P>So I need to come up with a file format for saving levels.  Likely a text
+file of some sort for easy editing.  Maybe also have separate music for each
+level, rather than compiling it into the code?  High scores for each level, and
+a total score too.  Also need to implement end of level detection, winners,
+score keeping, and lots of related stuff.  Maybe even a title screen!  I might
+have to drop CP/M support (saves 10 kilobytes) and use NABU PAK segment files
+to fit it all into memory.
+
+<HR>
+<H2><A NAME="2025.09.11"></A>2025.09.11</H2>
+
+<H3>One More Power-Up: Solid</H3>
+
+<P>The power-ups are working nicely.  After a graphical dud where the bash
+through walls looked like a parrot rather than a fist, I stuck to abstract
+shapes and am happy with the graphical look.  I added a solid trail power-up,
+which deposits tiles four times faster than normal.
+
+<P ALIGN=CENTER><A HREF="20250911Solid.png"><IMG
+SRC="20250911Solid.png" WIDTH="123" HEIGHT="150"
+ALT="[The Solid Power Up]"></A>
+<A HREF="20250911Solid.GIF"><IMG
+SRC="20250911Solid.GIF" WIDTH="280" HEIGHT="216"
+ALT="[Animated GIF of the Solid Power-Up being used]"></A>
+
+<H3>Loading a Program in a NABU PAK Segment?</H3>
+
+<P>Before I tackle level loading (had an idea for a scripting language so you
+could load levels, test high scores, have bonus levels if you do well enough),
+I'm going to have a look at running without CP/M in memory, to give a bit of
+space for more things.  It does mean no standard output (no files) other than
+what the NABU network adapter API can do, which is actually quite a lot.  So I
+could have debug text going to a Telnet terminal session over TCP networking,
+and read and write files on the server (game levels, high scores), with
+subdirectories in the file names!
 
 <P>- Alex
 

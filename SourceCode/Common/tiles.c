@@ -134,6 +134,7 @@ uint8_t g_cache_dirty_screen_tiles_index = 0;
  */
 static void DumpOneTileToTerminal(tile_pointer pTile)
 {
+#if !defined(NABU_H) || (BIN_TYPE == BIN_CPM)
   printf("(%d,%d) Owner=%d (%s) Anim=%d Tick=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
     (int) pTile->pixel_center_x,
     (int) pTile->pixel_center_y,
@@ -150,6 +151,7 @@ static void DumpOneTileToTerminal(tile_pointer pTile)
     0
 #endif /* NABU_H */
   );
+#endif /* BIN_TYPE == BIN_CPM */
 }
 
 
@@ -657,8 +659,8 @@ void CopyTilesToScreen(void)
 */
 void DumpTilesToTerminal(void)
 {
+#if !defined(NABU_H) || (BIN_TYPE == BIN_CPM)
   uint8_t index;
-
   printf("Tile data dump...\n");
 
 #if 0
@@ -689,5 +691,6 @@ void DumpTilesToTerminal(void)
     g_screen_top_X_tiles, g_screen_top_Y_tiles);
   printf("Screen location in play area (%d,%d).\n",
     g_play_area_col_for_screen, g_play_area_row_for_screen);
+#endif /* BIN_TYPE == BIN_CPM */
 }
 

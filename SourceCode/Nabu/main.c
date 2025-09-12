@@ -6,9 +6,19 @@
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a usable .COM file),
  * Optionally with --math32 for 32 bit floating point, uses 5K extra memory.
- * Use this command line to compile, 20000 max allocs is good enough:
+ * Use this command line to compile for CP/M, 20000 max allocs is good enough:
  *
  * zcc +cpm -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "NTHPONG.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/ ; time sync
+ *
+ * Use this one to compile for HomeBrew (raw NABU segment files downloaded
+ * into memory), no CP/M so you have 10K more memory (and 4K of ROM in low
+ * memory you can replace), but no files or stdio.  Z88DK simulates the NABU
+ * CAB file builder (CABUILD) to make the segment file, starting at address
+ * $140D (3 NOPs required before actual code start).  Maybe that's for initial
+ * ROM loader code and working RAM?  Interrupt vectors?  Maybe we can use that
+ * 5K of address space for our RAM (can switch off the ROM bank easily enough).
+ *
+ * zcc +nabu -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "Nth Pong Wars.nabu" ; cp -v *.nabu ~/Documents/NABU\ Internet\ Adapter/Local\ Source/ ; time sync
  *
  * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips on
  * writing code that the compiler likes and optimizer settings.
@@ -36,9 +46,9 @@
 
 #pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
 #pragma output noredir /* No command line file redirection. */
-/* #pragma output nostreams /* No disk based file streams? */
-/* #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
-#pragma printf = "%d %X %c %s" /* Need these printf formats. */
+#pragma output nostreams /* No disk based file streams? */
+#pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
+/* #pragma printf = "%d %X %c %s" /* Need these printf formats. */
 /* #pragma printf = "%f %d %X %c %s" /* Printf formats and float for debug. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
@@ -66,12 +76,12 @@
    for docs.  You may need to adjust the paths to fit where you downloaded it
    from https://github.com/DJSures/NABU-LIB.git   There's also a fixed up fork
    at https://github.com/agmsmith/NABU-LIB/tree/NthPongCustomisations */
-#define BIN_TYPE BIN_CPM /* We're compiling for CP/M OS, not stand alone. */
+#define BIN_TYPE BIN_HOMEBREW /* We're compiling for stand alone no OS mode. */
 /* #define DISABLE_KEYBOARD_INT /* Disable it to use only the CP/M keyboard. */
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
 /* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
-#define DISABLE_CURSOR /* Don't flash on VDP during NABU-LIB keyboard input. */
+/* #define DISABLE_CURSOR /* Don't flash on VDP during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
 
@@ -160,7 +170,9 @@ static void ProcessKeyboard(void)
     else
     {
 #if DEBUG_KEYBOARD
+  #if BIN_TYPE == BIN_CPM
       printf ("Got letter %d %c.\n", (int) letter, letter);
+  #endif /* BIN_TYPE == BIN_CPM */
 #endif
       if (letter == 'q')
       {
@@ -225,7 +237,7 @@ void main(void)
      screen when the program exits, so you can see printf output after exit.
      Or if you've redirected output to a remote device (telnet server), you can
      see it there and it doesn't mess up the screen. */
-
+#if BIN_TYPE == BIN_CPM
   printf("Welcome to the Nth Pong Wars NABU game.\n"
     "Copyright 2025 by Alexander G. M. Smith,\n"
     "contact me at agmsmith@ncf.ca.  Started\n"
@@ -262,9 +274,10 @@ void main(void)
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
   sizeof(s_OriginalLocationZeroMemory)) != 0)
   {
-    printf("Corrupted zero page Memory before anything done!\n");
+    HitAnyKey("Corrupted zero page Memory before anything done!\n");
     return;
   }
+#endif /* BIN_TYPE == BIN_CPM */
 
   initNABULib(); /* No longer can use CP/M text input or output. */
 
@@ -284,7 +297,7 @@ void main(void)
 #if 0
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
-    printf("Failed to load NTHPONG\\COTTAGE.PC2.\n");
+    HitAnyKey("Failed to load NTHPONG\\COTTAGE.PC2.\n");
     return;
   }
   z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
@@ -294,7 +307,7 @@ void main(void)
 
   if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
   {
-    printf("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
+    HitAnyKey("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
     return;
   }
 
@@ -314,7 +327,7 @@ void main(void)
 
   if (!InitTileArray())
   {
-    printf("Failed to set up play area tiles.\n");
+    HitAnyKey("Failed to set up play area tiles.\n");
     return;
   }
 
@@ -448,18 +461,20 @@ void main(void)
   CSFX_stop();
 
   DumpTilesToTerminal();
-  printf ("Frame count: %d\n", g_FrameCounter);
+  strcpy(TempBuffer, "Frame count: ");
+  fast_utoa(g_FrameCounter, TempBuffer + strlen(TempBuffer));
+  HitAnyKey(TempBuffer);
 
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
   sizeof(s_OriginalLocationZeroMemory)) != 0)
   {
-    printf("Corrupted NULL Memory!");
+    HitAnyKey("Corrupted NULL Memory!");
   }
 
   if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
   sizeof(s_OriginalStackMemory)) != 0)
   {
-    printf("Corrupted Stack Memory!");
+    HitAnyKey("Corrupted Stack Memory!");
     /* Restart CP/M even when the stack is corrupted. */
     __asm
     rst 0;
@@ -469,11 +484,11 @@ void main(void)
 #if 1
   /* If plain return isn't working.  Happens if main doesn't return void, or if
      you print too much CP/M output to the screen when in graphics mode. */
-  printf("Done.  Brute force exit to CP/M.\n");
+  HitAnyKey("Done.  Brute force exit to CP/M.\n");
   __asm
   rst 0;
   __endasm;
 #endif
-  printf("Done.  Returning to CP/M.\n");
+  HitAnyKey("Done.  Returning to CP/M.\n");
 }
 

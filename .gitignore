@@ -18,4 +18,6 @@
 *.lis
 *.lst
 *.map
+*.NABU
+*.nabu
 *.sym

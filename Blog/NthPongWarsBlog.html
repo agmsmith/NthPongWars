@@ -2285,6 +2285,41 @@ could have debug text going to a Telnet terminal session over TCP networking,
 and read and write files on the server (game levels, high scores), with
 subdirectories in the file names!
 
+<HR>
+<H2><A NAME="2025.09.14"></A>2025.09.14</H2>
+
+<H3>Compiling without the OS</H3>
+
+<P>It turns out that merely removing all calls to printf() is enough for the
+linker to not include standard I/O library functions.  Those won't work since
+there isn't any terminal, or file system, when in non-OS mode.
+
+<P>So surprisingly, using Z88DK to build a "nabu" target (rather than "cpm")
+worked the first time!  I should neaten up the code, and add a debug print
+system that goes over the network to a telnet terminal session, but it works!
+The game plays just fine.  However, there are two problems:
+
+<P>The "nabu" target dragged in some VDP library code and data, which that
+target includes for convenience, but I'm using NABU-LIB which has the same
+functionality so I'd rather not do that.
+
+<P>As well, the "nabu" target builds code designed to run at address $140D,
+which is where the stock Nabu 4K boot rom loads the first program.  So memory
+space from $0 to $140D, about 5 kilobytes is wasted.  Also, only that boot ROM
+loads code at that address, other ROM versions load somewhere around there, or
+presumably after $2000 for the 8K ROMs.  Which makes me think I should add a
+relocater in the setup code to move the program down to near the beginning of
+memory.  I'll have to leave some space for the interrupt table ($FF00 to $FFFF
+in NABU-LIB) and a stack.  After we have relocated things to where they were
+compiled for, the C runtime runs and sets up the memory heap and other C
+ecosystem things like the at-exit routines.
+
+<P>So, is there a bare bones Z88DK target that won't add VDP library routines?
+There are two, "embedded" which makes a system that assumes separate ROM and
+RAM areas, and plain "z80" which doesn't include extra libraries (except a
+console IO one) and just sets up the C ecosystem.  Looks like I should make a
+new target and add the relocater to it.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

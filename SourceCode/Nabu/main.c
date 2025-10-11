@@ -18,7 +18,7 @@
  * ROM loader code and working RAM?  Interrupt vectors?  Maybe we can use that
  * 5K of address space for our RAM (can switch off the ROM bank easily enough).
  *
- * zcc +nabu -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "Nth Pong Wars.nabu" ; cp -v *.nabu ~/Documents/NABU\ Internet\ Adapter/Local\ Source/ ; time sync
+ * zcc +nabu -subtype=bare -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "NthPongWars" ; cp -v *.bare ~/Documents/NABU\ Internet\ Adapter/Local\ Source/ ; time sync
  *
  * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips on
  * writing code that the compiler likes and optimizer settings.
@@ -46,9 +46,9 @@
 
 #pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
 #pragma output noredir /* No command line file redirection. */
-#pragma output nostreams /* No disk based file streams? */
-#pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
-/* #pragma printf = "%d %X %c %s" /* Need these printf formats. */
+/* #pragma output nostreams /* No disk based file streams? */
+/* #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
+#pragma printf = "%d %X %c %s" /* Need these printf formats. */
 /* #pragma printf = "%f %d %X %c %s" /* Printf formats and float for debug. */
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
@@ -76,7 +76,11 @@
    for docs.  You may need to adjust the paths to fit where you downloaded it
    from https://github.com/DJSures/NABU-LIB.git   There's also a fixed up fork
    at https://github.com/agmsmith/NABU-LIB/tree/NthPongCustomisations */
-#define BIN_TYPE BIN_HOMEBREW /* We're compiling for stand alone no OS mode. */
+#ifdef __NABU_BARE__ /* Defined for Z88DK builds with +nabu -subtype=bare */
+  #define BIN_TYPE BIN_HOMEBREW /* Compile for stand alone no OS mode. */
+#else
+  #define BIN_TYPE BIN_CPM /* Have printf() and standard output. */
+#endif
 /* #define DISABLE_KEYBOARD_INT /* Disable it to use only the CP/M keyboard. */
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
@@ -237,7 +241,7 @@ void main(void)
      screen when the program exits, so you can see printf output after exit.
      Or if you've redirected output to a remote device (telnet server), you can
      see it there and it doesn't mess up the screen. */
-#if BIN_TYPE == BIN_CPM
+#ifndef __NABU_BARE__
   printf("Welcome to the Nth Pong Wars NABU game.\n"
     "Copyright 2025 by Alexander G. M. Smith,\n"
     "contact me at agmsmith@ncf.ca.  Started\n"
@@ -277,7 +281,7 @@ void main(void)
     HitAnyKey("Corrupted zero page Memory before anything done!\n");
     return;
   }
-#endif /* BIN_TYPE == BIN_CPM */
+#endif /* ifndef __NABU_BARE__ */
 
   initNABULib(); /* No longer can use CP/M text input or output. */
 

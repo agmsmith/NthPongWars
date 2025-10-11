@@ -13,10 +13,9 @@
  * Use this one to compile for HomeBrew (raw NABU segment files downloaded
  * into memory), no CP/M so you have 10K more memory (and 4K of ROM in low
  * memory you can replace), but no files or stdio.  Z88DK simulates the NABU
- * CAB file builder (CABUILD) to make the segment file, starting at address
- * $140D (3 NOPs required before actual code start).  Maybe that's for initial
- * ROM loader code and working RAM?  Interrupt vectors?  Maybe we can use that
- * 5K of address space for our RAM (can switch off the ROM bank easily enough).
+ * CAB file builder (CABUILD) to make the segment file with a 3 byte header.
+ * Note that the Z88DK +nabu target defaults to including their VDP library and
+ * other things, so we made a "bare" subtype that has almost nothing.
  *
  * zcc +nabu -subtype=bare -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "NthPongWars" ; cp -v *.bare ~/Documents/NABU\ Internet\ Adapter/Local\ Source/ ; time sync
  *
@@ -46,17 +45,22 @@
 
 #pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
 #pragma output noredir /* No command line file redirection. */
-/* #pragma output nostreams /* No disk based file streams? */
-/* #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
-#pragma printf = "%d %X %c %s" /* Need these printf formats. */
-/* #pragma printf = "%f %d %X %c %s" /* Printf formats and float for debug. */
+#ifdef __NABU_BARE__
+  #pragma output nostreams /* No disk based file streams? */
+  #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
+#else /* We have stdio and printf, and usually CP/M as the OS doing it. */
+  #pragma printf = "%d %X %c %s" /* Need these printf formats. */
+  /* #pragma printf = "%f %d %X %c %s" /* Printf formats and float for debug. */
+#endif
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
 #pragma define CRT_STACK_SIZE=1024
 /* Reserve space for local variables on the stack, the remainder goes in the
    heap for malloc()/free() to distribute.  The Z88DK C runtime uses a default
    of 512 bytes of stack.  NABU Cloud CP/M has 200 bytes at the very end of
-   memory for its stack (just after the interrupt table). */
+   memory for its stack (just after the interrupt table).  We need a bit more
+   for temporary buffer space to load pictures, etc.  General game code doesn't
+   make any lasting allocations, to avoid fragmentation of memory. */
 
 /* Various standard libraries included here if we need them. */
 #if 0 /* These includes are included by NABU-LIB anyway. */
@@ -64,18 +68,18 @@
   #include <stdlib.h>
   #include <stdio.h> /* For printf and sprintf and stdout file handles. */
 #endif
-/* #include <math.h> /* For 32 bit floating point math routines. */
+/* #include <math.h> /* For 32 bit floating point math routines, for debug. */
 #include <string.h> /* For strlen. */
 #include <malloc.h> /* For malloc and free, and initialising a heap. */
 
 /* Use DJ Sure's Nabu code library, for VDP video hardware and the Nabu Network
    simulated data network.  Now that it compiles with the latest Z88DK compiler
-   (lots of warnings about "function declarator with no prototype"),
-   and it has a richer library for our purposes than the Z88DK NABU support.
-   Here are some defines to select options in the library, see NABU-LIB.h
-   for docs.  You may need to adjust the paths to fit where you downloaded it
-   from https://github.com/DJSures/NABU-LIB.git   There's also a fixed up fork
-   at https://github.com/agmsmith/NABU-LIB/tree/NthPongCustomisations */
+   (lots of warnings about "function declarator with no prototype" which we
+   fixed in our branch), and it has a richer library for our purposes than the
+   Z88DK NABU support.  Here are some defines to select options in the library,
+   see NABU-LIB.h for docs.  You may need to adjust the paths to fit where you
+   downloaded it from https://github.com/DJSures/NABU-LIB.git  There's a fixed
+   version at https://github.com/agmsmith/NABU-LIB/tree/NthPongCustomisations */
 #ifdef __NABU_BARE__ /* Defined for Z88DK builds with +nabu -subtype=bare */
   #define BIN_TYPE BIN_HOMEBREW /* Compile for stand alone no OS mode. */
 #else
@@ -174,9 +178,9 @@ static void ProcessKeyboard(void)
     else
     {
 #if DEBUG_KEYBOARD
-  #if BIN_TYPE == BIN_CPM
+  #ifndef __NABU_BARE__
       printf ("Got letter %d %c.\n", (int) letter, letter);
-  #endif /* BIN_TYPE == BIN_CPM */
+  #endif
 #endif
       if (letter == 'q')
       {
@@ -278,7 +282,7 @@ void main(void)
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
   sizeof(s_OriginalLocationZeroMemory)) != 0)
   {
-    HitAnyKey("Corrupted zero page Memory before anything done!\n");
+    printf("Corrupted zero page Memory before anything done!\n");
     return;
   }
 #endif /* ifndef __NABU_BARE__ */

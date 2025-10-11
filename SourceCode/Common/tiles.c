@@ -659,7 +659,7 @@ void CopyTilesToScreen(void)
 */
 void DumpTilesToTerminal(void)
 {
-#if !defined(NABU_H) || (BIN_TYPE == BIN_CPM)
+#ifndef __NABU_BARE__
   uint8_t index;
   printf("Tile data dump...\n");
 
@@ -691,6 +691,6 @@ void DumpTilesToTerminal(void)
     g_screen_top_X_tiles, g_screen_top_Y_tiles);
   printf("Screen location in play area (%d,%d).\n",
     g_play_area_col_for_screen, g_play_area_row_for_screen);
-#endif /* BIN_TYPE == BIN_CPM */
+#endif /* ifndef __NABU_BARE__ */
 }
 

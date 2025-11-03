@@ -17,7 +17,7 @@
  * Note that the Z88DK +nabu target defaults to including their VDP library and
  * other things, so we made a "bare" subtype that has almost nothing.
  *
- * zcc +nabu -subtype=bare -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "NthPongWars.bare" ; cp -v *.nabu ~/Documents/NABU\ Internet\ Adapter/Local\ Source/ ; time sync
+ * zcc +nabu -subtype=bare -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "NthPongWars" ; cp -v NTHPONGWARS.NABU ~/Documents/NABU\ Internet\ Adapter/Local\ Source/NthPongWars.nabu ; time sync
  *
  * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips on
  * writing code that the compiler likes and optimizer settings.

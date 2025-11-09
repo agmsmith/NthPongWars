@@ -16,12 +16,12 @@ static bool CopyFileToVRAM(uint8_t fileId, uint16_t amountToRead)
     else
       count = amountRemaining;
 
-    count = rn_fileHandleReadSeq(fileId, TempBuffer, 0, count);
+    count = rn_fileHandleReadSeq(fileId, g_TempBuffer, 0, count);
     if (count == 0)
       break; /* End of file or error. */
     amountRemaining -= count;
 
-    pBuffer = TempBuffer;
+    pBuffer = g_TempBuffer;
     for (; count != 0; count--)
       IO_VDPDATA = *pBuffer++;
   }
@@ -37,7 +37,7 @@ static bool CopyFileToVRAM(uint8_t fileId, uint16_t amountToRead)
  * be set to the identity function (position X maps to name X for each of 3
  * bands of 256 tiles) and no sprites are used.
  *
- * Uses char TempBuffer[TEMPBUFFER_LEN] defined by the main program.
+ * Uses char g_TempBuffer[TEMPBUFFER_LEN] defined by the main program.
  * Returns true if successful, false if it couldn't open the file or there
  * isn't enough data in the file.
  */

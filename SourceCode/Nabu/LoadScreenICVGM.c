@@ -26,7 +26,7 @@ uint16_t AmountToRead, uint8_t *DecodedBuffer)
   bool dollar_found;
   bool at_start_of_line;
 
-  memset(TempBuffer, 0, TEMPBUFFER_LEN); /* Make sure no garbage after text. */
+  memset(g_TempBuffer, 0, TEMPBUFFER_LEN); /* Make sure no garbage after text. */
   keyword_length = strlen(KeyWord);
   pDecoded = DecodedBuffer;
 
@@ -41,18 +41,18 @@ uint16_t AmountToRead, uint8_t *DecodedBuffer)
     else /* Near the end, just read one line at a time. */
       count = ICVGM_CHARS_PER_LINE;
 
-    count = rn_fileHandleReadSeq(fileId, TempBuffer, 0, count);
+    count = rn_fileHandleReadSeq(fileId, g_TempBuffer, 0, count);
     if (count == 0)
       break; /* End of file or error. */
 
     if (at_start_of_line)
     {
-      if (strncmp(KeyWord, TempBuffer, keyword_length) == 0)
+      if (strncmp(KeyWord, g_TempBuffer, keyword_length) == 0)
         keyword_found = true;
       at_start_of_line = false;
     }
 
-    pBuffer = TempBuffer;
+    pBuffer = g_TempBuffer;
     for (; count != 0; count--)
     {
       letter = *pBuffer++;
@@ -103,7 +103,7 @@ static void CopyVRAMToRAM(uint16_t AmountToCopy, uint8_t *RAMBuffer)
  * the font, the sprite pattern table, and a sprite colour table (not quite
  * sprite attributes, we ignore it).
  *
- * Uses char TempBuffer[TEMPBUFFER_LEN] defined by the main program.
+ * Uses char g_TempBuffer[TEMPBUFFER_LEN] defined by the main program.
  * Returns true if successful, false if it couldn't open the file or there
  * isn't enough data in the file or it doesn't have keywords.
  */

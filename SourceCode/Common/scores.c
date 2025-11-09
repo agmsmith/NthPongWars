@@ -163,8 +163,8 @@ void CopyScoresToScreen(void)
     char *pChar;
     char letter;
 
-    strcpy(TempBuffer, "0000"); /* 4 leading zeroes. */
-    pChar = fast_utoa(g_FrameCounter, TempBuffer + 4) - 4; /* Last four digits. */
+    strcpy(g_TempBuffer, "0000"); /* 4 leading zeroes. */
+    pChar = fast_utoa(g_FrameCounter, g_TempBuffer + 4) - 4; /* Last four digits. */
     vdp_setWriteAddress(_vdpPatternNameTableAddr + 28);
     for (; (letter = *pChar) != 0; pChar++)
       IO_VDPDATA = letter;

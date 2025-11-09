@@ -6,7 +6,8 @@
  *
  * Compile for NABU + RetroNet Cloud CP/M (generates a usable .COM file),
  * Optionally with --math32 for 32 bit floating point, uses 5K extra memory.
- * Use this command line to compile for CP/M, 20000 max allocs is good enough:
+ * Use this command line to compile for CP/M, 20000 max allocs (a compiler code
+ * optimization time limit) is good enough:
  *
  * zcc +cpm -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm --math32 -lndos main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "NTHPONG.COM" ; cp -v *.COM ~/Documents/NABU\ Internet\ Adapter/Store/D/0/ ; time sync
  *
@@ -15,10 +16,12 @@
  * memory you can replace), but no files or stdio.  Z88DK simulates the NABU
  * CAB file builder (CABUILD) to make the segment file with a 3 byte header.
  * Note that the Z88DK +nabu target defaults to including their VDP library and
- * other things, so we made a "bare" subtype that has almost nothing.
+ * other things, so we made a "bare" subtype that has almost nothing plus a
+ * relocating loader so we can use the RAM obscured by the ROM.  Get that
+ * hacked up Z88DK from https://github.com/agmsmith/z88dk/tree/nabu_bare
  *
  * zcc +nabu -subtype=bare -v --list --c-code-in-asm -z80-verb -gen-map-file -gen-symbol-file -create-app -compiler=sdcc -O2 --opt-code-speed=all --max-allocs-per-node20000 --fverbose-asm main.c z80_delay_ms.asm z80_delay_tstate.asm l_fast_utoa.asm CHIPNSFX.asm Art/NthPongWarsMusic.asm Art/NthPongWarsExtractedEffects.asm -o "NthPongWars" ; cp -v NTHPONGWARS.NABU ~/Documents/NABU\ Internet\ Adapter/Local\ Source/NthPongWars.nabu ; time sync
- *
+
  * See https://github.com/marinus-lab/z88dk/wiki/WritingOptimalCode for tips on
  * writing code that the compiler likes and optimizer settings.
  *
@@ -98,17 +101,17 @@
 #include "../../../NABU-LIB/NABULIB/patterns.h" /* Font as a global array. */
 #endif
 
-/* Temporary buffer used for sprinting into and for intermediate storage during
-   screen loading, etc.  Avoids using stack space. */
+/* Temporary global buffer used for sprinting into and for intermediate storage
+   during screen loading, etc.  Avoids using stack space. */
 #define TEMPBUFFER_LEN 512
-char TempBuffer[TEMPBUFFER_LEN];
+char g_TempBuffer[TEMPBUFFER_LEN];
 
 /* Our own game include files, some are source code!  Comes after NABU-LIB.h
-   has been included and TempBuffer defined. */
+   has been included and g_TempBuffer defined. */
 
 #include "../Common/fixed_point.c" /* Our own fixed point math. */
-#include "LoadScreenICVGM.c"
-#include "LoadScreenPC2.c"
+#include "LoadScreenICVGM.c" /* Load font+screen+sprites saved by ICVGM. */
+#include "LoadScreenPC2.c" /* Loads full screen pictures in PC2 format. */
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 #include "l_fast_utoa.h" /* Our hacked up version of utoa() to fix bugs. */
 #include "CHIPNSFX.h" /* Music player glue functions. */
@@ -124,10 +127,21 @@ char TempBuffer[TEMPBUFFER_LEN];
 
 static bool s_KeepRunning;
 
+/*******************************************************************************
+ * Utility function to append a readable ASCII version of the given 16 bit
+ * unsigned integer, to the g_TempBuffer.  Assume it doesn't overflow.  Returns
+ * a pointer to the end of the string in g_TempBuffer.  Doesn't trash memory
+ * like printf("%u") does in Z88DK due to mangling the IX frame pointer.
+ */
+static char * AppendDecimalUInt16(uint16_t Number)
+{
+  return fast_utoa(Number, g_TempBuffer + strlen(g_TempBuffer));
+}
+
 
 /*******************************************************************************
- * The usual press any key to continue prompt, in VDP graphics mode.  NULL for
- * a default message string.
+ * The usual press any key to continue prompt, in VDP graphics mode.  NULL
+ * message pointer to show a default message string.
  */
 static char HitAnyKey(const char *MessageText)
 {
@@ -197,15 +211,16 @@ static void ProcessKeyboard(void)
  */
 static uint16_t s_StackFramePointer = 0;
 static uint16_t s_StackPointer = 0;
+static const char *k_CorruptedLowMemText =
+  "Corrupted location zero (NULL) Memory!";
 
 void main(void)
 {
   /* Save some stack space, variables that persist in main() can be static. */
   static char s_OriginalLocationZeroMemory[16];
-  static char s_OriginalStackMemory[16];
 
-  /* A few local variables to force stack frame creation, sets IX register. */
-  unsigned int sTotalMem, sLargestMem;
+  /* Just a couple of local variables, to trigger stack frame setup in IX. */
+  uint16_t totalMem, largestMem;
 
   /* Initialise some fixed point number constants. */
   ZERO_FX(gfx_Constant_Zero);
@@ -223,7 +238,7 @@ void main(void)
   /* Grab the stack pointer and stack frame pointer to see if they're sane.
      If the frame pointer is $FF00 or above (the CP/M really small stack),
      while stack is $Cxxx then things may go badly.  Frame should be nearby
-     stack. */
+     stack.  Nabu Bare mode has stack at $FF00, interrupt table above that.*/
   __asm
   push af;
   push hl;
@@ -234,58 +249,6 @@ void main(void)
   pop hl;
   pop af;
   __endasm;
-
-  /* Detect memory corruption in our stack. */
-  memcpy(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
-    sizeof(s_OriginalStackMemory));
-
-  /* Note that printf goes through CP/M and scrambles the video memory (it's
-     arranged differently), so don't use printf during graphics mode.  However
-     the NABU CP/M has a screen text buffer and that will be restored to the
-     screen when the program exits, so you can see printf output after exit.
-     Or if you've redirected output to a remote device (telnet server), you can
-     see it there and it doesn't mess up the screen. */
-#ifndef __NABU_BARE__
-  printf("Welcome to the Nth Pong Wars NABU game.\n"
-    "Copyright 2025 by Alexander G. M. Smith,\n"
-    "contact me at agmsmith@ncf.ca.  Started\n"
-    "February 2024, see the blog at\n"
-    "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html\n"
-    "Released under the GNU General Public\n"
-    "License version 3.\n");
-
-  printf("Compiled on " __DATE__ " at " __TIME__ ".\n");
-  mallinfo(&sTotalMem, &sLargestMem);
-  printf("Heap has %d bytes free, largest %d.\n", sTotalMem, sLargestMem);
-  printf("Using Z88DK with the SDCC compiler, and D. J. Sures NABU-LIB.\n");
-
-  /* Weird bug in Z88DK where printf("$%X $$$$$%X", a, b); loses any
-     number of dollar signs before the second %X.  Turns out printing 16 bit
-     integers was corrupting the IX register, our frame pointer! */
-#if 0
-  printf("Stack pointer is $%X, frame $%X.\n",
-    (int) s_StackPointer, (int) s_StackFramePointer);
-#else
-  printf("Stack pointer is $%X, frame %c%X.\n",
-    (int) s_StackPointer, '$', (int) s_StackFramePointer);
-#endif
-/* printf ("Hit any key... ");
-  printf ("  Got %c.\n", getchar()); /* CP/M compatible keyboard input. */
-
-  if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
-  sizeof(s_OriginalStackMemory)) != 0)
-  {
-    printf("Corrupted Stack Memory before anything done!\n");
-    return;
-  }
-
-  if (memcmp(s_OriginalLocationZeroMemory, NULL,
-  sizeof(s_OriginalLocationZeroMemory)) != 0)
-  {
-    printf("Corrupted zero page Memory before anything done!\n");
-    return;
-  }
-#endif /* ifndef __NABU_BARE__ */
 
   initNABULib(); /* No longer can use CP/M text input or output. */
 
@@ -302,7 +265,15 @@ void main(void)
     _vdpSpriteGeneratorTableAddr = 0x3800; 2048 or 0x800 bytes long, end 0x4000.
   */
 
-#if 0
+  /* Note that printf goes through CP/M and scrambles the video memory (it's
+     arranged differently), so don't use printf during graphics mode.  However
+     the NABU CP/M has a screen text buffer and that will be restored to the
+     screen when the program exits, so you can see printf output after exit.
+     Or if you've redirected output to a remote device (telnet server), you can
+     see it there and it doesn't mess up the screen.  But since Nabu Bare mode
+     doesn't have printf, best to not use it. */
+
+#if 1
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     HitAnyKey("Failed to load NTHPONG\\COTTAGE.PC2.\n");
@@ -311,11 +282,48 @@ void main(void)
   z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
 #endif
 
-  /* Load our game screen, with a font and sprites defined. */
+  /* Load our game screen, with a font and sprites too. */
 
   if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
   {
     HitAnyKey("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
+    return;
+  }
+
+  /* Print out some status info about the game.  Leave top row unmodified since
+     it has score graphics from the default screen load. */
+
+  z80_delay_ms(100);
+  vdp_clearRows(1, 23);
+  vdp_setCursor2(0, 1);
+  vdp_printJustified("Welcome to the Nth Pong Wars NABU game.  "
+    "Copyright 2025 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
+    "Started in February 2024, see the blog at "
+    "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
+    "Released under the GNU General Public License version 3",
+    0, 32);
+  vdp_newLine();
+
+  strcpy(g_TempBuffer, "Compiled on " __DATE__ " at " __TIME__ ".  ");
+  mallinfo(&totalMem, &largestMem);
+  strcat (g_TempBuffer, "Heap has ");
+  AppendDecimalUInt16(totalMem);
+  strcat (g_TempBuffer, " bytes free, largest ");
+  AppendDecimalUInt16(largestMem);
+  strcat (g_TempBuffer, ".  Stack pointer is ");
+  AppendDecimalUInt16(s_StackPointer);
+  strcat(g_TempBuffer, ", frame ");
+  AppendDecimalUInt16(s_StackFramePointer);
+  strcat(g_TempBuffer, ".  Using Z88DK with the SDCC compiler, and "
+    "D. J. Sures NABU-LIB.");
+  vdp_printJustified(g_TempBuffer, 0, 32); vdp_newLine();
+
+  HitAnyKey(NULL);
+
+  if (memcmp(s_OriginalLocationZeroMemory, NULL,
+  sizeof(s_OriginalLocationZeroMemory)) != 0)
+  {
+    HitAnyKey(k_CorruptedLowMemText);
     return;
   }
 
@@ -455,48 +463,34 @@ void main(void)
     sizeof(s_OriginalLocationZeroMemory)) != 0)
     {
       vdp_setCursor2(0, 0);
-      vdp_print("Corrupted NULL Memory!");
-    }
-    if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
-    sizeof(s_OriginalStackMemory)) != 0)
-    {
-      vdp_setCursor2(0, 1);
-      vdp_print("Corrupted Stack Memory!");
+      vdp_print(k_CorruptedLowMemText);
     }
 #endif
   }
   vdp_disableVDPReadyInt();
   CSFX_stop();
+  vdp_setCursor2(0, 0);
 
   DumpTilesToTerminal();
-  strcpy(TempBuffer, "Frame count: ");
-  fast_utoa(g_FrameCounter, TempBuffer + strlen(TempBuffer));
-  HitAnyKey(TempBuffer);
+  strcpy(g_TempBuffer, "Frame count: ");
+  AppendDecimalUInt16(g_FrameCounter);
+  HitAnyKey(g_TempBuffer);
 
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
   sizeof(s_OriginalLocationZeroMemory)) != 0)
   {
-    HitAnyKey("Corrupted NULL Memory!");
+    HitAnyKey(k_CorruptedLowMemText);
   }
 
-  if (memcmp(s_OriginalStackMemory, (char *) (s_StackFramePointer + 0),
-  sizeof(s_OriginalStackMemory)) != 0)
-  {
-    HitAnyKey("Corrupted Stack Memory!");
-    /* Restart CP/M even when the stack is corrupted. */
-    __asm
-    rst 0;
-    __endasm;
-  }
-
-#if 1
+#if 0
   /* If plain return isn't working.  Happens if main doesn't return void, or if
-     you print too much CP/M output to the screen when in graphics mode. */
+     you print too much CP/M output to the screen when in graphics mode.  To do
+     a real reset, would need to switch ROM in before the jp 0 instruction. */
   HitAnyKey("Done.  Brute force exit to CP/M.\n");
   __asm
-  rst 0;
+  jp 0;
   __endasm;
 #endif
-  HitAnyKey("Done.  Returning to CP/M.\n");
+  HitAnyKey("Done.  Returning to operating system.\n");
 }
 

@@ -2318,7 +2318,50 @@ ecosystem things like the at-exit routines.
 There are two, "embedded" which makes a system that assumes separate ROM and
 RAM areas, and plain "z80" which doesn't include extra libraries (except a
 console IO one) and just sets up the C ecosystem.  Looks like I should make a
-new target and add the relocater to it.
+new target and add the relocator to it.
+
+<HR>
+<H2><A NAME="2025.11.09"></A>2025.11.09</H2>
+
+<H3>New Nabu Bare Target for Z88DK - More memory!</H3>
+
+<P>After a cottage closing delay, other chores and a car crash (was totalled,
+fortunately only scraped my knee), I put in a new Nabu target subtype into the
+Z88DK development system.  Most of the time was figuring out how the system
+works, with annoying problems like two different ways of defining a symbol
+for compiles and assembles.  Anyway, I was able to add a "bare" subtype which
+doesn't include any IO functions (no stdio, no printing, no disk).  I also
+added a bootstrap relocator to the C runtime, which figures out where the
+program got loaded into memory by the NABU ROM and moves it to the correct
+origin.  There were a few stumbles finding out the size of the program, and
+using trampoline code (code written by the bootstrap to a known fixed high
+memory location) to do the move.
+
+<P>Have a look at <A HREF="https://github.com/agmsmith/z88dk/blob/nabu_bare/lib/target/nabu/classic/nabu_crt0.asm">https://github.com/agmsmith/z88dk/blob/nabu_bare/lib/target/nabu/classic/nabu_crt0.asm</A> to see the code.  The magic trick to find out where in memory you got loaded is:
+<PRE>
+    ; Get the current program counter, where in memory are we?
+    ld  hl, NABU_BARE_STUB_DESTINATION
+    ld  (hl), $e1 ; pop hl opcode.
+    inc hl
+    ld  (hl), $e9 ; jp (hl) opcode.
+    call NABU_BARE_STUB_DESTINATION ; Returns with program counter in HL.
+nabu_bare_pc: ; HL points to nabu_bare_pc address as loaded in memory.
+</PRE>
+The rest is merely a matter of a bit of math to set up an ldir opcode to move
+memory to the right place.
+
+<P>After all that, and changing printf's to vdp_print equivalents, I now have
+a lot more free memory!  It went from 6648 free bytes to 23865 bytes.  17217
+extra!  That's a quarter of the total memory space.  Maybe there is even enough
+to add networking to the game.
+
+<P ALIGN=CENTER><A HREF="20251109CPMMemoryUsage.png"><IMG
+SRC="20251109CPMMemoryUsage.png" WIDTH="512" HEIGHT="384"
+ALT="[Status Screen from CP/M Boot]"></A>
+
+<P ALIGN=CENTER><A HREF="20251109MoreMemoryWithoutCPM.png"><IMG
+SRC="20251109MoreMemoryWithoutCPM.png" WIDTH="512" HEIGHT="384"
+ALT="[Status Screen from a Bare Boot]"></A>
 
 <P>- Alex
 

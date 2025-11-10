@@ -2325,7 +2325,7 @@ new target and add the relocator to it.
 
 <H3>New Nabu Bare Target for Z88DK - More memory!</H3>
 
-<P>After a cottage closing delay, other chores and a car crash (was totalled,
+<P>After a cottage closing delay, other chores and a car crash (car totalled,
 fortunately only scraped my knee), I put in a new Nabu target subtype into the
 Z88DK development system.  Most of the time was figuring out how the system
 works, with annoying problems like two different ways of defining a symbol
@@ -2337,7 +2337,7 @@ origin.  There were a few stumbles finding out the size of the program, and
 using trampoline code (code written by the bootstrap to a known fixed high
 memory location) to do the move.
 
-<P>Have a look at <A HREF="https://github.com/agmsmith/z88dk/blob/nabu_bare/lib/target/nabu/classic/nabu_crt0.asm">https://github.com/agmsmith/z88dk/blob/nabu_bare/lib/target/nabu/classic/nabu_crt0.asm</A> to see the code.  The magic trick to find out where in memory you got loaded is:
+<P>Have a look at <A HREF="https://github.com/agmsmith/z88dk/blob/nabu_bare/lib/target/nabu/classic/nabu_crt0.asm">https://github.com/agmsmith/z88dk/blob/nabu_bare/lib/target/nabu/classic/nabu_crt0.asm</A> to see the code.  The magic trick to find out where in memory you got loaded is (NABU_BARE_STUB_DESTINATION is $FFE0):
 <PRE>
     ; Get the current program counter, where in memory are we?
     ld  hl, NABU_BARE_STUB_DESTINATION
@@ -2351,9 +2351,10 @@ The rest is merely a matter of a bit of math to set up an ldir opcode to move
 memory to the right place.
 
 <P>After all that, and changing printf's to vdp_print equivalents, I now have
-a lot more free memory!  It went from 6648 free bytes to 23865 bytes.  17217
-extra!  That's a quarter of the total memory space.  Maybe there is even enough
-to add networking to the game.
+a lot more free memory!  It went from 6648 free bytes under CP/M to 23865 bytes
+with no operating system and the memory relocation technique to use ROM space.
+17217 extra!  That's a quarter of the total memory space.  Maybe there is even
+enough to add networking to the game.
 
 <P ALIGN=CENTER><A HREF="20251109CPMMemoryUsage.png"><IMG
 SRC="20251109CPMMemoryUsage.png" WIDTH="512" HEIGHT="384"

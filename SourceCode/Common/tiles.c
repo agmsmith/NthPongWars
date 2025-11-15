@@ -128,30 +128,35 @@ tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];
 uint8_t g_cache_dirty_screen_tiles_index = 0;
 
 
-/******************************************************************************/
-
-/* Debug function to print the state of a tile.
+/*******************************************************************************
+ * Debug function to print the state of a tile.
  */
-static void DumpOneTileToTerminal(tile_pointer pTile)
+static void DumpOneTileToDebug(tile_pointer pTile)
 {
-#if !defined(NABU_H) || (BIN_TYPE == BIN_CPM)
-  printf("(%d,%d) Owner=%d (%s) Anim=%d Tick=%d Disp=%d DirtS=%d, DirtR=%d, VDP=%d\n",
-    (int) pTile->pixel_center_x,
-    (int) pTile->pixel_center_y,
-    (int) pTile->owner,
-    g_TileOwnerNames[pTile->owner],
-    (int) pTile->animationIndex,
-    (int) pTile->animDelayCount,
-    (int) pTile->displayedChar,
-    (int) pTile->dirty_screen,
-    (int) pTile->dirty_remote,
+  strcpy(g_TempBuffer, "(");
+  AppendDecimalUInt16((uint16_t) pTile->pixel_center_x);
+  strcat(g_TempBuffer, ",");
+  AppendDecimalUInt16((uint16_t) pTile->pixel_center_y);
+  strcat(g_TempBuffer, ") Owner=");
+  AppendDecimalUInt16((uint16_t) pTile->owner);
+  strcat(g_TempBuffer, " (");
+  strcat(g_TempBuffer, g_TileOwnerNames[pTile->owner]);
+  strcat(g_TempBuffer, ") Anim=");
+  AppendDecimalUInt16((uint16_t) pTile->animationIndex);
+  strcat(g_TempBuffer, " Tick=");
+  AppendDecimalUInt16((uint16_t) pTile->animDelayCount);
+  strcat(g_TempBuffer, " Disp=");
+  AppendDecimalUInt16((uint16_t) pTile->displayedChar);
+  strcat(g_TempBuffer, " DirtS=");
+  AppendDecimalUInt16((uint16_t) pTile->dirty_screen);
+  strcat(g_TempBuffer, ", DirtR=");
+  AppendDecimalUInt16((uint16_t) pTile->dirty_remote);
 #ifdef NABU_H
-    (int) pTile->vdp_address
-#else
-    0
+  strcat(g_TempBuffer, ", VDP=");
+  AppendDecimalUInt16((uint16_t) pTile->vdp_address);
 #endif /* NABU_H */
-  );
-#endif /* BIN_TYPE == BIN_CPM */
+  strcat(g_TempBuffer, ".\n");
+  DebugPrintString(g_TempBuffer);
 }
 
 
@@ -659,38 +664,62 @@ void CopyTilesToScreen(void)
 */
 void DumpTilesToTerminal(void)
 {
-#ifndef __NABU_BARE__
   uint8_t index;
-  printf("Tile data dump...\n");
+  DebugPrintString("Tile data dump...\n");
 
 #if 0
   /* Dump all tiles in the tile array. */
   tile_pointer pTile;
   for (pTile = g_tile_array; pTile != g_play_area_end_tile; pTile++)
-    DumpOneTileToTerminal(pTile);
+    DumpOneTileToDebug(pTile);
 #endif
 
-  printf("Cached animated tiles, %d:\n", (int) g_cache_animated_tiles_index);
+  strcpy(g_TempBuffer, "Cached animated tiles, ");
+  AppendDecimalUInt16((uint16_t) g_cache_animated_tiles_index);
+  strcat(g_TempBuffer, ":\n");
+  DebugPrintString(g_TempBuffer);
+
   if (g_cache_animated_tiles_index <= MAX_ANIMATED_CACHE)
   {
     for (index = 0; index < g_cache_animated_tiles_index; index++)
-      DumpOneTileToTerminal(g_cache_animated_tiles[index]);
+      DumpOneTileToDebug(g_cache_animated_tiles[index]);
   }
 
-  printf("Cached dirty tiles, %d:\n", (int) g_cache_dirty_screen_tiles_index);
+  strcpy(g_TempBuffer, "Cached dirty tiles, ");
+  AppendDecimalUInt16((uint16_t) g_cache_dirty_screen_tiles_index);
+  strcat(g_TempBuffer, ":\n");
+  DebugPrintString(g_TempBuffer);
   if (g_cache_dirty_screen_tiles_index <= MAX_DIRTY_SCREEN_CACHE)
   {
     for (index = 0; index < g_cache_dirty_screen_tiles_index; index++)
-      DumpOneTileToTerminal(g_cache_dirty_screen_tiles[index]);
+      DumpOneTileToDebug(g_cache_dirty_screen_tiles[index]);
   }
 
-  printf("Play area %dx%d tiles (%d).\n",
-    g_play_area_width_tiles, g_play_area_height_tiles, g_play_area_num_tiles);
-  printf("Screen area %dx%d, top at (%d,%d).\n",
-    g_screen_width_tiles, g_screen_height_tiles,
-    g_screen_top_X_tiles, g_screen_top_Y_tiles);
-  printf("Screen location in play area (%d,%d).\n",
-    g_play_area_col_for_screen, g_play_area_row_for_screen);
-#endif /* ifndef __NABU_BARE__ */
+  strcpy(g_TempBuffer, "Play area ");
+  AppendDecimalUInt16((uint16_t) g_play_area_width_tiles);
+  strcat(g_TempBuffer, "x");
+  AppendDecimalUInt16((uint16_t) g_play_area_height_tiles);
+  strcat(g_TempBuffer, " tiles (");
+  AppendDecimalUInt16((uint16_t) g_play_area_num_tiles);
+  strcat(g_TempBuffer, ").\n");
+  DebugPrintString(g_TempBuffer);
+
+  strcpy(g_TempBuffer, "Screen area ");
+  AppendDecimalUInt16((uint16_t) g_screen_width_tiles);
+  strcat(g_TempBuffer, "x");
+  AppendDecimalUInt16((uint16_t) g_screen_height_tiles);
+  strcat(g_TempBuffer, ", top at (");
+  AppendDecimalUInt16((uint16_t) g_screen_top_X_tiles);
+  strcat(g_TempBuffer, ",");
+  AppendDecimalUInt16((uint16_t) g_screen_top_Y_tiles);
+  strcat(g_TempBuffer, ").\n");
+  DebugPrintString(g_TempBuffer);
+
+  strcpy(g_TempBuffer, "Screen location in play area (");
+  AppendDecimalUInt16((uint16_t) g_play_area_col_for_screen);
+  strcat(g_TempBuffer, ",");
+  AppendDecimalUInt16((uint16_t) g_play_area_row_for_screen);
+  strcat(g_TempBuffer, ").\n");
+  DebugPrintString(g_TempBuffer);
 }
 

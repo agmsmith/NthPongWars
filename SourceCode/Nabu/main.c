@@ -94,7 +94,7 @@
 /* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
 /* #define DISABLE_CURSOR /* Don't flash on VDP during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
-#include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h"
+#include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h" /* For TCP Server. */
 
 #if 0 /* We have our own VDP font now, don't need array using up memory. */
 #define FONT_LM80C
@@ -117,26 +117,27 @@ char g_TempBuffer[TEMPBUFFER_LEN];
 #include "CHIPNSFX.h" /* Music player glue functions. */
 #include "Art/NthPong1.h" /* Graphics definitions to go with loaded data. */
 #include "Art/NthPongWarsMusic.h" /* List of available Music loaded. */
+#include "../Common/debug_print.c"
 #include "../Common/tiles.c"
 #include "../Common/players.c"
 #include "../Common/simulate.c"
 #include "../Common/scores.c"
 #include "../Common/sounds.c"
 
-/* Our globals and semi-global statics. */
+/* Variables in main() that also need to be accessed from assembler have to be
+   globalish.  Make them static but global scope. */
 
+static uint16_t s_StackFramePointer = 0;
+static uint16_t s_StackPointer = 0;
+static const char *k_CorruptedLowMemText =
+  "Corrupted location zero (NULL) Memory!";
+static const char *k_WelcomeText =
+  "Welcome to the Nth Pong Wars NABU game.  "
+  "Copyright 2025 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
+  "Started in February 2024, see the blog at "
+  "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
+  "Released under the GNU General Public License version 3\n";
 static bool s_KeepRunning;
-
-/*******************************************************************************
- * Utility function to append a readable ASCII version of the given 16 bit
- * unsigned integer, to the g_TempBuffer.  Assume it doesn't overflow.  Returns
- * a pointer to the end of the string in g_TempBuffer.  Doesn't trash memory
- * like printf("%u") does in Z88DK due to mangling the IX frame pointer.
- */
-static char * AppendDecimalUInt16(uint16_t Number)
-{
-  return fast_utoa(Number, g_TempBuffer + strlen(g_TempBuffer));
-}
 
 
 /*******************************************************************************
@@ -206,21 +207,34 @@ static void ProcessKeyboard(void)
 
 
 /*******************************************************************************
- * Main program.  Variables in main() that also need to be accessed from
- * assembler have to be globalish.  Make them static but global scope.
+ * Initialise an about this program message in the temp buffer.
  */
-static uint16_t s_StackFramePointer = 0;
-static uint16_t s_StackPointer = 0;
-static const char *k_CorruptedLowMemText =
-  "Corrupted location zero (NULL) Memory!";
+static void SetUpAboutThisProgramText(void)
+{
+  uint16_t totalMem, largestMem;
 
+  strcpy(g_TempBuffer, "Compiled on " __DATE__ " at " __TIME__ ".  ");
+  mallinfo(&totalMem, &largestMem);
+  strcat (g_TempBuffer, "Heap has ");
+  AppendDecimalUInt16(totalMem);
+  strcat (g_TempBuffer, " bytes free, largest ");
+  AppendDecimalUInt16(largestMem);
+  strcat (g_TempBuffer, ".  Stack pointer is ");
+  AppendDecimalUInt16(s_StackPointer);
+  strcat(g_TempBuffer, ", frame ");
+  AppendDecimalUInt16(s_StackFramePointer);
+  strcat(g_TempBuffer, ".  Using Z88DK with the SDCC compiler, and "
+    "D. J. Sures NABU-LIB.\n");
+}
+
+
+/*******************************************************************************
+ * Main program and main game loop.
+ */
 void main(void)
 {
   /* Save some stack space, variables that persist in main() can be static. */
   static char s_OriginalLocationZeroMemory[16];
-
-  /* Just a couple of local variables, to trigger stack frame setup in IX. */
-  uint16_t totalMem, largestMem;
 
   /* Initialise some fixed point number constants. */
   ZERO_FX(gfx_Constant_Zero);
@@ -250,6 +264,10 @@ void main(void)
   pop af;
   __endasm;
 
+  DebugPrintString(k_WelcomeText); /* So CP/M users can see the welcome text. */
+  SetUpAboutThisProgramText();
+  DebugPrintString(g_TempBuffer);
+
   initNABULib(); /* No longer can use CP/M text input or output. */
 
   vdp_init(VDP_MODE_G2,
@@ -276,7 +294,7 @@ void main(void)
 #if 1
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
-    HitAnyKey("Failed to load NTHPONG\\COTTAGE.PC2.\n");
+    DebugPrintString("Failed to load NTHPONG\\COTTAGE.PC2.\n");
     return;
   }
   z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
@@ -286,7 +304,7 @@ void main(void)
 
   if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
   {
-    HitAnyKey("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
+    DebugPrintString("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
     return;
   }
 
@@ -296,28 +314,9 @@ void main(void)
   z80_delay_ms(100);
   vdp_clearRows(1, 23);
   vdp_setCursor2(0, 1);
-  vdp_printJustified("Welcome to the Nth Pong Wars NABU game.  "
-    "Copyright 2025 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
-    "Started in February 2024, see the blog at "
-    "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
-    "Released under the GNU General Public License version 3",
-    0, 32);
-  vdp_newLine();
-
-  strcpy(g_TempBuffer, "Compiled on " __DATE__ " at " __TIME__ ".  ");
-  mallinfo(&totalMem, &largestMem);
-  strcat (g_TempBuffer, "Heap has ");
-  AppendDecimalUInt16(totalMem);
-  strcat (g_TempBuffer, " bytes free, largest ");
-  AppendDecimalUInt16(largestMem);
-  strcat (g_TempBuffer, ".  Stack pointer is ");
-  AppendDecimalUInt16(s_StackPointer);
-  strcat(g_TempBuffer, ", frame ");
-  AppendDecimalUInt16(s_StackFramePointer);
-  strcat(g_TempBuffer, ".  Using Z88DK with the SDCC compiler, and "
-    "D. J. Sures NABU-LIB.");
+  vdp_printJustified((char *) k_WelcomeText, 0, 32); vdp_newLine();
+  SetUpAboutThisProgramText();
   vdp_printJustified(g_TempBuffer, 0, 32); vdp_newLine();
-
   HitAnyKey(NULL);
 
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
@@ -474,7 +473,9 @@ void main(void)
   DumpTilesToTerminal();
   strcpy(g_TempBuffer, "Frame count: ");
   AppendDecimalUInt16(g_FrameCounter);
+  strcat(g_TempBuffer, "\n");
   HitAnyKey(g_TempBuffer);
+  DebugPrintString(g_TempBuffer);
 
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
   sizeof(s_OriginalLocationZeroMemory)) != 0)
@@ -491,6 +492,7 @@ void main(void)
   jp 0;
   __endasm;
 #endif
-  HitAnyKey("Done.  Returning to operating system.\n");
+  HitAnyKey("Done.");
+  DebugPrintString("Returning to operating system.\n");
 }
 

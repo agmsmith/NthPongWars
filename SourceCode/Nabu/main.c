@@ -296,10 +296,19 @@ void main(void)
   vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
   IO_VDPDATA = 0xD0;
 
-#if 1
+#if 0
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
     DebugPrintString("Failed to load NTHPONG\\COTTAGE.PC2.\n");
+    return;
+  }
+  z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
+#endif
+
+#if 1
+  if (!LoadScreenPC2("NTHPONG\\TITLESCREEN.PC2"))
+  {
+    DebugPrintString("Failed to load NTHPONG\\TITLESCREEN.PC2.\n");
     return;
   }
   z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */

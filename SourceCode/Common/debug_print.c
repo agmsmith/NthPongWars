@@ -38,10 +38,10 @@ void DebugPrintString(const char *MessageText)
       amountToWrite = 255;
     else
       amountToWrite = charCount;
-  
+
     rn_TCPServerWrite(0 /* dataOffset */, amountToWrite /* dataLen */,
       (char *) pChar);
-    
+
     pChar += amountToWrite;
     charCount -= amountToWrite;
   }

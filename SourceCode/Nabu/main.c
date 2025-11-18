@@ -136,7 +136,7 @@ static const char *k_WelcomeText =
   "Copyright 2025 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
   "Started in February 2024, see the blog at "
   "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
-  "Released under the GNU General Public License version 3\n";
+  "Released under the GNU General Public License version 3.\n";
 static bool s_KeepRunning;
 
 
@@ -291,6 +291,11 @@ void main(void)
      see it there and it doesn't mess up the screen.  But since Nabu Bare mode
      doesn't have printf, best to not use it. */
 
+  /* Turn off random sprites, often left over from the last run. */
+
+  vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
+  IO_VDPDATA = 0xD0;
+
 #if 1
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
@@ -314,9 +319,11 @@ void main(void)
   z80_delay_ms(100);
   vdp_clearRows(1, 23);
   vdp_setCursor2(0, 1);
-  vdp_printJustified((char *) k_WelcomeText, 0, 32); vdp_newLine();
+  vdp_printJustified((char *) k_WelcomeText, 0, 32);
+  vdp_newLine();
   SetUpAboutThisProgramText();
-  vdp_printJustified(g_TempBuffer, 0, 32); vdp_newLine();
+  vdp_printJustified(g_TempBuffer, 0, 32);
+  vdp_newLine();
   HitAnyKey(NULL);
 
   if (memcmp(s_OriginalLocationZeroMemory, NULL,

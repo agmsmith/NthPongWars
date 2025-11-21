@@ -311,7 +311,7 @@ void main(void)
     DebugPrintString("Failed to load NTHPONG\\TITLESCREEN.PC2.\n");
     return;
   }
-  z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
+  z80_delay_ms(500); /* No font loaded, just graphics, so no hit any key. */
 #endif
 
   /* Load our game screen, with a font and sprites too. */

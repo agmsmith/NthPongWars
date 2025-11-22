@@ -311,7 +311,8 @@ void main(void)
     DebugPrintString("Failed to load NTHPONG\\TITLESCREEN.PC2.\n");
     return;
   }
-  z80_delay_ms(500); /* No font loaded, just graphics, so no hit any key. */
+  vdp_setCursor2(30, 23);
+  HitAnyKey("");
 #endif
 
   /* Load our game screen, with a font and sprites too. */
@@ -321,6 +322,23 @@ void main(void)
     DebugPrintString("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
     return;
   }
+
+#if 0
+  /* Print some text on screen which we can screen grab and put into the fully
+     graphic title screen, and it will still look pixel perfect if we get it on
+     a character cell 8 pixel boundary. */
+
+  vdp_clearRows(0, 23);
+  vdp_setCursor2(0, 0);
+  /* 32 wide 12345678901234567890123456789012 */
+  vdp_print("Nth Pong Wars copyright (c) 2025");
+  vdp_newLine();
+  vdp_print("by Alexander G. M. Smith.");
+  vdp_newLine();
+  vdp_print("hit any key to continue...");
+  vdp_newLine();
+  HitAnyKey(NULL);
+#endif
 
   /* Print out some status info about the game.  Leave top row unmodified since
      it has score graphics from the default screen load. */

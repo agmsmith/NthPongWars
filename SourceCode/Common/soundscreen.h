@@ -1,5 +1,8 @@
 /******************************************************************************
- * Nth Pong Wars, sounds.h for doing portable sound effects and music.
+ * Nth Pong Wars, soundscreen.h for doing portable sounds, music and screens.
+ *
+ * They're kind of related, with the need to play music while loading a full
+ * screen image (which takes a few seconds on the NABU).
  *
  * AGMS20250410 - Start this header file.
  *
@@ -16,8 +19,8 @@
  * You should have received a copy of the GNU General Public License along with
  * this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _SOUNDS_H
-#define _SOUNDS_H 1
+#ifndef _SOUND_SCREEN_H
+#define _SOUND_SCREEN_H 1
 
 typedef enum sounds_enum { /* List of all sounds, in increasing priority. */
   SOUND_NULL = 0, /* The sound of silence? */
@@ -30,21 +33,37 @@ typedef enum sounds_enum { /* List of all sounds, in increasing priority. */
   };
 typedef uint8_t sound_type; /* Want it to be 8 bits, not 16. */
 
+/* We can open a data file to load music or screen data, using a platform
+   specific file handle.  It has a special value for errors. */
+#ifdef NABU_H
+typedef uint8_t FileHandleType;
+#define BAD_FILE_HANDLE ((FileHandleType) 0xFF)
+#else
+typedef int FileHandleType;
+#define BAD_FILE_HANDLE ((FileHandleType) -1)
+#endif NABU_H
+
+
 extern uint8_t g_harvest_sound_threshold;
 /* Keeps track of the amount of harvesting going on in the most recent harvest
    sound, and doesn't play other harvests this big or smaller.  Decremented
    once per frame until it hits zero, to make it adaptive. */
 
+
 extern void PlaySound(sound_type sound_id, player_pointer pPlayer);
 /* Play a sound effect.  Given a player so we can customise sounds per player.
    Plays with priority if the system can't play multiple sounds at once. */
 
+extern FileHandleType OpenDataFile(const char *FileNameBase);
+/* */
+
 extern bool PlayMusic(const char *FileName);
 /* Starts the given piece of music playing.  Assumes the sound library is
-   initialised and a game loop will update sound ticks.  Will look for that file
-   in several places, using an extension specific to the platform (so don't
-   specify a file name extension).  Returns true if successful.  If it returns
-   false, it starts playing some default built-in music. */
+   initialised and a game loop (or screen loader) will update sound ticks.
+   Will look for that file in several places, using an extension specific to
+   the platform (so don't specify a file name extension).  Returns true if
+   successful.  If it returns false, it starts playing some default built-in
+   music. */
 
-#endif /* _SOUNDS_H */
+#endif /* _SOUND_SCREEN_H */
 

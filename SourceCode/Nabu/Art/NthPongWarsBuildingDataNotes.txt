@@ -18,7 +18,7 @@ noise effects start playing.  So there are only 2 music channels: 3, 4.
 Effects Tracks, have a $F0 end opcode at the end of each sound so music will be
 heard after the sound effect:
 0 - Empty
-1 - Wall Bip (use channel 0 or 1) 
+1 - Wall Bip (use channel 0 or 1)
 2 - Tile Bip (use channel 1 or 0)
 3 - Harvest (use channel 2)  Instrument xxxxNxxxxxx player number 1-4 variation.
 4 - Ball on Ball (use channel 2)

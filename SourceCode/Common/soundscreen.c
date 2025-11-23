@@ -1,5 +1,5 @@
 /******************************************************************************
- * Nth Pong Wars, sounds.c for doing portable sound effects and music.
+ * Nth Pong Wars, soundscreen.h for doing portable sounds, music and screens.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -143,10 +143,11 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
 
 
 /* Starts the given piece of music playing.  Assumes the sound library is
-   initialised and a game loop will update sound ticks.  Will look for that file
-   in several places, using an extension specific to the platform (so don't
-   specify a file name extension).  Returns true if successful.  If it returns
-   false, it starts playing some default built-in music.
+   initialised and a game loop (or screen loader) will update sound ticks.
+   Will look for that file in several places, using an extension specific to
+   the platform (so don't specify a file name extension).  Returns true if
+   successful.  If it returns false, it starts playing some default built-in
+   music.
 */
 #ifdef NABU_H
 #define MAX_MUSIC_BUFFER_SIZE 1500 /* Bigest ChipsNSfx song we can play. */

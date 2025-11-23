@@ -15,8 +15,8 @@ Music should use the same white noises only in channel 5 rule,
 for its channels 3, 4, 5.  Since due to bugs, channel 3 doesn't work once
 noise effects start playing.  So there are only 2 music channels: 3, 4.
 
-Effects Tracks, has a silence at the end of each sound so music will be heard
-after the sound effect:
+Effects Tracks, have a $F0 end opcode at the end of each sound so music will be
+heard after the sound effect:
 0 - Empty
 1 - Wall Bip (use channel 0 or 1) 
 2 - Tile Bip (use channel 1 or 0)
@@ -27,8 +27,8 @@ after the sound effect:
 Compiling
 
 Generate the data file in assembler from the .chp music file by using:
-chipnsfx -v -l _NthMusic_ -L NthPongWarsMusic.chp NthPongWarsMusic.asm
-chipnsfx -v -l _NthEffects_ -L NthPongWarsEffects.chp NthPongWarsEffects.asm
+CHIPNSFX -v -l _NthMusic_ -L NthPongWarsMusic.chp NthPongWarsMusic.asm
+CHIPNSFX -v -l _NthEffects_ -L NthPongWarsEffects.chp NthPongWarsEffects.asm
 
 Though for effects, put just one track per channel when saving to get a pure
 effect track data block and copy the resulting assembler for that effect into
@@ -39,8 +39,8 @@ symbols for use from C, like this:
 PUBLIC _NthMusic_a_z, _NthMusic_a, _NthMusic_b, _NthMusic_c
 
 
-Optionally for loading music rather than having it built with the program, can
-convert assembler to binary data with:
-z80asm -v -l -m -b -o=NthPongWarsMusic.bin NthPongWarsMusic.asm
-z80asm -v -l -m -b -o=NthPongWarsEffects.bin NthPongWarsEffects.asm
+Optionally for loading music rather than having it built into the program, can
+convert assembler to relative binary data with a song header with:
+CHIPNSFX -v -L LOADSONG.CHP LOADSONG.ASM
+z80asm -v -l -m -b -o=LOADSONG.CHIPNSFX LOADSONG.ASM
 

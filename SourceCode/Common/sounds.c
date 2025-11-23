@@ -141,3 +141,59 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
 #endif /* NABU_H */
 }
 
+
+/* Starts the given piece of music playing.  Assumes the sound library is
+   initialised and a game loop will update sound ticks.  Will look for that file
+   in several places, using an extension specific to the platform (so don't
+   specify a file name extension).  Returns true if successful.  If it returns
+   false, it starts playing some default built-in music.
+*/
+#ifdef NABU_H
+#define MAX_MUSIC_BUFFER_SIZE 1500 /* Bigest ChipsNSfx song we can play. */
+uint8_t gLoadedMusic[MAX_MUSIC_BUFFER_SIZE];
+#endif /* NABU_H */
+
+bool PlayMusic(const char *FileName)
+{
+  bool returnCode = false;
+#ifdef NABU_H
+  uint16_t amountRead;
+  uint8_t fileId;
+  int32_t fileSize32;
+  uint16_t fileSize16;
+  uint8_t nameLen;
+  char fullPathNameBuffer[128];
+
+  strcpy(fullPathNameBuffer, "NTHPONG\\"); /* Has 8 characters */
+  strncat(fullPathNameBuffer, FileName, sizeof(fullPathNameBuffer) - 18);
+  strcat(fullPathNameBuffer, ".CHIPNSFX");
+  nameLen = strlen(fullPathNameBuffer);
+  fileSize32 = rn_fileSize(nameLen, fullPathNameBuffer);
+  if (fileSize32 <= 0 || fileSize32 > MAX_MUSIC_BUFFER_SIZE)
+    return false; /* Not found or empty or too big. */
+  fileId = rn_fileOpen(nameLen, fullPathNameBuffer, OPEN_FILE_FLAG_READONLY,
+    0xff /* Use a new file handle */);
+  if (fileId == 0xff)
+    return false; /* Wants uppercase, backslashes for directories! */
+
+  fileSize16 = fileSize32;
+  bzero(gLoadedMusic, MAX_MUSIC_BUFFER_SIZE); /* For easier debugging. */
+
+  amountRead = rn_fileHandleReadSeq(fileId, gLoadedMusic,
+    0 /* buffer offset */, fileSize16);
+  if (amountRead != fileSize16)
+    goto ErrorExit;
+
+  CSFX_start(gLoadedMusic, false /* IsEffects */); /* Background music. */
+  returnCode = true;
+
+ErrorExit:
+  rn_fileHandleClose(fileId);
+
+  if (!returnCode) /* Play some default music. */
+    CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Background music. */
+
+#endif /* NABU_H */
+  return returnCode;
+}
+

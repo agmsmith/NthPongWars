@@ -296,6 +296,9 @@ void main(void)
   vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
   IO_VDPDATA = 0xD0;
 
+  /* Start the frame interrupt, to count frames and do sound tick timing. */
+  vdp_enableVDPReadyInt();
+
 #if 0
   if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
   {
@@ -311,8 +314,15 @@ void main(void)
     DebugPrintString("Failed to load NTHPONG\\TITLESCREEN.PC2.\n");
     return;
   }
-  vdp_setCursor2(30, 23);
-  HitAnyKey("");
+  CSFX_stop(); /* Initialise the CHIPNSFX music player library. */
+  PlayMusic("LOADSONG");
+  while (!isKeyPressed())
+  {
+    vdp_waitVDPReadyInt(); 
+    vdp_waitVDPReadyInt(); 
+    CSFX_play(); /* Update music every 1/30 of a second. */
+  }
+  getChar(); /* Remove the key that was pressed. */
 #endif
 
   /* Load our game screen, with a font and sprites too. */
@@ -384,7 +394,7 @@ void main(void)
 
   InitialiseScores(); /* Do after tiles & players set up: calc initial score. */
 
-  CSFX_stop(); /* Initialise the CHIPNSFX music player library. */
+  CSFX_stop(); /* Initialise the CHIPNSFX music player library & stop music. */
   CSFX_start(NthEffects_a_z, true /* IsEffects */);
   CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Background music. */
 
@@ -395,7 +405,6 @@ void main(void)
      often dropping to 20 fps when there's lots of physics activity. */
 
   s_KeepRunning = true;
-  vdp_enableVDPReadyInt();
   while (true)
   {
     ProcessKeyboard();

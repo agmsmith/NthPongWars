@@ -39,5 +39,12 @@ extern void PlaySound(sound_type sound_id, player_pointer pPlayer);
 /* Play a sound effect.  Given a player so we can customise sounds per player.
    Plays with priority if the system can't play multiple sounds at once. */
 
+extern bool PlayMusic(const char *FileName);
+/* Starts the given piece of music playing.  Assumes the sound library is
+   initialised and a game loop will update sound ticks.  Will look for that file
+   in several places, using an extension specific to the platform (so don't
+   specify a file name extension).  Returns true if successful.  If it returns
+   false, it starts playing some default built-in music. */
+
 #endif /* _SOUNDS_H */
 

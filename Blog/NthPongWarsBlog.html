@@ -2364,6 +2364,47 @@ ALT="[Status Screen from CP/M Boot]"></A>
 SRC="20251109MoreMemoryWithoutCPM.png" WIDTH="512" HEIGHT="384"
 ALT="[Status Screen from a Bare Boot]"></A>
 
+
+<HR>
+<H2><A NAME="2025.11.24"></A>2025.11.24</H2>
+
+<H3>Load Screens and Music - Integrated and Improved</H3>
+
+<P>While trying to make a title screen, I rewrote the screen loading code to
+better integrate with music, so now it can:
+<UL>
+  <LI>Play music while loading!
+  <LI>Also I changed one of the file formats from ASCII (35KB/screen) to binary
+    (7KB/screen), 5 times faster, though at the expense of an extra step to
+    prepare the data.
+  <LI>Also, music and screens are now loadable from external files, either in
+    your local NABU Internet Adapter directories or from my web site if it
+    doesn't find a local copy.  That's thanks to D. J. Sure's NABU-LIB and
+    Internet Adapter server functionality.  It means I can just distribute the
+    .nabu file and you can run it without having to install the data files.
+    And you can have different music for each level.
+</UL>
+
+<P>Unfortunately most of the example files that come with the music player
+code are from copyrighted games, but I was able to find four songs from demos
+that I could use.  I'll have to add a credits screen to the game for them.
+Anyone want to try composing chip tunes?  The player comes with a music editor.
+
+<P ALIGN=CENTER><A HREF="20251124%20Music%20and%20Load%20Screens.mp4"><IMG
+SRC="20251124%20New%20Title%20Screen.png" WIDTH="280" HEIGHT="216"
+ALT="[Video of screens loading with music playing]"></A><BR>
+<A HREF="20251124%20Music%20and%20Load%20Screens.mp4">20251124 Music and Load
+Screens.mp4</A>
+
+<P>That's the next job.  Designing an ASCII <I>Level File Format</I> that
+specifies the screen, music, game variation, game tile layout (initial
+power-ups, walls, etc), AI code, win and lose conditions (capture all the N
+flag tiles, or N tiles in your colour, or highest score after N seconds, or
+just a button push (for static screens), etc) to end the level, and name of
+the next level to use when winning or losing.  Since it's text, you could make
+your own levels.  You could even totally ignore the gameplay and use that level
+scheme to just load screens and play music in a pick your own adventure book.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

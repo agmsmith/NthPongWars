@@ -21,7 +21,7 @@
 
 #include "players.h"
 #include "scores.h"
-#include "sounds.h"
+#include "soundscreen.h"
 
 #ifdef NABU_H
 #include "Art/NthPong1.h" /* Artwork data definitions for player sprites. */

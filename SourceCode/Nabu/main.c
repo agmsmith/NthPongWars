@@ -109,8 +109,6 @@ char g_TempBuffer[TEMPBUFFER_LEN];
    has been included and g_TempBuffer defined. */
 
 #include "../Common/fixed_point.c" /* Our own fixed point math. */
-#include "LoadScreenICVGM.c" /* Load font+screen+sprites saved by ICVGM. */
-#include "LoadScreenPC2.c" /* Loads full screen pictures in PC2 format. */
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 #include "l_fast_utoa.h" /* Our hacked up version of utoa() to fix bugs. */
 #include "CHIPNSFX.h" /* Music player glue functions. */
@@ -121,7 +119,7 @@ char g_TempBuffer[TEMPBUFFER_LEN];
 #include "../Common/players.c"
 #include "../Common/simulate.c"
 #include "../Common/scores.c"
-#include "../Common/sounds.c"
+#include "../Common/soundscreen.c"
 
 /* Variables in main() that also need to be accessed from assembler have to be
    globalish.  Make them static but global scope. */
@@ -141,12 +139,21 @@ static bool s_KeepRunning;
 
 /*******************************************************************************
  * The usual press any key to continue prompt, in VDP graphics mode.  NULL
- * message pointer to show a default message string.
+ * message pointer to show a default message string.  Keeps the music playing
+ * while waiting for a key to be pressed.
  */
 static char HitAnyKey(const char *MessageText)
 {
   vdp_newLine();
   vdp_print((char *) (MessageText ? MessageText : "Press any key to continue."));
+
+  while (!isKeyPressed())
+  {
+    vdp_waitVDPReadyInt();
+    vdp_waitVDPReadyInt();
+    CSFX_play(); /* Update music every 1/30 of a second. */
+  }
+
   return getChar();
 }
 
@@ -295,42 +302,37 @@ void main(void)
   vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
   IO_VDPDATA = 0xD0;
 
+  /* Make sure cursor is at top left, so it will wipe out a known spot on
+     screen for full screen graphics. */
+  vdp_setCursor2(0, 0);
+
+  /* Initialise the CHIPNSFX music player library, before frame interrupt. */
+  CSFX_stop();
+
   /* Start the frame interrupt, to count frames and do sound tick timing. */
   vdp_enableVDPReadyInt();
 
-#if 0
-  if (!LoadScreenPC2("NTHPONG\\COTTAGE.PC2"))
-  {
-    DebugPrintString("Failed to load NTHPONG\\COTTAGE.PC2.\n");
+#if 1
+  /* Start some loading screen music. */
+  PlayMusic("ONECOLN1");
+  if (!LoadScreenNFUL("COTTAGE"))
     return;
-  }
-  z80_delay_ms(100); /* No font loaded, just graphics, so no hit any key. */
+  HitAnyKey(""); /* No font available to print text, so print nothing. */
 #endif
 
 #if 1
-  if (!LoadScreenPC2("NTHPONG\\TITLESCREEN.PC2"))
-  {
-    DebugPrintString("Failed to load NTHPONG\\TITLESCREEN.PC2.\n");
+  /* More loading screen music. */
+  PlayMusic("SQUAROOT");
+  if (!LoadScreenNFUL("TITLESCREEN")) /* Error message on debug output. */
     return;
-  }
-  CSFX_stop(); /* Initialise the CHIPNSFX music player library. */
-  PlayMusic("LOADSONG");
-  while (!isKeyPressed())
-  {
-    vdp_waitVDPReadyInt(); 
-    vdp_waitVDPReadyInt(); 
-    CSFX_play(); /* Update music every 1/30 of a second. */
-  }
-  getChar(); /* Remove the key that was pressed. */
+  HitAnyKey(""); /* No font available to print text, so print nothing. */
 #endif
 
   /* Load our game screen, with a font and sprites too. */
 
-  if (!LoadScreenICVGM("NTHPONG\\NTHPONG1.ICV"))
-  {
-    DebugPrintString("Failed to load NTHPONG\\NTHPONG1.ICV.\n");
+  PlayMusic("LOADSONG");
+  if (!LoadScreenNSCR("NTHPONG1"))
     return;
-  }
 
 #if 0
   /* Print some text on screen which we can screen grab and put into the fully
@@ -352,11 +354,11 @@ void main(void)
   /* Print out some status info about the game.  Leave top row unmodified since
      it has score graphics from the default screen load. */
 
-  z80_delay_ms(100);
   vdp_clearRows(1, 23);
   vdp_setCursor2(0, 1);
   vdp_printJustified((char *) k_WelcomeText, 0, 32);
   vdp_newLine();
+  CSFX_play(); /* Avoid a pause in the music due to slow printing. */
   SetUpAboutThisProgramText();
   vdp_printJustified(g_TempBuffer, 0, 32);
   vdp_newLine();
@@ -393,9 +395,9 @@ void main(void)
 
   InitialiseScores(); /* Do after tiles & players set up: calc initial score. */
 
-  CSFX_stop(); /* Initialise the CHIPNSFX music player library & stop music. */
+  CSFX_stop(); /* Stop loading screen background music. */
   CSFX_start(NthEffects_a_z, true /* IsEffects */);
-  CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Background music. */
+  CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Game background music. */
 
   /* The main program loop.  Update things (which may take a while), then wait
      for vertical blanking to start, then copy data to the VDP quickly, then
@@ -499,7 +501,7 @@ void main(void)
   }
 #endif
 
-#if 0 /* Check for corrupted memory. */
+#if 0 /* Check for corrupted memory every frame. */
     if (memcmp(s_OriginalLocationZeroMemory, NULL,
     sizeof(s_OriginalLocationZeroMemory)) != 0)
     {
@@ -510,31 +512,26 @@ void main(void)
   }
   vdp_disableVDPReadyInt();
   CSFX_stop();
-  vdp_setCursor2(0, 0);
+
+  if (memcmp(s_OriginalLocationZeroMemory, NULL,
+  sizeof(s_OriginalLocationZeroMemory)) != 0)
+    DebugPrintString(k_CorruptedLowMemText);
 
   DumpTilesToTerminal();
   strcpy(g_TempBuffer, "Frame count: ");
   AppendDecimalUInt16(g_FrameCounter);
   strcat(g_TempBuffer, "\n");
-  HitAnyKey(g_TempBuffer);
   DebugPrintString(g_TempBuffer);
-
-  if (memcmp(s_OriginalLocationZeroMemory, NULL,
-  sizeof(s_OriginalLocationZeroMemory)) != 0)
-  {
-    HitAnyKey(k_CorruptedLowMemText);
-  }
 
 #if 0
   /* If plain return isn't working.  Happens if main doesn't return void, or if
      you print too much CP/M output to the screen when in graphics mode.  To do
      a real reset, would need to switch ROM in before the jp 0 instruction. */
-  HitAnyKey("Done.  Brute force exit to CP/M.\n");
+  DebugPrintString("Done.  Brute force exit to CP/M.\n");
   __asm
   jp 0;
   __endasm;
 #endif
-  HitAnyKey("Done.");
   DebugPrintString("Returning to operating system.\n");
 }
 

@@ -15,7 +15,7 @@
  * this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "sounds.h"
+#include "soundscreen.h"
 
 #ifdef NABU_H
 #define MAX_SOUND_CHANNELS 3 /* Just the sound effects ones, 0 to 2. */
@@ -142,59 +142,294 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
 }
 
 
-/* Starts the given piece of music playing.  Assumes the sound library is
-   initialised and a game loop (or screen loader) will update sound ticks.
+/* To avoid passing arguments on the stack, which is bulky on Z80.  Set by
+   OpenDataFile() and persists until the next open.  Though the provided name
+   strings may have vanished by then.  Also useful for generating error
+   messages about higher level errors while loading. */
+static const char *sSetUpFileNameBase;
+static const char *sSetUpExtension;
+
+/* Utility function to set up the path name, returns length of the string. */
+static uint8_t SetUpPathInTempBuffer(const char *prefix)
+{
+  strcpy(g_TempBuffer, prefix);
+  strcat(g_TempBuffer, sSetUpFileNameBase);
+  strcat(g_TempBuffer, ".");
+  strcat(g_TempBuffer, sSetUpExtension);
+  return strlen(g_TempBuffer);
+}
+
+/* Open a file for sequential reading, using the given file name and extension
+   (the extension will usually be platform specific).  Will look in various
+   directories and online, returning the first one found.  Returns
+   BAD_FILE_HANDLE if it wasn't found anywhere and prints a debug message.
+   If it was found, you should close it when you've finished using it.  Uses
+   g_TempBuffer.  For NABU, use upper case names.
+*/
+FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
+{
+  FileHandleType fileID;
+#ifdef NABU_H
+  uint8_t nameLen;
+#endif /* NABU_H */
+
+  sSetUpFileNameBase = fileNameBase;
+  sSetUpExtension = extension;
+
+#ifdef NABU_H
+  /* First try the NTHPONG directory on the NABU Internet Adapter server.  Note
+     that directory separator is a backslash since the adapter was written
+     originally in Windows.  Also it needs uppercase. */
+
+  nameLen = SetUpPathInTempBuffer("NTHPONG\\");
+  if (rn_fileSize(nameLen, g_TempBuffer) > 0) /* See if the file exists. */
+  {
+    fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
+      0xff /* Use a new file handle */);
+    if (fileID != BAD_FILE_HANDLE)
+      return fileID;
+  }
+
+  /* Try Alex's web server.  Hopefully the Internet Adapter will read it once
+     and then cache it. */
+
+  nameLen = SetUpPathInTempBuffer("http://www.agmsmith.ca/NTHPONG/");
+  if (rn_fileSize(nameLen, g_TempBuffer) > 0) /* See if the file exists. */
+  {
+    fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
+      0xff /* Use a new file handle */);
+    if (fileID != BAD_FILE_HANDLE)
+      return fileID;
+  }
+#endif /* NABU_H */
+
+  SetUpPathInTempBuffer(
+    "Unable to load file from local directory or Alex's web site, named \"");
+  strcat(g_TempBuffer, "\".\n");
+  DebugPrintString(g_TempBuffer);
+
+  return BAD_FILE_HANDLE;
+}
+
+
+/* Undoes OpenDataFile.  Does nothing when given BAD_FILE_HANDLE.
+*/
+void CloseDataFile(FileHandleType fileHandle)
+{
+#ifdef NABU_H
+  if (fileHandle != BAD_FILE_HANDLE)
+    rn_fileHandleClose(fileHandle);
+#endif /* NABU_H */
+}
+
+
+/* Starts the given piece of external music playing.  Assumes the sound library
+   is initialised and a game loop (or screen loader) will update sound ticks.
    Will look for that file in several places, using an extension specific to
    the platform (so don't specify a file name extension).  Returns true if
    successful.  If it returns false, it starts playing some default built-in
    music.
 */
 #ifdef NABU_H
-#define MAX_MUSIC_BUFFER_SIZE 1500 /* Bigest ChipsNSfx song we can play. */
+#define MAX_MUSIC_BUFFER_SIZE 1500 /* Bigest ChipsNSfx song we can play, +1. */
 uint8_t gLoadedMusic[MAX_MUSIC_BUFFER_SIZE];
 #endif /* NABU_H */
 
 bool PlayMusic(const char *FileName)
 {
   bool returnCode = false;
+
 #ifdef NABU_H
   uint16_t amountRead;
-  uint8_t fileId;
-  int32_t fileSize32;
-  uint16_t fileSize16;
-  uint8_t nameLen;
-  char fullPathNameBuffer[128];
+  uint8_t fileID;
 
-  strcpy(fullPathNameBuffer, "NTHPONG\\"); /* Has 8 characters */
-  strncat(fullPathNameBuffer, FileName, sizeof(fullPathNameBuffer) - 18);
-  strcat(fullPathNameBuffer, ".CHIPNSFX");
-  nameLen = strlen(fullPathNameBuffer);
-  fileSize32 = rn_fileSize(nameLen, fullPathNameBuffer);
-  if (fileSize32 <= 0 || fileSize32 > MAX_MUSIC_BUFFER_SIZE)
-    return false; /* Not found or empty or too big. */
-  fileId = rn_fileOpen(nameLen, fullPathNameBuffer, OPEN_FILE_FLAG_READONLY,
-    0xff /* Use a new file handle */);
-  if (fileId == 0xff)
-    return false; /* Wants uppercase, backslashes for directories! */
+  fileID = OpenDataFile(FileName, "CHIPNSFX");
+  if (fileID == BAD_FILE_HANDLE)
+    goto ErrorExit;
 
-  fileSize16 = fileSize32;
   bzero(gLoadedMusic, MAX_MUSIC_BUFFER_SIZE); /* For easier debugging. */
-
-  amountRead = rn_fileHandleReadSeq(fileId, gLoadedMusic,
-    0 /* buffer offset */, fileSize16);
-  if (amountRead != fileSize16)
+  amountRead = rn_fileHandleReadSeq(fileID, gLoadedMusic,
+    0 /* buffer offset */, MAX_MUSIC_BUFFER_SIZE);
+  CloseDataFile(fileID);
+  if (amountRead == 0 || amountRead >= MAX_MUSIC_BUFFER_SIZE)
     goto ErrorExit;
 
   CSFX_start(gLoadedMusic, false /* IsEffects */); /* Background music. */
   returnCode = true;
 
 ErrorExit:
-  rn_fileHandleClose(fileId);
-
   if (!returnCode) /* Play some default music. */
     CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Background music. */
-
 #endif /* NABU_H */
+
   return returnCode;
 }
+
+#ifdef NABU_H
+static void SoundUpdateIfNeeded(void)
+{
+  if (vdpIsReady) /* A frame time has gone by. */
+  {
+    vdpIsReady = 0;
+    CSFX_play(); /* Update sound hardware with current tune data. */
+  }
+}
+#endif /* NABU_H */
+
+#ifdef NABU_H
+/* Utility function to read AmountToCopy bytes from a file and write to the
+   given VRAM address.  If Triplicate is TRUE then data is also written to
+   VRAM address + 2K and VRAM address + 4K.  Uses g_TempBuffer, which can be
+   smaller than the AmountToCopy.  Updates sound tick as needed so you can have
+   music playing during loading (assuming the frame interrupt is working).
+   Returns FALSE if there wasn't enough data in the file.  TRUE if it succeeded.
+*/
+static bool CopyFileToVRAM(uint16_t AmountToCopy, FileHandleType FileID,
+  uint16_t VRAMAddress, bool Triplicate)
+{
+  uint16_t amountRemaining = AmountToCopy;
+  uint16_t currentVRAM = VRAMAddress;
+
+  while (amountRemaining != 0)
+  {
+    SoundUpdateIfNeeded();
+
+    uint16_t amountToRead = amountRemaining;
+    uint16_t amountRead;
+    if (amountToRead > TEMPBUFFER_LEN)
+      amountToRead = TEMPBUFFER_LEN;
+    amountRead = rn_fileHandleReadSeq(FileID, g_TempBuffer,
+      0 /* buffer offset */, amountToRead);
+    if (amountRead == 0) /* End of file or a read error. */
+      break;
+
+    SoundUpdateIfNeeded();
+
+    const char *bufferPntr = g_TempBuffer;
+    uint16_t amountToWrite = amountRead;
+    vdp_setWriteAddress(currentVRAM);
+    while (amountToWrite-- != 0)
+      IO_VDPDATA = *bufferPntr++;
+
+    if (Triplicate)
+    {
+      SoundUpdateIfNeeded();
+      bufferPntr = g_TempBuffer;
+      amountToWrite = amountRead;
+      vdp_setWriteAddress(currentVRAM + 2048);
+      while (amountToWrite-- != 0)
+        IO_VDPDATA = *bufferPntr++;
+
+      SoundUpdateIfNeeded();
+      bufferPntr = g_TempBuffer;
+      amountToWrite = amountRead;
+      vdp_setWriteAddress(currentVRAM + 4096);
+      while (amountToWrite-- != 0)
+        IO_VDPDATA = *bufferPntr++;
+    }
+    currentVRAM += amountRead;
+    amountRemaining -= amountRead;
+  }
+  return (amountRemaining == 0); /* Success only if we read it all. */
+}
+#endif /* NABU_H */
+
+
+#ifdef NABU_H
+/* Read a character mapped screen picture, with fonts and sprites, into video
+   RAM.  The original file is *.DAT created by ICVGM (a Windows tool), which
+   gets assembled into a binary file.  Since we're running in graphics mode 2,
+   the font needs to be triplicated for each third of the screen.  Uses
+   g_TempBuffer.  Returns true if successful, false (and prints a debug message)
+   if it couldn't open the file or there isn't enough data in the file.
+*/
+bool LoadScreenNSCR(const char *FileName)
+{
+  uint8_t fileID = BAD_FILE_HANDLE;
+  bool returnCode = false;
+
+  fileID = OpenDataFile(FileName, "NSCR");
+  if (fileID == BAD_FILE_HANDLE)
+    goto ErrorExit;
+
+  /* Load name table. */
+  if (!CopyFileToVRAM(768, fileID, _vdpPatternNameTableAddr, false))
+    goto ErrorMissingData;
+
+  /* Load tile patterns. */
+  if (!CopyFileToVRAM(2048, fileID, _vdpPatternGeneratorTableAddr, true))
+    goto ErrorMissingData;
+
+  /* Load tile colours. */
+  if (!CopyFileToVRAM(2048, fileID, _vdpColorTableAddr, true))
+    goto ErrorMissingData;
+
+  /* Load sprite patterns. */
+  if (!CopyFileToVRAM(2048, fileID, _vdpSpriteGeneratorTableAddr, false))
+    goto ErrorMissingData;
+
+  returnCode = true;
+  goto ErrorExit;
+
+ErrorMissingData:
+  SetUpPathInTempBuffer("File is too small, named \"");
+  strcat(g_TempBuffer, "\".\n");
+  DebugPrintString(g_TempBuffer);
+
+ErrorExit:
+  CloseDataFile(fileID);
+  return returnCode;
+}
+#endif /* NABU_H */
+
+#ifdef NABU_H
+/* Read a full screen bitmap (no useable fonts so printing text doesn't work)
+   into video RAM.  Usually a *.NFUL file created by Dithertron.  Uses
+   g_TempBuffer.  Returns true if successful, false (and prints a debug message)
+   if it couldn't open the file or there isn't enough data in the file.
+*/
+bool LoadScreenNFUL(const char *FileName)
+{
+  uint8_t fileID = BAD_FILE_HANDLE;
+  bool returnCode = false;
+
+  fileID = OpenDataFile(FileName, "NFUL");
+  if (fileID == BAD_FILE_HANDLE)
+    goto ErrorExit;
+
+  /* Reset the name table to the identity function. */
+
+  SoundUpdateIfNeeded();
+  vdp_setWriteAddress(_vdpPatternNameTableAddr);
+  { /* Put in a block so i and j are temporary variables. */
+    uint8_t i = 3;
+    do {
+      uint8_t j = 0;
+      do {
+        IO_VDPDATA = j++;
+      } while (j != 0);
+    } while (--i != 0);
+  }
+
+  /* Load tile patterns. */
+  if (!CopyFileToVRAM(6144, fileID, _vdpPatternGeneratorTableAddr, false))
+    goto ErrorMissingData;
+
+  /* Load tile colours. */
+  if (!CopyFileToVRAM(6144, fileID, _vdpColorTableAddr, false))
+    goto ErrorMissingData;
+
+  returnCode = true;
+  goto ErrorExit;
+
+ErrorMissingData:
+  SetUpPathInTempBuffer("File is too small, named \"");
+  strcat(g_TempBuffer, "\".\n");
+  DebugPrintString(g_TempBuffer);
+
+ErrorExit:
+  CloseDataFile(fileID);
+  return returnCode;
+}
+#endif /* NABU_H */
 

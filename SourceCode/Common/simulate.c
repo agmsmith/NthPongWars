@@ -25,7 +25,7 @@
 
 #define DEBUG_PRINT_SIM 0 /* Turn on debug printfs, uses floating point. */
 
-#include "sounds.h"
+#include "soundscreen.h"
 
 /* The range of flying heights and what they do. */
 #define MAX_FLYING_HEIGHT 20 /* Can fly this high at most. */

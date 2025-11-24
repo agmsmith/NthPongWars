@@ -41,7 +41,7 @@ typedef uint8_t FileHandleType;
 #else
 typedef int FileHandleType;
 #define BAD_FILE_HANDLE ((FileHandleType) -1)
-#endif NABU_H
+#endif /* NABU_H */
 
 
 extern uint8_t g_harvest_sound_threshold;
@@ -54,16 +54,43 @@ extern void PlaySound(sound_type sound_id, player_pointer pPlayer);
 /* Play a sound effect.  Given a player so we can customise sounds per player.
    Plays with priority if the system can't play multiple sounds at once. */
 
-extern FileHandleType OpenDataFile(const char *FileNameBase);
-/* */
+extern FileHandleType OpenDataFile(const char *fileNameBase,
+  const char *extension);
+/* Open a file for sequential reading, using the given file name and extension
+   (the extension will usually be platform specific).  Will look in various
+   directories and online, returning the first one found.  Returns
+   BAD_FILE_HANDLE if it wasn't found anywhere and prints a debug message.
+   If it was found, you should close it when you've finished using it.  Uses
+   g_TempBuffer.  For NABU, use upper case names. */
+
+extern void CloseDataFile(FileHandleType fileHandle);
+/* Undoes OpenDataFile.  Does nothing when given BAD_FILE_HANDLE. */
 
 extern bool PlayMusic(const char *FileName);
-/* Starts the given piece of music playing.  Assumes the sound library is
-   initialised and a game loop (or screen loader) will update sound ticks.
+/* Starts the given piece of external music playing.  Assumes the sound library
+   is initialised and a game loop (or screen loader) will update sound ticks.
    Will look for that file in several places, using an extension specific to
    the platform (so don't specify a file name extension).  Returns true if
    successful.  If it returns false, it starts playing some default built-in
    music. */
+
+#ifdef NABU_H
+extern bool LoadScreenNSCR(const char *FileName);
+/* Read a character mapped screen picture, with fonts and sprites, into video
+   RAM.  The original file is *.DAT created by ICVGM (a Windows tool), which
+   gets assembled into a binary file.  Since we're running in graphics mode 2,
+   the font needs to be triplicated for each third of the screen.  Uses
+   g_TempBuffer.  Returns true if successful, false (and prints a debug message)
+   if it couldn't open the file or there isn't enough data in the file. */
+#endif /* NABU_H */
+
+#ifdef NABU_H
+extern bool LoadScreenNFUL(const char *FileName);
+/* Read a full screen bitmap (no useable fonts so printing text doesn't work)
+   into video RAM.  Usually a *.NFUL file created by Dithertron.  Uses
+   g_TempBuffer.  Returns true if successful, false (and prints a debug message)
+   if it couldn't open the file or there isn't enough data in the file. */
+#endif /* NABU_H */
 
 #endif /* _SOUND_SCREEN_H */
 

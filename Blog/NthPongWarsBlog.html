@@ -2405,6 +2405,32 @@ the next level to use when winning or losing.  Since it's text, you could make
 your own levels.  You could even totally ignore the gameplay and use that level
 scheme to just load screens and play music in a pick your own adventure book.
 
+<HR>
+<H2><A NAME="2025.11.25"></A>2025.11.25</H2>
+
+<H3>Level File Format</H3>
+
+<P>What do we need to load a level and run it?
+<UL>
+  <LI><B>File name of the level.</B>  Likely we'll have a level counter in the game which will be used to generate the file name.  So a name like <CODE>Something#</CODE> where the # will get replaced by the 3 digit (that should be enough) level number and a stock extension of .level (files like Game123.level, or Tutorial.level).  You can use lower case, but it will all be converted to upper case due to Nabu Internet Adapter limitations.
+  <LI><B>Type of Game to play.</B>  Should we play Nth Pong wars, or display a static screen (option to limit input to the winner of the previous level for high score entry screens and trivia game answer screens), or show high scores, or show the settings screen?
+  <LI><B>Wining conditions.</B>  What counts as a game over?  Which player wins (identified by colour)?  You have a choice of several gameplay rules, like first to reach a tile count of X (with an option to have the required count decreasing every second), or first player to control all of a set of tiles (list of tile coordinates needed), or first player to press their joystick button (useful for static screens or trivia contests), or a joystick direction move by any player (for multiple choice static screens).
+  <LI><B>Win count.</B>  Each time a particular player wins a level, their win count is incremented.  This gets used for the high score screen, which shows current players and a top ten list with dates.
+  <LI><B>Next levels.</B>  After a level has finished, what's the name of the next level?  We have four choices, named after the player colours, the winning player of the level gets their next level chosen (optionally it could be a random choice).  For multiple choice static screens, this can be input from a joystick direction.  For trivia games, this could be the first player to press their button.
+  <LI><B>Name of Screen file.</B>  This can be a full screen graphic (no font available, *.NFUL file name, 12KB, about 2 seconds to load), a character based screen and font and sprites (*.NSCR, 7KB, 1 second, required for game play), and just a screen full of characters using the current font (*.NCHR, 1KB, fastest to load).  Or you can just leave the previous level's screen showing.
+  <LI><B>Name of Music file.</B>  The background music to be played.  For Nabu ChipNSFX files, game screens need to use tonal music in channels 1 and 2, noise instruments in channel 3, though the noise may go quiet due to player bugs.  Also the music should be relatively quiet so that the game sound effects are distinct.
+  <LI><B>Play Area Size.</B>  For game levels, the size of the level (width and height in tiles).  The Nabu is limited to a total of 800 tiles due to memory space.  Lets you have long skinny play areas.
+  <LI><B>Screen Tile Area.</B>  Where the tiles are displayed on the screen, using top left corner row & column, and width & height.  There's also a play area location of the screen rectangle, maybe that will be automated to scroll the screen to follow a player in the play area, but it currently is set to (0,0) since scrolling is very slow.  Generally you'd make a screen (perhaps with a fake picture frame graphic) with an empty spot where the tiles will go.
+  <LI><B>Introductory Text.</B>  Some text that will be printed over the screen tile area.  Automatically word wrapped.  If present, the game will pause until someone hits a button.
+  <LI><B>AI Player Code.</B>  A listing of the code needed for the AI players, and starting code location for each player.  Might have to write a mini-assembler so you don't have to type it in as numbers.  The instructions are things like go to this location, wait a certain amount of time, set speed, follow this player, chase the score leader, chase the Human score leader.
+  <LI><B></B>
+  <LI><B></B>
+  <LI><B></B>
+  <LI><B></B>
+</UL>
+
+Let's use a keyword+value general format for the file.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

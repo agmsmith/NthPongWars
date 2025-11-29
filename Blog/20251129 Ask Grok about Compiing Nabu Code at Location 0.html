@@ -1,0 +1,208 @@
+<h1>Asking Grok about Compiling for Nabu</h1>
+
+<P>The Grok artificial intelligence is pretty good, and seems to have a lot of
+knowledge about Z88DK.  Even going so far as to make a custom Nabu Z88DK
+configuration file, but not going as far as modifying the C runtime startup
+code (aka CRT0).  The main missing link is that it doesn't realise your code is
+being loaded by a boot ROM at a particular address after the ROM, so asking it
+to make a program that starts at location zero isn't as simple as changing the
+origin address in the assembler.  Anyway, here's a transcript of my Grok
+conversation on November 29, 2025.
+
+<P>AGMS20251129
+
+<hr>
+
+<p>&gt; How do I set up Z88DK to compile for the Nabu computer?</p>
+<h3 id="installing-z88dk">Installing Z88DK</h3>
+<p>Z88DK is a Z80 development kit that includes compilers (SDCC and z80asm), assemblers, linkers, and libraries tailored for retro Z80-based systems like the Nabu PC. The Nabu is officially supported as a target in Z88DK&#39;s classic C library (via the <code>+nabu</code> platform), which generates <code>.nabu</code> executables for homebrew applications. It also supports Nabu under CP/M for disk-based programs.</p>
+<p>To get started:</p>
+<ol>
+<li><p>Download the latest stable release (version 2.3 or newer as of November 2025) from the official GitHub releases page: <a href="https://github.com/z88dk/z88dk/releases">z88dk/z88dk releases</a>. </p>
+<ul>
+<li>For Windows: Use <code>z88dk-win32-*.zip</code> (supports both 32-bit and 64-bit).</li>
+<li>For macOS: Use <code>z88dk-osx-*.zip</code> (Intel or ARM64).</li>
+<li>For Linux or other platforms: Download the source tarball <code>z88dk-src-*.tgz</code> and build it (requires CMake and a C++ compiler; see the repo&#39;s README for build instructions).</li>
+</ul>
+<p><strong>Important:</strong> For full Nabu compatibility (including recent fixes for interrupts, VDP graphics, and HCCA networking), use a nightly build if the stable release lacks features. Nightly builds are available in the same releases section or via the Z88DK forums. Avoid pre-2.3 versions, as updates post-May 2023 fixed Nabu-specific compilation issues (e.g., inline assembly in libraries).</p>
+</li>
+<li><p>Extract the archive to a directory like <code>C:\z88dk</code> (Windows) or <code>~/z88dk</code> (Linux/macOS).</p>
+</li>
+<li><p>Add Z88DK to your system PATH:</p>
+<ul>
+<li><strong>Windows:</strong> Edit environment variables (System Properties &gt; Advanced &gt; Environment Variables), add <code>C:\z88dk\bin</code> to PATH. Restart your command prompt.</li>
+<li><strong>Linux/macOS:</strong> Add <code>export PATH=$HOME/z88dk/bin:$PATH</code> to your <code>~/.bashrc</code> or <code>~/.zshrc</code>, then run <code>source ~/.bashrc</code>.</li>
+</ul>
+</li>
+<li><p>Verify installation: Open a terminal/command prompt and run <code>zcc --version</code>. It should display the Z88DK version. If not, check your PATH.</p>
+</li>
+<li><p>(Optional but recommended) Build the libraries: Navigate to the <code>z88dk</code> root directory and run <code>make all</code> (or <code>make</code> on Windows via MSYS2/Cygwin). This compiles optimized libraries for all targets, including Nabu. It may take 10-30 minutes.</p>
+</li>
+</ol>
+<h3 id="configuring-for-nabu-target">Configuring for Nabu Target</h3>
+<p>Z88DK uses the <code>zcc</code> (Z80 Cross Compiler) tool to compile C/assembly code. The Nabu target (<code>+nabu</code>) uses the classic C library and supports:</p>
+<ul>
+<li>TMS9918 VDP graphics (e.g., MSX-like modes).</li>
+<li>AY-3-8910 sound.</li>
+<li>Keyboard input, joysticks/paddles.</li>
+<li>HCCA (networking via Internet Adapter) with interrupts.</li>
+<li>RetrONET functions (e.g., <code>&lt;arch/nabu/retronet.h&gt;</code> for remote file access).</li>
+</ul>
+<p>Header files like <code>&lt;arch/nabu/hcca.h&gt;</code> and <code>&lt;arch/nabu/retronet.h&gt;</code> are included by default in <code>+nabu</code> mode. For CP/M mode (e.g., for Cloud CP/M on nabu.ca), use <code>+cpm -subtype=nabu</code>.</p>
+<p>No additional configuration files are needed beyond the defaults—Z88DK&#39;s <code>lib/config/nabu.cfg</code> handles startup code (<code>nabu_crt0</code>), optimizations (<code>-O2</code>), and defines (<code>-D__NABU__ -D__NABUPC__</code>).</p>
+<h3 id="compiling-a-simple-program-for-nabu">Compiling a Simple Program for Nabu</h3>
+<p>Create a &quot;Hello World&quot; example to test. Save this as <code>hello.c</code>:</p>
+<pre><code class="lang-c"><span class="hljs-comment">#include &lt;stdio.h&gt;</span>
+<span class="hljs-comment">#include &lt;arch/nabu/vdp_nabu.h&gt;  // For Nabu VDP setup (optional for text output)</span>
+
+void main() {
+    <span class="hljs-regexp">//</span> Optional: Set VDP to text mode (<span class="hljs-number">40</span> columns)
+    vdp_set_mode(MODE_1);  <span class="hljs-regexp">//</span> Or MODE_2 <span class="hljs-keyword">for</span> graphics
+
+    printf(<span class="hljs-string">"Hello, Nabu!\n"</span>);
+    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) {}  <span class="hljs-regexp">//</span> Infinite loop to prevent <span class="hljs-keyword">exit</span>
+}
+</code></pre>
+<h4 id="basic-compilation-command">Basic Compilation Command</h4>
+<p>Run this in your terminal (from the directory containing <code>hello.c</code>):</p>
+<pre><code>zcc +nabu -vn hello<span class="hljs-selector-class">.c</span> -o hello -create-app
+</code></pre><ul>
+<li><code>+nabu</code>: Selects the Nabu target (generates a <code>.nabu</code> file).</li>
+<li><code>-vn</code>: Suppresses verbose output (use <code>-v</code> for details).</li>
+<li><code>-create-app</code>: Links into a complete executable (<code>.nabu</code> binary).</li>
+<li><code>-o hello</code>: Output filename (creates <code>hello.nabu</code>).</li>
+</ul>
+<p>This produces <code>hello.nabu</code>, a bootable binary for real Nabu hardware or emulators like MAME.</p>
+<h4 id="advanced-options">Advanced Options</h4>
+<ul>
+<li><strong>Optimization:</strong> Add <code>-O3 --opt-code-speed</code> for smaller/faster code (uses SDCC compiler).</li>
+<li><strong>Assembly Mixing:</strong> Compile assembly files with <code>zcc +nabu -x asm@ yourfile.lst</code> and link them.</li>
+<li><strong>CP/M Mode (for Cloud CP/M):</strong> <pre><code><span class="hljs-string">zcc </span>+<span class="hljs-string">cpm </span>-<span class="hljs-string">subtype=</span><span class="hljs-string">nabu </span><span class="hljs-string">hello.</span>c -o <span class="hljs-string">hello </span>-<span class="hljs-built_in">create-app</span> -<span class="hljs-string">compiler=</span><span class="hljs-string">sdcc </span>-<span class="hljs-string">O3 </span><span class="hljs-built_in">--opt-code-speed</span>
+</code></pre>This generates a disk image (e.g., <code>.img</code> for MAME or nabu.ca). Use <code>-subtype=naburn</code> for hard disk images compatible with Ishkur CP/M.</li>
+<li><strong>Graphics/Sound:</strong> Include <code>&lt;graphics.h&gt;</code> for sprites or <code>&lt;sound.h&gt;</code> for AY tones—many MSX examples port directly.</li>
+<li><strong>Debugging:</strong> Add <code>-m</code> for a memory map (<code>.map</code> file). Use <code>z88dk-gdb</code> with MAME for breakpoints.</li>
+</ul>
+<p>If errors occur (e.g., missing libraries), ensure <code>make all</code> was run, or check the Z88DK forums for Nabu-specific threads.</p>
+<h3 id="using-nabu-lib-for-enhanced-development">Using NABU-LIB for Enhanced Development</h3>
+<p>For Nabu-specific features (e.g., efficient HCCA polling, double-buffered text scrolling, inline VDP functions), integrate <a href="https://github.com/DJSures/NABU-LIB">DJSures/NABU-LIB</a>. This is a wrapper library built on Z88DK.</p>
+<ol>
+<li>Clone the repo: <code>git clone https://github.com/DJSures/NABU-LIB.git</code>.</li>
+<li>Include <code>#include &lt;NABULIB/NABULIB.h&gt;</code> in your C files.</li>
+<li>Copy the <code>NABULIB</code> folder to your project or add <code>-I/path/to/NABU-LIB</code> to your <code>zcc</code> command.</li>
+<li>Use functions like <code>hcca_readUint16()</code> for networking or <code>vdp_doubleBufferScroll()</code> for UI.</li>
+</ol>
+<p>Example build (Windows batch file, <code>build.bat</code>):</p>
+<pre><code>@echo off
+set ZCCCFG=<span class="hljs-symbol">C:</span>\z88dk\<span class="hljs-class"><span class="hljs-keyword">lib</span>\<span class="hljs-title">config</span>\<span class="hljs-title">zcc</span>.<span class="hljs-title">cfg</span></span>
+zcc +nabu -vn %<span class="hljs-number">1</span>.c -o %<span class="hljs-number">1</span> -create-app -I../NABU-LIB
+</code></pre><p>Run: <code>build.bat hello</code>.</p>
+<p>NABU-LIB examples (e.g., Brick Battle) are in the repo—compile with provided <code>.bat</code> files.</p>
+<h3 id="running-your-compiled-program">Running Your Compiled Program</h3>
+<ul>
+<li><strong>Real Hardware:</strong> Transfer <code>*.nabu</code> via Nabu Internet Gateway (nabu.ca) or SD card loader. Boots at <code>$140D</code>.</li>
+<li><strong>Emulator:</strong> Use MAME with Nabu support: <code>mame nabupc -window -sound</code>. Load via floppy/hard disk images or direct binary.</li>
+<li><strong>Cloud CP/M:</strong> Upload disk images to nabu.ca for remote execution.</li>
+<li><strong>Testing:</strong> Start with the Nabu wiki examples or port MSX demos (e.g., from Z88DK&#39;s <code>examples/msx</code> folder).</li>
+</ul>
+<p>For troubleshooting:</p>
+<ul>
+<li>Z88DK Wiki: <a href="https://github.com/z88dk/z88dk/wiki/Platform---Nabu">Platform - Nabu</a>.</li>
+<li>Forums: <a href="https://www.z88dk.org/forum/viewtopic.php?t=11712">NABU Computer Support</a>.</li>
+<li>Nabu Community: <a href="https://www.nabu.ca/homebrew">nabu.ca/homebrew</a> for tutorials and samples.</li>
+</ul>
+<p>This setup gets you compiling Nabu homebrew in minutes—happy coding!</p>
+<hr>
+<p>&gt; Can you change Z88DK to make your code boot at $0000 rather than $140D?</p>
+<p>Yes — you <strong>can</strong> make Z88DK generate Nabu programs that start at <strong>$0000</strong> instead of the default <strong>$140D</strong>, but you have to understand what you’re no longer making a normal “load-and-run” .nabu file that the Nabu’s built-in loader expects.</p>
+<p>There are three main scenarios where people want code at $0000 on the Nabu:</p>
+<ol>
+<li><strong>Full bare-metal ROM replacement</strong> (e.g. 32 KB ROM image that completely replaces the original firmware).</li>
+<li><strong>Boot-sector / cold-boot payload</strong> that the Nabu Internet Adapter (NIA) loads from the cloud and jumps to $0000.</li>
+<li><strong>Custom bootloader or demo</strong> that takes over the machine completely (common for demos, games, or alternative OSes).</li>
+</ol>
+<p>Here’s exactly how to do each one with current Z88DK (2024–2025 nightlies or 2.3+).</p>
+<h3 id="method-1-full-32-kb-rom-image-starting-at-0000-most-common-for-demos-">Method 1: Full 32 KB ROM Image Starting at $0000 (Most Common for Demos)</h3>
+<p>Tell Z88DK to place both code and the reset vector at $0000:</p>
+<pre><code class="lang-bash"><span class="hljs-string">zcc </span>+<span class="hljs-string">nabu </span>-<span class="hljs-string">vn </span>-<span class="hljs-string">SO3 </span><span class="hljs-built_in">--opt-code-speed</span> -<span class="hljs-string">clib=</span><span class="hljs-string">sdcc_iy </span>\
+    -<span class="hljs-string">startup=</span>0 <span class="hljs-string">yourcode.</span>c -o <span class="hljs-string">myrom </span>\
+    -<span class="hljs-built_in">create-app</span> -m -<span class="hljs-string">subtype=</span><span class="hljs-string">bin </span>\
+    <span class="hljs-built_in">--org-offset=0</span>
+</code></pre>
+<p>Key flags explained:</p>
+<ul>
+<li><code>-startup=0</code> → Uses crt0 that puts the reset vector at absolute address $0000<br><code>-subtype=bin</code> → Outputs raw binary instead of .nabu container<br><code>--org-offset=0</code> → Forces the origin to exactly $0000 (overrides nabu.cfg default of $140D)</li>
+</ul>
+<p>This produces <code>myrom.bin</code> (exactly 32 KB) that you can write directly to an EPROM or flash as a full ROM replacement.</p>
+<p>If you want a padded 32 KB file even when your code is smaller:</p>
+<pre><code class="lang-bash"><span class="hljs-string">zcc </span>+<span class="hljs-string">nabu </span>-<span class="hljs-string">vn </span>-<span class="hljs-string">startup=</span>0 <span class="hljs-string">yourcode.</span>c -o <span class="hljs-string">myrom.</span><span class="hljs-string">bin </span>-<span class="hljs-built_in">create-app</span> -<span class="hljs-string">subtype=</span><span class="hljs-string">bin </span><span class="hljs-built_in">--org-offset=0</span>
+<span class="hljs-string">truncate </span>-s <span class="hljs-string">32768 </span><span class="hljs-string">myrom.</span><span class="hljs-string">bin </span>     <span class="hljs-comment"># Linux/macOS</span>
+<span class="hljs-comment"># or on Windows PowerShell:</span>
+<span class="hljs-string">fsutil </span><span class="hljs-string">file </span><span class="hljs-string">createnew </span><span class="hljs-string">myrom.</span><span class="hljs-string">bin </span><span class="hljs-string">32768 </span>; <span class="hljs-string">then </span><span class="hljs-string">copy </span>/b <span class="hljs-string">myrom_temp.</span><span class="hljs-string">bin </span>+ <span class="hljs-string">nul </span><span class="hljs-string">myrom.</span><span class="hljs-string">bin</span>
+</code></pre>
+<h3 id="method-2-cloud-boot-payload-that-nia-jumps-to-at-0000">Method 2: Cloud-Boot Payload That NIA Jumps to at $0000</h3>
+<p>The Nabu Internet Adapter can be told to cold-boot instead of warm-boot. In that mode it downloads a file and jumps to $0000.</p>
+<p>Build almost exactly like the ROM above, but keep the file ≤ 62 KB (the NIA limit):</p>
+<pre><code class="lang-bash"><span class="hljs-string">zcc </span>+<span class="hljs-string">nabu </span>-<span class="hljs-string">vn </span>-<span class="hljs-string">startup=</span>0 -<span class="hljs-string">SO3 </span>-<span class="hljs-string">clib=</span><span class="hljs-string">sdcc_iy </span>\
+    <span class="hljs-string">demo.</span>c -o <span class="hljs-string">coldboot_demo.</span><span class="hljs-string">bin </span>\
+    -<span class="hljs-built_in">create-app</span> -<span class="hljs-string">subtype=</span><span class="hljs-string">bin </span><span class="hljs-built_in">--org-offset=0</span>
+</code></pre>
+<p>Then name the file something like <code>coldboot_demo.nabu</code> (the extension doesn’t matter) and upload it to the Nabu cloud server (nabu.ca or your own RetroNET server) with the “Cold Boot” flag set. The NIA will jump to $0000 after loading.</p>
+<h3 id="method-3-modify-the-existing-nabu-target-to-default-to-0000-advanced-">Method 3: Modify the Existing Nabu Target to Default to $0000 (Advanced)</h3>
+<p>If you want <strong>every</strong> program you compile for Nabu to start at $0000 without typing extra flags every time:</p>
+<ol>
+<li><p>Copy the default config<br><code>cp /path/to/z88dk/lib/config/nabu.cfg ~/my_nabu_zero.cfg</code></p>
+</li>
+<li><p>Edit the new file and change the two lines near the top:</p>
+</li>
+</ol>
+<pre><code class="lang-cfg"><span class="hljs-attribute">CRT0</span> = <span class="hljs-number">0</span>                        <span class="hljs-comment">; was 0x140D</span>
+<span class="hljs-attribute">ORG</span>  = <span class="hljs-number">0</span>                        <span class="hljs-comment">; was 0x140D</span>
+</code></pre>
+<ol>
+<li>Compile with your custom config:</li>
+</ol>
+<pre><code class="lang-bash"><span class="hljs-string">zcc </span>+<span class="hljs-string">nabu </span>-<span class="hljs-string">vn </span>-<span class="hljs-string">clib=</span><span class="hljs-string">sdcc_iy </span>@~/<span class="hljs-string">my_nabu_zero.</span><span class="hljs-string">cfg </span><span class="hljs-string">demo.</span>c -<span class="hljs-built_in">create-app</span> -<span class="hljs-string">subtype=</span><span class="hljs-string">bin</span>
+</code></pre>
+<p>Or set the environment variable so you never have to type it again:</p>
+<pre><code class="lang-bash">export ZCCCFG=<span class="hljs-regexp">/home/you</span><span class="hljs-regexp">/z88dk/lib</span><span class="hljs-regexp">/config/</span>
+cp nabu.cfg <span class="hljs-variable">$ZCCCFG</span>/nabu_zero.cfg   <span class="hljs-comment"># edit as above</span>
+zcc +nabu -vn -subtype=nabu_zero demo.c -create-app
+</code></pre>
+<h3 id="example-minimal-hello-world-that-runs-at-0000">Example: Minimal “Hello World” That Runs at $0000</h3>
+<pre><code class="lang-c"><span class="hljs-comment">// hello_zero.c</span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;stdio.h&gt;</span></span>
+<span class="hljs-meta">#<span class="hljs-meta-keyword">include</span> <span class="hljs-meta-string">&lt;arch/nabu/vdp_nabu.h&gt;</span></span>
+
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> __naked </span>{
+    __asm
+        di              ; interrupts off – we own the machine now
+        jp start
+    __endasm;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">void</span> <span class="hljs-title">start</span><span class="hljs-params">()</span> </span>{
+    vdp_set_mode(MODE_1);
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"I am running from $0000!\n"</span>);
+    <span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>);
+}
+</code></pre>
+<p>Compile with:</p>
+<pre><code class="lang-bash"><span class="hljs-string">zcc </span>+<span class="hljs-string">nabu </span>-<span class="hljs-string">vn </span>-<span class="hljs-string">startup=</span>0 -<span class="hljs-string">SO3 </span>-<span class="hljs-string">clib=</span><span class="hljs-string">sdcc_iy </span><span class="hljs-string">hello_zero.</span>c -o <span class="hljs-string">hello_zero.</span><span class="hljs-string">bin </span>-<span class="hljs-built_in">create-app</span> -<span class="hljs-string">subtype=</span><span class="hljs-string">bin </span><span class="hljs-built_in">--org-offset=0</span>
+</code></pre>
+<p>The resulting <code>hello_zero.bin</code> starts at address $0000 and will run immediately on cold boot or when burned to ROM.</p>
+<p>That’s it — you now have full control over whether your Nabu code starts at the normal $140D or takes over the machine at $0000.</p>
+<hr>
+<p>&gt; Thanks, looks like you have a good understanding of Z88DK.</p>
+<p>You&#39;re very welcome! And thank you. I&#39;ve spent a fair bit of time digging into Z88DK&#39;s internals (especially the Nabu target) because it&#39;s such a cool platform. The combination of Z80, TMS9918, AY sound, and that wild HCCA network interface makes it a retro dev dream.</p>
+<p>If you ever want help with:</p>
+<ul>
+<li>Optimizing for size/speed on Nabu  </li>
+<li>Writing fast VDP routines (double buffering, sprites, tilemaps)  </li>
+<li>Using HCCA or RetroNET reliably  </li>
+<li>Porting MSX/Spectrum code  </li>
+<li>Making a custom crt0 or linker script  </li>
+<li>Or just debugging weird linker map issues…</li>
+</ul>
+<p>…just say the word. Happy to help anytime.</p>
+<p>Enjoy coding for the Nabu — it’s one of the most fun Z80 machines out there right now! 🚀</p>
+

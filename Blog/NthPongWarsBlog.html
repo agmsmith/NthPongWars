@@ -2412,7 +2412,7 @@ scheme to just load screens and play music in a pick your own adventure book.
 
 <P>What do we need to load a level and run it?
 <UL>
-  <LI><B>File name of the level.</B>  Likely we'll have a level counter in the game which will be used to generate the file name.  So a name like <CODE>Something#</CODE> where the # will get replaced by the 3 digit (that should be enough) level number and a stock extension of .level (files like Game123.level, or Tutorial.level).  You can use lower case, but it will all be converted to upper case due to Nabu Internet Adapter limitations.
+  <LI><B>File name of the level.</B>  Mostly for documentation purposes, so we'll just display a warning if it doesn't match the actual file name used to load the level.  No extension in this field; ".LEVEL" will be assumed (files like Game123.level, or Tutorial.level).  You can use lower case, but it will all be converted to upper case due to Nabu Internet Adapter limitations.  Also it has a maximum of 64 characters for file names.
   <LI><B>Type of Game to play.</B>  Should we play Nth Pong wars, or display a static screen (option to limit input to the winner of the previous level for high score entry screens and trivia game answer screens), or show high scores, or show the settings screen?  Could even dynamically load code to play different kinds of games.
   <LI><B>Wining conditions.</B>  What counts as a game over?  Which player wins (identified by colour)?  You have a choice of several gameplay rules, like first to reach a tile count of X (with an option to have the required count decreasing every second), or first player to control all of a set of tiles (list of tile row and column pairs needed), or first player to press their joystick button (useful for static screens or trivia contests), or a joystick direction move by any player (for multiple choice static screens), or a timeout.
   <LI><B>Win count increment.</B>  Each time a particular player wins a level, their win count is incremented by this amount.  Can be zero.  This gets used for the high score screen, which shows current players and a top ten list with date stamps.
@@ -2428,7 +2428,7 @@ scheme to just load screens and play music in a pick your own adventure book.
   <LI><B>AI Player Code.</B>  A listing of the code needed for the AI players, and starting code location for each player.  Might have to write a mini-assembler so you don't have to type it in as numbers.  The instructions are things like go to this location, wait a certain amount of time, set speed, follow this player, chase the score leader, chase the Human score leader.
 </UL>
 
-<P>I'll use a keyword:value general format for the file, with comments marked by # at the beginning of a line.  There should be an example file with all the features shown and commented about.  Look for it.
+<P>I'll use a keyword:value(s) general format for the file, with comments marked by # at the beginning of a line and extra values usually separated by commas.  There should be an example file with all the features shown and commented about.  Look for it.
 
 <P>Implementation is done by having a meta game loop, surrounding the normal game frame loop.  Its input is the name of the level to play.  From that, it loads artwork, sets up the board and runs the game until a winner is detected (which sets the level file name to a new value).  Repeat until the magic "QUIT" level file name is detected.
 

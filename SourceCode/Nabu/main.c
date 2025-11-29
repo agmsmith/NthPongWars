@@ -355,7 +355,7 @@ void main(void)
      it has score graphics from the default screen load. */
 
   vdp_clearRows(1, 23);
-  vdp_setCursor2(0, 1);
+  vdp_setCursor2(0, 2);
   vdp_printJustified((char *) k_WelcomeText, 0, 32);
   vdp_newLine();
   CSFX_play(); /* Avoid a pause in the music due to slow printing. */

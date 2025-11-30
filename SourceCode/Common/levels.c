@@ -1,7 +1,7 @@
 /******************************************************************************
  * Nth Pong Wars, levels.c for loading levels, screens and other things.
  *
- * AGMS20241220 - Started this code file.
+ * AGMS20251129 - Started this code file.
  *
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -283,7 +283,7 @@ static bool ProcessLevelKeywords(void)
 {
   #define MAX_LEVEL_KEYWORD_LENGTH 32
   char keyWord[MAX_LEVEL_KEYWORD_LENGTH];
-  
+
   while (true)
   {
     /* Read the next keyword.  Skip leading spaces.  Skip comment lines. */

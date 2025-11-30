@@ -1,0 +1,5 @@
+# Load our title screen, it's a full screen picture.
+BackgroundMusic: PINKPNTH
+FullScreen: TITLESCREEN
+NextLevel: COTTAGE
+

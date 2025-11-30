@@ -156,6 +156,18 @@ static uint8_t SetUpPathInTempBuffer(const char *prefix)
   strcat(g_TempBuffer, sSetUpFileNameBase);
   strcat(g_TempBuffer, ".");
   strcat(g_TempBuffer, sSetUpExtension);
+
+#if 0
+  /* Convert the whole pathname string to upper case. */
+
+  char *pChar, letter;
+  pChar = g_TempBuffer;
+  while ((letter = *pChar) != 0)
+  {
+    *pChar++ = toupper(letter);
+  }
+#endif
+
   return strlen(g_TempBuffer);
 }
 
@@ -204,7 +216,7 @@ FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
 #endif /* NABU_H */
 
   SetUpPathInTempBuffer(
-    "Unable to load file from local directory or Alex's web site, named \"");
+    "Unable to load file from store directory or Alex's web site, named \"");
   strcat(g_TempBuffer, "\".\n");
   DebugPrintString(g_TempBuffer);
 

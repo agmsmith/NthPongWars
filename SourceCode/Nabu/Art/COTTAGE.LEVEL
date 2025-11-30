@@ -1,0 +1,5 @@
+# Load a picture of the family cottage, it's a full screen picture.
+BackgroundMusic: ONECOLN1
+FullScreen: COTTAGE
+NextLevel: Quit
+

@@ -72,6 +72,7 @@
 #endif
 /* #include <math.h> /* For 32 bit floating point math routines, for debug. */
 #include <string.h> /* For strlen. */
+#include <ctype.h> /* For toupper. */
 #include <malloc.h> /* For malloc and free, and initialising a heap. */
 
 /* Use DJ Sure's Nabu code library, for VDP video hardware and the Nabu Network
@@ -120,6 +121,7 @@ char g_TempBuffer[TEMPBUFFER_LEN];
 #include "../Common/simulate.c"
 #include "../Common/scores.c"
 #include "../Common/soundscreen.c"
+#include "../Common/levels.c"
 
 /* Variables in main() that also need to be accessed from assembler have to be
    globalish.  Make them static but global scope. */
@@ -312,7 +314,7 @@ void main(void)
   /* Start the frame interrupt, to count frames and do sound tick timing. */
   vdp_enableVDPReadyInt();
 
-#if 1
+#if 0
   /* Start some loading screen music. */
   PlayMusic("ONECOLN1");
   if (!LoadScreenNFUL("COTTAGE"))
@@ -320,7 +322,7 @@ void main(void)
   HitAnyKey(""); /* No font available to print text, so print nothing. */
 #endif
 
-#if 1
+#if 0
   /* More loading screen music. */
   PlayMusic("SQUAROOT");
   if (!LoadScreenNFUL("TITLESCREEN")) /* Error message on debug output. */
@@ -399,116 +401,94 @@ void main(void)
   CSFX_start(NthEffects_a_z, true /* IsEffects */);
   CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Game background music. */
 
-  /* The main program loop.  Update things (which may take a while), then wait
-     for vertical blanking to start, then copy data to the VDP quickly, then
-     go back to updating things, etc.  Unfortunately we don't have enough time
-     to do everything in one frame, so it's usually 30 frames per second,
-     often dropping to 20 fps when there's lots of physics activity. */
+  /* The meta game loop.  One screen or level loaded per loop, with the level
+     file setting all sorts of options, from victory conditions to AI
+     algorithms, and of course the tile map too. */
 
-  s_KeepRunning = true;
-  while (true)
+  strcpy(gLevelFileName, "TITLE");
+  while (LoadLevelFile(gLevelFileName))
   {
-    ProcessKeyboard();
-    UpdatePlayerInputs();
-    Simulate();
-    if ((g_FrameCounter & 0x3F) == 0)
-      AddNextPowerUpTile(); /* See coincident power-up before hitting it. */
-    UpdateTileAnimations();
-    UpdatePlayerAnimations();
-    UpdateScores();
+    /* The main program loop.  Update things (which may take a while), then wait
+       for vertical blanking to start, then copy data to the VDP quickly, then
+       go back to updating things, etc.  Unfortunately we don't have enough time
+       to do everything in one frame, so it's usually 20 frames per second with
+       4 players, often dropping when there's lots of physics simulation
+       activity due to players moving too fast. */
 
-    /* Check for game exit here, after the updates have been done, but before
-       the dirty flags have been cleared, so we can see what's taking up all
-       the time being drawn. */
+    s_KeepRunning = true;
+    while (true)
+    {
+      ProcessKeyboard();
+      UpdatePlayerInputs();
+      Simulate();
+      if ((g_FrameCounter & 0x3F) == 0)
+        AddNextPowerUpTile(); /* See coincident power-up before hitting it. */
+      UpdateTileAnimations();
+      UpdatePlayerAnimations();
+      UpdateScores();
 
-    if (!s_KeepRunning)
-      break;
+      /* Check for game exit here, after the updates have been done, but before
+         the dirty flags have been cleared, so we can see what's taking up all
+         the time being drawn. */
 
-    /* Wait for the next vertical blank.  Check if our update took longer than
-       a frame.  vdpIsReady counts number of vertical blank starts missed. */
+      if (!s_KeepRunning)
+        break;
 
-    g_ScoreFramesPerUpdate = vdpIsReady + 1;
-    vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */ 
+      /* Wait for the next vertical blank.  Check if our update took longer than
+         a frame.  vdpIsReady counts number of vertical blank starts missed. */
 
-    /* Do the sprites first, since they're time critical to avoid glitches. */
-    CopyPlayersToSprites();
-    CopyTilesToScreen();
-    CopyScoresToScreen();
+      g_ScoreFramesPerUpdate = vdpIsReady + 1;
+      vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */ 
 
-    /* Update the audio hardware with the music being played.  Can debug which
-       channels are busy, look in scores.c. */
-    CSFX_play();
+      /* Do the sprites first, since they're time critical to avoid glitches. */
+      CopyPlayersToSprites();
+      CopyTilesToScreen();
+      CopyScoresToScreen();
 
-    /* Frame has been completed.  On to the next one.  16 bit wrap-around
-       needed so time differences past the wrap still work. */
+      /* Update the audio hardware with the music being played.  Can debug which
+         channels are busy, look in scores.c. */
+      CSFX_play();
 
-    g_FrameCounter++;
+      /* Check for victory conditions, but after the screen update, so the
+         player can see themselves hitting the desired number of points etc. */
 
-    if ((g_FrameCounter & 0x1F) == 0)
-      g_ScoreGoal--; /* Fake decreasing of the goal about once per second. */
+      if (VictoryConditionTest())
+        s_KeepRunning = false;
+
+      /* Frame has been completed.  On to the next one.  16 bit wrap-around
+         needed so time differences past the wrap still work. */
+
+      g_FrameCounter++;
+
+      if ((g_FrameCounter & 0x1F) == 0)
+        g_ScoreGoal--; /* Fake decreasing of the goal about once per second. */
 
 #if 0
-    /* Every once in a while move the screen around the play area. */
+      /* Every once in a while move the screen around the play area. */
 
-    if ((g_FrameCounter & 0x1ff) == 0)
-    {
-      g_play_area_col_for_screen += 3;
-      if (g_play_area_col_for_screen >= g_play_area_width_tiles)
+      if ((g_FrameCounter & 0x1ff) == 0)
       {
-        g_play_area_col_for_screen = 0;
-        g_play_area_row_for_screen += 3;
-        if (g_play_area_row_for_screen >= g_play_area_height_tiles)
-          g_play_area_row_for_screen = 0;
+        g_play_area_col_for_screen += 3;
+        if (g_play_area_col_for_screen >= g_play_area_width_tiles)
+        {
+          g_play_area_col_for_screen = 0;
+          g_play_area_row_for_screen += 3;
+          if (g_play_area_row_for_screen >= g_play_area_height_tiles)
+            g_play_area_row_for_screen = 0;
+        }
+        ActivateTileArrayWindow();
       }
-      ActivateTileArrayWindow();
-    }
-#endif
-
-#if 0
-  /* Draw some new tiles once in a while, randomly moving around. */
-
-  if ((g_FrameCounter & 31) == 19)
-  {
-    static uint8_t row, col;
-    tile_owner newOwner;
-    tile_pointer pTile;
-
-    row++;
-    if ((rand() & 255) > 200)
-    { /* Rarely put in a power up. */
-      newOwner = (rand() & 7) + OWNER_PUP_NORMAL;
-    }
-    else /* Regular tile change. */
-    {
-      newOwner = rand() & 0x07;
-      if (newOwner >= OWNER_PUP_NORMAL)
-        newOwner = OWNER_MAX; /* Skip power ups. */
-    }
-    if (newOwner < OWNER_MAX)
-    {
-      col++;
-      if (col >= g_play_area_width_tiles)
-        col = 0;
-      if (row >= g_play_area_height_tiles)
-        row = 0;
-      pTile = g_tile_array_row_starts[row];
-      if (pTile != NULL)
-      {
-        pTile += col;
-        SetTileOwner(pTile, newOwner);
-      }
-    }
-  }
 #endif
 
 #if 0 /* Check for corrupted memory every frame. */
-    if (memcmp(s_OriginalLocationZeroMemory, NULL,
-    sizeof(s_OriginalLocationZeroMemory)) != 0)
-    {
-      vdp_setCursor2(0, 0);
-      vdp_print(k_CorruptedLowMemText);
-    }
+      if (memcmp(s_OriginalLocationZeroMemory, NULL,
+      sizeof(s_OriginalLocationZeroMemory)) != 0)
+      {
+        vdp_setCursor2(0, 0);
+        vdp_print(k_CorruptedLowMemText);
+      }
 #endif
+    }
   }
   vdp_disableVDPReadyInt();
   CSFX_stop();

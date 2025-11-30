@@ -25,7 +25,7 @@
 #define _LEVELS_H 1
 
 #define MAX_FILE_NAME_LENGTH 64 /* Max for the Nabu Internet Adapter. */
-extern char *gLevelFileName[MAX_FILE_NAME_LENGTH+1];
+extern char *gLevelFileName[MAX_FILE_NAME_LENGTH];
 /* File base name for the currently running level.  Will have ".level" appended
    to find the real file, and on the NABU will be all upper case.  The actual
    file is a text file located locally, or on the server, or on Alex's web

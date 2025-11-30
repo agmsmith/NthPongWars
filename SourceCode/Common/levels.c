@@ -23,7 +23,7 @@
   #define NUL ((char) 0)
 #endif
 
-char *gLevelFileName[MAX_FILE_NAME_LENGTH+1];
+char *gLevelFileName[MAX_FILE_NAME_LENGTH];
 
 /* Checks the victory conditions and sets things up for loading the next level
    (depending on which player won).  Returns TRUE if the level was completed.
@@ -230,10 +230,33 @@ bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
 bool KeywordFullScreen(void)
 {
   char screenFileName[MAX_FILE_NAME_LENGTH+1];
-  if (!LevelReadAndTrimLine(screenFileName, MAX_FILE_NAME_LENGTH+1))
+  if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
     return true;
-  LoadScreenNFUL(screenFileName);
-  return true;
+  return LoadScreenNFUL(screenFileName);
+}
+
+
+/* This keyword loads a font based screen (*.NSCR) which includes sprites.
+   Returns false to abort the level file load.
+*/
+bool KeywordCharFontSpriteScreen(void)
+{
+  char screenFileName[MAX_FILE_NAME_LENGTH+1];
+  if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
+    return true;
+  return LoadScreenNSCR(screenFileName);
+}
+
+
+/* This keyword loads just the name table, the characters of a screen (*.NCHR).
+   Uses the previously loaded font.  Returns false to abort the level file load.
+*/
+bool KeywordCharImageScreen(void)
+{
+  char screenFileName[MAX_FILE_NAME_LENGTH+1];
+  if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
+    return true;
+  return LoadScreenNCHR(screenFileName);
 }
 
 
@@ -242,7 +265,7 @@ bool KeywordFullScreen(void)
 bool KeywordBackgroundMusic(void)
 {
   char musicFileName[MAX_FILE_NAME_LENGTH+1];
-  if (!LevelReadAndTrimLine(musicFileName, MAX_FILE_NAME_LENGTH+1))
+  if (!LevelReadAndTrimLine(musicFileName, sizeof(musicFileName)))
     return true;
   PlayMusic(musicFileName);
   return true;
@@ -253,7 +276,7 @@ bool KeywordBackgroundMusic(void)
 */
 bool KeywordNextLevel(void)
 {
-  LevelReadAndTrimLine(gLevelFileName, MAX_FILE_NAME_LENGTH+1);
+  LevelReadAndTrimLine(gLevelFileName, sizeof(gLevelFileName));
   return true;
 }
 
@@ -269,20 +292,29 @@ typedef struct KeyWordCallStruct {
 } *KeyWordCallPointer;
 
 static struct KeyWordCallStruct kKeywordFunctionTable[] = {
-  {"FullScreen", KeywordFullScreen},
-  {"BackgroundMusic", KeywordBackgroundMusic},
+  {"ScreenFull", KeywordFullScreen},
+  {"ScreenFont", KeywordCharFontSpriteScreen},
+  {"ScreenChar", KeywordCharImageScreen},
+  {"Music", KeywordBackgroundMusic},
   {"NextLevel", KeywordNextLevel},
   {NULL, NULL}
 };
 
 
 /* Read the level file keyword by keyword.  Returns FALSE on abort, usually
-   something wrong about the level file, like bad tile map syntax.
+   something wrong about the level file, like bad tile map syntax.  The level
+   file name is only used for error messages.
 */
-static bool ProcessLevelKeywords(void)
+static bool ProcessLevelKeywords(const char *LevelFileNameBase)
 {
   #define MAX_LEVEL_KEYWORD_LENGTH 32
   char keyWord[MAX_LEVEL_KEYWORD_LENGTH];
+  char levelName[MAX_FILE_NAME_LENGTH];
+
+  /* Make a copy of the level name for error messages.  Often it is the next
+     level global, which can be changed by loading a level. */
+  strncpy(levelName, LevelFileNameBase,sizeof(levelName));
+  levelName[MAX_FILE_NAME_LENGTH-1] = 0;
 
   while (true)
   {
@@ -299,7 +331,7 @@ static bool ProcessLevelKeywords(void)
       continue; /* Continue on to the next line after the comment. */
     }
 
-    if (!LevelReadWord(keyWord, MAX_LEVEL_KEYWORD_LENGTH, ':'))
+    if (!LevelReadWord(keyWord, sizeof(keyWord), ':'))
       break; /* End of file encountered.  Job done. */
 
     /* Got the keyword, do special processing for each one. */
@@ -314,6 +346,19 @@ static bool ProcessLevelKeywords(void)
         break; /* Processed this keyword, don't bother searching further. */
       }
       pKeywordCall++;
+    }
+    if (pKeywordCall->keyword == NULL)
+    { /* Unknown keyword, print a debug message and discard the rest. */
+      strcpy(g_TempBuffer, "Unknown keyword \"");
+      strcat(g_TempBuffer, keyWord);
+      strcat(g_TempBuffer, "\" in level file \"");
+      strcat(g_TempBuffer, levelName);
+      strcat(g_TempBuffer, "\".\n");
+      DebugPrintString(g_TempBuffer);
+
+      /* Throw away the rest of the line. */
+      if (!LevelReadAndTrimLine(keyWord, sizeof(keyWord)))
+        break; /* End of file. */
     }
   }
   return true;
@@ -339,7 +384,7 @@ bool LoadLevelFile(const char *FileNameBase)
   if (sLevelFileHandle == BAD_FILE_HANDLE)
     return false;
 
-  ProcessLevelKeywords();
+  ProcessLevelKeywords(FileNameBase);
 
   CloseDataFile(sLevelFileHandle);
   sLevelFileHandle = BAD_FILE_HANDLE;

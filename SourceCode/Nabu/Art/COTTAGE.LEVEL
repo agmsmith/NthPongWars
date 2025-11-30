@@ -1,5 +1,8 @@
 # Load a picture of the family cottage, it's a full screen picture.
-BackgroundMusic: ONECOLN1
-FullScreen: COTTAGE
+
+# First a file name with lots of space before and after it.
+Music:   ONECOLN1  
+
+ScreenFull: COTTAGE
 NextLevel: Quit
 

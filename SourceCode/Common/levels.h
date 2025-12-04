@@ -24,24 +24,61 @@
 #ifndef _LEVELS_H
 #define _LEVELS_H 1
 
-#define MAX_FILE_NAME_LENGTH 64 /* Max for the Nabu Internet Adapter. */
-extern char *gLevelFileName[MAX_FILE_NAME_LENGTH];
-/* File base name for the currently running level.  Will have ".level" appended
-   to find the real file, and on the NABU will be all upper case.  The actual
-   file is a text file located locally, or on the server, or on Alex's web
-   site.  Users can make their own if they wish. */
+#define MAX_FILE_NAME_LENGTH 64 /* Maximum for the Nabu Internet Adapter. */
+#define MAX_LEVEL_NAME_LENGTH 32 /* Short names take less memory. */
+
+/* Various things controlling how the victory condition is achieved.  Can be
+   several of them at once. */
+
+extern bool gVictoryModeFireButtonPress;
+/* If a fire button press wins the game.  Next level is selected by which
+   player pressed their fire button first (see gWinnerNextLevelName). */
+
+extern bool gVictoryModeJoystickPress;
+/* The next level is selected by which joystick direction or fire button is
+   pressed first.  Mostly useful for trivia contests. */
+
+extern bool gVictoryModeHighestTileCount;
+/* The player with the highest tile count wins.  The game runs until the
+   highest player tile count is greater or equal to the countdown value
+   (g_ScoreGoal).  The countdown ticks down once per second and starts at the
+   number of tiles in the game area. */
+
+extern uint8_t gVictoryWinningPlayer;
+/* Number of the winning player, or MAX_PLAYERS+1 if no player has won.  Does
+   get set to MAX_PLAYERS (not a valid player) when in gVictoryModeJoystickPress
+   and the fire button is used. */
+
+extern char gLevelName[MAX_LEVEL_NAME_LENGTH];
+/* Base name for the currently running level, or the next level after victory
+   happens.  When opening the level file, will have ".level" appended to find
+   the file, and on the NABU should be all upper case.  The actual file
+   is a text file located locally, or on the server, or on Alex's web site.
+   Users can make their own if they wish. */
+
+extern char gWinnerNextLevelName[MAX_PLAYERS+1][MAX_LEVEL_NAME_LENGTH];
+/* Whoever wins the level has a custom next level base file name.  Mostly
+   useful for doing trivia contests.  Though for ordinary use these are all set
+   to the same level name.  0 to MAX_PLAYERS-1 are for players.  In button modes
+   0 is left, 1 is down, 2 is right, 3 is up, 4 is fire. */
+
+extern char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH];
+/* A level name saved for later use.  Possibly many levels later. */
+
 
 extern bool VictoryConditionTest(void);
 /* Checks the victory conditions and sets things up for loading the next level
    (depending on which player won).  Returns TRUE if the level was completed. */
 
-extern bool LoadLevelFile(const char *FileNameBase);
-/* Loads the named level file, given just the base name.  Will be converted to
-   upper case, with ".LEVEL" appended.  Will look for that file locally, on the
-   Nabu server and on Alex's web site.  Returns FALSE if it couldn't find the
-   file, or if the name is "QUIT".  Since it is a line by line keyword based
-   file, it can successfully load garbage without doing anything (you'll end
-   up playing the previous level again). */
+extern bool LoadLevelFile(void);
+/* Loads the named level file, with the base name in gLevelName.  Will be
+   converted to a full file name and searched for locally, on the Nabu server
+   and on Alex's web site.  Returns FALSE if it couldn't find the file, or if
+   the name is "Quit".  If the name is "Bookmark" then it will load the
+   previously saved bookmarked level name.  Loading sets up related things as
+   it loads, like the game tile area size or background music.  Since it is a
+   line by line keyword based file, it can successfully load garbage without
+   doing anything (you'll end up playing the previous level again). */
 
 #endif /* _LEVELS_H */
 

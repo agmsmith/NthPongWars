@@ -100,7 +100,7 @@ target_list_item_record g_target_list[] = {
   {30, TARGET_CODE_GOTO},
 };
 
-/* Where to start the instructions for player 0 to player N-1. */ 
+/* Where to start the instructions for player 0 to player N-1. */
 uint8_t g_target_start_indices[MAX_PLAYERS] =
 {30, 0, 30, 30};
 
@@ -115,8 +115,8 @@ void InitialisePlayers(void)
   /* Cache the positions of the walls. */
 
   g_play_area_wall_bottom_y = g_play_area_height_pixels -
-    PLAYER_PIXEL_DIAMETER_NORMAL / 2; 
-  g_play_area_wall_left_x = PLAYER_PIXEL_DIAMETER_NORMAL / 2; 
+    PLAYER_PIXEL_DIAMETER_NORMAL / 2;
+  g_play_area_wall_left_x = PLAYER_PIXEL_DIAMETER_NORMAL / 2;
   g_play_area_wall_right_x = g_play_area_width_pixels -
     PLAYER_PIXEL_DIAMETER_NORMAL / 2;
   g_play_area_wall_top_y = PLAYER_PIXEL_DIAMETER_NORMAL / 2;
@@ -661,7 +661,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   }
   else /* Time for a change in harvest mode duty cycle. */
   {
-    uint8_t desiredSpeed = pPlayer->brain_info.algo.desired_speed; 
+    uint8_t desiredSpeed = pPlayer->brain_info.algo.desired_speed;
 
     if (desiredSpeed == (uint8_t) 255)
     { /* Code for always harvest, used for not leaving a trail. */

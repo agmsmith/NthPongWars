@@ -23,13 +23,92 @@
   #define NUL ((char) 0)
 #endif
 
-char *gLevelFileName[MAX_FILE_NAME_LENGTH];
+bool gVictoryModeFireButtonPress = false;
+bool gVictoryModeJoystickPress = false;
+bool gVictoryModeHighestTileCount = true;
+uint16_t gVictoryCountdownStart = 1000;
+uint8_t gVictoryWinningPlayer = MAX_PLAYERS + 1;
+
+char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";
+char gWinnerNextLevelName[MAX_PLAYERS+1][MAX_LEVEL_NAME_LENGTH];
+char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH] = "TITLE";
+
 
 /* Checks the victory conditions and sets things up for loading the next level
    (depending on which player won).  Returns TRUE if the level was completed.
 */
 bool VictoryConditionTest(void)
 {
+  uint8_t winningPlayer = MAX_PLAYERS + 1;
+
+  uint8_t i;
+  player_pointer pPlayer = g_player_array;
+  for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
+  {
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      continue;
+
+    /* First player to press their fire button wins. */
+
+    if (gVictoryModeFireButtonPress)
+    {
+      if (pPlayer->joystick_inputs & Joy_Button)
+      {
+        winningPlayer = i;
+        break;
+      }
+    }
+
+    /* First player to move their joystick selects the winner by what direction
+       they moved it, or if they pressed the fire button. */
+
+    if (gVictoryModeJoystickPress)
+    {
+      /* Make sure the joystick bits are contiguous, since we shift them around
+         assuming that they are.  And that shifting the fire button gets us to
+         MAX_PLAYERS.  Otherwise this joystick to player number code needs to
+         be redone. */
+      COMPILER_VERIFY(JOYSTICK_DIRECTION_MASK == 0b00001111);
+      COMPILER_VERIFY(Joy_Button == 0b00010000);
+      COMPILER_VERIFY(MAX_PLAYERS == 4);
+
+      uint8_t buttonBits =
+        (pPlayer->joystick_inputs & (JOYSTICK_DIRECTION_MASK | Joy_Button));
+      if (buttonBits != 0)
+      {
+        uint8_t bitCount = 0;
+        while ((buttonBits & 1) == 0)
+        {
+          buttonBits >>= 1;
+          bitCount++;
+        }
+        winningPlayer = bitCount; /* Will be from 0 to 4 (MAX_PLAYER == 4). */
+        break;
+      }
+    }
+
+    /* First player whose tile count reaches the countdown timer wins. */
+
+    if (gVictoryModeHighestTileCount)
+    {
+      if (g_TileOwnerCounts[OWNER_PLAYER_1 + i] >= g_ScoreGoal)
+      {
+        winningPlayer = i;
+        break;
+      }
+    }
+  }
+
+  /* If we have a winner (or MAX_PLAYERS for fire button pressed in joystick
+     mode), use their next level as the one we want to load next. */
+
+  if (winningPlayer < MAX_PLAYERS + 1)
+  {
+    gVictoryWinningPlayer = winningPlayer;
+    strcpy(gLevelName, gWinnerNextLevelName[winningPlayer]);
+    return true;
+  }
+
   return false;
 }
 
@@ -229,7 +308,7 @@ bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
 */
 bool KeywordFullScreen(void)
 {
-  char screenFileName[MAX_FILE_NAME_LENGTH+1];
+  char screenFileName[MAX_FILE_NAME_LENGTH];
   if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
     return true;
   return LoadScreenNFUL(screenFileName);
@@ -241,7 +320,7 @@ bool KeywordFullScreen(void)
 */
 bool KeywordCharFontSpriteScreen(void)
 {
-  char screenFileName[MAX_FILE_NAME_LENGTH+1];
+  char screenFileName[MAX_FILE_NAME_LENGTH];
   if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
     return true;
   return LoadScreenNSCR(screenFileName);
@@ -253,7 +332,7 @@ bool KeywordCharFontSpriteScreen(void)
 */
 bool KeywordCharImageScreen(void)
 {
-  char screenFileName[MAX_FILE_NAME_LENGTH+1];
+  char screenFileName[MAX_FILE_NAME_LENGTH];
   if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
     return true;
   return LoadScreenNCHR(screenFileName);
@@ -264,7 +343,7 @@ bool KeywordCharImageScreen(void)
 */
 bool KeywordBackgroundMusic(void)
 {
-  char musicFileName[MAX_FILE_NAME_LENGTH+1];
+  char musicFileName[MAX_FILE_NAME_LENGTH];
   if (!LevelReadAndTrimLine(musicFileName, sizeof(musicFileName)))
     return true;
   PlayMusic(musicFileName);
@@ -272,11 +351,130 @@ bool KeywordBackgroundMusic(void)
 }
 
 
-/* This keyword specifies the base file name for the next level.
+/* This keyword specifies the base level name for the next level.  It is
+   followed by a player identification, either "All" or "P0", "P1", "P2",
+   "P3" or a joystick direction to identify which next level gets set.
+   The player is followed by a comma and the level name is the rest of the line.
 */
-bool KeywordNextLevel(void)
+bool KeywordLevelNext(void)
 {
-  LevelReadAndTrimLine(gLevelFileName, sizeof(gLevelFileName));
+  char levelName[MAX_LEVEL_NAME_LENGTH];
+  char playerName[8];
+  uint8_t iPlayer = MAX_PLAYERS + 2; /* +2 means no player specified. */
+
+  static struct LevelOptionStruct {
+    const char *optionWord;
+    uint8_t playerNumber;
+  } sLevelNextOptions[] = {
+    {"All", MAX_PLAYERS + 1},
+    {"P0", 0},
+    {"P1", 1},
+    {"P2", 2},
+    {"P3", 3},
+    {"Left", 0},
+    {"Down", 1},
+    {"Right", 2},
+    {"Up", 3},
+    {"Fire", 4},
+    {NULL, MAX_PLAYERS + 2}
+  };
+
+  /* Get the player number, 0 to 3 for normal players, or 4 for Fire button,
+     5 == MAX_PLAYERS+1 to signify all players.  MAX_PLAYERS+2 for invalid. */
+
+  if (!LevelReadWord(playerName, sizeof(playerName), ','))
+    goto ErrorExit;
+
+  struct LevelOptionStruct *pOption;
+  pOption = sLevelNextOptions;
+  const char *optionWord;
+  while ((optionWord = pOption->optionWord) != NULL)
+  {
+    if (strcasecmp(playerName, optionWord) == 0)
+    {
+      iPlayer = pOption->playerNumber;
+      break;
+    }
+    pOption++;
+  }
+  if (iPlayer >= MAX_PLAYERS + 2)
+    goto ErrorExit; /* No recognised option found. */
+
+  if (!LevelReadAndTrimLine(levelName, sizeof(levelName)))
+    goto ErrorExit;
+
+  /* Copy the name to the appropriate player's NextLevel file name. */
+
+  if (iPlayer < MAX_PLAYERS + 1)
+    strcpy(gWinnerNextLevelName[iPlayer], levelName);
+  else /* All players picked. */
+  {
+    uint8_t i;
+    for (i = 0; i < MAX_PLAYERS + 1; i++)
+      strcpy(gWinnerNextLevelName[i], levelName);
+  }
+  return true;
+
+ErrorExit:
+  DebugPrintString("LevelNext: needs P0 to P3, All, "
+    "Up/Down/Left/Right/Fire then a comma & level name.\n");
+  return false;
+}
+
+
+/* Save a named level for use later.  Possibly many levels later.
+*/
+bool KeywordLevelBookmark(void)
+{
+  LevelReadAndTrimLine(gBookmarkedLevelName, sizeof(gBookmarkedLevelName));
+  return true;
+}
+
+
+/* Delay a number of 1/10 of a second.  Keep the music playing. */
+bool KeywordDelay(void)
+{
+  char textOfNumber[10];
+  int delayCount;
+
+  LevelReadAndTrimLine(textOfNumber, sizeof(textOfNumber));
+  delayCount = atoi(textOfNumber) * 2;
+
+  /* Our delay loop runs 1/20 second per iteration, to keep the music going. */
+
+  while (delayCount > 0)
+  {
+    if (vdpIsReady >= 3) /* 3 frames, 1/20 of second has gone by. */
+    {
+      vdpIsReady = 0;
+      CSFX_play(); /* Update sound hardware with current tune data. */
+      delayCount--;
+    }
+  }
+  return true;
+}
+
+
+/* How should this level be run?  Should the game engine be turned on?  Or is
+   it just a static screen waiting for a button press?  Set up the appropriate
+   things for the selected mode.
+*/
+bool KeywordGameMode(void)
+{
+  char modeName[MAX_FILE_NAME_LENGTH];
+  if (!LevelReadAndTrimLine(modeName, sizeof(modeName)))
+    return true; /* Early end of file.  Leave mode unchanged. */
+
+  if (strcasecmp(modeName, "WaitButton") == 0)
+  {
+  }
+  else if (strcasecmp(modeName, "Play"))
+  {
+  }
+  else
+  {
+    DebugPrintString("Unrecognised GameMode value, try WaitButton, Play.\n");
+  }
   return true;
 }
 
@@ -296,25 +494,21 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"ScreenFont", KeywordCharFontSpriteScreen},
   {"ScreenChar", KeywordCharImageScreen},
   {"Music", KeywordBackgroundMusic},
-  {"NextLevel", KeywordNextLevel},
+  {"LevelNext", KeywordLevelNext},
+  {"LevelBookmark", KeywordLevelBookmark},
+  {"Delay", KeywordDelay},
+  {"GameMode", KeywordGameMode},
   {NULL, NULL}
 };
 
 
 /* Read the level file keyword by keyword.  Returns FALSE on abort, usually
-   something wrong about the level file, like bad tile map syntax.  The level
-   file name is only used for error messages.
+   something wrong about the level file, like bad tile map syntax.
 */
-static bool ProcessLevelKeywords(const char *LevelFileNameBase)
+static bool ProcessLevelKeywords(void)
 {
   #define MAX_LEVEL_KEYWORD_LENGTH 32
   char keyWord[MAX_LEVEL_KEYWORD_LENGTH];
-  char levelName[MAX_FILE_NAME_LENGTH];
-
-  /* Make a copy of the level name for error messages.  Often it is the next
-     level global, which can be changed by loading a level. */
-  strncpy(levelName, LevelFileNameBase,sizeof(levelName));
-  levelName[MAX_FILE_NAME_LENGTH-1] = 0;
 
   while (true)
   {
@@ -326,13 +520,21 @@ static bool ProcessLevelKeywords(const char *LevelFileNameBase)
     if (LevelPeekNextByte() == '#')
     {
       /* Just read the rest of the line and discard it. */
-      if (!LevelReadLine(keyWord, MAX_LEVEL_KEYWORD_LENGTH))
+      if (!LevelReadLine(keyWord, sizeof(keyWord)))
         break; /* End of file encountered. */
       continue; /* Continue on to the next line after the comment. */
     }
 
     if (!LevelReadWord(keyWord, sizeof(keyWord), ':'))
       break; /* End of file encountered.  Job done. */
+
+    strcpy(g_TempBuffer, "Now doing level keyword \"");
+    strcat(g_TempBuffer, keyWord);
+    strcat(g_TempBuffer, "\".\n");
+    DebugPrintString(g_TempBuffer);
+
+    if (!LevelSkipSpaces()) /* For convenience, skip spaces after the colon. */
+      break; /* Hit end of file, always need a value after the keyword. */
 
     /* Got the keyword, do special processing for each one. */
 
@@ -351,40 +553,51 @@ static bool ProcessLevelKeywords(const char *LevelFileNameBase)
     { /* Unknown keyword, print a debug message and discard the rest. */
       strcpy(g_TempBuffer, "Unknown keyword \"");
       strcat(g_TempBuffer, keyWord);
-      strcat(g_TempBuffer, "\" in level file \"");
-      strcat(g_TempBuffer, levelName);
       strcat(g_TempBuffer, "\".\n");
       DebugPrintString(g_TempBuffer);
-
-      /* Throw away the rest of the line. */
       if (!LevelReadAndTrimLine(keyWord, sizeof(keyWord)))
-        break; /* End of file. */
+        break; /* End of file while discarding the rest of the line. */
     }
   }
   return true;
 }
 
 
-/* Loads the named level file, given just the base name.  Will be converted to
-   upper case, with ".LEVEL" appended.  Will look for that file locally, on the
-   Nabu server and on Alex's web site.  Returns FALSE if it couldn't find the
-   file, or if the name is "QUIT".  Since it is a line by line keyword based
-   file, it can successfully load garbage without doing anything (you'll end
-   up playing the previous level again).
+/* Loads the named level file, with the base name in gLevelName.  Will be
+   converted to a full file name and searched for locally, on the Nabu server
+   and on Alex's web site.  Returns FALSE if it couldn't find the file, or if
+   the name is "Quit".  If the name is "Bookmark" then it will load the
+   previously saved bookmarked level name.  Loading sets up related things as
+   it loads, like the game tile area size or background music.  Since it is a
+   line by line keyword based file, it can successfully load garbage without
+   doing anything (you'll end up playing the previous level again).
 */
-bool LoadLevelFile(const char *FileNameBase)
+bool LoadLevelFile(void)
 {
   char levelBuffer[LEVEL_READ_BUFFER_SIZE];
   sLevelBuffer = levelBuffer; /* Save a pointer to the start of the buffer. */
 
-  if (strcasecmp(FileNameBase, "quit") == 0)
+  gVictoryWinningPlayer = MAX_PLAYERS + 1;
+
+  if (strcasecmp(gLevelName, "Quit") == 0)
     return false;
 
-  sLevelFileHandle = OpenDataFile(FileNameBase, "LEVEL");
+  if (strcasecmp(gLevelName, "Bookmark") == 0)
+    strcpy(gLevelName, gBookmarkedLevelName);
+
+  sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL");
   if (sLevelFileHandle == BAD_FILE_HANDLE)
-    return false;
+    return false; /* OpenDataFile will have printed an error message. */
 
-  ProcessLevelKeywords(FileNameBase);
+  /* Reinitialise our buffering system to be empty. */
+  sLevelReadPosition = 0;
+  sLevelWritePosition = 0;
+
+  DebugPrintString("Now loading level file \"");
+  DebugPrintString(g_TempBuffer);
+  DebugPrintString("\".\n");
+
+  ProcessLevelKeywords();
 
   CloseDataFile(sLevelFileHandle);
   sLevelFileHandle = BAD_FILE_HANDLE;

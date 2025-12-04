@@ -1,0 +1,78 @@
+# This is an example level file, for NthPongWars by Alexander G. M. Smith.
+# AGMS20251204 - started this file.
+# This one has all the options specified, which you likely won't use in a
+# real level file as some contradict others.  That's so you can see what's
+# available, and for testing the level reading code.
+
+# As you can tell, a line that starts with a # is a comment.  Blank lines
+# and leading spaces are ignored too.
+
+# Look for NthPongWarsBuildingDataNotes.txt for how to convert pictures to
+# screens and music to binary.  Note that the NABU Internet Adapter needs all
+# upper case names, and the music & screen loaders will append the platform
+# specific file extension and look in several places for the file, from the
+# Internet Adapter local Store folder to Alex's web site (so we can distribute
+# *.nabu executables without having to include the data files).
+
+# If there is a problem loading something, error messages will be printed to
+# the debug output: CP/M text screen (which you can redirect to Telnet with
+# the STAT command), and for *.nabu executables to the telnet network session
+# on port 5815 (or whatever you have the RetroNetTCPServerPort set to in the
+# NABU Internet Adapter).
+
+# When loading a screen, it's best to start the music first, since the level
+# file is executed in the order specified and it's nice to have the music going
+# during the possibly several seconds long screen load.  That means if you have
+# several screen loads in a row, it will do them all in that order, making for
+# a kind of slide show.  Wonder if we should have a Delay keyword?
+
+# Start some background music.  Nabu uses the CHIPNSFX tracker+player suite,
+# http://cngsoft.no-ip.org/chipnsfx.htm though with the output assembler
+# converted to binary.  This will start the SQUAROOT.CHIPNSFX file playing.
+Music: SQUAROOT
+
+# Load a full screen bitmap graphic.  This is a 12KB file, so it will take
+# about 1 second to load.  Since the TMS9918A video chip in the NABU does only
+# character mapped graphics, a full screen is done with a custom font per
+# character.  So you can't play a game or see text when one of these is
+# displayed.  NthPongWarsBuildingDataNotes.txt explains how to make a picture
+# into a *.NFUL file.  This will load TITLESCREEN.NFUL.
+ScreenFull: TITLESCREEN
+
+# Just delays the loading of the level file by a given number of 1/10 of a
+# second.  The example delays 10 seconds.
+Delay: 100
+
+# This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
+# about 7KB so it takes half a second to load.  This is the kind of screen you
+# need to see a game correctly, assuming the font and sprite parts have the
+# graphics the game uses.  This example loads NTHPONG1.NSCR.
+ScreenFont: NTHPONG1
+
+# This keyword loads just the name table, the characters of a screen (*.NCHR).
+# It's 768 bytes long, so it takes about 1/10 of a second to load.  It's
+# basically just the first part of a *.NSCR file, so you can create it the
+# same way.  The characters are displayed with whatever font is already loaded.
+# This one would load the text for a help screen from HELP.NCHR.
+ScreenChar: HELP
+
+# This specifies which level gets played after this one finishes.  Base level
+# names can be up to 31 characters long.  The very first level is "Title".
+# You can specify it generically (with All as the first argument), like this,
+# which will make LEVEL007.LEVEL the next level after this one is completed,
+# no matter who wins:
+LevelNext: All, LEVEL007
+# Or have a custom level for each particular winning player (P0 to P3),
+# which could also be the player who presses their fire button first in a
+# trivia game mode:
+LevelNext: P3, CONGRATS_YELLOW
+# Or the next level is determined by a joystick direction or button press
+# (Left, Down, Right, Up, Fire).
+LevelNext: Down, ANSWER026_B
+
+# This one saves a specified level name as a bookmark.  Later on you can load
+# that bookmarked level by specifying the magic level name of "Bookmark".
+# Useful for showing a congratulations screen and then jumping back into the
+# game sequence of levels.
+LevelBookmark: LEVEL008
+

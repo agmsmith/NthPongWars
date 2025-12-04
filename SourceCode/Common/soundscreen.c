@@ -176,7 +176,8 @@ static uint8_t SetUpPathInTempBuffer(const char *prefix)
    directories and online, returning the first one found.  Returns
    BAD_FILE_HANDLE if it wasn't found anywhere and prints a debug message.
    If it was found, you should close it when you've finished using it.  Uses
-   g_TempBuffer.  For NABU, use upper case names.
+   g_TempBuffer (on success the path name used is in the buffer).  For NABU,
+   use upper case names.
 */
 FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
 {

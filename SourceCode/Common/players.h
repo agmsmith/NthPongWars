@@ -41,7 +41,7 @@
    masking reasons, should be a power of two. */
 #define MAX_PLAYERS 4
 
-/* For masking off a counter to have values from 0 to MAX_PLAYERS-1. */
+/* Bits for masking off a counter to have values from 0 to MAX_PLAYERS-1. */
 #define MAX_PLAYERS_MASK 3
 
 /* Variable sized balls are problematic.  Having in-between sizes doesn't add
@@ -220,7 +220,7 @@ typedef struct player_struct {
   /* Set to TRUE if the velocity is right along the velocity_octant.  Needed so
      that we can aim for the next more counter-clockwise octant.  The octant
      finding code carefully uses the lower bound if the velocity is exactly on
-     an octant direction. */ 
+     an octant direction. */
 
   fx step_velocity_x;
   fx step_velocity_y;

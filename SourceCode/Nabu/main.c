@@ -109,6 +109,7 @@ char g_TempBuffer[TEMPBUFFER_LEN];
 /* Our own game include files, some are source code!  Comes after NABU-LIB.h
    has been included and g_TempBuffer defined. */
 
+#include "../Common/cverify.h" /* For compile time asserts with COMPILER_VERIFY(exp). */
 #include "../Common/fixed_point.c" /* Our own fixed point math. */
 #include "z80_delay_ms.h" /* Our hacked up version of time delay for NABU. */
 #include "l_fast_utoa.h" /* Our hacked up version of utoa() to fix bugs. */
@@ -248,7 +249,7 @@ void main(void)
   ZERO_FX(gfx_Constant_Zero);
   INT_TO_FX(1, gfx_Constant_One);
   COPY_NEGATE_FX(&gfx_Constant_One, &gfx_Constant_MinusOne);
-  INT_FRACTION_TO_FX(0 /* int */, 0x2000 /* fraction */, gfx_Constant_Eighth); 
+  INT_FRACTION_TO_FX(0 /* int */, 0x2000 /* fraction */, gfx_Constant_Eighth);
   COPY_NEGATE_FX(&gfx_Constant_Eighth, &gfx_Constant_MinusEighth);
 
   /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
@@ -405,8 +406,7 @@ void main(void)
      file setting all sorts of options, from victory conditions to AI
      algorithms, and of course the tile map too. */
 
-  strcpy(gLevelFileName, "TITLE");
-  while (LoadLevelFile(gLevelFileName))
+  while (LoadLevelFile())
   {
     /* The main program loop.  Update things (which may take a while), then wait
        for vertical blanking to start, then copy data to the VDP quickly, then
@@ -438,7 +438,7 @@ void main(void)
          a frame.  vdpIsReady counts number of vertical blank starts missed. */
 
       g_ScoreFramesPerUpdate = vdpIsReady + 1;
-      vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */ 
+      vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */
 
       /* Do the sprites first, since they're time critical to avoid glitches. */
       CopyPlayersToSprites();

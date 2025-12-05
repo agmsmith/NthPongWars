@@ -1,6 +1,6 @@
 # Load our title screen, it's a full screen picture.
+GameMode: Slide
 Music: PINKPNTH
 ScreenFull: TITLESCREEN
 LevelNext: All, LEVEL001
-Music: None.
 

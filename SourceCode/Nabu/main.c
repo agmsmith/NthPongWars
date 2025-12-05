@@ -209,6 +209,7 @@ static void ProcessKeyboard(void)
       if (letter == 'q')
       {
         s_KeepRunning = false;
+        strcpy(gLevelName, "Quit");
       }
     }
   }
@@ -396,15 +397,13 @@ void main(void)
 
   InitialisePlayers();
 
-  InitialiseScores(); /* Do after tiles & players set up: calc initial score. */
-
   CSFX_stop(); /* Stop loading screen background music. */
   CSFX_start(NthEffects_a_z, true /* IsEffects */);
   CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Game background music. */
 
   /* The meta game loop.  One screen or level loaded per loop, with the level
      file setting all sorts of options, from victory conditions to AI
-     algorithms, and of course the tile map too. */
+     algorithms, and of course the tile map too.  The first one is "TITLE". */
 
   while (LoadLevelFile())
   {
@@ -423,8 +422,8 @@ void main(void)
       if (gVictoryModeHighestTileCount) /* If running the Pong Wars game. */
       {
         Simulate();
-        if ((g_FrameCounter & 0x3F) == 0)
-          AddNextPowerUpTile(); /* See coincident power-up before hitting it. */
+        if ((g_FrameCounter & 0x3F) == 0) /* Do after simulation, to let the */
+          AddNextPowerUpTile(); /* player see a power-up before hitting it. */
         UpdateTileAnimations();
         UpdatePlayerAnimations();
         UpdateScores();

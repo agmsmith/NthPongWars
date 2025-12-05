@@ -201,6 +201,12 @@ typedef struct player_struct {
        see, 0 is hidden by the ball (ball on ground?).  Can be larger to make
        it look like you are flying, and perhaps not colliding with tiles.*/
 
+  int16_t starting_level_pixel_x;
+  int16_t starting_level_pixel_y;
+  uint8_t starting_level_pixel_flying_height;
+  /* The initial position of the players in pixels on the game board.  Set by
+     the level loader and used by InitialisePlayersForNewLevel. */
+
   fx velocity_x;
   fx velocity_y;
   /* The velocity vector the player is moving by, in pixels per update. */
@@ -288,6 +294,10 @@ typedef struct player_struct {
      following % sign, and at most 5 digits, and a NUL.  On the NABU it can use
      different letters in the font for coloured digits for each player. */
 
+  uint16_t win_count;
+  /* Number of levels won by this player.  Will be used for high score listings
+     later on. */
+
   uint8_t main_colour;
   /* Predefined colour for this player's main graphic.  On the NABU this is a
      number from 1 to 15 in the standard TMS9918A palette, see the
@@ -332,10 +342,10 @@ typedef struct player_struct {
    non-sequential as joysticks are picked up or go idle). */
 extern player_record g_player_array[MAX_PLAYERS];
 
-/* Calculated by InitialisePlayers(), these are the adjusted game coordinates
-   pixel boundaries of the play area.  Adjusted by the ball radius to make
-   collision tests easier.  If the ball center position is beyond this value,
-   it has hit the wall. */
+/* Calculated by InitialisePlayersForNewLevel(), these are the adjusted game
+   coordinates pixel boundaries of the play area.  Adjusted by the ball radius
+   to make collision tests easier.  If the ball center position is beyond this
+   value, it has hit the wall. */
 extern int16_t g_play_area_wall_bottom_y;
 extern int16_t g_play_area_wall_left_x;
 extern int16_t g_play_area_wall_right_x;
@@ -355,6 +365,9 @@ extern fx g_SeparationVelocityFxStepAdd;
 
 extern void InitialisePlayers(void);
 /* Set up the initial player data, mostly colours and animations. */
+
+extern void InitialisePlayersForNewLevel(void);
+/* Reset player things to get ready for running the next level. */
 
 extern void UpdatePlayerAnimations(void);
 /* Update animations for the next frame.  Also convert location of the player

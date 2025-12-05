@@ -1,5 +1,6 @@
 # The first level!  Set up the correct font for gameplay.
+GameMode: PongWar
 Music: LOADSONG
 ScreenFont: NTHPONG1
-LevelNext: All, COTTAGE
+LevelNext: All, HELP
 

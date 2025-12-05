@@ -464,16 +464,31 @@ bool KeywordGameMode(void)
   if (!LevelReadAndTrimLine(modeName, sizeof(modeName)))
     return true; /* Early end of file.  Leave mode unchanged. */
 
-  if (strcasecmp(modeName, "WaitButton") == 0)
+  if (strcasecmp(modeName, "Slide") == 0)
   {
+    gVictoryModeFireButtonPress = true;
+    gVictoryModeJoystickPress = false;
+    gVictoryModeHighestTileCount = false;
   }
-  else if (strcasecmp(modeName, "Play"))
+  else if (strcasecmp(modeName, "Trivia") == 0)
   {
+    gVictoryModeFireButtonPress = false;
+    gVictoryModeJoystickPress = true;
+    gVictoryModeHighestTileCount = false;
+  }
+  else if (strcasecmp(modeName, "PongWar") == 0)
+  {
+    gVictoryModeFireButtonPress = false;
+    gVictoryModeJoystickPress = false;
+    gVictoryModeHighestTileCount = true;
   }
   else
   {
-    DebugPrintString("Unrecognised GameMode value, try WaitButton, Play.\n");
+    DebugPrintString("Unrecognised GameMode: \"");
+    DebugPrintString(modeName);
+    DebugPrintString("\", try Slide, Trivia, PongWar.\n");
   }
+
   return true;
 }
 
@@ -565,11 +580,12 @@ static bool ProcessLevelKeywords(void)
 /* Loads the named level file, with the base name in gLevelName.  Will be
    converted to a full file name and searched for locally, on the Nabu server
    and on Alex's web site.  Returns FALSE if it couldn't find the file, or if
-   the name is "Quit".  If the name is "Bookmark" then it will load the
-   previously saved bookmarked level name.  Loading sets up related things as
-   it loads, like the game tile area size or background music.  Since it is a
-   line by line keyword based file, it can successfully load garbage without
-   doing anything (you'll end up playing the previous level again).
+   the name is "Quit" or there is a fixable syntax error.  If the name is
+   "Bookmark" then it will load the previously saved bookmarked level name.
+   Loading sets up related things as it loads, like the game tile area size or
+   background music.  Since it is a line by line keyword based file, it can
+   successfully load garbage without doing anything (you'll end up playing
+   the previous level again).
 */
 bool LoadLevelFile(void)
 {
@@ -578,29 +594,54 @@ bool LoadLevelFile(void)
 
   gVictoryWinningPlayer = MAX_PLAYERS + 1;
 
-  if (strcasecmp(gLevelName, "Quit") == 0)
-    return false;
-
   if (strcasecmp(gLevelName, "Bookmark") == 0)
+  {
+    DebugPrintString("Using bookmarked level.\n");
     strcpy(gLevelName, gBookmarkedLevelName);
+  }
+
+  if (strcasecmp(gLevelName, "Quit") == 0)
+  {
+    DebugPrintString("Quit level.\n");
+    return false;
+  }
 
   sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL");
   if (sLevelFileHandle == BAD_FILE_HANDLE)
     return false; /* OpenDataFile will have printed an error message. */
-
-  /* Reinitialise our buffering system to be empty. */
-  sLevelReadPosition = 0;
-  sLevelWritePosition = 0;
-
   DebugPrintString("Now loading level file \"");
   DebugPrintString(g_TempBuffer);
   DebugPrintString("\".\n");
 
-  ProcessLevelKeywords();
+  /* Reinitialise our local file buffering system to be empty. */
+  sLevelReadPosition = 0;
+  sLevelWritePosition = 0;
+
+  /* Load the level! */
+  bool returnCode = ProcessLevelKeywords();
 
   CloseDataFile(sLevelFileHandle);
   sLevelFileHandle = BAD_FILE_HANDLE;
   sLevelBuffer = NULL;
-  return true;
+
+  /* Reset player things (like scores, position, velocity) and a few other
+     things too that are level specific, now that the new level has loaded. */
+  InitialisePlayersForNewLevel();
+
+  /* Do after tiles & players set up: calc initial score. */
+  InitialiseScores();
+
+  /* Remove extra keystrokes and joystick actions from the input queue, so a
+     stale joystick action doesn't take over an AI player or skip to the next
+     level too early. */
+
+#ifdef NABU_H
+  while (isKeyPressed())
+    getChar();
+  g_KeyboardFakeJoystickStatus = 0;
+  bzero(g_JoystickStatus, sizeof(g_JoystickStatus));
+#endif /* NABU_H */
+
+  return returnCode;
 }
 

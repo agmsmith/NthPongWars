@@ -80,11 +80,12 @@ extern bool LoadLevelFile(void);
 /* Loads the named level file, with the base name in gLevelName.  Will be
    converted to a full file name and searched for locally, on the Nabu server
    and on Alex's web site.  Returns FALSE if it couldn't find the file, or if
-   the name is "Quit".  If the name is "Bookmark" then it will load the
-   previously saved bookmarked level name.  Loading sets up related things as
-   it loads, like the game tile area size or background music.  Since it is a
-   line by line keyword based file, it can successfully load garbage without
-   doing anything (you'll end up playing the previous level again). */
+   the name is "Quit" or there is a fixable syntax error.  If the name is
+   "Bookmark" then it will load the previously saved bookmarked level name.
+   Loading sets up related things as it loads, like the game tile area size or
+   background music.  Since it is a line by line keyword based file, it can
+   successfully load garbage without doing anything (you'll end up playing
+   the previous level again). */
 
 #endif /* _LEVELS_H */
 

@@ -1,0 +1,10 @@
+# Display a help screen.
+GameMode: Trivia
+Music: ONECOLN1
+ScreenChar: HELP
+Delay: 50
+LevelNext: All, TITLE
+LevelNext: Down, HELP
+LevelNext: Right, COTTAGE
+LevelNext: Fire, LEVEL001
+

@@ -22,6 +22,7 @@
 #include "players.h"
 #include "scores.h"
 #include "soundscreen.h"
+#include "levels.h"
 
 #ifdef NABU_H
 #include "Art/NthPong1.h" /* Artwork data definitions for player sprites. */
@@ -112,45 +113,23 @@ void InitialisePlayers(void)
   uint16_t pixelCoord;
   player_pointer pPlayer;
 
-  /* Cache the positions of the walls. */
-
-  g_play_area_wall_bottom_y = g_play_area_height_pixels -
-    PLAYER_PIXEL_DIAMETER_NORMAL / 2;
-  g_play_area_wall_left_x = PLAYER_PIXEL_DIAMETER_NORMAL / 2;
-  g_play_area_wall_right_x = g_play_area_width_pixels -
-    PLAYER_PIXEL_DIAMETER_NORMAL / 2;
-  g_play_area_wall_top_y = PLAYER_PIXEL_DIAMETER_NORMAL / 2;
-
-#if 0
-printf("Walls adjusted for player size:\n");
-printf("(%d to %d, %d to %d)\n",
-  g_play_area_wall_left_x,
-  g_play_area_wall_right_x,
-  g_play_area_wall_top_y,
-  g_play_area_wall_bottom_y
-);
-#endif
-
   /* Set the constant velocity change used for separating collided players. */
 
   INT_TO_FX(1, g_SeparationVelocityFxAdd);
 
-  /* Set up the players. */
+  /* Set up the players, scattered across the screen. */
 
-  pixelCoord = 32; /* Scatter players across screen. */
+  pixelCoord = 32;
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
   iPlayer++, pPlayer++)
   {
     pPlayer->player_array_index = iPlayer; /* Fast convert pointer to index. */
+    pPlayer->win_count = 0;
 
-    INT_TO_FX(pixelCoord, pPlayer->pixel_center_x);
-    INT_TO_FX(pixelCoord, pPlayer->pixel_center_y);
+    pPlayer->starting_level_pixel_x = pixelCoord;
+    pPlayer->starting_level_pixel_y = pixelCoord;
+    pPlayer->starting_level_pixel_flying_height = 15;
     pixelCoord += 32;
-    pPlayer->pixel_flying_height = 15;
-    INT_FRACTION_TO_FX(0, iPlayer * 256, pPlayer->velocity_x);
-    DIV4_FX(pPlayer->velocity_x, pPlayer->velocity_x);
-    INT_FRACTION_TO_FX(0, 0x1000, pPlayer->velocity_y);
-    pPlayer->player_collision_count = 0;
 
     /* Make them all AI players, since you can take over from AI easily. */
 
@@ -171,9 +150,46 @@ printf("(%d to %d, %d to %d)\n",
 #endif
 
 #ifdef NABU_H
-    pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
     pPlayer->shadow_colour = k_PLAYER_COLOURS[iPlayer].shadow;
     pPlayer->sparkle_colour = k_PLAYER_COLOURS[iPlayer].sparkle;
+#endif /* NABU_H */
+  }
+
+  InitialisePlayersForNewLevel();
+}
+
+
+/* Reset player things to get ready for running the next level.
+*/
+void InitialisePlayersForNewLevel(void)
+{
+  uint8_t iPlayer;
+  player_pointer pPlayer;
+
+  /* Cache the positions of the walls. */
+
+  g_play_area_wall_bottom_y = g_play_area_height_pixels -
+    PLAYER_PIXEL_DIAMETER_NORMAL / 2;
+  g_play_area_wall_left_x = PLAYER_PIXEL_DIAMETER_NORMAL / 2;
+  g_play_area_wall_right_x = g_play_area_width_pixels -
+    PLAYER_PIXEL_DIAMETER_NORMAL / 2;
+  g_play_area_wall_top_y = PLAYER_PIXEL_DIAMETER_NORMAL / 2;
+
+  /* Reset the players for a new level. */
+
+  for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
+  iPlayer++, pPlayer++)
+  {
+    INT_TO_FX(pPlayer->starting_level_pixel_x, pPlayer->pixel_center_x);
+    INT_TO_FX(pPlayer->starting_level_pixel_y, pPlayer->pixel_center_y);
+    pPlayer->pixel_flying_height = pPlayer->starting_level_pixel_flying_height;
+    INT_TO_FX(0, pPlayer->velocity_x);
+    INT_TO_FX(0, pPlayer->velocity_y);
+    pPlayer->player_collision_count = 0;
+    pPlayer->joystick_inputs = 0;
+
+#ifdef NABU_H
+    pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
     pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
   }
@@ -976,6 +992,7 @@ void UpdatePlayerInputs(void)
         ((player_brain) BRAIN_JOYSTICK) :
         ((player_brain) BRAIN_KEYBOARD);
       pPlayer->joystick_inputs = joyStickData;
+      pPlayer->win_count = 0;
 #if 0
 printf("Player %d assigned to %s #%d.\n", iPlayer,
   (pPlayer->brain == ((player_brain) BRAIN_JOYSTICK)) ? "joystick" : "keyboard",

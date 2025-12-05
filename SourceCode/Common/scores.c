@@ -49,7 +49,7 @@ void InitialiseScores(void)
     pPlayer->score_displayed = 0x4321; /* Force a display update next time. */
   }
 
-  g_ScoreGoal = g_play_area_num_tiles;
+  g_ScoreGoal = gVictoryStartingTileCount;
   s_ScoreGoalDisplayed = 0xFEDC; /* Force a display update next time. */
 
   s_ScoreFramesPerUpdateDisplayed = 255; /* Force an update. */

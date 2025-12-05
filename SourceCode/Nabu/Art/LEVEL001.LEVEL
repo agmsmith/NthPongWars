@@ -1,5 +1,5 @@
 # The first level!  Set up the correct font for gameplay.
 Music: LOADSONG
 ScreenFont: NTHPONG1
-NextLevel: COTTAGE
+LevelNext: All, COTTAGE
 

@@ -23,10 +23,10 @@
   #define NUL ((char) 0)
 #endif
 
-bool gVictoryModeFireButtonPress = false;
+bool gVictoryModeFireButtonPress = true;
 bool gVictoryModeJoystickPress = false;
-bool gVictoryModeHighestTileCount = true;
-uint16_t gVictoryCountdownStart = 1000;
+bool gVictoryModeHighestTileCount = false;
+uint16_t gVictoryStartingTileCount = 100;
 uint8_t gVictoryWinningPlayer = MAX_PLAYERS + 1;
 
 char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";
@@ -72,8 +72,7 @@ bool VictoryConditionTest(void)
       COMPILER_VERIFY(Joy_Button == 0b00010000);
       COMPILER_VERIFY(MAX_PLAYERS == 4);
 
-      uint8_t buttonBits =
-        (pPlayer->joystick_inputs & (JOYSTICK_DIRECTION_MASK | Joy_Button));
+      uint8_t buttonBits = pPlayer->joystick_inputs; /* Unused bits already 0 */
       if (buttonBits != 0)
       {
         uint8_t bitCount = 0;

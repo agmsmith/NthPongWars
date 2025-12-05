@@ -1,8 +1,9 @@
 # Load a picture of the family cottage, it's a full screen picture.
 
 # First a file name with lots of space before and after it.
-Music:   ONECOLN1  
-
+Music:   ONECOLN1     
+ScreenChar: HELP
+Delay: 50
 ScreenFull: COTTAGE
-NextLevel: Quit
+LevelNext: All, Quit
 

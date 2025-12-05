@@ -92,7 +92,7 @@
 /* #define DISABLE_HCCA_RX_INT /* Disable if not using networking. */
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
 /* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
-/* #define DISABLE_CURSOR /* Don't flash on VDP during NABU-LIB keyboard input. */
+#define DISABLE_CURSOR /* Don't flash on VDP during NABU-LIB keyboard input. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h" /* For TCP Server. */
 
@@ -171,7 +171,7 @@ static void ProcessKeyboard(void)
   while (isKeyPressed())
   {
     uint8_t letter;
-    letter = getChar(); /* Note, may flash cursor, writing ' ' to VDP. */
+    letter = getChar(); /* May flash cursor on screen, see DISABLE_CURSOR. */
 
     if (letter >= 0xE0 && letter < 0xEB) /* Cursor key pressed. */
     {
@@ -420,12 +420,15 @@ void main(void)
     {
       ProcessKeyboard();
       UpdatePlayerInputs();
-      Simulate();
-      if ((g_FrameCounter & 0x3F) == 0)
-        AddNextPowerUpTile(); /* See coincident power-up before hitting it. */
-      UpdateTileAnimations();
-      UpdatePlayerAnimations();
-      UpdateScores();
+      if (gVictoryModeHighestTileCount) /* If running the Pong Wars game. */
+      {
+        Simulate();
+        if ((g_FrameCounter & 0x3F) == 0)
+          AddNextPowerUpTile(); /* See coincident power-up before hitting it. */
+        UpdateTileAnimations();
+        UpdatePlayerAnimations();
+        UpdateScores();
+      }
 
       /* Check for game exit here, after the updates have been done, but before
          the dirty flags have been cleared, so we can see what's taking up all
@@ -441,9 +444,19 @@ void main(void)
       vdp_waitVDPReadyInt(); /* Fixed version now sets vdpIsReady to zero. */
 
       /* Do the sprites first, since they're time critical to avoid glitches. */
-      CopyPlayersToSprites();
-      CopyTilesToScreen();
-      CopyScoresToScreen();
+      if (gVictoryModeHighestTileCount) /* If running the Pong Wars game. */
+      {
+        CopyPlayersToSprites();
+        CopyTilesToScreen();
+        CopyScoresToScreen();
+      }
+      else /* Game not running, turn off the sprites, slow down to 30hz updates. */
+      {
+        if (g_ScoreFramesPerUpdate < 2)
+          vdp_waitVDPReadyInt();
+        vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
+        IO_VDPDATA = 0xD0;
+      }
 
       /* Update the audio hardware with the music being played.  Can debug which
          channels are busy, look in scores.c. */
@@ -460,9 +473,13 @@ void main(void)
 
       g_FrameCounter++;
 
-      if ((g_FrameCounter & 0x1F) == 0)
-        g_ScoreGoal--; /* Fake decreasing of the goal about once per second. */
+      /* Decrease the score goal about once per second. */
 
+      if ((g_FrameCounter & 0x1F) == 0)
+      {
+        if (g_ScoreGoal-- == 0)
+          g_ScoreGoal = 9; /* Shouldn't happen, somebody should have won. */
+      }
 #if 0
       /* Every once in a while move the screen around the play area. */
 

@@ -20,6 +20,18 @@
 # on port 5815 (or whatever you have the RetroNetTCPServerPort set to in the
 # NABU Internet Adapter).
 
+# Sets the game mode for this level.  Values are Slide, Trivia, PongWar.
+# Slide does a slide show, the game doesn't run and a static slide is
+# displayed.  When any player hits a fire button, the level ends and that
+# player is the winner.
+# Trivia runs the level as a trivia game.  A static screen is shown and the
+# game doesn't run.  A choice is made by a joystick movement or fire button,
+# and that ends the level, with the winner being set by the direction of
+# joystick movement or fire button action (see LevelNext: options).
+# PongWar runs the level as a playable Nth Pong Wars game, with AI players
+# enabled, remember to load a font and sprites for the game graphics.
+GameMode: Slide
+
 # When loading a screen, it's best to start the music first, since the level
 # file is executed in the order specified and it's nice to have the music going
 # during the possibly several seconds long screen load.  That means if you have
@@ -69,6 +81,10 @@ LevelNext: P3, CONGRATS_YELLOW
 # Or the next level is determined by a joystick direction or button press
 # (Left, Down, Right, Up, Fire).
 LevelNext: Down, ANSWER026_B
+# If you only want to specify one or two players, you can use LevelNext:All to
+# set the next level for all players and direction options then use more
+# specific LevelNext to set a particular player or direction option.  Useful
+# for trivia levels where there is only one right answer and many wrong answers.
 
 # This one saves a specified level name as a bookmark.  Later on you can load
 # that bookmarked level by specifying the magic level name of "Bookmark".

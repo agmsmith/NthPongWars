@@ -646,6 +646,12 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 {
   uint8_t joystickOutput = 0;
 
+  if (!gVictoryModeHighestTileCount) /* Not playing a game, so do nothing. */
+  {
+    pPlayer->joystick_inputs = 0;
+    return;
+  }
+
   /* Do the harvest mode vs trailing tiles mode based on time duty cycle that
      gets shorter if we need more speed (using the technique of laying down a
      tile and then harvesting it in the next frame, rather than the bigger
@@ -999,147 +1005,155 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
       continue;
     }
 
-    /* Update the direction the player's velocity is pointing in.  It's only
-       used here for modifying velocity direction, not in the physics
-       simulation.  Needed for applying harvest, and for steering.  Only update
-       it if needed, and occasionally every 16th frame to keep AI's pointed in
-       the right direction. */
+    /* Do some velocity adjustments here, outside the simulation, but only
+       if the game is running (it makes tile harvesting noises). */
 
-    uint8_t player_velocity_octant = 0;
-    if (pPlayer->thrust_harvested ||
-    (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left)) ||
-    ((uint8_t) g_FrameCounter & 15) == (iPlayer << 2))
+    if (gVictoryModeHighestTileCount) /* If game running. */
     {
-      player_velocity_octant = VECTOR_FX_TO_OCTANT(
-        &pPlayer->velocity_x, &pPlayer->velocity_y);
-      pPlayer->velocity_octant_right_on = ((player_velocity_octant & 0x80) != 0);
-      player_velocity_octant &= 7; /* Low 3 bits contain octant number. */
-      pPlayer->velocity_octant = player_velocity_octant;
-    }
+      /* Update the direction the player's velocity is pointing in.  It's only
+         used here for modifying velocity direction, not in the physics
+         simulation.  Needed for applying harvest, and for steering.  Only
+         update it if needed, and occasionally every 16th frame to keep AI's
+         pointed in the right direction. */
 
-    /* If thrusted in the last frame and harvested some points, speed up in
-       the current velocity direction.  Number of tiles harvested is converted
-       to a fraction of a pixel per update velocity (else things go way too
-       fast and the frame rate slows down as the physics adds more steps to
-       keep up).  Extra boost if you have the FAST power-up. */
-
-    if (pPlayer->thrust_harvested)
-    {
-      fx thrustAmount;
-      INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
-      DIV2Nth_FX(&thrustAmount, 5);
-
-      if (player_velocity_octant <= 1 || player_velocity_octant == 7)
-        ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
-      else if (player_velocity_octant >= 3 && player_velocity_octant <= 5)
-        SUBTRACT_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
-
-      if (player_velocity_octant >= 1 && player_velocity_octant <= 3)
-        ADD_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
-      else if (player_velocity_octant >= 5)
-        SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
-
-      /* Play a sound for harvesting.  Maybe. */
-      PlaySound(SOUND_HARVEST, pPlayer);
-    }
-
-    /* Apply joystick actions.  Fire does harvesting.  Directional buttons
-       steer.  Or just drift if not specifying a direction or firing (and since
-       not harvesting or steering, don't need to update the velocity octant). */
-
-    pPlayer->thrust_active = (joyStickData & Joy_Button);
-
-    if (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left))
-    {
-      /* Convert the joystick inputs to a direction in octants. */
-
-      uint8_t desired_octant = 0;
-      if (joyStickData & Joy_Left)
+      uint8_t player_velocity_octant = 0;
+      if (pPlayer->thrust_harvested ||
+      (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left)) ||
+      ((uint8_t) g_FrameCounter & 15) == (iPlayer << 2))
       {
-        if (joyStickData & Joy_Up)
-          desired_octant = 5;
-        else if (joyStickData & Joy_Down)
-          desired_octant = 3;
-        else
-          desired_octant = 4;
+        player_velocity_octant = VECTOR_FX_TO_OCTANT(
+          &pPlayer->velocity_x, &pPlayer->velocity_y);
+        pPlayer->velocity_octant_right_on =
+          ((player_velocity_octant & 0x80) != 0);
+        player_velocity_octant &= 7; /* Low 3 bits contain octant number. */
+        pPlayer->velocity_octant = player_velocity_octant;
       }
-      else if (joyStickData & Joy_Right)
+
+      /* If thrusted in the last frame and harvested some points, speed up in
+         the current velocity direction.  Number of tiles harvested is converted
+         to a fraction of a pixel per update velocity (else things go way too
+         fast and the frame rate slows down as the physics adds more steps to
+         keep up). */
+
+      if (pPlayer->thrust_harvested)
       {
-        if (joyStickData & Joy_Up)
-          desired_octant = 7;
-        else if (joyStickData & Joy_Down)
-          desired_octant = 1;
-        else
-          desired_octant = 0;
+        fx thrustAmount;
+        INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
+        DIV2Nth_FX(&thrustAmount, 5);
+
+        if (player_velocity_octant <= 1 || player_velocity_octant == 7)
+          ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
+        else if (player_velocity_octant >= 3 && player_velocity_octant <= 5)
+          SUBTRACT_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
+
+        if (player_velocity_octant >= 1 && player_velocity_octant <= 3)
+          ADD_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+        else if (player_velocity_octant >= 5)
+          SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+
+        /* Play a sound for harvesting.  Maybe, if nobody else is doing it. */
+        PlaySound(SOUND_HARVEST, pPlayer);
       }
-      else if (joyStickData & Joy_Up)
-          desired_octant = 6;
-      else if (joyStickData & Joy_Down)
-          desired_octant = 2;
 
-#if DEBUG_PRINT_OCTANTS
-printf("Player %d Velocity (%f,%f) octant %d, right on %d, desire %d.\n",
-iPlayer,
-GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y),
-pPlayer->velocity_octant, pPlayer->velocity_octant_right_on, desired_octant);
-#endif
+      /* Apply joystick actions.  Fire does harvesting.  Directional buttons
+         steer.  Or just drift if not specifying a direction or firing (and
+         since not harvesting or steering, don't need to update the velocity
+         octant). */
 
-      /* Modify the velocity direction to be closer to our desired_octant. */
+      pPlayer->thrust_active = (joyStickData & Joy_Button);
 
-      TurnVelocityTowardsOctant(pPlayer, desired_octant);
-#if DEBUG_PRINT_OCTANTS
-printf("  Turned velocity (%f,%f).\n",
-GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
-#endif
-    }
+      if (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left))
+      {
+        /* Convert the joystick inputs to a direction in octants. */
 
-#if 1
-    /* Add some friction, to reduce excessive velocity which slows the frame
-       rate (physics has to run multiple steps) and is uncontrollable for the
-       user.  Use cheap speed from simulation update (lags a frame). */
+        uint8_t desired_octant = 0;
+        if (joyStickData & Joy_Left)
+        {
+          if (joyStickData & Joy_Up)
+            desired_octant = 5;
+          else if (joyStickData & Joy_Down)
+            desired_octant = 3;
+          else
+            desired_octant = 4;
+        }
+        else if (joyStickData & Joy_Right)
+        {
+          if (joyStickData & Joy_Up)
+            desired_octant = 7;
+          else if (joyStickData & Joy_Down)
+            desired_octant = 1;
+          else
+            desired_octant = 0;
+        }
+        else if (joyStickData & Joy_Up)
+            desired_octant = 6;
+        else if (joyStickData & Joy_Down)
+            desired_octant = 2;
 
-    if (pPlayer->speed > FRICTION_SPEED)
-    {
-      static fx portionOfVelocity;
-      DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
-      SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
-      DIV256_FX(pPlayer->velocity_y, portionOfVelocity);
-      SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
-    }
-#endif
+  #if DEBUG_PRINT_OCTANTS
+  printf("Player %d Velocity (%f,%f) octant %d, right on %d, desire %d.\n",
+  iPlayer,
+  GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y),
+  pPlayer->velocity_octant, pPlayer->velocity_octant_right_on, desired_octant);
+  #endif
 
-    /* Update special effect animations, mostly for feedback to the player.
-       Note the priority order implied, though in future we could have more
-       sparkle animations active simultaneously. */
+        /* Modify the velocity direction to be closer to our desired_octant. */
 
-    SpriteAnimationType newAnimType = (SpriteAnimationType) SPRITE_ANIM_NONE;
-    if (pPlayer->power_up_timers[OWNER_PUP_BASH_WALL])
-      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_BASH;
-    else if (pPlayer->power_up_timers[OWNER_PUP_SOLID])
-      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_SOLID;
-    else if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
-      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_WIDER;
-    else if (pPlayer->thrust_active)
-      newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST;
+        TurnVelocityTowardsOctant(pPlayer, desired_octant);
+  #if DEBUG_PRINT_OCTANTS
+  printf("  Turned velocity (%f,%f).\n",
+  GET_FX_FLOAT(pPlayer->velocity_x), GET_FX_FLOAT(pPlayer->velocity_y));
+  #endif
+      }
 
-    /* Start a new animation if needed, copying the whole animation structure
-       to set the initial state.  Otherwise the previous animation continues
-       to play. */
+  #if 1
+      /* Add some friction, to reduce excessive velocity which slows the frame
+         rate (physics has to run multiple steps) and is uncontrollable for the
+         user.  Use cheap speed from simulation update (lags a frame). */
 
-    if (newAnimType != pPlayer->sparkle_anim.type)
-      pPlayer->sparkle_anim = g_SpriteAnimData[newAnimType];
+      if (pPlayer->speed > FRICTION_SPEED)
+      {
+        static fx portionOfVelocity;
+        DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
+        SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
+        DIV256_FX(pPlayer->velocity_y, portionOfVelocity);
+        SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
+      }
+  #endif
 
-    /* Switch in an extra bold harvest animation frame if they actually
-       harvested something.  Once it has played, the current animation will
-       restart from the beginning, because the override frame number is higher
-       than the normal range of animation frames in every animation. */
+      /* Update special effect animations, mostly for feedback to the player.
+         Note the priority order implied, though in future we could have more
+         sparkle animations active simultaneously. */
 
-    if (pPlayer->thrust_harvested)
-    {
-       pPlayer->sparkle_anim.current_delay =
-        g_SpriteAnimData[SPRITE_ANIM_BALL_EFFECT_THRUST].delay;
-       pPlayer->sparkle_anim.current_name =
-        SPRITE_ANIM_BALL_EFFECT_THRUST_BOLD_FRAME;
+      SpriteAnimationType newAnimType = (SpriteAnimationType) SPRITE_ANIM_NONE;
+      if (pPlayer->power_up_timers[OWNER_PUP_BASH_WALL])
+        newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_BASH;
+      else if (pPlayer->power_up_timers[OWNER_PUP_SOLID])
+        newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_SOLID;
+      else if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
+        newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_WIDER;
+      else if (pPlayer->thrust_active)
+        newAnimType = (SpriteAnimationType) SPRITE_ANIM_BALL_EFFECT_THRUST;
+
+      /* Start a new animation if needed, copying the whole animation structure
+         to set the initial state.  Otherwise the previous animation continues
+         to play. */
+
+      if (newAnimType != pPlayer->sparkle_anim.type)
+        pPlayer->sparkle_anim = g_SpriteAnimData[newAnimType];
+
+      /* Switch in an extra bold harvest animation frame if they actually
+         harvested something.  Once it has played, the current animation will
+         restart from the beginning, because the override frame number is higher
+         than the normal range of animation frames in every animation. */
+
+      if (pPlayer->thrust_harvested)
+      {
+         pPlayer->sparkle_anim.current_delay =
+          g_SpriteAnimData[SPRITE_ANIM_BALL_EFFECT_THRUST].delay;
+         pPlayer->sparkle_anim.current_name =
+          SPRITE_ANIM_BALL_EFFECT_THRUST_BOLD_FRAME;
+      }
     }
   }
 }

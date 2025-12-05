@@ -39,10 +39,16 @@ extern bool gVictoryModeJoystickPress;
    pressed first.  Mostly useful for trivia contests. */
 
 extern bool gVictoryModeHighestTileCount;
-/* The player with the highest tile count wins.  The game runs until the
+/* The player with the highest tile count wins.  If FALSE then the player
+   movement won't be run and AI's should go inactive.  The game runs until the
    highest player tile count is greater or equal to the countdown value
    (g_ScoreGoal).  The countdown ticks down once per second and starts at the
-   number of tiles in the game area. */
+   number of tiles in the game area, unless otherwise specified. */
+
+extern uint16_t gVictoryStartingTileCount;
+/* The countdown (g_ScoreGoal) starts at whatever value gVictoryInitialTileCount
+   specifies.  This is initialised to the number of tiles on the game board when
+   a board is loaded, or can be set using a keyword in a level file. */
 
 extern uint8_t gVictoryWinningPlayer;
 /* Number of the winning player, or MAX_PLAYERS+1 if no player has won.  Does

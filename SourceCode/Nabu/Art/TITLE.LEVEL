@@ -1,5 +1,6 @@
 # Load our title screen, it's a full screen picture.
 Music: PINKPNTH
 ScreenFull: TITLESCREEN
-NextLevel: LEVEL001
+LevelNext: All, LEVEL001
+Music: None.
 

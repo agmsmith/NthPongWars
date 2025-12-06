@@ -1214,6 +1214,25 @@ void UpdatePlayerInputs(void)
 }
 
 
+/* Make all players brainless.  Sometimes after a slide show you want a level
+   to start with no Human players.  A player would have been assigned when a
+   button was pressed in the slide show.
+*/
+void DeassignPlayersFromDevices(void)
+{
+  uint8_t iPlayer = MAX_PLAYERS - 1;
+  player_pointer pPlayer = g_player_array;
+  do {
+    if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE))
+    {
+      pPlayer->brain = ((player_brain) BRAIN_INACTIVE);
+      DebugPrintPlayerAssignment(pPlayer);
+    }
+    pPlayer++;
+  } while (iPlayer-- != 0);
+}
+
+
 #ifdef NABU_H
 /* Copy all the players to hardware sprites.  Returns the number of the next
    free sprite.  Inactive players don't use any sprites.  Also inactive sparkle

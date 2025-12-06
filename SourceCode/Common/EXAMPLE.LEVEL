@@ -92,3 +92,9 @@ LevelNext: Down, ANSWER026_B
 # game sequence of levels.
 LevelBookmark: LEVEL008
 
+# Removes all the players from the game.  Useful for starting a level that is
+# AI players only.  Note that merely pressing Fire in a slide show starts a
+# Human player.  Though once a player is removed, their total wins goes back
+# to zero.  No options needed after the colon.
+RemovePlayers:
+

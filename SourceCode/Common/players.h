@@ -369,6 +369,11 @@ extern void InitialisePlayers(void);
 extern void InitialisePlayersForNewLevel(void);
 /* Reset player things to get ready for running the next level. */
 
+extern void DeassignPlayersFromDevices(void);
+/* Make all players brainless.  Sometimes after a slide show you want a level
+   to start with no Human players.  A player would have been assigned when a
+   button was pressed in the slide show. */
+
 extern void UpdatePlayerAnimations(void);
 /* Update animations for the next frame.  Also convert location of the player
    to hardware pixel coordinates. */

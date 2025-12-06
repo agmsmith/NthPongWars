@@ -1,6 +1,6 @@
 # The first level!  Set up the correct font for gameplay.
 GameMode: PongWar
-Music: LOADSONG
+Music: Default
 ScreenFont: NTHPONG1
 LevelNext: All, HELP
-
+#RemovePlayers:

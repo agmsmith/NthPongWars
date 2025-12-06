@@ -453,6 +453,18 @@ bool KeywordDelay(void)
 }
 
 
+/* Remove all the players from the game.  Lets you have an AI only game.
+*/
+bool KeywordRemovePlayers(void)
+{
+  /* Throw away the rest of this line, it's not used. */
+  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+
+  DeassignPlayersFromDevices();
+  return true;
+}
+
+
 /* How should this level be run?  Should the game engine be turned on?  Or is
    it just a static screen waiting for a button press?  Set up the appropriate
    things for the selected mode.
@@ -510,6 +522,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"LevelNext", KeywordLevelNext},
   {"LevelBookmark", KeywordLevelBookmark},
   {"Delay", KeywordDelay},
+  {"RemovePlayers", KeywordRemovePlayers},
   {"GameMode", KeywordGameMode},
   {NULL, NULL}
 };

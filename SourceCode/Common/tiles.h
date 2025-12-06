@@ -190,6 +190,13 @@ extern tile_pointer g_play_area_end_tile; /* Just past the last tile. */
 extern uint16_t g_play_area_height_pixels;
 extern uint16_t g_play_area_width_pixels;
 
+/* The countdown (g_ScoreGoal) starts at whatever value gVictoryInitialTileCount
+   specifies.  This is initialised to the number of tiles on the game board when
+   a board is loaded, or can be set using a keyword in a level file.  Perhaps
+   should be in the level.h file, but you can't include that before tiles.h due
+   to a conflict over the definition of MAX_PLAYERS. */
+extern uint16_t gVictoryStartingTileCount;
+
 /* Size of the screen area we can draw tiles in, Only the active area is
    considered, score and other stuff around the visible area isn't included. */
 extern uint8_t g_screen_height_tiles;

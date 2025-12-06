@@ -514,6 +514,7 @@ void main(void)
     DebugPrintString(k_CorruptedLowMemText);
 
   DumpTilesToTerminal();
+  DumpPlayersToTerminal();
   strcpy(g_TempBuffer, "Frame count: ");
   AppendDecimalUInt16(g_FrameCounter);
   strcat(g_TempBuffer, "\n");

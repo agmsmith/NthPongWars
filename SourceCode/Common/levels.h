@@ -45,11 +45,6 @@ extern bool gVictoryModeHighestTileCount;
    (g_ScoreGoal).  The countdown ticks down once per second and starts at the
    number of tiles in the game area, unless otherwise specified. */
 
-extern uint16_t gVictoryStartingTileCount;
-/* The countdown (g_ScoreGoal) starts at whatever value gVictoryInitialTileCount
-   specifies.  This is initialised to the number of tiles on the game board when
-   a board is loaded, or can be set using a keyword in a level file. */
-
 extern uint8_t gVictoryWinningPlayer;
 /* Number of the winning player, or MAX_PLAYERS+1 if no player has won.  Does
    get set to MAX_PLAYERS (not a valid player) when in gVictoryModeJoystickPress

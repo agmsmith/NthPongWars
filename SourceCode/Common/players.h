@@ -389,5 +389,9 @@ extern void CopyPlayersToSprites(void);
    updated during display look bad. */
 #endif /* NABU_H */
 
+extern void DumpPlayersToTerminal(void);
+/* For debugging, print all the player assignments on the terminal.
+   Uses g_TempBuffer. */
+
 #endif /* _PLAYERS_H */
 

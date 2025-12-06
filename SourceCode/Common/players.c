@@ -887,6 +887,47 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 }
 
 
+/* Internal utility function for printing to debug output what player is
+   controlled by what device.  Uses g_TempBuffer.
+*/
+void DebugPrintPlayerAssignment(player_pointer pPlayer)
+{
+  strcpy(g_TempBuffer, "Player #");
+  AppendDecimalUInt16(pPlayer->player_array_index);
+  strcat(g_TempBuffer, " assigned to ");
+  switch (pPlayer->brain)
+  {
+    case BRAIN_INACTIVE:
+      strcat(g_TempBuffer, "nothing");
+      break;
+
+    case BRAIN_KEYBOARD:
+      strcat(g_TempBuffer, "keyboard");
+      break;
+
+    case BRAIN_JOYSTICK:
+      strcat(g_TempBuffer, "joystick ");
+      AppendDecimalUInt16(pPlayer->brain_info.iJoystick);
+      break;
+
+    case BRAIN_NETWORK:
+      strcat(g_TempBuffer, "remote network");
+      break;
+
+    case BRAIN_ALGORITHM:
+      strcat(g_TempBuffer, "algorithm running at ");
+      AppendDecimalUInt16(pPlayer->brain_info.algo.target_list_index);
+      break;
+
+    default:
+      strcat(g_TempBuffer, "unknown");
+  }
+
+  strcat(g_TempBuffer, ".\n");
+  DebugPrintString(g_TempBuffer);
+}
+
+
 /* Process the joystick and keyboard inputs.  Input activity assigns a player
    to the joystick or keyboard.  Also updates brains to generate fake joystick
    inputs if needed.  Then use the joystick inputs to modify the player's
@@ -966,7 +1007,7 @@ void UpdatePlayerInputs(void)
     if ((joyStickData & 0x1F) == 0)
       continue; /* No buttons pressed, no activity. */
 
-    /* Find an idle player and assign it to this input.  Or an AI player? */
+    /* Find an idle player and assign it to this input. */
 
     for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
       iPlayer++, pPlayer++)
@@ -993,11 +1034,7 @@ void UpdatePlayerInputs(void)
         ((player_brain) BRAIN_KEYBOARD);
       pPlayer->joystick_inputs = joyStickData;
       pPlayer->win_count = 0;
-#if 0
-printf("Player %d assigned to %s #%d.\n", iPlayer,
-  (pPlayer->brain == ((player_brain) BRAIN_JOYSTICK)) ? "joystick" : "keyboard",
-  pPlayer->brain_info.iJoystick);
-#endif
+      DebugPrintPlayerAssignment(pPlayer);
     }
   }
 
@@ -1019,6 +1056,7 @@ printf("Player %d assigned to %s #%d.\n", iPlayer,
     else if (g_FrameCounter - pPlayer->last_brain_activity_time > 30 * 30)
     {
       pPlayer->brain = ((player_brain) BRAIN_INACTIVE);
+      DebugPrintPlayerAssignment(pPlayer);
       continue;
     }
 
@@ -1248,4 +1286,21 @@ void CopyPlayersToSprites(void)
   IO_VDPDATA = 0xD0;
 }
 #endif /* NABU_H */
+
+
+/* For debugging, print all the player assignments on the terminal.
+   Uses g_TempBuffer.
+*/
+void DumpPlayersToTerminal(void)
+{
+  uint8_t iPlayer = MAX_PLAYERS - 1;
+  player_pointer pPlayer = g_player_array;
+
+  DebugPrintString("Player data dump...\n");
+
+  do {
+    DebugPrintPlayerAssignment(pPlayer);
+    pPlayer++;
+  } while (iPlayer-- != 0);
+}
 

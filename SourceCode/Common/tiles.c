@@ -97,6 +97,7 @@ uint16_t g_TileOwnerCounts[OWNER_MAX];
 uint8_t g_play_area_height_tiles = 24;
 uint8_t g_play_area_width_tiles = 32;
 uint16_t g_play_area_num_tiles = 0;
+uint16_t gVictoryStartingTileCount = 100;
 tile_pointer g_play_area_end_tile = NULL;
 uint16_t g_play_area_height_pixels = 0;
 uint16_t g_play_area_width_pixels = 0;
@@ -180,6 +181,7 @@ bool InitTileArray(void)
   if (g_play_area_num_tiles > TILES_ARRAY_SIZE)
     return false;
   g_play_area_end_tile = g_tile_array + g_play_area_num_tiles;
+  gVictoryStartingTileCount = g_play_area_num_tiles;
   g_play_area_height_pixels = g_play_area_height_tiles * TILE_PIXEL_WIDTH;
   g_play_area_width_pixels = g_play_area_width_tiles * TILE_PIXEL_WIDTH;
 

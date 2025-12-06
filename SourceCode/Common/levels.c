@@ -26,7 +26,6 @@
 bool gVictoryModeFireButtonPress = true;
 bool gVictoryModeJoystickPress = false;
 bool gVictoryModeHighestTileCount = false;
-uint16_t gVictoryStartingTileCount = 100;
 uint8_t gVictoryWinningPlayer = MAX_PLAYERS + 1;
 
 char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";

@@ -19,8 +19,16 @@
 #ifndef _DEBUG_PRINT_H
 #define _DEBUG_PRINT_H 1
 
+/* Print a string to the debug output, which is stdout in CP/M (you can redirect
+   it to a telnet session with "STAT CON:=UC1:") or the telnet session that the
+   Nabu Server is providing, when compiled for bare mode.  Use line feed
+   characters to start new lines, no need for a carriage return. */
 extern void DebugPrintString(const char *MessageText);
 
+/* Utility function to append a readable ASCII version of the given 16 bit
+   unsigned integer, to the g_TempBuffer.  Assume it doesn't overflow.  Returns
+   a pointer to the end of the string in g_TempBuffer.  Doesn't trash memory
+   like printf("%u") does in Z88DK due to mangling the IX frame pointer. */
 extern char * AppendDecimalUInt16(uint16_t Number);
 
 #endif /* _DEBUG_PRINT_H */

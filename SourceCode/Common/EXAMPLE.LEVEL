@@ -98,3 +98,11 @@ LevelBookmark: LEVEL008
 # to zero.  No options needed after the colon.
 RemovePlayers:
 
+# The number of AI players you want in the level.  Use zero for a Humans only
+# game, and if there are zero Humans, it will be a screen saver of sorts with
+# just the power-ups animating.  AI players are added every 8 seconds until
+# this quota is met, or there aren't any empty player slots.  Note that when
+# another player doesn't do anything for 30 seconds, they are removed, and
+# that's the chance for an AI to take over.
+MaxAIPlayers: 2
+

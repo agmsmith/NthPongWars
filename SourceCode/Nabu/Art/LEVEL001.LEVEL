@@ -3,4 +3,6 @@ GameMode: PongWar
 Music: Default
 ScreenFont: NTHPONG1
 LevelNext: All, HELP
-#RemovePlayers:
+RemovePlayers:
+MaxAIPlayers: 4
+

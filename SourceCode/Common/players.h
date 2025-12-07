@@ -342,6 +342,10 @@ typedef struct player_struct {
    non-sequential as joysticks are picked up or go idle). */
 extern player_record g_player_array[MAX_PLAYERS];
 
+/* When running, if there are some empty player slots, add AI players into them
+   until this number of AI players is reached. */
+extern uint8_t gLevelMaxAIPlayers;
+
 /* Calculated by InitialisePlayersForNewLevel(), these are the adjusted game
    coordinates pixel boundaries of the play area.  Adjusted by the ball radius
    to make collision tests easier.  If the ball center position is beyond this

@@ -47,6 +47,8 @@ int16_t g_play_area_wall_left_x;
 int16_t g_play_area_wall_right_x;
 int16_t g_play_area_wall_top_y;
 
+uint8_t gLevelMaxAIPlayers = MAX_PLAYERS;
+
 fx g_SeparationVelocityFxAdd;
 fx g_SeparationVelocityFxStepAdd;
 
@@ -131,16 +133,11 @@ void InitialisePlayers(void)
     pPlayer->starting_level_pixel_flying_height = 15;
     pixelCoord += 32;
 
-    /* Make them all AI players, since you can take over from AI easily. */
+    /* Make them all inactive players.  AI players get added later while the
+       game runs. */
 
+    pPlayer->brain = (player_brain) BRAIN_INACTIVE;
     bzero(&pPlayer->brain_info, sizeof(pPlayer->brain_info));
-    pPlayer->brain = (player_brain) BRAIN_ALGORITHM;
-    pPlayer->brain_info.algo.desired_speed = 4 + iPlayer;
-    pPlayer->brain_info.algo.trail_remaining = 5 + iPlayer * 50;
-    pPlayer->brain_info.algo.target_list_index =
-      g_target_start_indices[iPlayer];
-    pPlayer->brain_info.algo.steer = false;
-    pPlayer->brain_info.algo.target_player = 10;
 
     pPlayer->main_colour =
 #ifdef NABU_H
@@ -1035,6 +1032,38 @@ void UpdatePlayerInputs(void)
       pPlayer->joystick_inputs = joyStickData;
       pPlayer->win_count = 0;
       DebugPrintPlayerAssignment(pPlayer);
+    }
+  }
+
+  /* See if we need to add an AI player to make the quota of AI players.  But
+     only check about once every eight seconds. */
+
+  if ((uint8_t) g_FrameCounter == (uint8_t) 187 && gLevelMaxAIPlayers > 0)
+  {
+    uint8_t numAIPlayers = 0;
+    player_pointer pFreePlayer = NULL;
+
+    pPlayer = g_player_array;
+    for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+    {
+      if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
+        pFreePlayer = pPlayer;
+      else if (pPlayer->brain == ((player_brain) BRAIN_ALGORITHM))
+        numAIPlayers++;
+    }
+    if (numAIPlayers < gLevelMaxAIPlayers && pFreePlayer != NULL)
+    {
+      /* Make an AI player. */
+      bzero(&pFreePlayer->brain_info, sizeof(pFreePlayer->brain_info));
+      pFreePlayer->brain = (player_brain) BRAIN_ALGORITHM;
+      pFreePlayer->brain_info.algo.desired_speed = 4 + numAIPlayers;
+      pFreePlayer->brain_info.algo.trail_remaining = 5 + numAIPlayers * 50;
+      pFreePlayer->brain_info.algo.target_list_index =
+        g_target_start_indices[numAIPlayers];
+      pFreePlayer->brain_info.algo.steer = false;
+      pFreePlayer->brain_info.algo.target_player = 10;
+      pFreePlayer->last_brain_activity_time = g_FrameCounter;
+      DebugPrintPlayerAssignment(pFreePlayer);
     }
   }
 

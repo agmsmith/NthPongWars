@@ -349,6 +349,28 @@ bool KeywordBackgroundMusic(void)
 }
 
 
+/* Delay a number of 1/10 of a second.  Keep the music playing. */
+bool KeywordDelay(void)
+{
+  int delayCount;
+  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+  delayCount = atoi(g_TempBuffer) * 2;
+
+  /* Our delay loop runs 1/20 second per iteration, to keep the music going. */
+
+  while (delayCount > 0)
+  {
+    if (vdpIsReady >= 3) /* 3 frames, 1/20 of second has gone by. */
+    {
+      vdpIsReady = 0;
+      CSFX_play(); /* Update sound hardware with current tune data. */
+      delayCount--;
+    }
+  }
+  return true;
+}
+
+
 /* This keyword specifies the base level name for the next level.  It is
    followed by a player identification, either "All" or "P0", "P1", "P2",
    "P3" or a joystick direction to identify which next level gets set.
@@ -429,30 +451,6 @@ bool KeywordLevelBookmark(void)
 }
 
 
-/* Delay a number of 1/10 of a second.  Keep the music playing. */
-bool KeywordDelay(void)
-{
-  char textOfNumber[10];
-  int delayCount;
-
-  LevelReadAndTrimLine(textOfNumber, sizeof(textOfNumber));
-  delayCount = atoi(textOfNumber) * 2;
-
-  /* Our delay loop runs 1/20 second per iteration, to keep the music going. */
-
-  while (delayCount > 0)
-  {
-    if (vdpIsReady >= 3) /* 3 frames, 1/20 of second has gone by. */
-    {
-      vdpIsReady = 0;
-      CSFX_play(); /* Update sound hardware with current tune data. */
-      delayCount--;
-    }
-  }
-  return true;
-}
-
-
 /* Remove all the players from the game.  Lets you have an AI only game.
 */
 bool KeywordRemovePlayers(void)
@@ -461,6 +459,18 @@ bool KeywordRemovePlayers(void)
   LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
 
   DeassignPlayersFromDevices();
+  return true;
+}
+
+
+/* Set the desired number of AI players.  More AI players get added every few
+  seconds to meet this quota if there are empty player spots.
+*/
+bool KeywordMaxAIPlayers(void)
+{
+  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+  gLevelMaxAIPlayers = atoi(g_TempBuffer);
+
   return true;
 }
 
@@ -519,10 +529,11 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"ScreenFont", KeywordCharFontSpriteScreen},
   {"ScreenChar", KeywordCharImageScreen},
   {"Music", KeywordBackgroundMusic},
+  {"Delay", KeywordDelay},
   {"LevelNext", KeywordLevelNext},
   {"LevelBookmark", KeywordLevelBookmark},
-  {"Delay", KeywordDelay},
   {"RemovePlayers", KeywordRemovePlayers},
+  {"MaxAIPlayers", KeywordMaxAIPlayers},
   {"GameMode", KeywordGameMode},
   {NULL, NULL}
 };

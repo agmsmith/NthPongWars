@@ -365,6 +365,26 @@ void ActivateTileArrayWindow(void)
 }
 
 
+/* Force a redraw of the whole screen.  Usually used after loading a new level,
+   so that left-over graphics from cut screen screens are replaced by the
+   current tile state.
+*/
+void MakeAllTilesDirty(void)
+{
+  tile_pointer pTile;
+
+  if (g_play_area_end_tile == NULL)
+    return; /* Tiles not initialised or level load failed. */
+
+  pTile = g_tile_array;
+  while (pTile != g_play_area_end_tile)
+  {
+    pTile->dirty_screen = true;
+    pTile++;
+  }
+}
+
+
 /* Request redraw of a tile.  Takes care of updating animation stuff, setting
    dirty flags.
 */

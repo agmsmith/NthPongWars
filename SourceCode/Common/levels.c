@@ -662,6 +662,15 @@ bool LoadLevelFile(void)
   sLevelFileHandle = BAD_FILE_HANDLE;
   sLevelBuffer = NULL;
 
+  /* Force redraw of all tiles, and in the possibly moved on-screen window.
+     Lets you see the tiles, rather than whatever leftover graphics are on
+     screen.  But only when in a game mode that displays the board. */
+  if (gVictoryModeHighestTileCount)
+  {
+    ActivateTileArrayWindow();
+    MakeAllTilesDirty();
+  }
+
   /* Reset player things (like scores, position, velocity) and a few other
      things too that are level specific, now that the new level has loaded. */
   InitialisePlayersForNewLevel();

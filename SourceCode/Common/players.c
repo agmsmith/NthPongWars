@@ -681,23 +681,28 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   else /* Time for a change in harvest mode duty cycle. */
   {
     uint8_t desiredSpeed = pPlayer->brain_info.algo.desired_speed;
+    bool wasHarvesting = (pPlayer->joystick_inputs & Joy_Button) != 0;
 
     if (desiredSpeed == (uint8_t) 255)
-    { /* Code for always harvest, used for not leaving a trail. */
-      joystickOutput |= Joy_Button;
+    {
+      /* Code for always harvest, used for not leaving a trail.  Well, except
+         when stopped, then coast/harvest alternate updates else the AI player
+         gets stuck. */
+
+      if (pPlayer->speed != 0 || !wasHarvesting)
+        joystickOutput |= Joy_Button;
       pPlayer->brain_info.algo.trail_remaining = 8;
     }
     else
     {
       int8_t deltaSpeed = (int8_t) desiredSpeed - (int8_t) pPlayer->speed;
         /* A positive number if more speed needed. */
-      bool wasHarvesting = (pPlayer->joystick_inputs & Joy_Button) != 0;
       uint8_t time_to_trail; /* Time limit for the next harvest/trail mode. */
 
       if (deltaSpeed <= 0)
       {
         if (wasHarvesting)
-          time_to_trail = 10; /* 10 == 2 seconds of going slow, no harvest. */
+          time_to_trail = 10; /* 10 == 2 seconds of coasting, no harvest. */
         else /* Next mode will be harvest, keep it short, don't need it. */
           time_to_trail = 1;
       }

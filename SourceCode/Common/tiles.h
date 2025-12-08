@@ -262,6 +262,11 @@ extern void ActivateTileArrayWindow(void);
    clip the globals so that they fit on the real screen.  Tries to be fast, so
    you can move the window often, but it will probably cost a missed frame. */
 
+extern void MakeAllTilesDirty(void);
+/* Force a redraw of the whole screen.  Usually used after loading a new level,
+   so that left-over graphics from cut screen screens are replaced by the
+   current tile state. */
+
 extern void RequestTileRedraw(tile_pointer pTile);
 /* Request redraw of a tile.  Takes care of updating animation stuff, setting
    dirty flags. */

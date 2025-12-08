@@ -475,6 +475,20 @@ bool KeywordMaxAIPlayers(void)
 }
 
 
+/* When playing in countdown mode, the first player to reach this many tiles in
+   their colour wins.  The count starts at this value and counts down about once
+   per second.  If you don't specify it, it gets set to the number of tiles in
+  the level.
+*/
+bool KeywordCountdownStart(void)
+{
+  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+  gVictoryStartingTileCount = atoi(g_TempBuffer);
+
+  return true;
+}
+
+
 /* How should this level be run?  Should the game engine be turned on?  Or is
    it just a static screen waiting for a button press?  Set up the appropriate
    things for the selected mode.
@@ -534,6 +548,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"LevelBookmark", KeywordLevelBookmark},
   {"RemovePlayers", KeywordRemovePlayers},
   {"MaxAIPlayers", KeywordMaxAIPlayers},
+  {"CountdownStart", KeywordCountdownStart},
   {"GameMode", KeywordGameMode},
   {NULL, NULL}
 };

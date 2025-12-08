@@ -106,3 +106,9 @@ RemovePlayers:
 # that's the chance for an AI to take over.
 MaxAIPlayers: 2
 
+# When playing in countdown mode, the first player to reach this many tiles in
+# their colour wins.  The count starts at this value and counts down about once
+# per second.  If you don't specify it, it gets set to the number of tiles in
+# the level.
+CountdownStart: 100
+

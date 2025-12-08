@@ -5,4 +5,5 @@ ScreenFont: NTHPONG1
 LevelNext: All, HELP
 RemovePlayers:
 MaxAIPlayers: 4
+CountdownStart: 120
 

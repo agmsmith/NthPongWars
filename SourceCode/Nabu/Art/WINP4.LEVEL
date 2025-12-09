@@ -1,0 +1,7 @@
+# Player #4 (not a player) Wins.
+GameMode: Slide
+Music: UNDERWTR
+ScreenFull: WINP4
+LevelNext: All, Bookmark
+PlayTimeout: 5
+

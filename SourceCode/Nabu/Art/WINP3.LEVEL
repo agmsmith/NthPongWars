@@ -1,0 +1,7 @@
+# Player #3 Wins.
+GameMode: Slide
+Music: SQUAROOT
+ScreenFull: WINP3
+LevelNext: All, Bookmark
+PlayTimeout: 5
+

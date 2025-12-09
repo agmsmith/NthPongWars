@@ -1,0 +1,7 @@
+# Player #1 Wins.
+GameMode: Slide
+Music: LOADSONG
+ScreenFull: WINP1
+LevelNext: All, Bookmark
+PlayTimeout: 5
+

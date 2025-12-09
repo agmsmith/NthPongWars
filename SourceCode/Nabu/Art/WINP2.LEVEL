@@ -1,0 +1,7 @@
+# Player #2 Wins.
+GameMode: Slide
+Music: ONECOLN1
+ScreenFull: WINP2
+LevelNext: All, Bookmark
+PlayTimeout: 20
+

@@ -1,0 +1,7 @@
+# Player #0 Wins.
+GameMode: Slide
+Music: Silence
+ScreenFull: WINP0
+LevelNext: All, Bookmark
+PlayTimeout: 5
+

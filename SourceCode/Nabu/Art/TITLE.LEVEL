@@ -1,7 +1,16 @@
-# Load our title screen, it's a full screen picture.
-GameMode: Slide
-Music: PINKPNTH
+# Load the Nth Pong Wars title screen, it's a full screen picture.
+GameMode: Trivia
+Music: ONECOLN1
 ScreenFull: TITLESCREEN
+
+# If a direction is  selected, start the game or show credits etc, else
+# wait 5 seconds and then show a demonstration of gameplay.
 LevelNext: All, LEVEL001
-PlayTimeout: 10
+LevelNext: Left, Quit
+LevelNext: Right, CREDITS
+LevelNext: Fire, GAMEDEMO
+PlayTimeout: 5
+
+# Remove all players and reset win counts to zero.
+RemovePlayers:
 

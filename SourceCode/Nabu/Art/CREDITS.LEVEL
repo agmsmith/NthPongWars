@@ -1,0 +1,7 @@
+# Show the credits screen.
+GameMode: Slide
+Music: ONECOLN1
+ScreenFull: CREDITS
+LevelNext: All, TITLE
+PlayTimeout: 7
+

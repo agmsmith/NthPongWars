@@ -41,8 +41,6 @@ void InitialiseScores(void)
   uint8_t iPlayer;
   player_pointer pPlayer;
 
-  g_FrameCounter = (uint16_t) 0; /* Bleeble -ve start to test wrap-around. */
-
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {

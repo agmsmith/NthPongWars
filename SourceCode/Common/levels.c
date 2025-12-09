@@ -103,8 +103,8 @@ bool VictoryConditionTest(void)
 
   /* Check for a level timeout if we don't have a winner yet. */
 
-  if (sVictoryTimeoutFrame && sVictoryTimeoutFrame == g_FrameCounter &&
-  winningPlayer >= MAX_PLAYERS + 1)
+  if (sVictoryTimeoutFrame && (sVictoryTimeoutFrame == g_FrameCounter) &&
+  (winningPlayer >= MAX_PLAYERS + 1))
     winningPlayer = MAX_PLAYERS; /* Fire button "player" is the winner. */
 
   /* If we have a winner (or MAX_PLAYERS for fire button pressed in joystick
@@ -379,6 +379,7 @@ bool KeywordPlayTimeout(void)
     if (sVictoryTimeoutFrame == 0)
       sVictoryTimeoutFrame = 1; /* Handle rare case of hitting zero. */
   }
+
   return true;
 }
 
@@ -560,7 +561,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"LevelBookmark", KeywordLevelBookmark},
   {"RemovePlayers", KeywordRemovePlayers},
   {"MaxAIPlayers", KeywordMaxAIPlayers},
-  {"CountdownStart", KeywordCountdownStart},
+  {"InitialCount", KeywordCountdownStart},
   {"GameMode", KeywordGameMode},
   {NULL, NULL}
 };
@@ -644,6 +645,7 @@ bool LoadLevelFile(void)
 
   gVictoryWinningPlayer = MAX_PLAYERS + 1;
   sVictoryTimeoutFrame = 0;
+  g_FrameCounter = 0;
 
   if (strcasecmp(gLevelName, "Bookmark") == 0)
   {

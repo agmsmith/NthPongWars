@@ -21,14 +21,14 @@
 # NABU Internet Adapter).
 
 # Sets the game mode for this level.  Values are Slide, Trivia, PongWar.
-# Slide does a slide show, the game doesn't run and a static slide is
+# SLIDE does a slide show, the game doesn't run and a static slide is
 # displayed.  When any player hits a fire button, the level ends and that
 # player is the winner.
-# Trivia runs the level as a trivia game.  A static screen is shown and the
+# TRIVIA runs the level as a trivia game.  A static screen is shown and the
 # game doesn't run.  A choice is made by a joystick movement or fire button,
 # and that ends the level, with the winner being set by the direction of
 # joystick movement or fire button action (see LevelNext: options).
-# PongWar runs the level as a playable Nth Pong Wars game, with AI players
+# PONGWAR runs the level as a playable Nth Pong Wars game, with AI players
 # enabled, remember to load a font and sprites for the game graphics.
 GameMode: Slide
 
@@ -41,6 +41,7 @@ GameMode: Slide
 # Start some background music.  Nabu uses the CHIPNSFX tracker+player suite,
 # http://cngsoft.no-ip.org/chipnsfx.htm though with the output assembler
 # converted to binary.  This will start the SQUAROOT.CHIPNSFX file playing.
+# Use a music file name of "Silence" to turn off the background music.
 Music: SQUAROOT
 
 # Load a full screen bitmap graphic.  This is a 12KB file, so it will take
@@ -116,5 +117,5 @@ MaxAIPlayers: 2
 # their colour wins.  The count starts at this value and counts down about once
 # per second.  If you don't specify it, it gets set to the number of tiles in
 # the level.
-CountdownStart: 100
+InitialCount: 100
 

@@ -1,0 +1,12 @@
+# A demonstration of the game, with all AIs.
+GameMode: PongWar
+Music: Default
+ScreenFont: NTHPONG1
+LevelNext: All, CREDITS
+
+# Want all AI players, though a Human can join in if they wish.
+RemovePlayers:
+MaxAIPlayers: 4
+# Will be a short game.
+InitialCount: 120
+

@@ -32,6 +32,10 @@ char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";
 char gWinnerNextLevelName[MAX_PLAYERS+1][MAX_LEVEL_NAME_LENGTH];
 char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH] = "TITLE";
 
+static uint16_t sVictoryTimeoutFrame = 0;
+/* Frame counter when the current level times out and player 4 (the Fire
+   button) is declared the winner.  Zero if the timeout isn't active. */
+
 
 /* Checks the victory conditions and sets things up for loading the next level
    (depending on which player won).  Returns TRUE if the level was completed.
@@ -97,13 +101,27 @@ bool VictoryConditionTest(void)
     }
   }
 
+  /* Check for a level timeout if we don't have a winner yet. */
+
+  if (sVictoryTimeoutFrame && sVictoryTimeoutFrame == g_FrameCounter &&
+  winningPlayer >= MAX_PLAYERS + 1)
+    winningPlayer = MAX_PLAYERS; /* Fire button "player" is the winner. */
+
   /* If we have a winner (or MAX_PLAYERS for fire button pressed in joystick
-     mode), use their next level as the one we want to load next. */
+     mode or timeout), use their next level as the one we want to load next. */
 
   if (winningPlayer < MAX_PLAYERS + 1)
   {
     gVictoryWinningPlayer = winningPlayer;
     strcpy(gLevelName, gWinnerNextLevelName[winningPlayer]);
+
+    strcpy(g_TempBuffer, "Winner is player #");
+    AppendDecimalUInt16(winningPlayer);
+    strcat(g_TempBuffer, ", next level \"");
+    strcat(g_TempBuffer, gLevelName);
+    strcat(g_TempBuffer, "\".\n");
+    DebugPrintString(g_TempBuffer);
+
     return true;
   }
 
@@ -349,23 +367,17 @@ bool KeywordBackgroundMusic(void)
 }
 
 
-/* Delay a number of 1/10 of a second.  Keep the music playing. */
-bool KeywordDelay(void)
+/* Make the current level end after a given number of seconds. */
+bool KeywordPlayTimeout(void)
 {
-  int delayCount;
   LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
-  delayCount = atoi(g_TempBuffer) * 2;
+  sVictoryTimeoutFrame = (uint16_t) atoi(g_TempBuffer) * 20 /* Assume 20hz */;
 
-  /* Our delay loop runs 1/20 second per iteration, to keep the music going. */
-
-  while (delayCount > 0)
-  {
-    if (vdpIsReady >= 3) /* 3 frames, 1/20 of second has gone by. */
-    {
-      vdpIsReady = 0;
-      CSFX_play(); /* Update sound hardware with current tune data. */
-      delayCount--;
-    }
+  if (sVictoryTimeoutFrame != 0)
+  { /* User wants a timeout, we need a global frame number to trigger it. */
+    sVictoryTimeoutFrame += g_FrameCounter;
+    if (sVictoryTimeoutFrame == 0)
+      sVictoryTimeoutFrame = 1; /* Handle rare case of hitting zero. */
   }
   return true;
 }
@@ -543,7 +555,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"ScreenFont", KeywordCharFontSpriteScreen},
   {"ScreenChar", KeywordCharImageScreen},
   {"Music", KeywordBackgroundMusic},
-  {"Delay", KeywordDelay},
+  {"PlayTimeout", KeywordPlayTimeout},
   {"LevelNext", KeywordLevelNext},
   {"LevelBookmark", KeywordLevelBookmark},
   {"RemovePlayers", KeywordRemovePlayers},
@@ -631,6 +643,7 @@ bool LoadLevelFile(void)
   sLevelBuffer = levelBuffer; /* Save a pointer to the start of the buffer. */
 
   gVictoryWinningPlayer = MAX_PLAYERS + 1;
+  sVictoryTimeoutFrame = 0;
 
   if (strcasecmp(gLevelName, "Bookmark") == 0)
   {

@@ -3,4 +3,5 @@ GameMode: Slide
 Music: PINKPNTH
 ScreenFull: TITLESCREEN
 LevelNext: All, LEVEL001
+PlayTimeout: 10
 

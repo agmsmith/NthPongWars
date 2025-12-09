@@ -36,7 +36,7 @@ GameMode: Slide
 # file is executed in the order specified and it's nice to have the music going
 # during the possibly several seconds long screen load.  That means if you have
 # several screen loads in a row, it will do them all in that order, making for
-# a kind of slide show.  Wonder if we should have a Delay keyword?
+# a kind of slide show.
 
 # Start some background music.  Nabu uses the CHIPNSFX tracker+player suite,
 # http://cngsoft.no-ip.org/chipnsfx.htm though with the output assembler
@@ -51,9 +51,15 @@ Music: SQUAROOT
 # into a *.NFUL file.  This will load TITLESCREEN.NFUL.
 ScreenFull: TITLESCREEN
 
-# Just delays the loading of the level file by a given number of 1/10 of a
-# second.  The example delays 10 seconds.
-Delay: 100
+# When this much time has elapsed while running a level, the next level choice
+# for the fire button (see LevelNext: Fire, LevelName) is used to load the next
+# level and the fire button is declared the winner.  Mostly useful for attract
+# mode gameplay.  Timeout in seconds.  Internally it uses the frame counter,
+# assuming 20 frames per second, so 3276 seconds is the maximum, a bit over 54
+# minutes.  Though if the game is running fast, like when displaying a static
+# screen, it will be 3 times faster.  Don't specify this keyword or use zero
+# for no timeout.
+PlayTimeout: 30
 
 # This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
 # about 7KB so it takes half a second to load.  This is the kind of screen you
@@ -95,7 +101,7 @@ LevelBookmark: LEVEL008
 # Removes all the players from the game.  Useful for starting a level that is
 # AI players only.  Note that merely pressing Fire in a slide show starts a
 # Human player.  Though once a player is removed, their total wins goes back
-# to zero.  No options needed after the colon.
+# to zero.  No options after the colon.
 RemovePlayers:
 
 # The number of AI players you want in the level.  Use zero for a Humans only

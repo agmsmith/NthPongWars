@@ -1,0 +1,13 @@
+# Level #2.  AGMS20251210
+GameMode: PongWar
+Music: PINKPNTH
+ScreenFont: NTHPONG1
+
+LevelBookmark: CREDITS
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+
+InitialCount: 200
+

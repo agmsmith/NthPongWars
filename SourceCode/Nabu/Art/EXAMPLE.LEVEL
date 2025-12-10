@@ -75,6 +75,19 @@ ScreenFont: NTHPONG1
 # This one would load the text for a help screen from HELP.NCHR.
 ScreenChar: HELP
 
+# This draws some text on the screen, using whatever font is currently loaded.
+# You specify a line to start drawing the text, left margin for the first line
+# and then left margin for subsequent lines (in case you want to indent a
+# paragraph) and right margin.  The text will be wrapped to fill that spot,
+# possibly taking up several lines if needed.  This example starts on line 2
+# (the screen starts with line 0 and goes up to line 23), has the first left
+# margin at 5, the subsequent lines left margin at 0 (far left) and right
+# margin of 32 (it draws up to but not including the right margin), and the
+# rest is the text, with leading and trailing spaces removed.  No, it doesn't
+# handle new line characters, so you would have to do several ScreenText
+# keywords to get a similar effect.
+ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
+
 # This specifies which level gets played after this one finishes.  Base level
 # names can be up to 31 characters long.  The very first level is "Title".
 # You can specify it generically (with All as the first argument), like this,

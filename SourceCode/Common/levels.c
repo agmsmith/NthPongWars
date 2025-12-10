@@ -266,7 +266,7 @@ static bool LevelReadLine(char *Buffer, uint8_t BufferSize)
    Buffer with the text up to but not including the delimiter and adds a NUL.
    Returns TRUE if data was read, FALSE for end of file.
    BufferSize should be at least 2, max 255, zero will trash memory, 1 will
-   have spurrious end of file indications.
+   have spurious end of file indications.
 */
 static bool LevelReadWord(
   char *Buffer, uint8_t BufferSize, char Delimiter)
@@ -343,6 +343,38 @@ bool KeywordCharFontSpriteScreen(void)
 }
 
 
+/* This draws some text on the screen, using whatever font is currently loaded.
+   You specify a line to start drawing the text, left margin for the first line
+   and then left margin for subsequent lines (in case you want to indent a
+   paragraph) and right margin.  The text will be wrapped to fill that spot,
+  possibly taking up several lines if needed.
+*/
+bool KeywordTextOnScreen(void)
+{
+  char numberText[10];
+  uint8_t marginData[4]; /* Line, left, more left, right margin */
+  uint8_t i;
+
+  /* Read the line number, first left margin, subsequent left, right margin. */
+
+  for (i = 0; i < sizeof(marginData); i++)
+  {
+    if (!LevelReadWord(numberText, sizeof(numberText), ','))
+      return false;
+    marginData[i] = atoi(numberText);
+  }
+
+  /* Yes, vdp_setCursor2() has input sanity checking. */
+  vdp_setCursor2(marginData[1] /* column */, marginData[0] /* row */);
+
+  if (!LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer)))
+    return false;
+
+  vdp_printJustified(g_TempBuffer, marginData[2], marginData[3]);
+  return true;
+}
+
+
 /* This keyword loads just the name table, the characters of a screen (*.NCHR).
    Uses the previously loaded font.  Returns false to abort the level file load.
 */
@@ -370,7 +402,8 @@ bool KeywordBackgroundMusic(void)
 /* Make the current level end after a given number of seconds. */
 bool KeywordPlayTimeout(void)
 {
-  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+  if (!LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer)))
+    return false;
   sVictoryTimeoutFrame = (uint16_t) atoi(g_TempBuffer) * 20 /* Assume 20hz */;
 
   if (sVictoryTimeoutFrame != 0)
@@ -555,6 +588,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"ScreenFull", KeywordFullScreen},
   {"ScreenFont", KeywordCharFontSpriteScreen},
   {"ScreenChar", KeywordCharImageScreen},
+  {"ScreenText", KeywordTextOnScreen},
   {"Music", KeywordBackgroundMusic},
   {"PlayTimeout", KeywordPlayTimeout},
   {"LevelNext", KeywordLevelNext},
@@ -565,7 +599,6 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"GameMode", KeywordGameMode},
   {NULL, NULL}
 };
-
 
 /* Read the level file keyword by keyword.  Returns FALSE on abort, usually
    something wrong about the level file, like bad tile map syntax.
@@ -640,12 +673,8 @@ static bool ProcessLevelKeywords(void)
 */
 bool LoadLevelFile(void)
 {
-  char levelBuffer[LEVEL_READ_BUFFER_SIZE];
-  sLevelBuffer = levelBuffer; /* Save a pointer to the start of the buffer. */
-
-  gVictoryWinningPlayer = MAX_PLAYERS + 1;
-  sVictoryTimeoutFrame = 0;
-  g_FrameCounter = 0;
+  /* Do Quit before resetting level things (like the frame counter), so we
+     have better debug info.  And a bookmark could be quit too. */
 
   if (strcasecmp(gLevelName, "Bookmark") == 0)
   {
@@ -659,12 +688,20 @@ bool LoadLevelFile(void)
     return false;
   }
 
+  /* Some things that need to be reset at the start of a level. */
+  gVictoryWinningPlayer = MAX_PLAYERS + 1;
+  sVictoryTimeoutFrame = 0;
+  g_FrameCounter = 0;
+
   sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL");
   if (sLevelFileHandle == BAD_FILE_HANDLE)
     return false; /* OpenDataFile will have printed an error message. */
   DebugPrintString("Now loading level file \"");
   DebugPrintString(g_TempBuffer);
   DebugPrintString("\".\n");
+
+  char levelBuffer[LEVEL_READ_BUFFER_SIZE];
+  sLevelBuffer = levelBuffer; /* Save a pointer to the start of the buffer. */
 
   /* Reinitialise our local file buffering system to be empty. */
   sLevelReadPosition = 0;
@@ -696,7 +733,6 @@ bool LoadLevelFile(void)
   /* Remove extra keystrokes and joystick actions from the input queue, so a
      stale joystick action doesn't take over an AI player or skip to the next
      level too early. */
-
 #ifdef NABU_H
   while (isKeyPressed())
     getChar();

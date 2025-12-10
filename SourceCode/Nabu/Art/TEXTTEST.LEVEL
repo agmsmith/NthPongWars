@@ -1,0 +1,8 @@
+# Show some printable text.
+GameMode: Slide
+ScreenFont: TEXTSCREEN
+ScreenText: 3, 5, 3, 29, This is one very long line of text printed on screen.  It should wrap so that only the first line is indented.
+ScreenText: 16, 3, 3, 29, Hit any key to continue.  Well, actually hit the FIRE button on a Joystick or the YES button on the keyboard.
+LevelNext: All, TITLE
+PlayTimeout: 12
+

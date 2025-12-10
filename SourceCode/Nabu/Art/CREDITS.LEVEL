@@ -2,6 +2,6 @@
 GameMode: Slide
 Music: ONECOLN1
 ScreenFull: CREDITS
-LevelNext: All, TITLE
+LevelNext: All, TEXTTEST
 PlayTimeout: 7
 

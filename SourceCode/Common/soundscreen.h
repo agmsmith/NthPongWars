@@ -74,6 +74,10 @@ extern bool PlayMusic(const char *FileName);
    successful.  If it returns false, it starts playing some default built-in
    music. */
 
+extern void SoundUpdateIfNeeded(void);
+/* This is best called after every lengthy operation, like opening a file.
+   We could do music updates in an interrupt, but that can be a bit tricky. */
+
 #ifdef NABU_H
 extern bool LoadScreenNSCR(const char *FileName);
 /* Read a character mapped screen picture, with fonts and sprites, into video

@@ -287,19 +287,19 @@ ErrorExit:
 }
 
 
-#ifdef NABU_H
 /* This is best called after every lengthy operation, like opening a file.
    We could do music updates in an interrupt, but that can be a bit tricky.
 */
-static void SoundUpdateIfNeeded(void)
+void SoundUpdateIfNeeded(void)
 {
+#ifdef NABU_H
   if (vdpIsReady) /* A frame time has gone by. */
   {
     vdpIsReady = 0;
     CSFX_play(); /* Update sound hardware with current tune data. */
   }
-}
 #endif /* NABU_H */
+}
 
 
 #ifdef NABU_H

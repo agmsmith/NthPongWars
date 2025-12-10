@@ -9,5 +9,6 @@ LevelNext: P1, WINP1
 LevelNext: P2, WINP2
 LevelNext: P3, WINP3
 
-InitialCount: 200
+MaxAIPlayers: 2
+InitialCount: 250
 

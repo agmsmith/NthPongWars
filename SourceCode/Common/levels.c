@@ -23,6 +23,9 @@
   #define NUL ((char) 0)
 #endif
 
+const char kMagicWordCopyright[] = "Copyright";
+const char kMagicWordVersion[] = "Version";
+
 bool gVictoryModeFireButtonPress = true;
 bool gVictoryModeJoystickPress = false;
 bool gVictoryModeHighestTileCount = false;
@@ -347,7 +350,8 @@ bool KeywordCharFontSpriteScreen(void)
    You specify a line to start drawing the text, left margin for the first line
    and then left margin for subsequent lines (in case you want to indent a
    paragraph) and right margin.  The text will be wrapped to fill that spot,
-  possibly taking up several lines if needed.
+   possibly taking up several lines if needed.  Magic words are recognised and
+   replace the text with something else.
 */
 bool KeywordTextOnScreen(void)
 {
@@ -367,10 +371,14 @@ bool KeywordTextOnScreen(void)
   /* Yes, vdp_setCursor2() has input sanity checking. */
   vdp_setCursor2(marginData[1] /* column */, marginData[0] /* row */);
 
+  SoundUpdateIfNeeded();
   if (!LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer)))
     return false;
 
-  vdp_printJustified(g_TempBuffer, marginData[2], marginData[3]);
+  SoundUpdateIfNeeded();
+  vdp_printJustified((char *) StockTextMessages(g_TempBuffer),
+    marginData[2], marginData[3]);
+
   return true;
 }
 
@@ -741,5 +749,39 @@ bool LoadLevelFile(void)
 #endif /* NABU_H */
 
   return returnCode;
+}
+
+
+/* Returns one of several stock text messages when given a keyword.  May use
+   g_TempBuffer or maybe not.  Returns your MagicWord if it doesn't know
+   that magic word.  Currently recognises "Copyright" and "Version".
+*/
+const char *StockTextMessages(const char *MagicWord)
+{
+  if (strcasecmp(MagicWord, kMagicWordCopyright) == 0)
+  {
+    return
+      "Welcome to the Nth Pong Wars NABU game.  "
+      "Copyright 2025 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
+      "Started in February 2024, see the blog at "
+      "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
+      "Released under the GNU General Public License version 3.\n";
+  }
+  else if (strcasecmp(MagicWord, kMagicWordVersion) == 0)
+  {
+    uint16_t totalMem, largestMem;
+
+    strcpy(g_TempBuffer, "Compiled on " __DATE__ " at " __TIME__ ".  ");
+    mallinfo(&totalMem, &largestMem);
+    strcat (g_TempBuffer, "Heap has ");
+    AppendDecimalUInt16(totalMem);
+    strcat (g_TempBuffer, " bytes free, largest ");
+    AppendDecimalUInt16(largestMem);
+    strcat(g_TempBuffer, ".  Using D. J. Sures NABU-LIB, compiled with "
+      "the Z88DK build environment (using the SDCC compiler).\n");
+    return g_TempBuffer;
+  }
+
+  return MagicWord;
 }
 

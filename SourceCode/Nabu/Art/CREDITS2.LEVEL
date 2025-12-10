@@ -1,0 +1,6 @@
+# Show the second credits screen, with music info.
+GameMode: Slide
+ScreenFull: CREDITS
+LevelNext: All, TITLE
+PlayTimeout: 7
+

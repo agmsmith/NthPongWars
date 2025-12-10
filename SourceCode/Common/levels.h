@@ -27,6 +27,9 @@
 #define MAX_FILE_NAME_LENGTH 64 /* Maximum for the Nabu Internet Adapter. */
 #define MAX_LEVEL_NAME_LENGTH 32 /* Short names take less memory. */
 
+extern const char kMagicWordCopyright[]; /* Contains "Copyright". */
+extern const char kMagicWordVersion[]; /* Contains "Version". */
+
 /* Various things controlling how the victory condition is achieved.  Can be
    several of them at once. */
 
@@ -81,6 +84,11 @@ extern bool LoadLevelFile(void);
    background music.  Since it is a line by line keyword based file, it can
    successfully load garbage without doing anything (you'll end up playing
    the previous level again). */
+
+extern const char *StockTextMessages(const char *MagicWord);
+/* Returns one of several stock text messages when given a keyword.  May use
+   g_TempBuffer or maybe not.  Returns your MagicWord if it doesn't know
+   that magic word.  Currently recognises "Copyright" and "Version". */
 
 #endif /* _LEVELS_H */
 

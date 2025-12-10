@@ -1,0 +1,7 @@
+# Show the first credits screen, followed by others.
+GameMode: Slide
+ScreenChar: TEXTSCREEN
+LevelNext: All, CREDITS2
+PlayTimeout: 7
+ScreenText: 4, 4, 4, 28, Copyright
+

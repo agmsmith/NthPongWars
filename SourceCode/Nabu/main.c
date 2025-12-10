@@ -124,20 +124,11 @@ char g_TempBuffer[TEMPBUFFER_LEN];
 #include "../Common/soundscreen.c"
 #include "../Common/levels.c"
 
-/* Variables in main() that also need to be accessed from assembler have to be
-   globalish.  Make them static but global scope. */
 
-static uint16_t s_StackFramePointer = 0;
-static uint16_t s_StackPointer = 0;
+static bool s_KeepRunning;
+static char s_OriginalLocationZeroMemory[16]; /* Detects memory trashing. */
 static const char *k_CorruptedLowMemText =
   "Corrupted location zero (NULL) Memory!";
-static const char *k_WelcomeText =
-  "Welcome to the Nth Pong Wars NABU game.  "
-  "Copyright 2025 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
-  "Started in February 2024, see the blog at "
-  "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
-  "Released under the GNU General Public License version 3.\n";
-static bool s_KeepRunning;
 
 
 /*******************************************************************************
@@ -217,34 +208,15 @@ static void ProcessKeyboard(void)
 
 
 /*******************************************************************************
- * Initialise an about this program message in the temp buffer.
- */
-static void SetUpAboutThisProgramText(void)
-{
-  uint16_t totalMem, largestMem;
-
-  strcpy(g_TempBuffer, "Compiled on " __DATE__ " at " __TIME__ ".  ");
-  mallinfo(&totalMem, &largestMem);
-  strcat (g_TempBuffer, "Heap has ");
-  AppendDecimalUInt16(totalMem);
-  strcat (g_TempBuffer, " bytes free, largest ");
-  AppendDecimalUInt16(largestMem);
-  strcat (g_TempBuffer, ".  Stack pointer is ");
-  AppendDecimalUInt16(s_StackPointer);
-  strcat(g_TempBuffer, ", frame ");
-  AppendDecimalUInt16(s_StackFramePointer);
-  strcat(g_TempBuffer, ".  Using Z88DK with the SDCC compiler, and "
-    "D. J. Sures NABU-LIB.\n");
-}
-
-
-/*******************************************************************************
  * Main program and main game loop.
  */
 void main(void)
 {
-  /* Save some stack space, variables that persist in main() can be static. */
-  static char s_OriginalLocationZeroMemory[16];
+  /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
+     letter and user may affect this since they're in the CP/M parameter
+     area (the first 256 bytes of memory). */
+  memcpy(s_OriginalLocationZeroMemory, NULL,
+    sizeof(s_OriginalLocationZeroMemory));
 
   /* Initialise some fixed point number constants. */
   ZERO_FX(gfx_Constant_Zero);
@@ -253,30 +225,9 @@ void main(void)
   INT_FRACTION_TO_FX(0 /* int */, 0x2000 /* fraction */, gfx_Constant_Eighth);
   COPY_NEGATE_FX(&gfx_Constant_Eighth, &gfx_Constant_MinusEighth);
 
-  /* Detect memory corruption from using a NULL pointer.  Changing CP/M drive
-     letter and user may affect this since they're in the CP/M parameter
-     area (the first 256 bytes of memory). */
-  memcpy(s_OriginalLocationZeroMemory, NULL,
-    sizeof(s_OriginalLocationZeroMemory));
-
-  /* Grab the stack pointer and stack frame pointer to see if they're sane.
-     If the frame pointer is $FF00 or above (the CP/M really small stack),
-     while stack is $Cxxx then things may go badly.  Frame should be nearby
-     stack.  Nabu Bare mode has stack at $FF00, interrupt table above that.*/
-  __asm
-  push af;
-  push hl;
-  ld hl,0
-  add hl, sp; /* No actual move sp to hl instruction, but can add it. */
-  ld (_s_StackPointer), hl;
-  ld (_s_StackFramePointer), ix;
-  pop hl;
-  pop af;
-  __endasm;
-
-  DebugPrintString(k_WelcomeText); /* So CP/M users can see the welcome text. */
-  SetUpAboutThisProgramText();
-  DebugPrintString(g_TempBuffer);
+  /* So CP/M users can see the welcome text. */
+  DebugPrintString(StockTextMessages(kMagicWordCopyright));
+  DebugPrintString(StockTextMessages(kMagicWordVersion));
 
   initNABULib(); /* No longer can use CP/M text input or output. */
 
@@ -310,39 +261,20 @@ void main(void)
      screen for full screen graphics. */
   vdp_setCursor2(0, 0);
 
-  /* Initialise the CHIPNSFX music player library, before frame interrupt. */
+  /* Initialise the CHIPNSFX music player library, before frame interrupt, in
+     case we ever do music updates in the interrupt. */
   CSFX_stop();
 
   /* Start the frame interrupt, to count frames and do sound tick timing. */
   vdp_enableVDPReadyInt();
 
 #if 0
-  /* Start some loading screen music. */
-  PlayMusic("ONECOLN1");
-  if (!LoadScreenNFUL("COTTAGE"))
-    return;
-  HitAnyKey(""); /* No font available to print text, so print nothing. */
-#endif
+  /* Print some text on screen which we can screen grab and put into the fully
+     graphic title screen, and it will still look pixel perfect due to the use
+     of only two colours. */
 
-#if 0
-  /* More loading screen music. */
-  PlayMusic("SQUAROOT");
-  if (!LoadScreenNFUL("TITLESCREEN")) /* Error message on debug output. */
-    return;
-  HitAnyKey(""); /* No font available to print text, so print nothing. */
-#endif
-
-  /* Load our game screen, with a font and sprites too. */
-
-  PlayMusic("LOADSONG");
   if (!LoadScreenNSCR("NTHPONG1"))
     return;
-
-#if 0
-  /* Print some text on screen which we can screen grab and put into the fully
-     graphic title screen, and it will still look pixel perfect if we get it on
-     a character cell 8 pixel boundary. */
-
   vdp_clearRows(0, 23);
   vdp_setCursor2(0, 0);
   /* 32 wide 12345678901234567890123456789012 */
@@ -354,26 +286,6 @@ void main(void)
   vdp_newLine();
   HitAnyKey(NULL);
 #endif
-
-  /* Print out some status info about the game.  Leave top row unmodified since
-     it has score graphics from the default screen load. */
-
-  vdp_clearRows(1, 23);
-  vdp_setCursor2(0, 2);
-  vdp_printJustified((char *) k_WelcomeText, 0, 32);
-  vdp_newLine();
-  CSFX_play(); /* Avoid a pause in the music due to slow printing. */
-  SetUpAboutThisProgramText();
-  vdp_printJustified(g_TempBuffer, 0, 32);
-  vdp_newLine();
-  HitAnyKey(NULL);
-
-  if (memcmp(s_OriginalLocationZeroMemory, NULL,
-  sizeof(s_OriginalLocationZeroMemory)) != 0)
-  {
-    HitAnyKey(k_CorruptedLowMemText);
-    return;
-  }
 
   /* Set up the tiles.  Directly map play area to screen for now rather than
      using a scrolling window, which is quite slow. */
@@ -400,6 +312,13 @@ void main(void)
   CSFX_stop(); /* Stop loading screen background music. */
   CSFX_start(NthEffects_a_z, true /* IsEffects */);
   CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Game background music. */
+
+  if (memcmp(s_OriginalLocationZeroMemory, NULL,
+  sizeof(s_OriginalLocationZeroMemory)) != 0)
+  {
+    DebugPrintString(k_CorruptedLowMemText);
+    return;
+  }
 
   /* The meta game loop.  One screen or level loaded per loop, with the level
      file setting all sorts of options, from victory conditions to AI

@@ -85,7 +85,8 @@ ScreenChar: HELP
 # margin of 32 (it draws up to but not including the right margin), and the
 # rest is the text, with leading and trailing spaces removed.  No, it doesn't
 # handle new line characters, so you would have to do several ScreenText
-# keywords to get a similar effect.
+# keywords to get a similar effect.  Magic words you can use are "Copyright"
+# and "Version" to display those text items.
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
 
 # This specifies which level gets played after this one finishes.  Base level
@@ -109,7 +110,8 @@ LevelNext: Down, ANSWER026_B
 # This one saves a specified level name as a bookmark.  Later on you can load
 # that bookmarked level by specifying the magic level name of "Bookmark".
 # Useful for showing a congratulations screen and then jumping back into the
-# game sequence of levels.
+# game sequence of levels.  Not sure if we need to implement a stack and make
+# this a full fledged subroutine call.
 LevelBookmark: LEVEL008
 
 # Removes all the players from the game.  Useful for starting a level that is

@@ -65,6 +65,9 @@ typedef uint8_t tile_owner; /* Want 8 bits, not a 16 bit enum. */
 /* List of names for each of the owner enums, mostly for debugging. */
 extern const char * g_TileOwnerNames[OWNER_MAX];
 
+/* List of characters for each of the owner enums, used when loading a level. */
+extern const char g_TileOwnerLetters[OWNER_MAX];
+
 /* Animations are done by changing the character displayed for a particular tile
    type.  A NUL terminated string lists the characters to be used in sequence,
    once per frame.  For slower animations, repeat the character.  Animations

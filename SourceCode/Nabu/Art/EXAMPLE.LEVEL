@@ -135,3 +135,70 @@ MaxAIPlayers: 2
 # the level.
 InitialCount: 100
 
+# Set up a game board with the given width and height in tiles.  On the NABU
+# you can use up to 800 tiles, though full screen can display 32x24 = 768 tiles.
+# However, you can scroll the screen...  Usually you leave space for a score
+# line at the top of the screen.  Also the maximum height and width are 254.
+BoardSize: 32, 23
+
+# Specify the rectangle on the screen where the game board is displayed.  Lets
+# you have smaller game boards inside a bigger picture.  Values are X character
+# position of top left corner (0 to 31), Y of top left corner (0 to 23), width
+# in tiles, height in tiles.  The example uses all the screen except the
+# topmost line (where the scores always are displayed).
+BoardScreen: 0, 1, 32, 23
+
+# Where is the screen inside the board area?  These are the tile X and Y
+# positions of the top left corner of the screen inside the game world.
+BoardTopCorner: 0, 0
+
+# Should the board scroll around to follow a player?  We'll use the lowest
+# scoring player to balance the game difficulty.  Since scrolling updates
+# are so slow (whole screen needs to be redrawn), it will only update when the
+# player goes off the screen, and at that point jump move them to the center of
+# the screen.  Use Yes or No.  Yes not implemented yet.
+BoardScroll: No
+
+# Specify the contents of the board.  Board height quantity of lines follows
+# this keyword (which doesn't have an argument), and board width characters
+# from each line are used to set the board state.  Unspecified tiles will be
+# empty.  Empty lines may get ignored.  A line starting with "END" will end the
+# tile load.  The player tiles are used for selecting a starting location for
+# the corresponding player.  The letter codes currently are:
+# ' ', /* OWNER_EMPTY */
+# '1', /* OWNER_PLAYER_1 */
+# '2', /* OWNER_PLAYER_2 */
+# '3', /* OWNER_PLAYER_3 */
+# '4', /* OWNER_PLAYER_4 */
+# 'N', /* OWNER_PUP_NORMAL */
+# 'H', /* OWNER_PUP_STOP, using H for Halt */
+# 'F', /* OWNER_PUP_FLY */
+# 'W', /* OWNER_PUP_WIDER */
+# 'B', /* OWNER_PUP_BASH_WALL */
+# 'S', /* OWNER_PUP_SOLID */
+BoardTiles:
+1         2          3         4X
+                                X
+                                X
+HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHX
+                                X
+W         W          W         WX
+                                X
+                                X
+SFB       SFB      BFS       BFSX
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+END
+

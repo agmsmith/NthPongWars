@@ -37,6 +37,20 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
   "Solid", /* OWNER_PUP_SOLID */
 };
 
+const char g_TileOwnerLetters[OWNER_MAX] = {
+  ' ', /* OWNER_EMPTY */
+  '1', /* OWNER_PLAYER_1 */
+  '2', /* OWNER_PLAYER_2 */
+  '3', /* OWNER_PLAYER_3 */
+  '4', /* OWNER_PLAYER_4 */
+  'N', /* OWNER_PUP_NORMAL */
+  'H', /* OWNER_PUP_STOP, using H for Halt */
+  'F', /* OWNER_PUP_FLY */
+  'W', /* OWNER_PUP_WIDER */
+  'B', /* OWNER_PUP_BASH_WALL */
+  'S', /* OWNER_PUP_SOLID */
+};
+
 const char *g_TileAnimData[OWNER_MAX] =
 {
 #ifdef NABU_H

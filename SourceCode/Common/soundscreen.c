@@ -240,8 +240,9 @@ void CloseDataFile(FileHandleType fileHandle)
    is initialised and a game loop (or screen loader) will update sound ticks.
    Will look for that file in several places, using an extension specific to
    the platform (so don't specify a file name extension).  "Silence" turns off
-   background music.  Returns true if successful.  If it returns false, it
-   starts playing some default built-in music.
+   background music and "Default" plays the built-in music designed for when
+   the game is running (quieter, not too complex).  Returns true if successful.
+   If it returns false, it  starts playing the default built-in music.
 */
 #ifdef NABU_H
 #define MAX_MUSIC_BUFFER_SIZE 1500 /* Bigest ChipsNSfx song we can play, +1. */
@@ -254,6 +255,14 @@ bool PlayMusic(const char *FileName)
   {
 #ifdef NABU_H
     CSFX_stop();
+#endif /* NABU_H */
+    return true;
+  }
+
+  if (strcasecmp(FileName, "Default") == 0)
+  {
+#ifdef NABU_H
+    CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Background music. */
 #endif /* NABU_H */
     return true;
   }

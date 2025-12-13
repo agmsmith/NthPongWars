@@ -41,7 +41,8 @@ GameMode: Slide
 # Start some background music.  Nabu uses the CHIPNSFX tracker+player suite,
 # http://cngsoft.no-ip.org/chipnsfx.htm though with the output assembler
 # converted to binary.  This will start the SQUAROOT.CHIPNSFX file playing.
-# Use a music file name of "Silence" to turn off the background music.
+# Use a music file name of "Silence" to turn off the background music,
+# "Default" to play the built in gameplay music.
 Music: SQUAROOT
 
 # Load a full screen bitmap graphic.  This is a 12KB file, so it will take

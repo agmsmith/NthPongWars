@@ -225,6 +225,11 @@ static bool LevelSkipSpaces(void)
    BufferSize should be at least 2, max 255, zero will trash memory, 1 will
    have spurrious end of file indications.
 */
+
+/* Make sure our large temp buffer is safe to use in LevelReadLine() with a
+   hard coded 255 buffer length, since the length here is byte sized. */
+COMPILER_VERIFY(sizeof(g_TempBuffer) >= 255);
+
 static bool LevelReadLine(char *Buffer, uint8_t BufferSize)
 {
   char *pDest = Buffer;
@@ -266,10 +271,20 @@ static bool LevelReadLine(char *Buffer, uint8_t BufferSize)
 }
 
 
-/* Read a word from the level file.  Stops at the delimeter or NUL.  If there
-   is more text than will fit in the buffer, skips the excess.  Fills the given
-   Buffer with the text up to but not including the delimiter and adds a NUL.
-   Returns TRUE if data was read, FALSE for end of file.
+/* Read to the start of the next line.  Useful for skipping over the remainder
+   of a line that you don't want to process. */
+static bool LevelReadToStartOfNextLine(void)
+{
+  char Buffer[10];
+  return LevelReadLine(Buffer, sizeof(Buffer));
+}
+
+
+/* Read a word from the level file.  Stops at the delimiter (it gets consumed)
+   or end of line (doesn't get consumed) or NUL.  If there is more text than
+   will fit in the buffer, read and skip the excess.  Fills the given Buffer
+   with the text up to but not including the delimiter and adds a NUL.
+   Returns FALSE if end of file was encountered before any data was read.
    BufferSize should be at least 2, max 255, zero will trash memory, 1 will
    have spurious end of file indications.
 */
@@ -286,6 +301,13 @@ static bool LevelReadWord(
     letter = LevelReadByte();
     if (letter == NUL || letter == Delimiter)
       break;
+    if (letter == 13 || letter == 10) /* Carriage return or line feed. */
+    { /* Leave the end of line intact, so it can be read after this word.
+         Also means that if you do several read words in a row, they will all
+         return empty strings when you are up against the end of the line. */
+      LevelUndoReadByte();
+      break;
+    }
     if (sizeSoFar < dataSize)
     {
       *pDest++ = letter;
@@ -297,6 +319,7 @@ static bool LevelReadWord(
   /* Returns FALSE when end of file was hit before reading any data. */
   return !(sizeSoFar == 0 && letter == NUL);
 }
+
 
 /* Read a line and trim off leading and trailing spaces and tabs.
 */
@@ -374,7 +397,7 @@ bool KeywordTextOnScreen(void)
   vdp_setCursor2(marginData[1] /* column */, marginData[0] /* row */);
 
   SoundUpdateIfNeeded();
-  if (!LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer)))
+  if (!LevelReadAndTrimLine(g_TempBuffer, 255))
     return false;
 
   SoundUpdateIfNeeded();
@@ -412,7 +435,7 @@ bool KeywordBackgroundMusic(void)
 /* Make the current level end after a given number of seconds. */
 bool KeywordPlayTimeout(void)
 {
-  if (!LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer)))
+  if (!LevelReadAndTrimLine(g_TempBuffer, 255))
     return false;
   sVictoryTimeoutFrame = (uint16_t) atoi(g_TempBuffer) * 20 /* Assume 20hz */;
 
@@ -517,7 +540,7 @@ bool KeywordLevelBookmark(void)
 bool KeywordRemovePlayers(void)
 {
   /* Throw away the rest of this line, it's not used. */
-  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+  LevelReadToStartOfNextLine();
 
   DeassignPlayersFromDevices();
   return true;
@@ -529,7 +552,7 @@ bool KeywordRemovePlayers(void)
 */
 bool KeywordMaxAIPlayers(void)
 {
-  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+  LevelReadAndTrimLine(g_TempBuffer, 255);
   gLevelMaxAIPlayers = atoi(g_TempBuffer);
 
   return true;
@@ -543,7 +566,7 @@ bool KeywordMaxAIPlayers(void)
 */
 bool KeywordCountdownStart(void)
 {
-  LevelReadAndTrimLine(g_TempBuffer, sizeof(g_TempBuffer));
+  LevelReadAndTrimLine(g_TempBuffer, 255);
   gVictoryStartingTileCount = atoi(g_TempBuffer);
 
   return true;
@@ -589,6 +612,53 @@ bool KeywordGameMode(void)
 }
 
 
+/* Set the size of the game board, width and height in tiles.
+*/
+bool KeywordBoardSize(void)
+{
+  char numberText[10];
+  uint8_t height;
+  uint8_t width;
+
+  /* Read the tile width number. */
+  if (!LevelReadWord(numberText, sizeof(numberText), ','))
+    return false;
+  width = atoi(numberText);
+
+  /* Read the tile height number and advance to the next line. */
+  if (!LevelReadAndTrimLine(numberText, sizeof(numberText)))
+    return false;
+  height = atoi(numberText);
+
+  /* Sanity check and use the numbers. */
+
+  if (width <= 0)
+    width = 1;
+  g_play_area_width_tiles = width;
+
+  if (height <= 0)
+    height = 1;
+  g_play_area_height_tiles = height;
+
+  if (!InitTileArray())
+  {
+    strcpy(g_TempBuffer, "BoardSize of ");
+    AppendDecimalUInt16(width);
+    strcat(g_TempBuffer, "x");
+    AppendDecimalUInt16(height);
+    strcat(g_TempBuffer, " is too big to fit in memory.\n");
+    DebugPrintString(g_TempBuffer);
+
+    /* Go back to a safe size so we don't crash with no board. */
+
+    g_play_area_width_tiles = 20;
+    g_play_area_height_tiles = 15;
+    return false;
+  }
+  return true;
+}
+
+
 /* Handle all level keywords.  We have a table of the word and the
    corresponding function to call. */
 
@@ -612,6 +682,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"MaxAIPlayers", KeywordMaxAIPlayers},
   {"InitialCount", KeywordCountdownStart},
   {"GameMode", KeywordGameMode},
+  {"BoardSize", KeywordBoardSize},
   {NULL, NULL}
 };
 

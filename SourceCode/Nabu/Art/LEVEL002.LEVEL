@@ -3,6 +3,7 @@ GameMode: PongWar
 Music: PINKPNTH
 ScreenFont: NTHPONG1
 
+# After showing the win screen, will return to the credits.
 LevelBookmark: CREDITS
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
@@ -10,5 +11,6 @@ LevelNext: P2, WINP2
 LevelNext: P3, WINP3
 
 MaxAIPlayers: 2
+BoardSize: 32, 23
 InitialCount: 250
 

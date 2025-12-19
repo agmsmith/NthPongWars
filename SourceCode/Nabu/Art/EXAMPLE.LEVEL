@@ -54,13 +54,13 @@ Music: SQUAROOT
 ScreenFull: TITLESCREEN
 
 # When this much time has elapsed while running a level, the next level choice
-# for the fire button (see LevelNext: Fire, LevelName) is used to load the next
-# level and the fire button is declared the winner.  Mostly useful for attract
-# mode gameplay.  Timeout in seconds.  Internally it uses the frame counter,
-# assuming 20 frames per second, so 3276 seconds is the maximum, a bit over 54
-# minutes.  Though if the game is running fast, like when displaying a static
-# screen, it will be 3 times faster.  Don't specify this keyword or use zero
-# for no timeout.
+# for the timeout (see LevelNext: Timeout, LevelName) is used to load the next
+# level and the timeout pseudo-player #5 is declared the winner.  Mostly useful
+# for attract mode gameplay.  Timeout in seconds.  Internally it uses the frame
+# counter, assuming 20 frames per second, so 3276 seconds is the maximum, a bit
+# over 54 minutes.  Though if the game is running fast, like when displaying a
+# static screen, it will be 3 times faster.  Don't specify this keyword or use
+# zero for no timeout.
 PlayTimeout: 30
 
 # This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
@@ -132,7 +132,8 @@ MaxAIPlayers: 2
 # When playing in countdown mode, the first player to reach this many tiles in
 # their colour wins.  The count starts at this value and counts down about once
 # per second.  If you don't specify it, it gets set to the number of tiles in
-# the level.
+# the level.  Use after BoardSize, which resets the count to the number of
+# tiles in the board.
 InitialCount: 100
 
 # Set up a game board with the given width and height in tiles.  On the NABU

@@ -12,5 +12,6 @@ LevelNext: P3, WINP3
 # Only remove players when starting the game, sets win counts to zero.
 RemovePlayers:
 MaxAIPlayers: 4
-InitialCount: 200
+BoardSize: 16, 10
+InitialCount: 80
 

@@ -29,10 +29,10 @@ const char kMagicWordVersion[] = "Version";
 bool gVictoryModeFireButtonPress = true;
 bool gVictoryModeJoystickPress = false;
 bool gVictoryModeHighestTileCount = false;
-uint8_t gVictoryWinningPlayer = MAX_PLAYERS + 1;
+uint8_t gVictoryWinningPlayer = MAX_PLAYERS + 2;
 
 char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";
-char gWinnerNextLevelName[MAX_PLAYERS+1][MAX_LEVEL_NAME_LENGTH];
+char gWinnerNextLevelName[MAX_PLAYERS+2][MAX_LEVEL_NAME_LENGTH];
 char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH] = "TITLE";
 
 static uint16_t sVictoryTimeoutFrame = 0;
@@ -45,7 +45,8 @@ static uint16_t sVictoryTimeoutFrame = 0;
 */
 bool VictoryConditionTest(void)
 {
-  uint8_t winningPlayer = MAX_PLAYERS + 1;
+  uint8_t winningPlayer = MAX_PLAYERS + 2;
+  /* 0 to 3 are players, 4 is Fire button, 5 is Timeout, 6 is invalid. */
 
   uint8_t i;
   player_pointer pPlayer = g_player_array;
@@ -107,13 +108,14 @@ bool VictoryConditionTest(void)
   /* Check for a level timeout if we don't have a winner yet. */
 
   if (sVictoryTimeoutFrame && (sVictoryTimeoutFrame == g_FrameCounter) &&
-  (winningPlayer >= MAX_PLAYERS + 1))
-    winningPlayer = MAX_PLAYERS; /* Fire button "player" is the winner. */
+  (winningPlayer >= MAX_PLAYERS + 2))
+    winningPlayer = MAX_PLAYERS + 1; /* Timeout "player" is the winner. */
 
-  /* If we have a winner (or MAX_PLAYERS for fire button pressed in joystick
-     mode or timeout), use their next level as the one we want to load next. */
+  /* If we have a winner (or MAX_PLAYERS = 4 for fire button pressed in
+     joystick mode or MAX_PLAYERS+1 == 5 for timeout), use their next level as
+     the one we want to load next. */
 
-  if (winningPlayer < MAX_PLAYERS + 1)
+  if (winningPlayer < MAX_PLAYERS + 2)
   {
     gVictoryWinningPlayer = winningPlayer;
     strcpy(gLevelName, gWinnerNextLevelName[winningPlayer]);
@@ -427,20 +429,23 @@ bool KeywordPlayTimeout(void)
 
 /* This keyword specifies the base level name for the next level.  It is
    followed by a player identification, either "All" or "P0", "P1", "P2",
-   "P3" or a joystick direction to identify which next level gets set.
-   The player is followed by a comma and the level name is the rest of the line.
+   "P3" or a joystick direction + Fire + Timeout to identify which next level
+   gets set.  The player is followed by a comma and the level name is the rest
+   of the line.
 */
 bool KeywordLevelNext(void)
 {
   char levelName[MAX_LEVEL_NAME_LENGTH];
   char playerName[8];
-  uint8_t iPlayer = MAX_PLAYERS + 2; /* +2 means no player specified. */
+
+  uint8_t iPlayer = MAX_PLAYERS + 3;
+  /* 0 to 3 are players, 4 is Fire button, 5 is Timeout, 6 is All, 7 is none. */
 
   static struct LevelOptionStruct {
     const char *optionWord;
     uint8_t playerNumber;
   } sLevelNextOptions[] = {
-    {"All", MAX_PLAYERS + 1},
+    {"All", MAX_PLAYERS + 2},
     {"P0", 0},
     {"P1", 1},
     {"P2", 2},
@@ -450,11 +455,13 @@ bool KeywordLevelNext(void)
     {"Right", 2},
     {"Up", 3},
     {"Fire", 4},
-    {NULL, MAX_PLAYERS + 2}
+    {"Timeout", 5},
+    {NULL, MAX_PLAYERS + 3}
   };
 
   /* Get the player number, 0 to 3 for normal players, or 4 for Fire button,
-     5 == MAX_PLAYERS+1 to signify all players.  MAX_PLAYERS+2 for invalid. */
+     or 5 for Timeout, or 6 to signify all players.  MAX_PLAYERS+3 == 7 for
+     invalid. */
 
   if (!LevelReadWord(playerName, sizeof(playerName), ','))
     goto ErrorExit;
@@ -471,7 +478,7 @@ bool KeywordLevelNext(void)
     }
     pOption++;
   }
-  if (iPlayer >= MAX_PLAYERS + 2)
+  if (iPlayer >= MAX_PLAYERS + 3)
     goto ErrorExit; /* No recognised option found. */
 
   if (!LevelReadAndTrimLine(levelName, sizeof(levelName)))
@@ -479,19 +486,19 @@ bool KeywordLevelNext(void)
 
   /* Copy the name to the appropriate player's NextLevel file name. */
 
-  if (iPlayer < MAX_PLAYERS + 1)
+  if (iPlayer < MAX_PLAYERS + 2)
     strcpy(gWinnerNextLevelName[iPlayer], levelName);
-  else /* All players picked. */
+  else /* All players picked.  iPlayer == MAX_PLAYERS + 2 */
   {
     uint8_t i;
-    for (i = 0; i < MAX_PLAYERS + 1; i++)
+    for (i = 0; i < MAX_PLAYERS + 2; i++)
       strcpy(gWinnerNextLevelName[i], levelName);
   }
   return true;
 
 ErrorExit:
   DebugPrintString("LevelNext: needs P0 to P3, All, "
-    "Up/Down/Left/Right/Fire then a comma & level name.\n");
+    "Up/Down/Left/Right/Fire/Timeout then a comma & level name.\n");
   return false;
 }
 
@@ -697,7 +704,7 @@ bool LoadLevelFile(void)
   }
 
   /* Some things that need to be reset at the start of a level. */
-  gVictoryWinningPlayer = MAX_PLAYERS + 1;
+  gVictoryWinningPlayer = MAX_PLAYERS + 2;
   sVictoryTimeoutFrame = 0;
   g_FrameCounter = 0;
 

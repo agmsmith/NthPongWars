@@ -8,7 +8,7 @@ ScreenFull: TITLESCREEN
 LevelNext: All, LEVEL001
 LevelNext: Left, Quit
 LevelNext: Right, CREDITS
-LevelNext: Fire, GAMEDEMO
+LevelNext: Timeout, GAMEDEMO
 PlayTimeout: 5
 
 # Remove all players and reset win counts to zero.

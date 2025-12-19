@@ -49,9 +49,9 @@ extern bool gVictoryModeHighestTileCount;
    number of tiles in the game area, unless otherwise specified. */
 
 extern uint8_t gVictoryWinningPlayer;
-/* Number of the winning player, or MAX_PLAYERS+1 if no player has won.  Does
+/* Number of the winning player, or MAX_PLAYERS+2 if no player has won.  Does
    get set to MAX_PLAYERS (not a valid player) when in gVictoryModeJoystickPress
-   and the fire button is used. */
+   and the fire button is used, or MAX_PLAYERS+1 for a level timeout. */
 
 extern char gLevelName[MAX_LEVEL_NAME_LENGTH];
 /* Base name for the currently running level, or the next level after victory
@@ -60,11 +60,11 @@ extern char gLevelName[MAX_LEVEL_NAME_LENGTH];
    is a text file located locally, or on the server, or on Alex's web site.
    Users can make their own if they wish. */
 
-extern char gWinnerNextLevelName[MAX_PLAYERS+1][MAX_LEVEL_NAME_LENGTH];
+extern char gWinnerNextLevelName[MAX_PLAYERS+2][MAX_LEVEL_NAME_LENGTH];
 /* Whoever wins the level has a custom next level base file name.  Mostly
    useful for doing trivia contests.  Though for ordinary use these are all set
    to the same level name.  0 to MAX_PLAYERS-1 are for players.  In button modes
-   0 is left, 1 is down, 2 is right, 3 is up, 4 is fire. */
+   0 is left, 1 is down, 2 is right, 3 is up, 4 is fire, 5 is for timeout. */
 
 extern char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH];
 /* A level name saved for later use.  Possibly many levels later. */

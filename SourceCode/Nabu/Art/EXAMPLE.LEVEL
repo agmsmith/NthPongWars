@@ -101,7 +101,7 @@ LevelNext: All, LEVEL007
 # trivia game mode:
 LevelNext: P3, CONGRATS_YELLOW
 # Or the next level is determined by a joystick direction or button press
-# (Left, Down, Right, Up, Fire).
+# (Left, Down, Right, Up, Fire, Timeout).
 LevelNext: Down, ANSWER026_B
 # If you only want to specify one or two players, you can use LevelNext:All to
 # set the next level for all players and direction options then use more
@@ -162,9 +162,11 @@ BoardScroll: No
 # Specify the contents of the board.  Board height quantity of lines follows
 # this keyword (which doesn't have an argument), and board width characters
 # from each line are used to set the board state.  Unspecified tiles will be
-# empty.  Empty lines may get ignored.  A line starting with "END" will end the
-# tile load.  The player tiles are used for selecting a starting location for
-# the corresponding player.  The letter codes currently are:
+# empty.  Empty lines may get ignored, so at least add a space.  Characters
+# past the width of the board are ignored.  Lines starting with # are treated
+# as tile data, not comments.  The player tiles are used for selecting a
+# starting location for the corresponding player.  The letter codes currently
+# are:
 # ' ', /* OWNER_EMPTY */
 # '1', /* OWNER_PLAYER_1 */
 # '2', /* OWNER_PLAYER_2 */
@@ -200,5 +202,5 @@ SFB       SFB      BFS       BFSX
                                 X
                                 X
                                 X
-END
+# END of BoardTiles.
 

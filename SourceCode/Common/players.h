@@ -93,14 +93,13 @@ typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
    Note that AI frames happen at a quarter of the screen update frame rate,
    so about 5hz, since we only update one AI each frame to save on CPU. */
 typedef struct player_algo_struct {
-  bool steer : 1; /* TRUE to turn towards target, false to drift. */
+  bool steer; /* TRUE to turn towards target, false to drift. */
   int16_t target_pixel_x; /* Location in the game world we head towards. */
   int16_t target_pixel_y;
   int16_t target_distance; /* Updated with current distance to target. */
   uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
   uint8_t target_list_index; /* Where we are in the global list of targets. */
   uint8_t desired_speed; /* Harvest if speed is less than this pixels/frame. */
-  uint8_t trail_remaining; /* Num AI frames remaining in harvest or trail. */
   uint8_t delay_remaining; /* Num AI frames remaining in time delay opcode. */
 } player_algo_record, *player_algo_pointer;
 
@@ -138,8 +137,8 @@ typedef uint8_t target_code; /* Want it to be 8 bits, not 16. */
    global target list and pointers to where each particular AI player has
    their code start. */
 typedef struct target_list_item_struct {
-  uint8_t target_pixel_x; /* 0 to 255, game world column coordinates. */
-  uint8_t target_pixel_y; /* 0 to 239 for row number, or a special opcode. */
+  uint8_t target_tile_x; /* 0 to 255, game world column coordinates. */
+  uint8_t target_tile_y; /* 0 to 239 for row number, or a special opcode. */
 } target_list_item_record, *target_list_item_pointer;
 
 extern target_list_item_record g_target_list[];

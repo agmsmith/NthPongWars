@@ -1,7 +1,7 @@
-# Player #4 (not a player) Wins.
+# Player #5 (not a player) Wins.
 GameMode: Slide
 Music: Silence
-ScreenFull: WINP4
+ScreenFull: WINP5
 LevelNext: All, Bookmark
 PlayTimeout: 5
 

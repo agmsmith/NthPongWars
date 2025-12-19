@@ -1,4 +1,4 @@
-# Show the second credits screen, with music info.
+# Show the third credits screen, with music info.
 GameMode: Slide
 ScreenFull: CREDITS
 LevelNext: All, TITLE

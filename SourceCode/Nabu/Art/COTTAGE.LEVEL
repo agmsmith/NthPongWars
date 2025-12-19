@@ -3,5 +3,6 @@ GameMode: Slide
 # A file name with lots of space before and after it.
 Music:   ONECOLN1     
 ScreenFull: COTTAGE
-LevelNext: All, Quit
+LevelNext: All, Bookmark
+PlayTimeout: 7
 

@@ -1,7 +1,7 @@
 # Player #2 Wins.
 GameMode: Slide
-Music: ONECOLN1
+Music: SQUAROOT
 ScreenFull: WINP2
 LevelNext: All, Bookmark
-PlayTimeout: 20
+PlayTimeout: 5
 

@@ -1,8 +1,8 @@
-# Show the first credits screen, followed by others.
+# Show the first credits screen, followed by others.  Keeps playing the current
+# music, which is often the winner's music from the previous player win screen.
 GameMode: Slide
-Music: UNDERWTR
 ScreenFont: TEXTSCREEN
 LevelNext: All, CREDITS1
 PlayTimeout: 7
-ScreenText: 4, 4, 4, 28, Version
+ScreenText: 4, 4, 4, 28, Copyright
 

@@ -2,12 +2,20 @@
 GameMode: PongWar
 Music: Default
 ScreenFont: NTHPONG1
+PlayTimeout: 50
+LevelBookmark: CREDITS
 LevelNext: All, CREDITS
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
 
 # Want all AI players, though a Human can join in if they wish.
 RemovePlayers:
 MaxAIPlayers: 4
-BoardSize: 26, 20
+BoardSize: 32, 23
 # Will be a short game.
-InitialCount: 120
+InitialCount: 80
 

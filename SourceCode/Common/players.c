@@ -657,65 +657,38 @@ head_towards_octant, head_clockwise);
 */
 static void BrainUpdateJoystick(player_pointer pPlayer)
 {
-  uint8_t joystickOutput = 0;
-
   if (!gVictoryModeHighestTileCount) /* Not playing a game, so do nothing. */
   {
     pPlayer->joystick_inputs = 0;
     return;
   }
 
-  /* Do the harvest mode vs trailing tiles mode based on time duty cycle that
-     gets shorter if we need more speed (using the technique of laying down a
-     tile and then harvesting it in the next frame, rather than the bigger
-     picture technique of heading towards larger areas of your tiles).  If
-     speed not needed, go for longer stretches of laying down tiles.  Special
-     speed of 255(-1) means stay in harvest mode to not leave a trail. */
+  /* Alternate every update between trail and harvest mode when the AI needs
+     more speed (using the technique of laying down a tile and then harvesting
+     it in the next frame, rather than the bigger picture technique of heading
+     towards larger areas of your tiles).  Special speed of 255(-1) means stay
+     in harvest mode to not leave a trail while moving (though do trail if you
+     become completely stationary. */
 
-  if (--pPlayer->brain_info.algo.trail_remaining != 0)
+  uint8_t joystickOutput = 0;
+  uint8_t desiredSpeed = pPlayer->brain_info.algo.desired_speed;
+  bool wasHarvesting = (pPlayer->joystick_inputs & Joy_Button) != 0;
+
+  if (desiredSpeed == (uint8_t) 255)
   {
-    /* Keep same harvest/trail mode, cycle not up yet. */
+    /* Code for always harvest, used for not leaving a trail.  Well, except
+       when stopped, then coast/harvest alternate updates else the AI player
+       gets stuck. */
 
-    joystickOutput |= (pPlayer->joystick_inputs & Joy_Button);
+    if (pPlayer->speed != 0 || !wasHarvesting)
+      joystickOutput |= Joy_Button;
   }
-  else /* Time for a change in harvest mode duty cycle. */
+  else
   {
-    uint8_t desiredSpeed = pPlayer->brain_info.algo.desired_speed;
-    bool wasHarvesting = (pPlayer->joystick_inputs & Joy_Button) != 0;
-
-    if (desiredSpeed == (uint8_t) 255)
-    {
-      /* Code for always harvest, used for not leaving a trail.  Well, except
-         when stopped, then coast/harvest alternate updates else the AI player
-         gets stuck. */
-
-      if (pPlayer->speed != 0 || !wasHarvesting)
-        joystickOutput |= Joy_Button;
-      pPlayer->brain_info.algo.trail_remaining = 8;
-    }
-    else
-    {
-      int8_t deltaSpeed = (int8_t) desiredSpeed - (int8_t) pPlayer->speed;
-        /* A positive number if more speed needed. */
-      uint8_t time_to_trail; /* Time limit for the next harvest/trail mode. */
-
-      if (deltaSpeed <= 0)
-      {
-        if (wasHarvesting)
-          time_to_trail = 10; /* 10 == 2 seconds of coasting, no harvest. */
-        else /* Next mode will be harvest, keep it short, don't need it. */
-          time_to_trail = 1;
-      }
-      else if (deltaSpeed > 12)
-        time_to_trail = 1; /* Alternate trail and harvest every update. */
-      else /* 1 to 12 deltaSpeed. */
-        time_to_trail = 13 - deltaSpeed;
-      pPlayer->brain_info.algo.trail_remaining = time_to_trail;
-
-      /* Flip Joy_Button bit of joystickOutput to flip harvest mode. */
-      if (!wasHarvesting) /* Should we harvest in the next cycle? */
-        joystickOutput |= Joy_Button;
-    }
+    /* deltaSpeed is a positive number if more speed needed. */
+    int8_t deltaSpeed = (int8_t) desiredSpeed - (int8_t) pPlayer->speed;
+    if (deltaSpeed > 0 && !wasHarvesting)
+      joystickOutput |= Joy_Button; /* Alternately turn on harvest mode. */
   }
 
   /* Has the current opcode finished?  Or is it still waiting? */
@@ -736,11 +709,10 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     target_list_item_record currentOpcode;
     currentOpcode = g_target_list[pPlayer->brain_info.algo.target_list_index++];
 
-    switch (currentOpcode.target_pixel_y)
+    switch (currentOpcode.target_tile_y)
     {
     case TARGET_CODE_SPEED:
-      pPlayer->brain_info.algo.desired_speed = currentOpcode.target_pixel_x;
-      pPlayer->brain_info.algo.trail_remaining = 1; /* Update harvest soon. */
+      pPlayer->brain_info.algo.desired_speed = currentOpcode.target_tile_x;
       break;
 
     case TARGET_CODE_STEER:
@@ -749,10 +721,10 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
          for the next next next player.  4 to target a rival player with the
          highest score, 5 to target the human with the highest score, other
          values make you drift rather than steer. */
-      if (currentOpcode.target_pixel_x <= 3)
+      if (currentOpcode.target_tile_x <= 3)
       { /* Target your own corner of the game board, or the next ones around. */
         uint8_t iMyself = (3 &
-          (pPlayer->player_array_index + currentOpcode.target_pixel_x));
+          (pPlayer->player_array_index + currentOpcode.target_tile_x));
         if (iMyself == 0 || iMyself == 3)
           pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH / 2;
         else
@@ -768,13 +740,13 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
         pPlayer->brain_info.algo.steer = true;
       }
-      else if (currentOpcode.target_pixel_x == 4 ||
-      currentOpcode.target_pixel_x == 5)
+      else if (currentOpcode.target_tile_x == 4 ||
+      currentOpcode.target_tile_x == 5)
       { /* Target the rival player with highest score. */
         uint8_t iMyself = pPlayer->player_array_index;
         uint8_t iBestPlayer = MAX_PLAYERS; /* Also code for don't target. */
         uint16_t maxScore = 0;
-        bool onlyHumans = (currentOpcode.target_pixel_x == 5);
+        bool onlyHumans = (currentOpcode.target_tile_x == 5);
         uint8_t iPlayer;
         for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
         {
@@ -813,20 +785,33 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       break;
 
     case TARGET_CODE_DELAY:
-      pPlayer->brain_info.algo.delay_remaining = currentOpcode.target_pixel_x;
+      pPlayer->brain_info.algo.delay_remaining = currentOpcode.target_tile_x;
       break;
 
     case TARGET_CODE_GOTO:
-      pPlayer->brain_info.algo.target_list_index = currentOpcode.target_pixel_x;
+      pPlayer->brain_info.algo.target_list_index = currentOpcode.target_tile_x;
       break;
 
     default:
       /* Just a pair of X and Y column/row target coordinates, go to center of
-         that tile (any closer to walls and you bounce off the wall). */
+         that tile (any closer to walls and you bounce off the wall).  Clip to
+         actual board size so you don't get AI's trying to go past the edge of
+         the board when you load a smaller board than what the opcodes use. */
+
+      uint8_t tileX;
+      tileX = currentOpcode.target_tile_x;
+      if (tileX >= g_play_area_width_tiles)
+        tileX = g_play_area_width_tiles - 1;
       pPlayer->brain_info.algo.target_pixel_x =
-        currentOpcode.target_pixel_x * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+        tileX * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+
+      uint8_t tileY;
+      tileY = currentOpcode.target_tile_y;
+      if (tileY >= g_play_area_height_tiles)
+        tileY = g_play_area_height_tiles - 1;
       pPlayer->brain_info.algo.target_pixel_y =
-        currentOpcode.target_pixel_y * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+        tileY * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+
       pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
       pPlayer->brain_info.algo.steer = true;
       break;
@@ -1062,7 +1047,6 @@ void UpdatePlayerInputs(void)
       bzero(&pFreePlayer->brain_info, sizeof(pFreePlayer->brain_info));
       pFreePlayer->brain = (player_brain) BRAIN_ALGORITHM;
       pFreePlayer->brain_info.algo.desired_speed = 4 + numAIPlayers;
-      pFreePlayer->brain_info.algo.trail_remaining = 5 + numAIPlayers * 50;
       pFreePlayer->brain_info.algo.target_list_index =
         g_target_start_indices[numAIPlayers];
       pFreePlayer->brain_info.algo.steer = false;

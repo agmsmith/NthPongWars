@@ -15,7 +15,9 @@ LevelNext: Timeout, WINP5
 # Want all AI players, though a Human can join in if they wish.
 RemovePlayers:
 MaxAIPlayers: 4
-BoardSize: 32, 23
+BoardSize: 30, 22
 # Will be a short game.
 InitialCount: 80
+
+ScreenText: 2, 30, 30, 32, D e m o n s t r a t i o n - L e v e l
 

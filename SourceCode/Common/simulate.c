@@ -72,7 +72,6 @@
  */
 void Simulate(void)
 {
-  int16_t absVelocity;
   int16_t maxVelocity;
   uint8_t iStep;
   uint8_t numberOfSteps;
@@ -178,26 +177,35 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
       ZERO_FX(pPlayer->velocity_y);
       tempSpeed = 0;
     }
-    else
+    else /* Find the player's Manhattan velocity, multiplied 4 precision. */
     {
-      absVelocity = GET_FX_INTEGER(pPlayer->velocity_x);
+      int16_t absVelocity;
+
+      absVelocity = MUL4INT_FX(&pPlayer->velocity_x);
       if (absVelocity < 0)
         absVelocity = -absVelocity;
       tempSpeed = absVelocity;
       if (absVelocity > maxVelocity)
         maxVelocity = absVelocity;
 
-      absVelocity = GET_FX_INTEGER(pPlayer->velocity_y);
+      absVelocity = MUL4INT_FX(&pPlayer->velocity_y);
       if (absVelocity < 0)
         absVelocity = -absVelocity;
       tempSpeed += absVelocity;
       if (absVelocity > maxVelocity)
         maxVelocity = absVelocity;
+
+      maxVelocity /= 4; /* Needs to be in pixels per update. */
     }
 
     /* Save the Manhattan speed, into an 8 bit integer, which should be good
-       enough since it is integer pixels per frame, and 256 would be moving the
-       width of the screen every frame, way too fast to care about. */
+       enough since it is integer pixels per frame, and 64 would be moving the
+       width of the screen every frame, way too fast to care about.  We use
+       four times the pixel speed so we can see movements of 1/4 of a pixel
+       per update.  Typically speeds are under 8 pixels per frame, and using
+       only pure thrusting seems to get you up to 4 pixels per frame, so you'd
+       see 0, 1, 2, 3 and 4 as normal speeds, which is too coarse a scale for
+       fine speed control. */
 
     if (tempSpeed < 0)
       pPlayer->speed = 0; /* Shouldn't happen unless overflowed 16 bit speed! */

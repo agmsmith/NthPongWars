@@ -152,6 +152,9 @@ extern void DIV2Nth_FX(pfx x, uint8_t n);
 /* Divide a by 256 and put into b. */
 #define DIV256_FX(a, b) {b.as_int32 = a.as_int32 / 256; }
 
+/* Multiply by 4 and return the integer portion. */
+extern int16_t MUL4INT_FX(pfx x);
+
 /* Convert a 2D vector into an octant angle direction.  Returns octant number
    in lower 3 bits of the result.  Result high bit is set if the vector is
    exactly on the angle, else zero.

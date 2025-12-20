@@ -61,12 +61,14 @@ uint8_t g_KeyboardFakeJoystickStatus;
    has a byte sized index in the opcodes so the array is currently limited to
    at most 256 elements. */
 target_list_item_record g_target_list[] = {
+  {12, TARGET_CODE_SPEED}, /* Fast speed. */
+  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to pick up speed. */
   {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
   {9, 20}, /* Capital N, start at bottom left corner of letter. */
   {2, TARGET_CODE_SPEED}, /* Slow speed. */
   {9, 11},
   {9, 2},
-  {1, TARGET_CODE_SPEED}, /* Even slower, more solid trail. */
+  {1, TARGET_CODE_SPEED}, /* Even slower, more solid diagonal trail. */
   {10, 4},
   {12, 8},
   {14, 11},
@@ -79,7 +81,7 @@ target_list_item_record g_target_list[] = {
   {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
   {19, 1}, /* Straight up to top of screen. */
   {30, 1},
-  {20, TARGET_CODE_SPEED}, /* Speed down right side of screen. */
+  {10, TARGET_CODE_SPEED}, /* Speed down right side of screen. */
   {30, 21},
   {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
   {9, 21}, /* Back under the starting point of the letter. */
@@ -89,15 +91,12 @@ target_list_item_record g_target_list[] = {
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
-  {0, TARGET_CODE_GOTO},
-  {0, TARGET_CODE_GOTO},
-/* Instruction 30 */
-  {7, TARGET_CODE_SPEED},
+/* Instruction 30 */ {10, TARGET_CODE_SPEED},
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {1, TARGET_CODE_STEER}, /* Steer to next corner. */
-  {30, TARGET_CODE_SPEED}, /* Faster movement. */
+  {3, TARGET_CODE_SPEED}, /* Slower movement. */
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
-  {50, TARGET_CODE_SPEED}, /* Fast movement towards player. */
+  {15, TARGET_CODE_SPEED}, /* Fast movement towards player. */
   {5, TARGET_CODE_STEER}, /* Head to leading Human player. */
   {5, TARGET_CODE_DELAY}, /* Delay 1 second to hound them. */
   {30, TARGET_CODE_GOTO},
@@ -685,10 +684,50 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   }
   else
   {
-    /* deltaSpeed is a positive number if more speed needed. */
+    /* deltaSpeed is a positive number if more speed needed.  Note that player
+      speed is in 1/4 pixels per update for extra precision. */
     int8_t deltaSpeed = (int8_t) desiredSpeed - (int8_t) pPlayer->speed;
-    if (deltaSpeed > 0 && !wasHarvesting)
-      joystickOutput |= Joy_Button; /* Alternately turn on harvest mode. */
+
+    /* Go to a slightly faster speed when you start accelerating, so you can
+       then coast for longer, making for less frequent annoying harvest sound
+       effects. */
+    bool hysteresis = pPlayer->brain_info.algo.speed_hysteresis;
+    if (hysteresis)
+      deltaSpeed += 4;
+
+    if (deltaSpeed > 0)
+    {
+      if (!wasHarvesting)
+        joystickOutput |= Joy_Button; /* Alternately turn on harvest mode. */
+
+      if (!hysteresis)
+      {
+        pPlayer->brain_info.algo.speed_hysteresis = true;
+#if 1
+        strcpy(g_TempBuffer, "Player #");
+        AppendDecimalUInt16(pPlayer->player_array_index);
+        strcat(g_TempBuffer, " hysteresis on, speed was ");
+        AppendDecimalUInt16(pPlayer->speed);
+        strcat(g_TempBuffer, ".\n");
+        DebugPrintString(g_TempBuffer);
+#endif
+      }
+    }
+    else /* Have reached target speed. */
+    {
+      if (hysteresis)
+      {
+        pPlayer->brain_info.algo.speed_hysteresis = false;
+#if 1
+        strcpy(g_TempBuffer, "Player #");
+        AppendDecimalUInt16(pPlayer->player_array_index);
+        strcat(g_TempBuffer, " removed hysteresis, speed was ");
+        AppendDecimalUInt16(pPlayer->speed);
+        strcat(g_TempBuffer, ".\n");
+        DebugPrintString(g_TempBuffer);
+#endif
+      }
+    }
   }
 
   /* Has the current opcode finished?  Or is it still waiting? */

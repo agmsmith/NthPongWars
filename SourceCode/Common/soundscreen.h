@@ -70,9 +70,10 @@ extern bool PlayMusic(const char *FileName);
 /* Starts the given piece of external music playing.  Assumes the sound library
    is initialised and a game loop (or screen loader) will update sound ticks.
    Will look for that file in several places, using an extension specific to
-   the platform (so don't specify a file name extension).  Returns true if
-   successful.  If it returns false, it starts playing some default built-in
-   music. */
+   the platform (so don't specify a file name extension).  "Silence" turns off
+   background music and "Default" plays the built-in music designed for when
+   the game is running (quieter, not too complex).  Returns true if successful.
+   If it returns false, it leaves whatever music was playing still playing. */
 
 extern void SoundUpdateIfNeeded(void);
 /* This is best called after every lengthy operation, like opening a file.

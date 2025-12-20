@@ -1,11 +1,11 @@
 # Level #2.  AGMS20251210
 GameMode: PongWar
-Music: PINKPNTH
+Music: Silence
 ScreenFont: NTHPONG1
 
-# After showing the win screen, will return to the short form credits.
-LevelBookmark: CREDITS2
-LevelNext: All, CREDITS2
+# After showing the win screen, will go to the next level.
+LevelBookmark: LEVEL003
+LevelNext: All, LEVEL003
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
@@ -14,6 +14,8 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 MaxAIPlayers: 2
-BoardSize: 32, 23
+BoardSize: 32, 22
 InitialCount: 250
+
+ScreenText: 23, 5, 5, 32, _The sound of silence?_
 

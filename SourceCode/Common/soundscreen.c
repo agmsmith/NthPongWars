@@ -242,7 +242,7 @@ void CloseDataFile(FileHandleType fileHandle)
    the platform (so don't specify a file name extension).  "Silence" turns off
    background music and "Default" plays the built-in music designed for when
    the game is running (quieter, not too complex).  Returns true if successful.
-   If it returns false, it  starts playing the default built-in music.
+   If it returns false, it leaves whatever music was playing still playing.
 */
 #ifdef NABU_H
 #define MAX_MUSIC_BUFFER_SIZE 1500 /* Bigest ChipsNSfx song we can play, +1. */
@@ -288,8 +288,6 @@ bool PlayMusic(const char *FileName)
   returnCode = true;
 
 ErrorExit:
-  if (!returnCode) /* Play some default music. */
-    CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Background music. */
 #endif /* NABU_H */
 
   return returnCode;

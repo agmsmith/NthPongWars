@@ -778,6 +778,7 @@ bool LoadLevelFile(void)
   gVictoryWinningPlayer = MAX_PLAYERS + 2;
   sVictoryTimeoutFrame = 0;
   g_FrameCounter = 0;
+  gLevelMaxAIPlayers = MAX_PLAYERS;
 
   sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL");
   if (sLevelFileHandle == BAD_FILE_HANDLE)

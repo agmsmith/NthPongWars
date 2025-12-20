@@ -476,6 +476,18 @@ Div2nthDone:
 }
 
 
+/* Multiply by 4 and return the integer portion.
+*/
+int16_t MUL4INT_FX(pfx x)
+{
+  int16_t intPart;
+  uint8_t fracPart;
+  intPart = x->portions.integer * 4;
+  fracPart = (x->portions.fraction >> 14);
+  return intPart | fracPart;
+}
+
+
 /* Convert a 2D vector into an octant angle direction.  Returns octant number
    in lower 3 bits of the result.  Result high bit is set if the vector is
    exactly on the angle, else zero.

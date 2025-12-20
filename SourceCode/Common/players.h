@@ -100,6 +100,7 @@ typedef struct player_algo_struct {
   uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
   uint8_t target_list_index; /* Where we are in the global list of targets. */
   uint8_t desired_speed; /* Harvest if speed is less than this pixels/frame. */
+  bool speed_hysteresis; /* Go over desired speed a bit before coasting. */ 
   uint8_t delay_remaining; /* Num AI frames remaining in time delay opcode. */
 } player_algo_record, *player_algo_pointer;
 
@@ -109,8 +110,10 @@ typedef struct player_algo_struct {
    return to the beginning of the path and follow it again, or hunt a player. */
 typedef enum target_list_codes_enum {
   TARGET_CODE_NONE = 240, /* No operation and lowest number opcode. */
-  TARGET_CODE_SPEED, /* X coordinate sets desired speed, in pixels/frame.
-    Use 255 to run in harvest mode, not leaving a trail behind. */
+  TARGET_CODE_SPEED, /* X coordinate sets desired speed, in quarter
+    pixels/frame.  Normally the best you can do is 4 pixels per frame (speed 16)
+    under thrust.  Use 255 to run in harvest mode, not leaving a trail
+    behind. */
   TARGET_CODE_STEER, /* X coordinate is 0 to 3 to steer towards a corner.  Zero
     for your corner of the board, 1 for next player's corner, 2 for next next
     player and 3 for the next next next player.  4 to target a rival player
@@ -211,9 +214,9 @@ typedef struct player_struct {
   /* The velocity vector the player is moving by, in pixels per update. */
 
   uint8_t speed;
-  /* Manhattan speed of the player in pixels per frame, calculated in
+  /* Manhattan speed of the player in quarter pixels per frame, calculated in
      Simulate() as part of the velocity updates, so it will lag a frame.  It's
-     abs(velocity_x) + abs(velocity_y). */
+     (abs(velocity_x) + abs(velocity_y)) * 4. */
 
   uint8_t velocity_octant;
   /* Direction the velocity is going in, calculated from velocity x,y but only
@@ -354,10 +357,10 @@ extern int16_t g_play_area_wall_left_x;
 extern int16_t g_play_area_wall_right_x;
 extern int16_t g_play_area_wall_top_y;
 
-/* When player speed is greater than this in pixels/frame, friction is
-   applied.  Needs to be under 8 pixels per frame, which is when an extra
-   physics step gets added and that slows everything down. */
-#define FRICTION_SPEED 2
+/* When player speed is greater than this in quarter pixels/frame, friction is
+   applied.  Needs to be under 8 pixels per frame (32 in value), which is when
+   an extra physics step gets added and that slows everything down. */
+#define FRICTION_SPEED 8
 
 /* Amount to add to the velocity of one of the players to separate them if
    needed.  g_SeparationVelocityFxAdd set once in in InitialisePlayers(),

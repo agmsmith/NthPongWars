@@ -15,7 +15,7 @@ LevelNext: Timeout, WINP5
 
 MaxAIPlayers: 2
 BoardSize: 32, 22
-InitialCount: 250
+InitialCount: 200
 
 ScreenText: 23, 5, 5, 32, _The sound of silence?_
 

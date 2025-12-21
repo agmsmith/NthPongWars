@@ -623,6 +623,8 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             {
               /* Power down, go back to Normal - turn off all power-ups. */
               bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
+              /* Also trigger a STOP power-up when you hit the NORMAL one. */
+              pPlayer->power_up_timers[OWNER_PUP_STOP] = 50;
             }
             else if (previousOwner < (tile_owner) OWNER_MAX)
               pPlayer->power_up_timers[previousOwner] += 50;

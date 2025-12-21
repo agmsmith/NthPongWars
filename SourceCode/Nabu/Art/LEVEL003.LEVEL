@@ -15,7 +15,7 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 BoardSize: 32, 22
-# Use default of tile count, no InitialCount: 250
+InitialCount: 350
 
 ScreenText: 23, 9, 9, 32, _The Long One_
 

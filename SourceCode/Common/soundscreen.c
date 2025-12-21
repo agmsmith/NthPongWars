@@ -190,34 +190,42 @@ FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
   sSetUpExtension = extension;
 
 #ifdef NABU_H
-  /* First try the NTHPONG directory on the NABU Internet Adapter server.  Note
-     that directory separator is a backslash since the adapter was written
-     originally in Windows.  Also it needs uppercase. */
+  static const char * sPathsToTry[] = {
+    /* First try the NTHPONG directory on the NABU Internet Adapter server.
+       Note that directory separator is a backslash since the adapter was
+       written originally in Windows.  Also it needs uppercase. */
+    "NTHPONG\\",
 
-  nameLen = SetUpPathInTempBuffer("NTHPONG\\");
-  if (rn_fileSize(nameLen, g_TempBuffer) > 0) /* See if the file exists. */
+    /* Try Alex's web server.  Hopefully the Internet Adapter will read it once
+       and then cache it.  Need HTTP, not HTTPS.  Cache isn't that fast; it
+       tries to read it each time the file is used to see if the file has
+       changed, then uses the local cached data. */
+    "http://www.agmsmith.ca/NTHPONG/",
+
+    /* Try the mirror of Alex's web server. */
+    "http://web.ncf.ca/au829/NTHPONG/",
+
+    /* End of list marker. */
+    NULL
+  };
+
+  const char *pPath;
+  uint8_t iPath = 0;
+  while ((pPath = sPathsToTry[iPath++]) != NULL)
   {
-    fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
-      0xff /* Use a new file handle */);
-    if (fileID != BAD_FILE_HANDLE)
-      return fileID;
-  }
-
-  /* Try Alex's web server.  Hopefully the Internet Adapter will read it once
-     and then cache it. */
-
-  nameLen = SetUpPathInTempBuffer("http://www.agmsmith.ca/NTHPONG/");
-  if (rn_fileSize(nameLen, g_TempBuffer) > 0) /* See if the file exists. */
-  {
-    fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
-      0xff /* Use a new file handle */);
-    if (fileID != BAD_FILE_HANDLE)
-      return fileID;
+    nameLen = SetUpPathInTempBuffer(pPath);
+    if (rn_fileSize(nameLen, g_TempBuffer) > 0) /* See if the file exists. */
+    {
+      fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
+        0xff /* Use a new file handle */);
+      if (fileID != BAD_FILE_HANDLE)
+        return fileID;
+    }
   }
 #endif /* NABU_H */
 
   SetUpPathInTempBuffer(
-    "Unable to load file from store directory or Alex's web site, named \"");
+    "Unable to load file from store directory or Alex's web sites, named \"");
   strcat(g_TempBuffer, "\".\n");
   DebugPrintString(g_TempBuffer);
 

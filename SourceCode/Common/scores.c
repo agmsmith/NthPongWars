@@ -92,10 +92,27 @@ void UpdateScores(void)
     uint16_t score = GetPlayerScore(iPlayer);
     if (score != pPlayer->score_displayed)
     {
-      /* Prepare a RAM copy of a colourful score number. */
+      /* Prepare a RAM copy of a colourful score number or other info.  Starts
+         flashing 3 player colour lozenges instead of digits when close to
+         winning, and has a 4th lozonge after the digits. */
+
+      char *pScoreText = pPlayer->score_text;
+      bool gettingClose = (score + 40 >= g_ScoreGoal);
+
+      if (gettingClose && (score + 20 >= g_ScoreGoal) && (score & 1) == 0)
       {
-        Write3DigitColourfulNumber(score, pPlayer->score_text,
+        /* Flashing lozenges are visible. */
+        uint8_t i = 4;
+        while (i-- != 0)
+          *pScoreText++ = fontOffset + ':';
+        *pScoreText = 0;
+      }
+      else /* Digits are visible, with a marker after if near. */
+      {
+        pScoreText = Write3DigitColourfulNumber(score, pScoreText,
           fontOffset /* Font offset to a colour digit set */);
+        *pScoreText++ = gettingClose ? fontOffset + ':' : ' ';
+        *pScoreText = 0;
       }
     }
     fontOffset += 11; /* Next batch of colourful digits and % sign. */

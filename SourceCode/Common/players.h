@@ -281,7 +281,8 @@ typedef struct player_struct {
      neutral), so we can detect idle players.  After about 30 seconds, we
      change that player slot to idle. */
 
-  /* uint16_t score; Use player colour tile in g_TileOwnerCounts, in tiles.h */
+  /* uint16_t score; Now obsolete.  Count is in player colour tile of
+     g_TileOwnerCounts, use GetPlayerScore() macro from tiles.h instead. */
   /* Current score of each player.  Counts the number of tiles they own.  Once
      a player has reached the goal score, the game is over.  Gave up on doing
      it as percentages, too CPU expensive.  Count incremental updates are done
@@ -293,8 +294,9 @@ typedef struct player_struct {
 
   char score_text[8];
   /* Text version of the score, corresponds to score_displayed.  May have a
-     following % sign, and at most 5 digits, and a NUL.  On the NABU it can use
-     different letters in the font for coloured digits for each player. */
+     following % sign or a marker showing that the player is close to the goal,
+     and at most 5 digits, and a NUL.  On the NABU it can use different letters
+     in the font for coloured digits for each player. */
 
   uint16_t win_count;
   /* Number of levels won by this player.  Will be used for high score listings
@@ -359,8 +361,10 @@ extern int16_t g_play_area_wall_top_y;
 
 /* When player speed is greater than this in quarter pixels/frame, friction is
    applied.  Needs to be under 8 pixels per frame (32 in value), which is when
-   an extra physics step gets added and that slows everything down. */
-#define FRICTION_SPEED 8
+   an extra physics step gets added and that slows everything down.  Also if it
+   is too high, AI players get stuck in corners bouncing off the sides while
+   trying to get to the corner tile. */
+#define FRICTION_SPEED 10
 
 /* Amount to add to the velocity of one of the players to separate them if
    needed.  g_SeparationVelocityFxAdd set once in in InitialisePlayers(),

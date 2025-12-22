@@ -78,8 +78,9 @@ target_list_item_record g_target_list[] = {
   {2, TARGET_CODE_SPEED}, /* Slow speed. */
   {19, 11},
   {19, 2},
-  {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
+  {10, TARGET_CODE_SPEED}, /* Speed up, upwards. */
   {19, 1}, /* Straight up to top of screen. */
+  {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
   {30, 1},
   {10, TARGET_CODE_SPEED}, /* Speed down right side of screen. */
   {30, 21},
@@ -90,11 +91,10 @@ target_list_item_record g_target_list[] = {
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
-  {0, TARGET_CODE_GOTO},
-/* Instruction 30 */ {10, TARGET_CODE_SPEED},
+/* Instruction 30 */ {11, TARGET_CODE_SPEED},
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {1, TARGET_CODE_STEER}, /* Steer to next corner. */
-  {3, TARGET_CODE_SPEED}, /* Slower movement. */
+  {6, TARGET_CODE_SPEED}, /* Slower movement. */
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {15, TARGET_CODE_SPEED}, /* Fast movement towards player. */
   {5, TARGET_CODE_STEER}, /* Head to leading Human player. */

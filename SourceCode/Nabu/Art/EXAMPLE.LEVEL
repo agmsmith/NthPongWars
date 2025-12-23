@@ -98,10 +98,10 @@ ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
 LevelNext: All, LEVEL007
 # Or have a custom level for each particular winning player (P0 to P3),
 # which could also be the player who presses their fire button first in a
-# trivia game mode:
+# Slide game mode:
 LevelNext: P3, CONGRATS_YELLOW
 # Or the next level is determined by a joystick direction or button press
-# (Left, Down, Right, Up, Fire, Timeout).
+# (Left, Down, Right, Up, Fire, Timeout) in Trivia mode.
 LevelNext: Down, ANSWER026_B
 # If you only want to specify one or two players, you can use LevelNext:All to
 # set the next level for all players and direction options then use more
@@ -143,21 +143,24 @@ InitialCount: 100
 BoardSize: 32, 23
 
 # Specify the rectangle on the screen where the game board is displayed.  Lets
-# you have smaller game boards inside a bigger picture.  Values are X character
-# position of top left corner (0 to 31), Y of top left corner (0 to 23), width
-# in tiles, height in tiles.  The example uses all the screen except the
-# topmost line (where the scores always are displayed).
+# you have smaller game boards inside a bigger picture frame.  Values are X
+# character position of top left corner (0 to 31), Y of top left corner
+# (0 to 23), width in tiles, height in tiles.  The example uses all the screen
+# except the topmost line (where the scores are always displayed).
+# Not yet implemented.
 BoardScreen: 0, 1, 32, 23
 
 # Where is the screen inside the board area?  These are the tile X and Y
 # positions of the top left corner of the screen inside the game world.
+# Not yet implemented.
 BoardTopCorner: 0, 0
 
 # Should the board scroll around to follow a player?  We'll use the lowest
 # scoring player to balance the game difficulty.  Since scrolling updates
 # are so slow (whole screen needs to be redrawn), it will only update when the
 # player goes off the screen, and at that point jump move them to the center of
-# the screen.  Use Yes or No.  Yes not implemented yet.
+# the screen.  Use Yes or No.
+# Not yet implemented.
 BoardScroll: No
 
 # Specify the contents of the board.  Board height quantity of lines follows
@@ -179,6 +182,7 @@ BoardScroll: No
 # 'W', /* OWNER_PUP_WIDER */
 # 'B', /* OWNER_PUP_BASH_WALL */
 # 'S', /* OWNER_PUP_SOLID */
+# Not yet implemented.
 BoardTiles:
 1         2          3         4X
                                 X

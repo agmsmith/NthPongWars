@@ -2418,25 +2418,176 @@ scheme to just load screens and play music in a pick your own adventure book.
 
 <P>What do we need to load a level and run it?
 <UL>
-  <LI><B>File name of the level.</B>  Mostly for documentation purposes, so we'll just display a warning if it doesn't match the actual file name used to load the level.  No extension in this field; ".LEVEL" will be assumed (files like Game123.level, or Tutorial.level).  You can use lower case, but it will all be converted to upper case due to Nabu Internet Adapter limitations.  Also it has a maximum of 64 characters for file names.
-  <LI><B>Type of Game to play.</B>  Should we play Nth Pong wars, or display a static screen (option to limit input to the winner of the previous level for high score entry screens and trivia game answer screens), or show high scores, or show the settings screen?  Could even dynamically load code to play different kinds of games.
-  <LI><B>Wining conditions.</B>  What counts as a game over?  Which player wins (identified by colour)?  You have a choice of several gameplay rules, like first to reach a tile count of X (with an option to have the required count decreasing every second), or first player to control all of a set of tiles (list of tile row and column pairs needed), or first player to press their joystick button (useful for static screens or trivia contests), or a joystick direction move by any player (for multiple choice static screens), or a timeout.
-  <LI><B>Win count increment.</B>  Each time a particular player wins a level, their win count is incremented by this amount.  Can be zero.  This gets used for the high score screen, which shows current players and a top ten list with date stamps.
-  <LI><B>Number of AI Players.</B>  Human players get assigned a colour when they move the joystick, if there isn't an unused colour, they displace an AI player or other Human player.  Their win count gets reset to zero, score (tiles owned count) doesn't change.
-  <LI><B>Next levels.</B>  After a level has finished, what's the name of the next level?  We have four choices, named after the player colours, the winning player of the level gets their next level chosen (optionally it could be a random choice).  For multiple choice static screens, this can be input from a joystick direction.  For trivia games, this could be the first player to press their button.
-  <LI><B>Name of Screen file.</B>  This can be a full screen graphic (no font available, *.NFUL file name, 12KB, about 2 seconds to load), a character based screen and font and sprites (*.NSCR, 7KB, 1 second, required for game play), and just a screen full of characters using the current font (*.NCHR, 1KB, fastest to load).  Or you can just leave the previous level's screen showing.
-  <LI><B>Name of Music file.</B>  The background music to be played.  For Nabu ChipNSFX files, game screens need to use tonal music in channels 1 and 2, noise instruments in channel 3, though the noise may go quiet due to player bugs.  Also the music should be relatively quiet so that the game sound effects are distinct.  The music gets loaded first so it plays while loading the background screen.
-  <LI><B>Play Area Size.</B>  For game levels, the size of the level (width and height in tiles).  The Nabu is limited to a total of 800 tiles due to memory space.  Lets you have long skinny play areas.
-  <LI><B>Screen Tile Area.</B>  Where the tiles are displayed on the screen, using top left corner row & column, and width & height.  There's also a play area location of the screen rectangle, maybe that will be automated to scroll the screen to follow a player in the play area, but it currently is set to (0,0) since scrolling is very slow.  Generally you'd make a screen (perhaps with a fake picture frame graphic) with an empty spot where the tiles will go.
-  <LI><B>Tile Data.</B>  A grid of ASCII characters, one for each tile.  Each line has as many characters as their are columns.  The number of lines should be the same as the number of rows.  After the data, there's a single line starting with "END", so we can pad missing rows or skip extra rows.  The characters describe what's on each tile, things like a power-up, an empty tile, a wall tile, a player owned tile, etc.
-  <LI><B>Tile Quotas.</B>  A list of all the power-ups with the number desired to be on the board.  Every few seconds, the game will round-robin iterate through the types of power-ups, adding a new one at a pseudo-random location (advanced players can figure out the pattern, on purpose) if it is under quota.
-  <LI><B>Introductory Text.</B>  Some text that will be printed over the screen tile area.  Automatically word wrapped.  Use victory conditions to pause the screen so that it can be read until a button is pressed.
-  <LI><B>AI Player Code.</B>  A listing of the code needed for the AI players, and starting code location for each player.  Might have to write a mini-assembler so you don't have to type it in as numbers.  The instructions are things like go to this location, wait a certain amount of time, set speed, follow this player, chase the score leader, chase the Human score leader.
+  <LI><B>File name of the level.</B> Mostly for documentation purposes, so
+    we'll just display a warning if it doesn't match the actual file name used
+    to load the level.  No extension in this field; ".LEVEL" will be assumed
+    (files like Game123.level, or Tutorial.level).  You can use lower case, but
+    it will all be converted to upper case due to Nabu Internet Adapter
+    limitations.  Also it has a maximum of 64 characters for file names.
+  <LI><B>Type of Game to play.</B> Should we play Nth Pong wars, or display a
+    static screen (option to limit input to the winner of the previous level
+    for high score entry screens and trivia game answer screens), or show high
+    scores, or show the settings screen?  Could even dynamically load code to
+    play different kinds of games.
+  <LI><B>Wining conditions.</B> What counts as a game over?  Which player wins
+    (identified by colour)?  You have a choice of several gameplay rules, like
+    first to reach a tile count of X (with an option to have the required count
+    decreasing every second), or first player to control all of a set of tiles
+    (list of tile row and column pairs needed), or first player to press their
+    joystick button (useful for static screens or trivia contests), or a
+    joystick direction move by any player (for multiple choice static screens),
+    or a timeout.
+  <LI><B>Win count increment.</B> Each time a particular player wins a level,
+    their win count is incremented by this amount.  Can be zero.  This gets
+    used for the high score screen, which shows current players and a top ten
+    list with date stamps.
+  <LI><B>Number of AI Players.</B> Human players get assigned a colour when
+    they move the joystick, if there isn't an unused colour, they displace an
+    AI player or other Human player.  Their win count gets reset to zero, score
+    (tiles owned count) doesn't change.
+  <LI><B>Next levels.</B> After a level has finished, what's the name of the
+    next level?  We have four choices, named after the player colours, the
+    winning player of the level gets their next level chosen (optionally it
+    could be a random choice).  For multiple choice static screens, this can be
+    input from a joystick direction.  For trivia games, this could be the first
+    player to press their button.
+  <LI><B>Name of Screen file.</B> This can be a full screen graphic (no font
+    available, *.NFUL file name, 12KB, about 2 seconds to load), a character
+    based screen and font and sprites (*.NSCR, 7KB, 1 second, required for game
+    play), and just a screen full of characters using the current font (*.NCHR,
+    1KB, fastest to load).  Or you can just leave the previous level's screen
+    showing.
+  <LI><B>Name of Music file.</B> The background music to be played.  For Nabu
+    ChipNSFX files, game screens need to use tonal music in channels 1 and 2,
+    noise instruments in channel 3, though the noise may go quiet due to player
+    bugs.  Also the music should be relatively quiet so that the game sound
+    effects are distinct.  The music gets loaded first so it plays while
+    loading the background screen.
+  <LI><B>Play Area Size.</B> For game levels, the size of the level (width and
+    height in tiles).  The Nabu is limited to a total of 800 tiles due to
+    memory space.  Lets you have long skinny play areas.
+  <LI><B>Screen Tile Area.</B> Where the tiles are displayed on the screen,
+    using top left corner row & column, and width & height.  There's also a
+    play area location of the screen rectangle, maybe that will be automated to
+    scroll the screen to follow a player in the play area, but it currently is
+    set to (0,0) since scrolling is very slow.  Generally you'd make a screen
+    (perhaps with a fake picture frame graphic) with an empty spot where the
+    tiles will go.
+  <LI><B>Tile Data.</B> A grid of ASCII characters, one for each tile.  Each
+    line has as many characters as their are columns.  The number of lines
+    should be the same as the number of rows.  After the data, there's a single
+    line starting with "END", so we can pad missing rows or skip extra rows.
+    The characters describe what's on each tile, things like a power-up, an
+    empty tile, a wall tile, a player owned tile, etc.
+  <LI><B>Tile Quotas.</B> A list of all the power-ups with the number desired
+    to be on the board.  Every few seconds, the game will round-robin iterate
+    through the types of power-ups, adding a new one at a pseudo-random
+    location (advanced players can figure out the pattern, on purpose) if it is
+    under quota.
+  <LI><B>Introductory Text.</B> Some text that will be printed over the screen
+    tile area.  Automatically word wrapped.  Use victory conditions to pause
+    the screen so that it can be read until a button is pressed.
+  <LI><B>AI Player Code.</B> A listing of the code needed for the AI players,
+    and starting code location for each player.  Might have to write a
+    mini-assembler so you don't have to type it in as numbers.  The
+    instructions are things like go to this location, wait a certain amount of
+    time, set speed, follow this player, chase the score leader, chase the
+    Human score leader.
 </UL>
 
-<P>I'll use a keyword:value(s) general format for the file, with comments marked by # at the beginning of a line and extra values usually separated by commas.  There should be an example file with all the features shown and commented about.  Look for it.
+<P>I'll use a keyword:value(s) general format for the file, with comments
+marked by # at the beginning of a line and extra values usually separated by
+commas.  There should be an example file with all the features shown and
+commented about.  Look for it.
 
-<P>Implementation is done by having a meta game loop, surrounding the normal game frame loop.  Its input is the name of the level to play.  From that, it loads artwork, sets up the board and runs the game until a winner is detected (which sets the level file name to a new value).  Repeat until the magic "QUIT" level file name is detected.
+<P>Implementation is done by having a meta game loop, surrounding the normal
+game frame loop.  Its input is the name of the level to play.  From that, it
+loads artwork, sets up the board and runs the game until a winner is detected
+(which sets the level file name to a new value).  Repeat until the magic "QUIT"
+level file name is detected.
+
+<HR>
+<H2><A NAME="2025.12.23"></A>2025.12.23</H2>
+
+<H3>Menu Screens and Music</H3>
+
+<P>I've had time to get more work done on the level loading.  It doesn't
+actually load levels now, but it does load screens (graphical, font and text,
+just text, ASCII print) and music (can play music while loading graphics).  If
+it can't find the file locally, it tries my web server, so I don't need to
+distribute all the files with the game, just the main executable.
+
+<P>The little level loading language has progressed, see <A
+HREF="20251223EXAMPLE.LEVEL.txt">EXAMPLE.LEVEL</A> for the current vocabulary.
+Besides specifying what to display, it can take different actions when
+different buttons are pressed, enough to do a triva game.  It can even start a
+game of Nth Pong Wars, kind of useful :-).  But not yet load a level, just
+create a new empty one of a given size.
+
+<P>That's enough power to implement a title screen, credits, a demo mode with
+timeout, and a game play level sequence, with win screens after each level.
+For example, here's the title screen level file:
+
+<PRE>
+# Load the Nth Pong Wars title screen, it's a full screen picture.
+GameMode: Trivia
+Music: ONECOLN1
+ScreenFull: TITLESCREEN
+
+# If a direction is  selected, start the game or show credits etc, else
+# wait 5 seconds and then show a demonstration of gameplay.
+LevelNext: All, LEVEL001
+LevelNext: Left, Quit
+LevelNext: Right, CREDITS
+LevelNext: Timeout, GAMEDEMO
+PlayTimeout: 5
+
+# Remove all players and reset win counts to zero.
+RemovePlayers:
+</PRE>
+
+And here's an example of a level file.  Each winning player has a screen of its
+own to display (usually with distinctive music per player), and with a kind of
+subroutine bookmark scheme, it continues on to the next level once the win
+screen has been acknowledged.
+
+<PRE>
+# Level #2.  AGMS20251210
+GameMode: PongWar
+Music: Silence
+ScreenFont: NTHPONG1
+
+# After showing the win screen, will go to the next level.
+LevelBookmark: LEVEL003
+LevelNext: All, LEVEL003
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
+
+MaxAIPlayers: 2
+BoardSize: 32, 22
+InitialCount: 200
+
+ScreenText: 23, 5, 5, 32, _The sound of silence?_
+</PRE>
+
+<P>Here's a video of the typical sequence of screens.  First there's a title
+screen and a few demonstration games, then a longer sequence of levels, each
+with a longer game.  Eventually I'll have to put in a high score screen at the
+end.
+
+<P ALIGN=CENTER><A HREF="20251223NthPongSampleRun.mp4"><IMG
+SRC="20251223NthPong.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of typical game progression through various levels and screens]"></A><BR>
+<A HREF="20251223NthPongSampleRun.mp4">20251223 Nth Pong Sample Run.mp4</A>
+
+<P>Now it's starting to flow like a game.  After playing it a while, I need to
+think over the gameplay, besides the AI getting stuck in a corner bug, the
+player's ability to go really fast by pounding the Harvest button throws off
+the gameplay balance.  Though it does make it very fast and exciting.
 
 <P>- Alex
 

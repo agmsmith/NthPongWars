@@ -1,0 +1,211 @@
+# This is an example level file, for NthPongWars by Alexander G. M. Smith.
+# AGMS20251204 - started this file.
+# This one has all the options specified, which you likely won't use in a
+# real level file as some contradict others.  That's so you can see what's
+# available, and for testing the level reading code.
+
+# As you can tell, a line that starts with a # is a comment.  Blank lines
+# and leading spaces are ignored too.
+
+# Look for NthPongWarsBuildingDataNotes.txt for how to convert pictures to
+# screens and music to binary.  Note that the NABU Internet Adapter needs all
+# upper case names, and the music & screen loaders will append the platform
+# specific file extension and look in several places for the file, from the
+# Internet Adapter local Store folder to Alex's web site (so we can distribute
+# *.nabu executables without having to include the data files).
+
+# If there is a problem loading something, error messages will be printed to
+# the debug output: CP/M text screen (which you can redirect to Telnet with
+# the STAT command), and for *.nabu executables to the telnet network session
+# on port 5815 (or whatever you have the RetroNetTCPServerPort set to in the
+# NABU Internet Adapter).
+
+# Sets the game mode for this level.  Values are Slide, Trivia, PongWar.
+# SLIDE does a slide show, the game doesn't run and a static slide is
+# displayed.  When any player hits a fire button, the level ends and that
+# player is the winner.
+# TRIVIA runs the level as a trivia game.  A static screen is shown and the
+# game doesn't run.  A choice is made by a joystick movement or fire button,
+# and that ends the level, with the winner being set by the direction of
+# joystick movement or fire button action (see LevelNext: options).
+# PONGWAR runs the level as a playable Nth Pong Wars game, with AI players
+# enabled, remember to load a font and sprites for the game graphics.
+GameMode: Slide
+
+# When loading a screen, it's best to start the music first, since the level
+# file is executed in the order specified and it's nice to have the music going
+# during the possibly several seconds long screen load.  That means if you have
+# several screen loads in a row, it will do them all in that order, making for
+# a kind of slide show.
+
+# Start some background music.  Nabu uses the CHIPNSFX tracker+player suite,
+# http://cngsoft.no-ip.org/chipnsfx.htm though with the output assembler
+# converted to binary.  This will start the SQUAROOT.CHIPNSFX file playing.
+# Use a music file name of "Silence" to turn off the background music,
+# "Default" to play the built in gameplay music.
+Music: SQUAROOT
+
+# Load a full screen bitmap graphic.  This is a 12KB file, so it will take
+# about 1 second to load.  Since the TMS9918A video chip in the NABU does only
+# character mapped graphics, a full screen is done with a custom font per
+# character.  So you can't play a game or see text when one of these is
+# displayed.  NthPongWarsBuildingDataNotes.txt explains how to make a picture
+# into a *.NFUL file.  This will load TITLESCREEN.NFUL.
+ScreenFull: TITLESCREEN
+
+# When this much time has elapsed while running a level, the next level choice
+# for the timeout (see LevelNext: Timeout, LevelName) is used to load the next
+# level and the timeout pseudo-player #5 is declared the winner.  Mostly useful
+# for attract mode gameplay.  Timeout in seconds.  Internally it uses the frame
+# counter, assuming 20 frames per second, so 3276 seconds is the maximum, a bit
+# over 54 minutes.  Though if the game is running fast, like when displaying a
+# static screen, it will be 3 times faster.  Don't specify this keyword or use
+# zero for no timeout.
+PlayTimeout: 30
+
+# This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
+# about 7KB so it takes half a second to load.  This is the kind of screen you
+# need to see a game correctly, assuming the font and sprite parts have the
+# graphics the game uses.  This example loads NTHPONG1.NSCR.
+ScreenFont: NTHPONG1
+
+# This keyword loads just the name table, the characters of a screen (*.NCHR).
+# It's 768 bytes long, so it takes about 1/10 of a second to load.  It's
+# basically just the first part of a *.NSCR file, so you can create it the
+# same way.  The characters are displayed with whatever font is already loaded.
+# This one would load the text for a help screen from HELP.NCHR.
+ScreenChar: HELP
+
+# This draws some text on the screen, using whatever font is currently loaded.
+# You specify a line to start drawing the text, left margin for the first line
+# and then left margin for subsequent lines (in case you want to indent a
+# paragraph) and right margin.  The text will be wrapped to fill that spot,
+# possibly taking up several lines if needed.  This example starts on line 2
+# (the screen starts with line 0 and goes up to line 23), has the first left
+# margin at 5, the subsequent lines left margin at 0 (far left) and right
+# margin of 32 (it draws up to but not including the right margin), and the
+# rest is the text, with leading and trailing spaces removed.  No, it doesn't
+# handle new line characters, so you would have to do several ScreenText
+# keywords to get a similar effect.  Magic words you can use are "Copyright"
+# and "Version" to display those text items.
+ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
+
+# This specifies which level gets played after this one finishes.  Base level
+# names can be up to 31 characters long.  The very first level is "Title".
+# You can specify it generically (with All as the first argument), like this,
+# which will make LEVEL007.LEVEL the next level after this one is completed,
+# no matter who wins:
+LevelNext: All, LEVEL007
+# Or have a custom level for each particular winning player (P0 to P3),
+# which could also be the player who presses their fire button first in a
+# Slide game mode:
+LevelNext: P3, CONGRATS_YELLOW
+# Or the next level is determined by a joystick direction or button press
+# (Left, Down, Right, Up, Fire, Timeout) in Trivia mode.
+LevelNext: Down, ANSWER026_B
+# If you only want to specify one or two players, you can use LevelNext:All to
+# set the next level for all players and direction options then use more
+# specific LevelNext to set a particular player or direction option.  Useful
+# for trivia levels where there is only one right answer and many wrong answers.
+
+# This one saves a specified level name as a bookmark.  Later on you can load
+# that bookmarked level by specifying the magic level name of "Bookmark".
+# Useful for showing a congratulations screen and then jumping back into the
+# game sequence of levels.  Not sure if we need to implement a stack and make
+# this a full fledged subroutine call.
+LevelBookmark: LEVEL008
+
+# Removes all the players from the game.  Useful for starting a level that is
+# AI players only.  Note that merely pressing Fire in a slide show starts a
+# Human player.  Though once a player is removed, their total wins goes back
+# to zero.  No options after the colon.
+RemovePlayers:
+
+# The number of AI players you want in the level.  Use zero for a Humans only
+# game, and if there are zero Humans, it will be a screen saver of sorts with
+# just the power-ups animating.  AI players are added every 8 seconds until
+# this quota is met, or there aren't any empty player slots.  Note that when
+# another player doesn't do anything for 30 seconds, they are removed, and
+# that's the chance for an AI to take over.
+MaxAIPlayers: 2
+
+# When playing in countdown mode, the first player to reach this many tiles in
+# their colour wins.  The count starts at this value and counts down about once
+# per second.  If you don't specify it, it gets set to the number of tiles in
+# the level.  Use after BoardSize, which resets the count to the number of
+# tiles in the board.
+InitialCount: 100
+
+# Set up a game board with the given width and height in tiles.  On the NABU
+# you can use up to 800 tiles, though full screen can display 32x24 = 768 tiles.
+# However, you can scroll the screen...  Usually you leave space for a score
+# line at the top of the screen.  Also the maximum height and width are 254.
+BoardSize: 32, 23
+
+# Specify the rectangle on the screen where the game board is displayed.  Lets
+# you have smaller game boards inside a bigger picture frame.  Values are X
+# character position of top left corner (0 to 31), Y of top left corner
+# (0 to 23), width in tiles, height in tiles.  The example uses all the screen
+# except the topmost line (where the scores are always displayed).
+# Not yet implemented.
+BoardScreen: 0, 1, 32, 23
+
+# Where is the screen inside the board area?  These are the tile X and Y
+# positions of the top left corner of the screen inside the game world.
+# Not yet implemented.
+BoardTopCorner: 0, 0
+
+# Should the board scroll around to follow a player?  We'll use the lowest
+# scoring player to balance the game difficulty.  Since scrolling updates
+# are so slow (whole screen needs to be redrawn), it will only update when the
+# player goes off the screen, and at that point jump move them to the center of
+# the screen.  Use Yes or No.
+# Not yet implemented.
+BoardScroll: No
+
+# Specify the contents of the board.  Board height quantity of lines follows
+# this keyword (which doesn't have an argument), and board width characters
+# from each line are used to set the board state.  Unspecified tiles will be
+# empty.  Empty lines may get ignored, so at least add a space.  Characters
+# past the width of the board are ignored.  Lines starting with # are treated
+# as tile data, not comments.  The player tiles are used for selecting a
+# starting location for the corresponding player.  The letter codes currently
+# are:
+# ' ', /* OWNER_EMPTY */
+# '1', /* OWNER_PLAYER_1 */
+# '2', /* OWNER_PLAYER_2 */
+# '3', /* OWNER_PLAYER_3 */
+# '4', /* OWNER_PLAYER_4 */
+# 'N', /* OWNER_PUP_NORMAL */
+# 'H', /* OWNER_PUP_STOP, using H for Halt */
+# 'F', /* OWNER_PUP_FLY */
+# 'W', /* OWNER_PUP_WIDER */
+# 'B', /* OWNER_PUP_BASH_WALL */
+# 'S', /* OWNER_PUP_SOLID */
+# Not yet implemented.
+BoardTiles:
+1         2          3         4X
+                                X
+                                X
+HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHX
+                                X
+W         W          W         WX
+                                X
+                                X
+SFB       SFB      BFS       BFSX
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+                                X
+# END of BoardTiles.
+

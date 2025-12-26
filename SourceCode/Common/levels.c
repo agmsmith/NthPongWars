@@ -849,14 +849,14 @@ const char *StockTextMessages(const char *MagicWord)
   {
     uint16_t totalMem, largestMem;
 
-    strcpy(g_TempBuffer, "Compiled on " __DATE__ " at " __TIME__ ".  ");
+    strcpy(g_TempBuffer, "Using D. J. Sures NABU-LIB, compiled with "
+      "the Z88DK build environment (using the SDCC compiler).  "
+      "Compiled on " __DATE__ " at " __TIME__ ".  Heap has ");
     mallinfo(&totalMem, &largestMem);
-    strcat (g_TempBuffer, "Heap has ");
     AppendDecimalUInt16(totalMem);
     strcat (g_TempBuffer, " bytes free, largest ");
     AppendDecimalUInt16(largestMem);
-    strcat(g_TempBuffer, ".  Using D. J. Sures NABU-LIB, compiled with "
-      "the Z88DK build environment (using the SDCC compiler).\n");
+    strcat(g_TempBuffer, ".\n");
     return g_TempBuffer;
   }
 

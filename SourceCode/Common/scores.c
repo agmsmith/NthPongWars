@@ -90,31 +90,28 @@ void UpdateScores(void)
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
     uint16_t score = GetPlayerScore(iPlayer);
+
     if (score != pPlayer->score_displayed)
     {
-      /* Prepare a RAM copy of a colourful score number or other info.  Starts
-         flashing 3 player colour lozenges instead of digits when close to
-         winning, and has a 4th lozonge after the digits. */
+      /* Prepare a RAM copy of a colourful score number or other info. */
 
-      char *pScoreText = pPlayer->score_text;
-      bool gettingClose = (score + 40 >= g_ScoreGoal);
-
-      if (gettingClose && (score + 20 >= g_ScoreGoal) && (score & 1) == 0)
-      {
-        /* Flashing lozenges are visible. */
-        uint8_t i = 4;
-        while (i-- != 0)
-          *pScoreText++ = fontOffset + ':';
-        *pScoreText = 0;
-      }
-      else /* Digits are visible, with a marker after if near. */
-      {
-        pScoreText = Write3DigitColourfulNumber(score, pScoreText,
-          fontOffset /* Font offset to a colour digit set */);
-        *pScoreText++ = gettingClose ? fontOffset + ':' : ' ';
-        *pScoreText = 0;
-      }
+      Write3DigitColourfulNumber(score, pPlayer->score_text,
+        fontOffset /* Font offset to a colour digit set */);
     }
+
+    /* See if the score is getting close to the goal, then turn on faster
+       flashing of the lozenge after the score display. */
+
+    uint16_t deltaScore = g_ScoreGoal - score;
+    if (deltaScore < 64)
+    {
+      pPlayer->score_getting_close = true;
+      pPlayer->score_getting_close_mask = (0x08 >>
+        (3 - ((uint8_t) deltaScore) / (uint8_t) 16)); /* 0 to 3 shifts. */
+    }
+    else
+      pPlayer->score_getting_close = false;
+
     fontOffset += 11; /* Next batch of colourful digits and % sign. */
   }
 
@@ -138,14 +135,30 @@ void CopyScoresToScreen(void)
     char *pChar;
     char letter;
     uint16_t score = GetPlayerScore(iPlayer);
+    bool addressSet = false;
 
-    if (score == pPlayer->score_displayed)
-      continue;
-    pPlayer->score_displayed = score; /* Now up to date. */
+    if (score != pPlayer->score_displayed)
+    {
+      pPlayer->score_displayed = score; /* Now up to date. */
 
-    vdp_setWriteAddress(_vdpPatternNameTableAddr + iPlayer * 4);
-    for (pChar = pPlayer->score_text; (letter = *pChar) != 0; pChar++)
-      IO_VDPDATA = letter;
+      vdp_setWriteAddress(_vdpPatternNameTableAddr + iPlayer * 4);
+      addressSet = true;
+      for (pChar = pPlayer->score_text; (letter = *pChar) != 0; pChar++)
+        IO_VDPDATA = letter;
+    }
+
+    char newLozenge = ' ';
+    if (pPlayer->score_getting_close &&
+    (g_FrameCounter & pPlayer->score_getting_close_mask))
+      newLozenge = 80 + ':' + 11 * iPlayer;
+
+    if (newLozenge != pPlayer->lozenge_text)
+    {
+      pPlayer->lozenge_text = newLozenge;
+      if (!addressSet)
+        vdp_setWriteAddress(_vdpPatternNameTableAddr + 3 + iPlayer * 4);
+      IO_VDPDATA = newLozenge;
+    }
   }
 
   if (s_ScoreGoalDisplayed != g_ScoreGoal)

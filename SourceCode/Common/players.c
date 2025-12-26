@@ -834,20 +834,21 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     default:
       /* Just a pair of X and Y column/row target coordinates, go to center of
          that tile (any closer to walls and you bounce off the wall).  Clip to
-         actual board size so you don't get AI's trying to go past the edge of
-         the board when you load a smaller board than what the opcodes use. */
+         just inside the actual board size so you don't get AI's trying to go
+         past the edge of the board when you load a smaller board than what the
+         opcodes use. */
 
       uint8_t tileX;
       tileX = currentOpcode.target_tile_x;
-      if (tileX >= g_play_area_width_tiles)
-        tileX = g_play_area_width_tiles - 1;
+      if (tileX >= g_play_area_width_tiles - 1)
+        tileX = g_play_area_width_tiles - 2;
       pPlayer->brain_info.algo.target_pixel_x =
         tileX * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
 
       uint8_t tileY;
       tileY = currentOpcode.target_tile_y;
-      if (tileY >= g_play_area_height_tiles)
-        tileY = g_play_area_height_tiles - 1;
+      if (tileY >= g_play_area_height_tiles - 1)
+        tileY = g_play_area_height_tiles - 2;
       pPlayer->brain_info.algo.target_pixel_y =
         tileY * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
 

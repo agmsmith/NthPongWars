@@ -703,7 +703,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       if (!hysteresis)
       {
         pPlayer->brain_info.algo.speed_hysteresis = true;
-#if 1
+#if 0
         strcpy(g_TempBuffer, "Player #");
         AppendDecimalUInt16(pPlayer->player_array_index);
         strcat(g_TempBuffer, " hysteresis on, speed was ");
@@ -718,7 +718,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       if (hysteresis)
       {
         pPlayer->brain_info.algo.speed_hysteresis = false;
-#if 1
+#if 0
         strcpy(g_TempBuffer, "Player #");
         AppendDecimalUInt16(pPlayer->player_array_index);
         strcat(g_TempBuffer, " removed hysteresis, speed was ");
@@ -765,17 +765,17 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         uint8_t iMyself = (3 &
           (pPlayer->player_array_index + currentOpcode.target_tile_x));
         if (iMyself == 0 || iMyself == 3)
-          pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH / 2;
+          pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH;
         else
           pPlayer->brain_info.algo.target_pixel_x =
             g_play_area_width_tiles * (int16_t) TILE_PIXEL_WIDTH -
-            TILE_PIXEL_WIDTH / 2;
+            TILE_PIXEL_WIDTH;
         if (iMyself == 0 || iMyself == 1)
-          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH / 2;
+          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH;
         else
           pPlayer->brain_info.algo.target_pixel_y =
             g_play_area_height_tiles * (int16_t) TILE_PIXEL_WIDTH -
-            TILE_PIXEL_WIDTH / 2;
+            TILE_PIXEL_WIDTH;
         pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
         pPlayer->brain_info.algo.steer = true;
       }
@@ -843,14 +843,14 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       if (tileX >= g_play_area_width_tiles - 1)
         tileX = g_play_area_width_tiles - 2;
       pPlayer->brain_info.algo.target_pixel_x =
-        tileX * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+        tileX * TILE_PIXEL_WIDTH;
 
       uint8_t tileY;
       tileY = currentOpcode.target_tile_y;
       if (tileY >= g_play_area_height_tiles - 1)
         tileY = g_play_area_height_tiles - 2;
       pPlayer->brain_info.algo.target_pixel_y =
-        tileY * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+        tileY * TILE_PIXEL_WIDTH;
 
       pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
       pPlayer->brain_info.algo.steer = true;

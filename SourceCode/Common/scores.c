@@ -105,12 +105,13 @@ void UpdateScores(void)
     uint16_t deltaScore = g_ScoreGoal - score;
     if (deltaScore < 64)
     {
-      pPlayer->score_getting_close = true;
+      /* Bit mask uses a lower bit the closer the player is to the goal, so
+         it will flash faster when used to mask test the frame counter. */
       pPlayer->score_getting_close_mask = (0x08 >>
         (3 - ((uint8_t) deltaScore) / (uint8_t) 16)); /* 0 to 3 shifts. */
     }
     else
-      pPlayer->score_getting_close = false;
+      pPlayer->score_getting_close_mask = 0;
 
     fontOffset += 11; /* Next batch of colourful digits and % sign. */
   }
@@ -148,7 +149,7 @@ void CopyScoresToScreen(void)
     }
 
     char newLozenge = ' ';
-    if (pPlayer->score_getting_close &&
+    if (pPlayer->score_getting_close_mask &&
     (g_FrameCounter & pPlayer->score_getting_close_mask))
       newLozenge = 80 + ':' + 11 * iPlayer;
 

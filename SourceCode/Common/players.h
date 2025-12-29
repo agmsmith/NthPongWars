@@ -298,9 +298,8 @@ typedef struct player_struct {
      and at most 5 digits, and a NUL.  On the NABU it can use different letters
      in the font for coloured digits for each player. */
 
-  bool score_getting_close;
   uint8_t score_getting_close_mask;
-  /* TRUE when the player's score is getting close to the goal.  Makes the
+  /* Non-zero when the player's score is getting close to the goal.  Makes the
      score display flash the lozenge after the score digits when the player is
      close, flashing faster as they get closer.  The mask is a single bit to
      AND with the frame counter to determine whether to draw the lozenge or

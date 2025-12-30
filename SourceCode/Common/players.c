@@ -61,11 +61,10 @@ uint8_t g_KeyboardFakeJoystickStatus;
    has a byte sized index in the opcodes so the array is currently limited to
    at most 256 elements. */
 target_list_item_record g_target_list[] = {
-  {12, TARGET_CODE_SPEED}, /* Fast speed. */
-  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds to pick up speed. */
+  {12, TARGET_CODE_POWER_UP}, /* Minor diversions, busy drawing a letter. */
   {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
   {9, 20}, /* Capital N, start at bottom left corner of letter. */
-  {2, TARGET_CODE_SPEED}, /* Slow speed. */
+  {2, TARGET_CODE_SPEED}, /* Slow speed, leave a trail. */
   {9, 11},
   {9, 2},
   {1, TARGET_CODE_SPEED}, /* Even slower, more solid diagonal trail. */
@@ -75,29 +74,33 @@ target_list_item_record g_target_list[] = {
   {16, 15},
   {17, 18},
   {19, 20},
-  {2, TARGET_CODE_SPEED}, /* Slow speed. */
+  {2, TARGET_CODE_SPEED}, /* Slow speed with a trail. */
   {19, 11},
-  {19, 2},
+  {19, 3},
   {10, TARGET_CODE_SPEED}, /* Speed up, upwards. */
   {19, 1}, /* Straight up to top of screen. */
-  {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
-  {30, 1},
+  {255, TARGET_CODE_SPEED}, /* No trail harvest mode, head right along top. */
+  {27, 1},
+  {9 * 8, TARGET_CODE_POWER_UP}, /* Divert up to 9 tiles away for power-ups. */
   {10, TARGET_CODE_SPEED}, /* Speed down right side of screen. */
-  {30, 21},
-  {255, TARGET_CODE_SPEED}, /* Pure harvest mode, no trail. */
-  {9, 21}, /* Back under the starting point of the letter. */
-  {0, TARGET_CODE_GOTO},
+  {30, 1},
+  {30, 23},
+  {3 * 8, TARGET_CODE_POWER_UP}, /* Divert up to 3 tiles away for power-ups. */
+  {9, 23}, /* Back under the starting point of the letter. */
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
 /* Instruction 30 */ {11, TARGET_CODE_SPEED},
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {4 * 8, TARGET_CODE_POWER_UP}, /* Divert up to 4 tiles away for power-ups. */
   {1, TARGET_CODE_STEER}, /* Steer to next corner. */
   {6, TARGET_CODE_SPEED}, /* Slower movement. */
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {0, TARGET_CODE_POWER_UP}, /* No diversions, busy chasing player. */
   {15, TARGET_CODE_SPEED}, /* Fast movement towards player. */
   {5, TARGET_CODE_STEER}, /* Head to leading Human player. */
+  {7 * 8, TARGET_CODE_POWER_UP}, /* Divert up to 7 tiles away for power-ups. */
   {5, TARGET_CODE_DELAY}, /* Delay 1 second to hound them. */
   {30, TARGET_CODE_GOTO},
 };
@@ -662,6 +665,10 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     return;
   }
 
+  /* Player position is used a lot, cache a copy here. */
+  int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
+  int16_t playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+
   /* Alternate every update between trail and harvest mode when the AI needs
      more speed (using the technique of laying down a tile and then harvesting
      it in the next frame, rather than the bigger picture technique of heading
@@ -735,6 +742,22 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   if (pPlayer->brain_info.algo.delay_remaining != 0)
   { /* Keep on waiting until the countdown has finished. */
     pPlayer->brain_info.algo.delay_remaining--;
+  }
+  else if (pPlayer->brain_info.algo.divert_to_pTile)
+  {
+    /* Busy diverting to a nearby "good" power-up.  Is it still there?  If
+       someone else takes it, or we take it, end diversion. */
+
+    if (pPlayer->brain_info.algo.divert_to_pTile->owner <
+    (tile_owner) OWNER_PUPS_GOOD_FOR_AI)
+    {
+      /* Resume normal targeting. */
+      pPlayer->brain_info.algo.divert_to_pTile = NULL;
+      pPlayer->brain_info.algo.target_pixel_x =
+        pPlayer->brain_info.algo.divert_saved_pixel_x;
+      pPlayer->brain_info.algo.target_pixel_y =
+        pPlayer->brain_info.algo.divert_saved_pixel_y;
+    }
   }
   else if (pPlayer->brain_info.algo.target_distance >
   PLAYER_PIXEL_DIAMETER_NORMAL)
@@ -810,10 +833,8 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
              So you can target the best Human player, and if no Humans are
              playing, the opcode will do almost nothing. */
 
-          pPlayer->brain_info.algo.target_pixel_x =
-            GET_FX_INTEGER(pPlayer->pixel_center_x);
-          pPlayer->brain_info.algo.target_pixel_y =
-            GET_FX_INTEGER(pPlayer->pixel_center_y);
+          pPlayer->brain_info.algo.target_pixel_x = playerX;
+          pPlayer->brain_info.algo.target_pixel_y = playerY;
         }
       }
       else /* Unknown steering orders, just drift. */
@@ -867,11 +888,77 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 
   if (pPlayer->brain_info.algo.steer)
   {
-    /* First update target location to the position of the player being
-       followed, if any.  Static targets just leave the target coordinates
-       unchanged and don't specify a player to follow. */
+    /* See if there are any nearby power-ups we might want to divert to. */
 
-    if (pPlayer->brain_info.algo.target_player < MAX_PLAYERS)
+    int16_t powerUpMaxPixelDistance =
+      pPlayer->brain_info.algo.divert_powerup_distance;
+
+    if (powerUpMaxPixelDistance > 0 &&
+    pPlayer->brain_info.algo.divert_to_pTile == NULL)
+    {
+      /* Just want to check over the "good" power-ups to see if they are near
+        enough for a diversion.  Bad ones we ignore, no avoidance behaviour
+        yet. */
+
+      int16_t bestDistance = 0x7FFF; /* Maximum positive value of int16. */
+      tile_pointer bestTile = NULL;
+
+      tile_owner powerup_type;
+      for (powerup_type = (tile_owner) OWNER_PUPS_GOOD_FOR_AI;
+      powerup_type < (tile_owner) OWNER_MAX; powerup_type++)
+      {
+        tile_pointer *ppCachedTile = &g_TileOwnerRecentTiles[powerup_type][0];
+        uint8_t recentIndex;
+        for (recentIndex = 0; recentIndex < MAX_RECENT_TILES; recentIndex++)
+        {
+          tile_pointer pTile = *ppCachedTile++;
+          if (pTile == NULL)
+            break; /* End of this list. */
+
+          /* Find the distance to the powerup. */
+
+          int16_t deltaX = pTile->pixel_center_x - playerX;
+          int16_t deltaY = pTile->pixel_center_y - playerY;
+          int16_t distance;
+
+          if (deltaX < 0)
+            distance = -deltaX;
+          else
+            distance = deltaX;
+
+          if (deltaY < 0)
+            distance -= deltaY;
+          else
+            distance += deltaY;
+
+          if (distance < bestDistance)
+          {
+            bestDistance = distance;
+            bestTile = pTile;
+          }
+        }
+      }
+
+      /* Got a good power-up candidate?  Head towards it. */
+
+      if (bestTile != NULL && bestDistance <= powerUpMaxPixelDistance)
+      {
+        pPlayer->brain_info.algo.divert_to_pTile = bestTile;
+        pPlayer->brain_info.algo.divert_saved_pixel_x =
+          pPlayer->brain_info.algo.target_pixel_x;
+        pPlayer->brain_info.algo.divert_saved_pixel_y =
+          pPlayer->brain_info.algo.target_pixel_y;
+        pPlayer->brain_info.algo.target_pixel_x = bestTile->pixel_center_x;
+        pPlayer->brain_info.algo.target_pixel_y = bestTile->pixel_center_y;
+      }
+    }
+
+    /* Update target location to the position of the player being followed,
+       if any.  Static targets or power-up targets just leave the target
+       coordinates unchanged and don't specify a player to follow. */
+
+    if (pPlayer->brain_info.algo.divert_to_pTile == NULL &&
+    pPlayer->brain_info.algo.target_player < MAX_PLAYERS)
     {
       player_pointer pTargetPlayer =
         g_player_array + pPlayer->brain_info.algo.target_player;
@@ -889,10 +976,8 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 
     /* How far and what direction to the target? */
 
-    int16_t deltaX = pPlayer->brain_info.algo.target_pixel_x -
-      GET_FX_INTEGER(pPlayer->pixel_center_x);
-    int16_t deltaY = pPlayer->brain_info.algo.target_pixel_y -
-      GET_FX_INTEGER(pPlayer->pixel_center_y);
+    int16_t deltaX = pPlayer->brain_info.algo.target_pixel_x - playerX;
+    int16_t deltaY = pPlayer->brain_info.algo.target_pixel_y - playerY;
 
     /* Get sum of absolute values of deltas to find distance. */
 

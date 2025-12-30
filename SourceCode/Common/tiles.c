@@ -612,7 +612,7 @@ void AddNextPowerUpTile(void)
       foundUnderQuota = true;
       break;
     }
-    if (++quotaIndex >= OWNER_MAX)
+    if (++quotaIndex >= (tile_owner) OWNER_MAX)
       quotaIndex = OWNER_PUP_NORMAL;
   } while (quotaIndex != s_TileQuotaNextIndex);
 
@@ -620,7 +620,7 @@ void AddNextPowerUpTile(void)
     return; /* Nothing under quota.  So do nothing. */
 
   s_TileQuotaNextIndex = quotaIndex + 1;
-  if (s_TileQuotaNextIndex >= OWNER_MAX)
+  if (s_TileQuotaNextIndex >= (tile_owner) OWNER_MAX)
     s_TileQuotaNextIndex = OWNER_PUP_NORMAL;
 
   tile_pointer pTile = g_tile_array_row_starts[s_TileQuotaNextRow];
@@ -877,7 +877,7 @@ void DumpTilesToTerminal(void)
   }
 
 #if DUMP_TILE_POWERUP_CACHE
-  for (index = 0; index < OWNER_MAX; index++)
+  for (index = 0; index < (tile_owner) OWNER_MAX; index++)
     DumpPowerUpCacheToDebug(index);
 #endif /* DUMP_TILE_POWERUP_CACHE */
 

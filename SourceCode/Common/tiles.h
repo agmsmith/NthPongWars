@@ -54,7 +54,8 @@ typedef enum tile_owner_enum {
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
   OWNER_PUPS_WITH_DURATION, /* Power-ups that have a timeout start here. */
   OWNER_PUP_FLY = OWNER_PUPS_WITH_DURATION, /* Fly over squares. */
-  OWNER_PUP_WIDER, /* Makes the player wider in effect; more tiles hit. */
+  OWNER_PUPS_GOOD_FOR_AI, /* Power-ups beneficial to AI players start here. */
+  OWNER_PUP_WIDER = OWNER_PUPS_GOOD_FOR_AI, /* Makes the player wider. */
   OWNER_PUP_BASH_WALL, /* Bashes through walls in one bounce. */
   OWNER_PUP_SOLID, /* Leaves behind more tiles make a solid trail. */
   OWNER_MAX
@@ -221,6 +222,14 @@ extern int16_t g_sprite_window_offset_y;
    rectangle.  Negative coordinates aren't implemented. */
 extern uint8_t g_play_area_col_for_screen;
 extern uint8_t g_play_area_row_for_screen;
+
+/* A cache to keep track of the last few tiles in each power-up category.  To
+   save speed (no linked lists, just shuffle the whole array around when
+   inserting or removing), only the "good" power-ups are updated (added when
+   they appear, removed when they disappear).  NULL for empty positions.  Used
+   by AI to find out if there is a good power-up nearby. */
+#define MAX_RECENT_TILES 3
+extern tile_pointer g_TileOwnerRecentTiles[OWNER_MAX][MAX_RECENT_TILES];
 
 /* A cache to keep track of which tiles are animated.  If more than the cache
   maximum are animated, the cache isn't used and we revert to scanning all tiles

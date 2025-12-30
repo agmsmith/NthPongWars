@@ -831,6 +831,11 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       pPlayer->brain_info.algo.target_list_index = currentOpcode.target_tile_x;
       break;
 
+    case TARGET_CODE_POWER_UP:
+      pPlayer->brain_info.algo.divert_powerup_distance =
+        currentOpcode.target_tile_x;
+      break;
+
     default:
       /* Just a pair of X and Y column/row target coordinates, go to center of
          that tile (any closer to walls and you bounce off the wall).  Clip to

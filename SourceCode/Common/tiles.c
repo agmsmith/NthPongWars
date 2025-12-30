@@ -86,10 +86,10 @@ uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
   0, /* OWNER_PLAYER_2 */
   0, /* OWNER_PLAYER_3 */
   0, /* OWNER_PLAYER_4 */
-  1, /* OWNER_PUP_NORMAL */
-  4, /* OWNER_PUP_STOP */
+  2, /* OWNER_PUP_NORMAL */
+  3, /* OWNER_PUP_STOP */
   2, /* OWNER_PUP_FLY */
-  2, /* OWNER_PUP_WIDER */
+  4, /* OWNER_PUP_WIDER */
   2, /* OWNER_PUP_BASH_WALL */
   2, /* OWNER_PUP_SOLID */
 };
@@ -136,6 +136,9 @@ static uint8_t s_PlayScreenLeft = 0;
 static uint8_t s_PlayScreenRight = 0;
 static uint8_t s_PlayScreenTop = 0;
 
+
+tile_pointer g_TileOwnerRecentTiles[OWNER_MAX][MAX_RECENT_TILES];
+
 tile_pointer g_cache_animated_tiles[MAX_ANIMATED_CACHE];
 uint8_t g_cache_animated_tiles_index = 0;
 
@@ -148,6 +151,12 @@ uint8_t g_cache_dirty_screen_tiles_index = 0;
  */
 static void DumpOneTileToDebug(tile_pointer pTile)
 {
+  if (pTile == NULL)
+  {
+    DebugPrintString("NULL tile.\n");
+    return;
+  }
+
   strcpy(g_TempBuffer, "(");
   AppendDecimalUInt16((uint16_t) pTile->pixel_center_x);
   strcat(g_TempBuffer, ",");
@@ -173,6 +182,34 @@ static void DumpOneTileToDebug(tile_pointer pTile)
   strcat(g_TempBuffer, ".\n");
   DebugPrintString(g_TempBuffer);
 }
+
+
+#define DUMP_TILE_POWERUP_CACHE 0
+#if DUMP_TILE_POWERUP_CACHE
+/*******************************************************************************
+ * Debug function to print out the tile cache for a particular power-up type.
+ */
+static void DumpPowerUpCacheToDebug(tile_owner owner)
+{
+  strcpy(g_TempBuffer, "Cache of recent ");
+  strcat(g_TempBuffer, g_TileOwnerNames[owner]);
+  strcat(g_TempBuffer, " tiles, out of ");
+  AppendDecimalUInt16(g_TileOwnerCounts[owner]);
+  strcat(g_TempBuffer, " total tiles:\n");
+  DebugPrintString(g_TempBuffer);
+
+  tile_pointer *ppCachedTile = &g_TileOwnerRecentTiles[owner][0];
+  uint8_t index;
+  for (index = 0; index < MAX_RECENT_TILES; index++, ppCachedTile++)
+  {
+    strcpy(g_TempBuffer, "Cache #");
+    AppendDecimalUInt16(index);
+    strcat(g_TempBuffer, ": ");
+    DebugPrintString(g_TempBuffer);
+    DumpOneTileToDebug(*ppCachedTile);
+  }
+}
+#endif /* DUMP_TILE_POWERUP_CACHE */
 
 
 /* Sets the tile array to the given size (g_screen_width_tiles by
@@ -251,6 +288,8 @@ bool InitTileArray(void)
 
   bzero(&g_TileOwnerCounts, sizeof (g_TileOwnerCounts));
   g_TileOwnerCounts[OWNER_EMPTY] = g_play_area_num_tiles;
+
+  bzero(&g_TileOwnerRecentTiles, sizeof (g_TileOwnerRecentTiles));
 
   ActivateTileArrayWindow();
 
@@ -442,8 +481,114 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
   /* Keeping score, and tracking kinds of tiles in play. */
 
   if (previousOwner < (tile_owner) OWNER_MAX) /* In case of data corruption. */
+  {
     g_TileOwnerCounts[previousOwner]--;
+
+    /* Remove tile from the cached list of recent "good" power-up tiles (we
+       don't bother updating other tiles since they're not needed by the AI). */
+
+    if (previousOwner >= (tile_owner) OWNER_PUPS_GOOD_FOR_AI)
+    {
+      /* Look for the tile in the cache list (actually a small array). */
+
+      tile_pointer *ppCachedTile = &g_TileOwnerRecentTiles[previousOwner][0];
+      tile_pointer pOldCachedTile;
+      uint8_t index;
+
+      for (index = 0; index < MAX_RECENT_TILES; index++, ppCachedTile++)
+      {
+        pOldCachedTile = *ppCachedTile;
+        if (pOldCachedTile == NULL || pOldCachedTile == pTile)
+          break;
+      }
+
+      /* If found, shift down the following tiles to remove the cached tile,
+         and the last tile becomes NULL. */
+
+      if (pOldCachedTile == pTile)
+      {
+        for (; index < MAX_RECENT_TILES - 1; index++, ppCachedTile++)
+        {
+          pOldCachedTile = ppCachedTile[1];
+          if (pOldCachedTile == NULL)
+            break;
+          *ppCachedTile = pOldCachedTile;
+        }
+        *ppCachedTile = NULL;
+
+#if DUMP_TILE_POWERUP_CACHE
+        DebugPrintString("Removed tile ");
+        DumpOneTileToDebug(pTile);
+        DumpPowerUpCacheToDebug(previousOwner);
+#endif /* DUMP_TILE_POWERUP_CACHE */
+      }
+#if DUMP_TILE_POWERUP_CACHE
+      else /* Not found in recent cache, don't have to remove it from cache. */
+      {
+        strcpy(g_TempBuffer, "Removed non-recent ");
+        strcat(g_TempBuffer, g_TileOwnerNames[previousOwner]);
+        strcat(g_TempBuffer, " tile, now have ");
+        AppendDecimalUInt16(g_TileOwnerCounts[previousOwner]);
+        strcat(g_TempBuffer, " total tiles:\n");
+        DebugPrintString(g_TempBuffer);
+        DumpOneTileToDebug(pTile);
+      }
+#endif /* DUMP_TILE_POWERUP_CACHE */
+    }
+  }
+
+  /* Update statistics and caches for the new tile. */
+
   g_TileOwnerCounts[newOwner]++;
+
+  /* Add the tile to the cached list of recent good power-up tiles, if not
+     already there. */
+
+  if (newOwner >= (tile_owner) OWNER_PUPS_GOOD_FOR_AI)
+  {
+    /* Look for the tile in the cache list. */
+
+    tile_pointer *ppCacheRowStart = &g_TileOwnerRecentTiles[newOwner][0];
+    tile_pointer *ppCachedTile = ppCacheRowStart;
+    tile_pointer pOldCachedTile;
+    uint8_t index;
+
+    for (index = 0; index < MAX_RECENT_TILES; index++, ppCachedTile++)
+    {
+      pOldCachedTile = *ppCachedTile;
+      if (pOldCachedTile == NULL || pOldCachedTile == pTile)
+        break;
+    }
+
+    /* If not found, shift over the following tiles to make space at the front
+       of the list for the new tile. */
+
+    if (pOldCachedTile == NULL || index >= MAX_RECENT_TILES)
+    {
+      tile_pointer pSwapInTile = pTile;
+      ppCachedTile = ppCacheRowStart;
+      for (index = 0; index < MAX_RECENT_TILES; index++, ppCachedTile++)
+      {
+        pOldCachedTile = *ppCachedTile;
+        *ppCachedTile = pSwapInTile;
+        if (pOldCachedTile == NULL)
+          break;
+        pSwapInTile = pOldCachedTile;
+      }
+#if DUMP_TILE_POWERUP_CACHE
+      DebugPrintString("Added tile ");
+      DumpOneTileToDebug(pTile);
+      DumpPowerUpCacheToDebug(newOwner);
+#endif /* DUMP_TILE_POWERUP_CACHE */
+    }
+#if DUMP_TILE_POWERUP_CACHE
+    else /* Already in recent collection, which is odd. */
+    {
+      DebugPrintString("Weird, bug?  Added already recent tile ");
+      DumpOneTileToDebug(pTile);
+    }
+#endif /* DUMP_TILE_POWERUP_CACHE */
+  }
 
   return previousOwner;
 }
@@ -730,6 +875,11 @@ void DumpTilesToTerminal(void)
     for (index = 0; index < g_cache_dirty_screen_tiles_index; index++)
       DumpOneTileToDebug(g_cache_dirty_screen_tiles[index]);
   }
+
+#if DUMP_TILE_POWERUP_CACHE
+  for (index = 0; index < OWNER_MAX; index++)
+    DumpPowerUpCacheToDebug(index);
+#endif /* DUMP_TILE_POWERUP_CACHE */
 
   strcpy(g_TempBuffer, "Play area ");
   AppendDecimalUInt16((uint16_t) g_play_area_width_tiles);

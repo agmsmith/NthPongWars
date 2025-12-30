@@ -93,15 +93,52 @@ typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
    Note that AI frames happen at a quarter of the screen update frame rate,
    so about 5hz, since we only update one AI each frame to save on CPU. */
 typedef struct player_algo_struct {
-  bool steer; /* TRUE to turn towards target, false to drift. */
-  int16_t target_pixel_x; /* Location in the game world we head towards. */
+  uint8_t target_list_index;
+    /* Where we are in the global list of targets.  Like a program counter. */
+
+  bool steer;
+    /* TRUE to turn towards target location, FALSE to drift aimlessly. */
+
+  uint8_t desired_speed;
+    /* Do a harvest if speed is less than this many pixels/frame. */
+
+  bool speed_hysteresis;
+    /* Internal algorithm use, go over desired speed a bit before coasting. */ 
+
+  int16_t target_pixel_x;
   int16_t target_pixel_y;
-  int16_t target_distance; /* Updated with current distance to target. */
-  uint8_t target_player; /* Index of player to target, MAX_PLAYERS for none. */
-  uint8_t target_list_index; /* Where we are in the global list of targets. */
-  uint8_t desired_speed; /* Harvest if speed is less than this pixels/frame. */
-  bool speed_hysteresis; /* Go over desired speed a bit before coasting. */ 
-  uint8_t delay_remaining; /* Num AI frames remaining in time delay opcode. */
+    /* Pixel based location in the game world we head towards (assuming steer
+       is TRUE).  To avoid bouncing off nearby walls, should be the center of
+       a tile if we are going to a tile. */
+
+  uint8_t target_player;
+    /* Index of player to target, MAX_PLAYERS for none.  If active, it will
+       overwrite the target_pixel variables with the given player's location
+       on every update. */
+
+  int16_t target_distance;
+    /* Updated with current pixel distance to target.  Are we there yet? */
+
+  uint8_t divert_powerup_distance;
+    /* When moving normally, divert to good power-up if it is this far away,
+       in pixels.  Will set divert_to_pTile if it finds a tile nearby.  Zero
+       turns off the divert mechanism. */
+
+  tile_pointer divert_to_pTile;
+    /* Which power-up tile are we diverting to?  NULL if not diverting.  Useful
+       for seeing if  that the power-up has vanished because some player
+       (including yourself) has taken it.  The divert overrides previous
+       targets and restores them when done.  Probably don't need a stack of
+       diversions. */
+
+  int16_t divert_saved_pixel_x;
+  int16_t divert_saved_pixel_y;
+    /* When diverting, remember former target so we can restore it. */
+
+  uint8_t delay_remaining;
+    /* Num AI frames remaining in the time delay opcode.  Usually means the
+       AI will keep on heading towards the thing it was targeting even if it
+       has reached it - good for annoying players. */
 } player_algo_record, *player_algo_pointer;
 
 /* When a target_list_item with a Y coordinate containing these magic values is
@@ -122,12 +159,9 @@ typedef enum target_list_codes_enum {
   TARGET_CODE_DELAY, /* X sets the time delay to wait for in AI frames before
     executing the next opcode. */
   TARGET_CODE_GOTO, /* Switch to the item at list index of X coordinate. */
-  TARGET_CODE_SKIP_GT, /* Skip the next list item if the distance to the target
-    is greater than the X coordinate. */
-  TARGET_CODE_SKIP_LT, /* Skip the next list item if the distance to the target
-    is less than the X coordinate. */
-  TARGET_CODE_SKIP_EQ, /* Skip the next list item if the distance to the target
-    is equal to the X coordinate. */
+  TARGET_CODE_POWER_UP, /* Stop hunting current target and divert to a nearby
+    "good" power-up if it is within X coordinate many pixels away.  Set to zero
+    to not divert. */
   TARGET_CODE_MAX
 };
 typedef uint8_t target_code; /* Want it to be 8 bits, not 16. */

@@ -2660,6 +2660,44 @@ ALT="[Screen shot of ArcadeMania running Nth Pong Wars]"></A>
 
 <P>Have fun!
 
+<HR>
+<H2><A NAME="2025.12.30"></A>2025.12.30</H2>
+
+<H3>AI that uses Power-ups!</H3>
+
+<P>After doing some late night programming yesterday, I got the AI players to
+make detours to pick up power-ups they are passing by.  Now they look like they
+know what they're doing!  And the gameplay is more challenging since they can
+go faster and do more damage when powered up.
+
+<P ALIGN="CENTER"><A HREF="20251230BetterAI.gif"><IMG
+SRC="20251230BetterAI.gif" WIDTH="280" HEIGHT="216"
+ALT="[Yellow AI player being smart and grabbing power-ups]"></A>
+
+<P>Note the yellow AI player here.  It's going down the right hand side of the
+screen, accidentally hits a Fly power-up (looks like little blue wings
+flapping), then diverts to a nearby Wide power-up (expanding white circles
+thing) and snags it before it has flown too high up to touch anything on the
+ground.  Conveniently the yellow player can now fly over all those blue tiles
+to the corner then head left to the place where it wants to start tracing out
+the letter "N".  On the way, it spots a Solid power-up (small white square
+repeatedly filling in) and circles over it while the Fly power-up fades away.
+
+<P>That's harder to do than you think, the problem is for the AI to check
+nearby tiles.  There's no memory space for doubly linked lists of power-ups of
+each kind (800 tiles times 4 bytes is 3.2 kilobytes) and no CPU for scanning
+nearby tiles (radius of 9 would be 18x18 = 324 tiles) to look for power-ups.
+Instead I keep small arrays of tile pointers for just the last 3 new power-ups
+of each kind added to the board.  Then the AI just checks those 9 tiles
+(3 types of "good" power-ups worth tracking, and each array has 3 or fewer
+of the most recent tiles).  It's not perfect since the AI won't know about
+old power-ups, but works well enough.
+
+<P>The actual AI action when passing nearby a power-up (near is a distance
+parameter the AI code can change) is to save its old target coordinates and
+then change them to the closest power-up.  When it's done, it restores the
+old target and resumes its normal behaviour.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.

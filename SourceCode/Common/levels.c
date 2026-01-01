@@ -659,10 +659,75 @@ bool KeywordBoardSize(void)
 }
 
 
-/* Handle all level keywords.  We have a table of the word and the
-   corresponding function to call. */
+/* Read tile data from the level file and set tiles and initial player
+   positions.  Stops on a line with "END".  Ignores spaces and comment lines.
+*/
+bool KeywordBoardTileData(void)
+{
+  uint8_t row = 0;
+  while (LevelReadAndTrimLine(g_TempBuffer, 255))
+  {
+    if (strcasecmp(g_TempBuffer, "END") == 0)
+      break; /* End of the tile data. */
+    if (g_TempBuffer[0] == '#')
+      continue; /* Skip over comment lines. */
+
+    /* Decode the tiles in the line. */
+
+    uint8_t column = 0;
+    const char *pChar;
+    char letter;
+    for (pChar = g_TempBuffer; (letter = *pChar) != 0; pChar++)
+    {
+      if (isblank(letter))
+        continue; /* Skip blanks between tile codes. */
+
+      /* Convert the level file letter to a tile type. */
+      tile_owner tileType;
+      for (tileType = 0; tileType < OWNER_MAX; tileType++)
+      {
+        if (g_TileOwnerLetters[tileType] == letter)
+          break;
+      }
+
+      /* Default unknown tile types to empty tiles. */
+      if (tileType >= OWNER_MAX)
+        tileType = OWNER_EMPTY;
+
+      tile_pointer pTile = TileForColumnAndRow(column, row);
+      if (pTile == NULL)
+        break; /* Ignore the rest of this line, no tiles here. */
+      SetTileOwner(pTile, tileType);
+
+      /* If it is a player coloured tile, move the player there. */
+
+      uint8_t iPlayer = tileType - OWNER_PLAYER_1;
+      if (iPlayer < MAX_PLAYERS)
+      {
+        player_pointer pPlayer = g_player_array + iPlayer;
+        INT_TO_FX(pTile->pixel_center_x, pPlayer->pixel_center_x);
+        INT_TO_FX(pTile->pixel_center_y, pPlayer->pixel_center_y);
+      }
+
+      /* Successfully set one tile, advance to the next column. */
+      column++;
+    }
+
+    if (column > 0) /* If we read something, count this as a row. */
+      row++;
+  }
+
+  return row > 0; /* TRUE if we actually read anything. */
+}
+
+
+/******************************************************************************
+ * Handle all level keywords.  We have a table of the word and the
+ * corresponding function to call.
+ */
 
 typedef bool (*KeywordFunctionPointer)(void);
+/* Generic function to read and process a keyword.  Returns FALSE to abort. */
 
 typedef struct KeyWordCallStruct {
   const char *keyword;
@@ -683,6 +748,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"InitialCount", KeywordCountdownStart},
   {"GameMode", KeywordGameMode},
   {"BoardSize", KeywordBoardSize},
+  {"BoardTileData", KeywordBoardTileData},
   {NULL, NULL}
 };
 

@@ -4,6 +4,13 @@
 # real level file as some contradict others.  That's so you can see what's
 # available, and for testing the level reading code.
 
+# For future compatibility, the version of the level file language can be
+# specified.  That way future game code can read older version files, or at
+# least you'll have an idea of what the differences are between them (by
+# looking at the history of this example file).  The first argument is a
+# YYYYMMDD date code, the second is the name of the game.
+LevelVersion: 20251231, NthPongWars
+
 # As you can tell, a line that starts with a # is a comment.  Blank lines
 # and leading spaces are ignored too.
 
@@ -163,15 +170,19 @@ BoardTopCorner: 0, 0
 # Not yet implemented.
 BoardScroll: No
 
-# Specify the contents of the board.  Board height quantity of lines follows
-# this keyword (which doesn't have an argument), and board width characters
-# from each line are used to set the board state.  Unspecified tiles will be
-# empty.  Empty lines may get ignored, so at least add a space.  Characters
-# past the width of the board are ignored.  Lines starting with # are treated
-# as tile data, not comments.  The player tiles are used for selecting a
-# starting location for the corresponding player.  The letter codes currently
-# are:
-# ' ', /* OWNER_EMPTY */
+# Specify the contents of the board.  Board height quantity of lines follow
+# this keyword (which doesn't have an argument), and board width non-space
+# characters from each line are used to set the board state.  Unspecified
+# tiles and unknown tile codes will be empty.  Spaces are ignored, so you
+# can space out the level data to give a better aspect ratio in the text
+# editor.  Maximum 254 bytes per line since we use 8 bit indices.  Comment
+# lines and empty lines are ignored.  Characters past the width or height
+# of the board are ignored.  A line containing just "END" marks the end of
+# the board data (without it the rest of your level file will get read as
+# tile data).  The player tiles are used for selecting a starting location
+# for the corresponding player.  The letter codes (upper/lower case is
+# significant) currently are:
+# '.', /* OWNER_EMPTY */
 # '1', /* OWNER_PLAYER_1 */
 # '2', /* OWNER_PLAYER_2 */
 # '3', /* OWNER_PLAYER_3 */
@@ -182,30 +193,22 @@ BoardScroll: No
 # 'W', /* OWNER_PUP_WIDER */
 # 'B', /* OWNER_PUP_BASH_WALL */
 # 'S', /* OWNER_PUP_SOLID */
-# Not yet implemented.
-BoardTiles:
-1         2          3         4X
-                                X
-                                X
-HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHX
-                                X
-W         W          W         WX
-                                X
-                                X
-SFB       SFB      BFS       BFSX
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-                                X
-# END of BoardTiles.
+BoardTileData:
+1 . . . . . . . . . 2 . . . . . . . . . . 3 . . . . . . . . . 4
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+# A row of halt/stop markers.  You can break through them.
+# Maybe later we'll have STOPs that are indestructible, or ones
+# which only one particular player can destroy.
+H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+W . . . . . . . . . W . . . . . . . . . . W . . . . . . . . . W
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+S F B . . . . . . . S F B . . . . . . B F S . . . . . . . B F S
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. N . . . . . . . . . N . . . . . . . . N . . . . . . . . . N .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+# The rest is empty, no need to specify the remaining rows to get empty.
+END
 

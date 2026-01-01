@@ -16,6 +16,24 @@ LevelNext: Timeout, WINP5
 MaxAIPlayers: 2
 BoardSize: 32, 22
 InitialCount: 200
+BoardTileData:
+1 . . . . . . . . . 2 . . . . . . . . . . 3 . . . . . . . . . 4
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+# A row of halt/stop markers.  You can break through them.
+# Maybe later we'll have STOPs that are indestructible, or ones
+# which only one particular player can destroy.
+H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+W . . . . . . . . . W . . . . . . . . . . W . . . . . . . . . W
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+S F B . . . . . . . S F B . . . . . . B F S . . . . . . . B F S
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. N . . . . . . . . . N . . . . . . . . N . . . . . . . . . N .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+# The rest is empty, no need to specify the remaining rows to get empty.
+END
 
 ScreenText: 23, 5, 5, 32, _The sound of silence?_
 

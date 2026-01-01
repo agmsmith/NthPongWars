@@ -260,6 +260,12 @@ extern uint8_t g_cache_animated_tiles_index; /* Next free cache entry. */
 extern tile_pointer g_cache_dirty_screen_tiles[MAX_DIRTY_SCREEN_CACHE];
 extern uint8_t g_cache_dirty_screen_tiles_index; /* Next free cache entry. */
 
+
+extern tile_pointer TileForColumnAndRow(uint8_t column, uint8_t row);
+/* Look up a tile given it's tile row and column.  Returns NULL if off the
+   board or something isn't initialised.  Sanity checks everything, in case
+   you are feeding in user generated level data. */
+
 extern bool InitTileArray(void);
 /* Sets the tile array to the given size (g_screen_width_tiles by
    g_play_area_height_tiles), returns TRUE if successful.  FALSE if the size is

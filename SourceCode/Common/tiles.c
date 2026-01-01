@@ -38,7 +38,7 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
 };
 
 const char g_TileOwnerLetters[OWNER_MAX] = {
-  ' ', /* OWNER_EMPTY */
+  '.', /* OWNER_EMPTY */
   '1', /* OWNER_PLAYER_1 */
   '2', /* OWNER_PLAYER_2 */
   '3', /* OWNER_PLAYER_3 */
@@ -210,6 +210,23 @@ static void DumpPowerUpCacheToDebug(tile_owner owner)
   }
 }
 #endif /* DUMP_TILE_POWERUP_CACHE */
+
+
+/* Look up a tile given it's tile row and column.  Returns NULL if off the
+   board or something isn't initialised.  Sanity checks everything, in case
+   you are feeding in user generated level data.
+*/
+tile_pointer TileForColumnAndRow(uint8_t column, uint8_t row)
+{
+  if (column >= g_play_area_width_tiles || row >= g_play_area_height_tiles)
+    return NULL;
+
+  tile_pointer pTile = g_tile_array_row_starts[row];
+  if (pTile != NULL)
+    pTile += column;
+
+  return pTile;
+}
 
 
 /* Sets the tile array to the given size (g_screen_width_tiles by

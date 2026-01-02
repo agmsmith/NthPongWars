@@ -705,8 +705,9 @@ bool KeywordBoardTileData(void)
       if (iPlayer < MAX_PLAYERS)
       {
         player_pointer pPlayer = g_player_array + iPlayer;
-        INT_TO_FX(pTile->pixel_center_x, pPlayer->pixel_center_x);
-        INT_TO_FX(pTile->pixel_center_y, pPlayer->pixel_center_y);
+        pPlayer->starting_level_pixel_x = pTile->pixel_center_x;
+        pPlayer->starting_level_pixel_y = pTile->pixel_center_y;
+        pPlayer->starting_level_pixel_flying_height = FLYING_ABOVE_TILES_HEIGHT;
       }
 
       /* Successfully set one tile, advance to the next column. */

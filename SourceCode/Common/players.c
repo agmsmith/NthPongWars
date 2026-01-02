@@ -91,7 +91,17 @@ target_list_item_record g_target_list[] = {
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
   {0, TARGET_CODE_GOTO},
-/* Instruction 30 */ {11, TARGET_CODE_SPEED},
+/* Instruction 30 */ {20, TARGET_CODE_SPEED}, /* Move faster. */
+  {12, TARGET_CODE_POWER_UP}, /* Divert up to 1.5 tiles away for power-ups. */
+  {4, TARGET_CODE_STEER}, /* Head to leading player.  Just bump into them. */
+  {9, TARGET_CODE_SPEED}, /* Slow down, below friction speed. */
+  {99, TARGET_CODE_STEER}, /* Just bounce around, no steering. */
+  {50, TARGET_CODE_DELAY}, /* Delay 10 seconds idling and bouncing. */
+  {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
+  {32, TARGET_CODE_POWER_UP}, /* Divert up to 4 tiles away for power-ups. */
+  {1, TARGET_CODE_STEER}, /* Steer to next corner. */
+  {30, TARGET_CODE_GOTO},
+/* Instruction 40 */ {11, TARGET_CODE_SPEED},
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {4 * 8, TARGET_CODE_POWER_UP}, /* Divert up to 4 tiles away for power-ups. */
   {1, TARGET_CODE_STEER}, /* Steer to next corner. */
@@ -102,12 +112,12 @@ target_list_item_record g_target_list[] = {
   {5, TARGET_CODE_STEER}, /* Head to leading Human player. */
   {7 * 8, TARGET_CODE_POWER_UP}, /* Divert up to 7 tiles away for power-ups. */
   {5, TARGET_CODE_DELAY}, /* Delay 1 second to hound them. */
-  {30, TARGET_CODE_GOTO},
+  {40, TARGET_CODE_GOTO},
 };
 
 /* Where to start the instructions for player 0 to player N-1. */
 uint8_t g_target_start_indices[MAX_PLAYERS] =
-{30, 0, 30, 30};
+{30, 40, 0, 30};
 
 
 /* Set up the initial player data, mostly colours and animations. */
@@ -186,7 +196,10 @@ void InitialisePlayersForNewLevel(void)
     INT_TO_FX(0, pPlayer->velocity_y);
     pPlayer->player_collision_count = 0;
     pPlayer->joystick_inputs = 0;
-
+    pPlayer->brain_info.algo.target_list_index =
+      g_target_start_indices[iPlayer];
+    pPlayer->brain_info.algo.steer = true;
+    pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
 #ifdef NABU_H
     pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
     pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
@@ -746,10 +759,12 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   else if (pPlayer->brain_info.algo.divert_to_pTile)
   {
     /* Busy diverting to a nearby "good" power-up.  Is it still there?  If
-       someone else takes it, or we take it, end diversion. */
+       someone else takes it, or we take it, or if we are too far above it to
+       pick it up, end diversion. */
 
     if (pPlayer->brain_info.algo.divert_to_pTile->owner <
-    (tile_owner) OWNER_PUPS_GOOD_FOR_AI)
+    (tile_owner) OWNER_PUPS_GOOD_FOR_AI ||
+    pPlayer->pixel_flying_height >= FLYING_ABOVE_TILES_HEIGHT)
     {
       /* Resume normal targeting. */
       pPlayer->brain_info.algo.divert_to_pTile = NULL;
@@ -894,7 +909,8 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       pPlayer->brain_info.algo.divert_powerup_distance;
 
     if (powerUpMaxPixelDistance > 0 &&
-    pPlayer->brain_info.algo.divert_to_pTile == NULL)
+    pPlayer->brain_info.algo.divert_to_pTile == NULL &&
+    pPlayer->pixel_flying_height < FLYING_ABOVE_TILES_HEIGHT)
     {
       /* Just want to check over the "good" power-ups to see if they are near
         enough for a diversion.  Bad ones we ignore, no avoidance behaviour
@@ -1178,9 +1194,9 @@ void UpdatePlayerInputs(void)
       pFreePlayer->brain = (player_brain) BRAIN_ALGORITHM;
       pFreePlayer->brain_info.algo.desired_speed = 4 + numAIPlayers;
       pFreePlayer->brain_info.algo.target_list_index =
-        g_target_start_indices[numAIPlayers];
+        g_target_start_indices[pFreePlayer->player_array_index];
       pFreePlayer->brain_info.algo.steer = false;
-      pFreePlayer->brain_info.algo.target_player = 10;
+      pFreePlayer->brain_info.algo.target_player = MAX_PLAYERS;
       pFreePlayer->last_brain_activity_time = g_FrameCounter;
       DebugPrintPlayerAssignment(pFreePlayer);
     }

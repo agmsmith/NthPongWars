@@ -54,6 +54,11 @@
    diameter), centered in the hardware sprite box. */
 #define PLAYER_PIXEL_DIAMETER_NORMAL 8
 
+/* The range of flying heights and what they do. */
+#define MAX_FLYING_HEIGHT 20 /* Can fly this high at most. */
+#define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
+#define FLYING_ABOVE_TILES_HEIGHT 8 /* Tile collisions skipped this high. */
+
 #ifdef NABU_H
 /* Use this Y sprite position to mark a sprite as not drawable.  It's the same
    as the 0xD0 magic value the hardware uses to mark the end of the sprite list,

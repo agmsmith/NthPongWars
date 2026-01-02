@@ -27,11 +27,6 @@
 
 #include "soundscreen.h"
 
-/* The range of flying heights and what they do. */
-#define MAX_FLYING_HEIGHT 20 /* Can fly this high at most. */
-#define MIN_FLYING_HEIGHT 2 /* 1 is hard to see, 0 invisible shadow. */
-#define FLYING_ABOVE_TILES_HEIGHT 8 /* Tile collisions skipped this high. */
-
 
 /*******************************************************************************
  * Calculate the new position and velocity of all players.

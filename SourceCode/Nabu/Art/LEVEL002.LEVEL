@@ -2,6 +2,7 @@
 GameMode: PongWar
 Music: Silence
 ScreenFont: NTHPONG1
+ScreenText: 21, 5, 5, 32, _The sound of silence?_
 
 # After showing the win screen, will go to the next level.
 LevelBookmark: LEVEL003
@@ -14,7 +15,7 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 MaxAIPlayers: 2
-BoardSize: 32, 22
+BoardSize: 32, 23
 InitialCount: 200
 BoardTileData:
 1 . . . . . . . . . 2 . . . . . . . . . . 3 . . . . . . . . . 4
@@ -33,6 +34,3 @@ S W B F . . . . . . S W B F . . . . F B W S . . . . . . F B W S
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 # The rest is empty, no need to specify the remaining rows to get empty.
 END
-
-ScreenText: 23, 5, 5, 32, _The sound of silence?_
-

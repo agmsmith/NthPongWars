@@ -50,6 +50,11 @@ typedef enum tile_owner_enum {
   OWNER_PLAYER_2,
   OWNER_PLAYER_3,
   OWNER_PLAYER_4,
+  OWNER_WALL_INDESTRUCTIBLE,
+  OWNER_WALL_DESTRUCTIBLE_P1, /* Indestructible to all except player 1. */
+  OWNER_WALL_DESTRUCTIBLE_P2,
+  OWNER_WALL_DESTRUCTIBLE_P3,
+  OWNER_WALL_DESTRUCTIBLE_P4,
   OWNER_PUP_NORMAL, /* Power-up that makes you normal.  Also first power up. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
   OWNER_PUPS_WITH_DURATION, /* Power-ups that have a timeout start here. */

@@ -29,6 +29,11 @@ const char * g_TileOwnerNames[OWNER_MAX] = {
   "P2", /* OWNER_PLAYER_2 */
   "P3", /* OWNER_PLAYER_3 */
   "P4", /* OWNER_PLAYER_4 */
+  "Wall", /* OWNER_WALL_INDESTRUCTIBLE */
+  "WallP1", /* OWNER_WALL_DESTRUCTIBLE_P1 */
+  "WallP2", /* OWNER_WALL_DESTRUCTIBLE_P2 */
+  "WallP3", /* OWNER_WALL_DESTRUCTIBLE_P3 */
+  "WallP4", /* OWNER_WALL_DESTRUCTIBLE_P4 */
   "Normal", /* OWNER_PUP_NORMAL */
   "Stop", /* OWNER_PUP_STOP */
   "Fly", /* OWNER_PUP_FLY */
@@ -43,6 +48,11 @@ const char g_TileOwnerLetters[OWNER_MAX] = {
   '2', /* OWNER_PLAYER_2 */
   '3', /* OWNER_PLAYER_3 */
   '4', /* OWNER_PLAYER_4 */
+  '+', /* OWNER_WALL_INDESTRUCTIBLE */
+  '(', /* OWNER_WALL_DESTRUCTIBLE_P1 */
+  ')', /* OWNER_WALL_DESTRUCTIBLE_P2 */
+  '[', /* OWNER_WALL_DESTRUCTIBLE_P3 */
+  ']', /* OWNER_WALL_DESTRUCTIBLE_P4 */
   'N', /* OWNER_PUP_NORMAL */
   'H', /* OWNER_PUP_STOP, using H for Halt */
   'F', /* OWNER_PUP_FLY */
@@ -59,6 +69,11 @@ const char *g_TileAnimData[OWNER_MAX] =
   "\xE1\xE5\xE9\xED\xF1\xF5\xF9\xFD", /* OWNER_PLAYER_2 */
   "\xE2\xE6\xEA\xEE\xF2\xF6\xFA\xFE", /* OWNER_PLAYER_3 */
   "\xE3\xE7\xEB\xEF\xF3\xF7\xFB\xFF", /* OWNER_PLAYER_4 */
+  "Wall", /* OWNER_WALL_INDESTRUCTIBLE */
+  "WallP1", /* OWNER_WALL_DESTRUCTIBLE_P1 */
+  "WallP2", /* OWNER_WALL_DESTRUCTIBLE_P2 */
+  "WallP3", /* OWNER_WALL_DESTRUCTIBLE_P3 */
+  "WallP4", /* OWNER_WALL_DESTRUCTIBLE_P4 */
   "\xB1\xB2\xB3\xB4\xB5\xB6", /* OWNER_PUP_NORMAL */
   "\xB0", /* OWNER_PUP_STOP */
   "\xBC\xBD\xBE\xBF\xC0\xC1\xC2", /* OWNER_PUP_FLY */
@@ -80,16 +95,21 @@ const char *g_TileAnimData[OWNER_MAX] =
 #endif /* NABU_H */
 };
 
-uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
+uint8_t g_TileOwnerQuotas[OWNER_MAX] = { /* Non-power-ups are ignored. */
   0, /* OWNER_EMPTY */
   0, /* OWNER_PLAYER_1 */
   0, /* OWNER_PLAYER_2 */
   0, /* OWNER_PLAYER_3 */
   0, /* OWNER_PLAYER_4 */
-  2, /* OWNER_PUP_NORMAL */
-  3, /* OWNER_PUP_STOP */
+  0, /* OWNER_WALL_INDESTRUCTIBLE */
+  0, /* OWNER_WALL_DESTRUCTIBLE_P1 */
+  0, /* OWNER_WALL_DESTRUCTIBLE_P2 */
+  0, /* OWNER_WALL_DESTRUCTIBLE_P3 */
+  0, /* OWNER_WALL_DESTRUCTIBLE_P4 */
+  1, /* OWNER_PUP_NORMAL */
+  4, /* OWNER_PUP_STOP */
   2, /* OWNER_PUP_FLY */
-  4, /* OWNER_PUP_WIDER */
+  2, /* OWNER_PUP_WIDER */
   2, /* OWNER_PUP_BASH_WALL */
   2, /* OWNER_PUP_SOLID */
 };
@@ -613,8 +633,8 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
 
 /* Adds a new power-up tile for ones which are under the quota set for the
    game.  Location is in a predictable pattern on purpose.  If we are already
-   at quote for all tile types, does nothing.  Recommend calling this every
-   couple of seconds.
+   at quote for all tile types, does nothing.  Doesn't overwrite indestructible
+   tiles or power-up tiles.  Recommend calling this every couple of seconds.
 */
 void AddNextPowerUpTile(void)
 {
@@ -644,7 +664,8 @@ void AddNextPowerUpTile(void)
   if (pTile != NULL && s_TileQuotaNextColumn < g_play_area_width_tiles)
   {
     pTile += s_TileQuotaNextColumn;
-    SetTileOwner(pTile, quotaIndex);
+    if (pTile->owner < (tile_owner) OWNER_WALL_INDESTRUCTIBLE)
+      SetTileOwner(pTile, quotaIndex);
   }
 
   /* Advance to the next tile position, for next time. */

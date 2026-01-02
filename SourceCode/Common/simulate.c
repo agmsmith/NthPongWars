@@ -605,6 +605,16 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
               RequestTileRedraw(pTile);
             }
           }
+          else if (previousOwner >= (tile_owner) OWNER_WALL_INDESTRUCTIBLE &&
+          previousOwner <= (tile_owner) OWNER_WALL_DESTRUCTIBLE_P4)
+          {
+            /* Tile is indestructible, unless you are the player that can
+               destroy that kind of tile. */
+
+            takeOverTile =
+              ((iPlayer + (tile_owner) OWNER_WALL_DESTRUCTIBLE_P1) ==
+              previousOwner);
+          }
           else /* A power up tile. */
           {
             takeOverTile = true;

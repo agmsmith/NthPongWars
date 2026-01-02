@@ -187,6 +187,11 @@ BoardScroll: No
 # '2', /* OWNER_PLAYER_2 */
 # '3', /* OWNER_PLAYER_3 */
 # '4', /* OWNER_PLAYER_4 */
+# '+', /* OWNER_WALL_INDESTRUCTIBLE */
+# '(', /* OWNER_WALL_DESTRUCTIBLE_P1 */
+# ')', /* OWNER_WALL_DESTRUCTIBLE_P2 */
+# '[', /* OWNER_WALL_DESTRUCTIBLE_P3 */
+# ']', /* OWNER_WALL_DESTRUCTIBLE_P4 */
 # 'N', /* OWNER_PUP_NORMAL */
 # 'H', /* OWNER_PUP_STOP, using H for Halt */
 # 'F', /* OWNER_PUP_FLY */

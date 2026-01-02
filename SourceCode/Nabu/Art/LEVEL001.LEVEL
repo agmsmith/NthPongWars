@@ -2,6 +2,7 @@
 GameMode: PongWar
 Music: Default
 ScreenFont: NTHPONG1
+ScreenText: 21, 4, 4, 32, _The First Level is Easy_
 
 LevelBookmark: LEVEL002
 LevelNext: All, LEVEL002
@@ -15,6 +16,23 @@ LevelNext: Timeout, WINP5
 # Only remove players when starting the game, sets win counts to zero.
 RemovePlayers:
 MaxAIPlayers: 4
+
 BoardSize: 32, 23
 InitialCount: 100
+BoardTileData:
+. . . . . . . . + +
+. 1 . . . . . . ] ] . W
+. . . . . . . . + +
+. . . . . . . . + +
+. 2 . . . . . . + +
+. . . . . . . . [ [ . S
+. . . . . . . . + +
+. 3 . . . . . . + +
+. . . . . . . . ) ) . B
+. . . . . . . . + +
+. 4 . . . . . . + +
+. . . . . . . . + +
+. . . . . . . . ( ( . W
++ + + + + + + + + +
++ + + + + + + + + +
 

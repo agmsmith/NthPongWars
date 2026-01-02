@@ -195,6 +195,7 @@ void InitialisePlayersForNewLevel(void)
     INT_TO_FX(0, pPlayer->velocity_x);
     INT_TO_FX(0, pPlayer->velocity_y);
     pPlayer->player_collision_count = 0;
+    bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
     pPlayer->joystick_inputs = 0;
     pPlayer->brain_info.algo.target_list_index =
       g_target_start_indices[iPlayer];

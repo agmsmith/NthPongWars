@@ -2,7 +2,24 @@
 GameMode: PongWar
 Music: Default
 ScreenFont: NTHPONG1
-PlayTimeout: 50
+ScreenText: 2, 30, 30, 32, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 28, 28, 30, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 26, 26, 28, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 24, 24, 26, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 22, 22, 24, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 20, 20, 22, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 18, 18, 20, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 16, 16, 18, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 14, 14, 16, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 12, 12, 14, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 10, 10, 12, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 08, 08, 10, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 06, 06, 08, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 04, 04, 06, D e m o n s t r a t i o n - L e v e l
+ScreenText: 2, 02, 02, 04, D e m o n s t r a t i o n - L e v e l
+
+
+PlayTimeout: 60
 LevelBookmark: CREDITS
 LevelNext: All, CREDITS
 LevelNext: P0, WINP0
@@ -15,9 +32,7 @@ LevelNext: Timeout, WINP5
 # Want all AI players, though a Human can join in if they wish.
 RemovePlayers:
 MaxAIPlayers: 4
-BoardSize: 30, 22
+BoardSize: 32, 23
 # Will be a short game.
-InitialCount: 80
-
-ScreenText: 2, 30, 30, 32, D e m o n s t r a t i o n - L e v e l
+InitialCount: 90
 

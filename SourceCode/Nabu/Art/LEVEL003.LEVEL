@@ -3,6 +3,7 @@ GameMode: PongWar
 Music: SQUAROOT
 Music: MELTDOWN
 ScreenFont: NTHPONG1
+ScreenText: 21, 9, 9, 32, _The Long One_
 
 # After showing the win screen, will return to the short form credits.
 LevelBookmark: CREDITS2
@@ -14,8 +15,6 @@ LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
-BoardSize: 32, 22
+BoardSize: 32, 23
 InitialCount: 350
-
-ScreenText: 23, 9, 9, 32, _The Long One_
 

@@ -22,7 +22,7 @@ ScreenText: 2, 02, 02, 04, D e m o n s t r a t i o n - L e v e l
 PlayTimeout: 60
 LevelBookmark: CREDITS
 LevelNext: All, CREDITS
-LevelNext: P0, WINP0
+LevelNext: P0, LEVEL004
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
 LevelNext: P3, WINP3

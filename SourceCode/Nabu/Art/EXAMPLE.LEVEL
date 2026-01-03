@@ -136,6 +136,15 @@ RemovePlayers:
 # that's the chance for an AI to take over.
 MaxAIPlayers: 2
 
+# Currently predefined in code, but eventually you'll be able to load
+# AI code in level files.  This keyword specifies where each AI player's
+# code starts.  Defaults to zero if not specified.  Valid values are:
+# 00 - Draw a letter N on the game board.
+# 30 - Go up and down a side, then attack the leading player momentarily. 
+# 40 - Go up and down, full attack on leading Human if present else nothing.
+# 60 - Go at no-friction speed so don't thrust much, just bounce around.
+AIPlayerCodeStart: 30, 40, 0, 30
+
 # When playing in countdown mode, the first player to reach this many tiles in
 # their colour wins.  The count starts at this value and counts down about once
 # per second.  If you don't specify it, it gets set to the number of tiles in

@@ -14,3 +14,9 @@ PlayTimeout: 5
 # Remove all players and reset win counts to zero.
 RemovePlayers:
 
+# Default to lots of AI players.
+MaxAIPlayers: 4
+
+# Set up default AI player personalities.
+AIPlayerCodeStart: 30, 40, 0, 30
+

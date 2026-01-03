@@ -414,7 +414,7 @@ extern int16_t g_play_area_wall_top_y;
    an extra physics step gets added and that slows everything down.  Also if it
    is too high, AI players get stuck in corners bouncing off the sides while
    trying to get to the corner tile. */
-#define FRICTION_SPEED 10
+#define FRICTION_SPEED 12
 
 /* Amount to add to the velocity of one of the players to separate them if
    needed.  g_SeparationVelocityFxAdd set once in in InitialisePlayers(),

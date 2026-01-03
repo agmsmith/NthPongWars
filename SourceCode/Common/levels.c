@@ -559,6 +559,24 @@ bool KeywordMaxAIPlayers(void)
 }
 
 
+/* Set the starting point of each AI player's code.  That will set the program
+   they are using and thus their behaviour.
+*/
+bool KeywordAIPlayerCodeStart(void)
+{
+  char numberText[10];
+  uint8_t iPlayer;
+
+  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
+  {
+    if (!LevelReadWord(numberText, sizeof(numberText), ','))
+      return false;
+    g_target_start_indices[iPlayer] = atoi(numberText);
+  }
+  return true;
+}
+
+
 /* When playing in countdown mode, the first player to reach this many tiles in
    their colour wins.  The count starts at this value and counts down about once
    per second.  If you don't specify it, it gets set to the number of tiles in
@@ -746,6 +764,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"LevelBookmark", KeywordLevelBookmark},
   {"RemovePlayers", KeywordRemovePlayers},
   {"MaxAIPlayers", KeywordMaxAIPlayers},
+  {"AIPlayerCodeStart", KeywordAIPlayerCodeStart},
   {"InitialCount", KeywordCountdownStart},
   {"GameMode", KeywordGameMode},
   {"BoardSize", KeywordBoardSize},

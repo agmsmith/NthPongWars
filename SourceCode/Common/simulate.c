@@ -501,8 +501,25 @@ printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
 
       bounceOffX = false;
       bounceOffY = false;
+
+      /* Start bounce off edges far away on opposite side, so all tile sides
+         we may bounce off will be closer (can hit tile up to 2 tile widths
+         away from player).  Previously was initialising at the player position,
+         which was incorrect in some situations. */
+
       bounceOffPixelX = playerX;
+      if (velocityX < 0)
+        bounceOffPixelX -= TILE_PIXEL_WIDTH * 3 + PLAYER_PIXEL_DIAMETER_NORMAL;
+      else if (velocityX > 0)
+        bounceOffPixelX += TILE_PIXEL_WIDTH * 3 + PLAYER_PIXEL_DIAMETER_NORMAL;
+
       bounceOffPixelY = playerY;
+      if (velocityY < 0)
+        bounceOffPixelY -= TILE_PIXEL_WIDTH * 3 + PLAYER_PIXEL_DIAMETER_NORMAL;
+      else if (velocityY > 0)
+        bounceOffPixelY += TILE_PIXEL_WIDTH * 3 + PLAYER_PIXEL_DIAMETER_NORMAL;
+
+      /* Scan the up to 9 tiles around the player's position. */
 
       for (curRow = startRow; curRow <= endRow; curRow++)
       {
@@ -735,9 +752,10 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
         NEGATE_FX(&pPlayer->step_velocity_x);
 
         /* Shove the player outside the tile side. */
-        INT_TO_FX(bounceOffPixelX + ((velocityX < 0)
-            ? (TILE_PIXEL_WIDTH / 2)
-            : - (TILE_PIXEL_WIDTH / 2)),
+        INT_TO_FX(bounceOffPixelX +
+          ((velocityX < 0)
+            ? (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)
+            : - (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)),
           pPlayer->pixel_center_x);
       }
 
@@ -748,8 +766,8 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
 
         /* Shove the player outside the tile side. */
         INT_TO_FX(bounceOffPixelY + ((velocityY < 0)
-            ? (TILE_PIXEL_WIDTH / 2)
-            : - (TILE_PIXEL_WIDTH / 2)),
+            ? (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)
+            : - (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)),
           pPlayer->pixel_center_y);
       }
 

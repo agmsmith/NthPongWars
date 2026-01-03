@@ -1499,7 +1499,7 @@ void DumpPlayersToTerminal(void)
 
   do {
     DebugPrintPlayerAssignment(pPlayer);
- 
+
     strcpy(g_TempBuffer, "Location (");
     AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->pixel_center_x));
     strcat(g_TempBuffer, ", ");

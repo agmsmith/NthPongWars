@@ -14,25 +14,22 @@ LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
-MaxAIPlayers: 2
+MaxAIPlayers: 3
+# Back to default AI player personalities.
+AIPlayerCodeStart: 30, 40, 0, 30
+
 BoardSize: 32, 23
 InitialCount: 200
 BoardTileData:
 1 . . . . . . . . . 2 . . . . . . . . . . 3 . . . . . . . . . 4
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-# A row of halt/stop markers.  You can break through them.
-# Maybe later we'll have STOPs that are indestructible, or ones
-# which only one particular player can destroy.
-H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 W . . . . . . . . . W . . . . . . . . . . W . . . . . . . . . W
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-. N . . . . . . . . . N . . . . . . . . N . . . . . . . . . N .
+1 N . . . . . . . . 2 N . . . . . . . . N 3 . . . . . . . . N 4
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-S W B F . . . . . . S W B F . . . . F B W S . . . . . . F B W S
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-. S . . . . . . . . . S . . . . . . . . S . . . . . . . . . S .
+. . S . . . . . . . . . S . . . . . . . . S . . . . . . . . . S
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 # The rest is empty, no need to specify the remaining rows to get empty.
 END

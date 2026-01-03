@@ -1,13 +1,13 @@
-# Level #4.  AGMS20260102
+# Classic Pong Wars.  AGMS20260102
 GameMode: PongWar
 Music: ONECOLN1
 ScreenFont: NTHPONG1
 ScreenText: 2, 7, 7, 32, _Classic Pong War_
 ScreenText: 12, 5, 5, 32, _Just a Screen Saver_
 
-# After showing the win screen, will return to the short form credits.
-LevelBookmark: CREDITS2
-LevelNext: All, CREDITS2
+# After showing the win screen, will return to the title.
+LevelBookmark: TITLE
+LevelNext: All, TITLE
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
@@ -16,7 +16,7 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 # Remove all players and reset win counts to zero.  Just want AIs doing
-# boring bounces around most of the time.
+# boring bounces around most of the time.  Though Humans can join in.
 RemovePlayers:
 MaxAIPlayers: 2
 BoardSize: 22, 22
@@ -98,4 +98,7 @@ END
 
 # Just want the purely bouncing around behaviour.
 AIPlayerCodeStart: 60, 60, 60, 60
+
+# Not too much interruption from the power-ups.
+TileQuota: S, 2
 

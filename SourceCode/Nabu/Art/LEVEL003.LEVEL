@@ -6,8 +6,8 @@ ScreenFont: NTHPONG1
 ScreenText: 21, 9, 9, 32, _The Long One_
 
 # After showing the win screen, will return to the short form credits.
-LevelBookmark: LEVEL004
-LevelNext: All, LEVEL004
+LevelBookmark: CREDITS2
+LevelNext: All, CREDITS2
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
@@ -17,4 +17,5 @@ LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
 InitialCount: 350
+MaxAIPlayers: 4
 

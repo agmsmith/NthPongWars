@@ -39,6 +39,10 @@ static uint16_t sVictoryTimeoutFrame = 0;
 /* Frame counter when the current level times out and player 4 (the Fire
    button) is declared the winner.  Zero if the timeout isn't active. */
 
+static bool sFirstTileQuotaKeywordClears = true;
+/* A flag that's set for each level load so we know that all tile quotas
+   need to be cleared the first time we see the keyword. */
+
 
 /* Checks the victory conditions and sets things up for loading the next level
    (depending on which player won).  Returns TRUE if the level was completed.
@@ -685,6 +689,8 @@ bool KeywordBoardTileData(void)
   uint8_t row = 0;
   while (LevelReadAndTrimLine(g_TempBuffer, 255))
   {
+    SoundUpdateIfNeeded();
+
     if (strcasecmp(g_TempBuffer, "END") == 0)
       break; /* End of the tile data. */
     if (g_TempBuffer[0] == '#')
@@ -740,6 +746,44 @@ bool KeywordBoardTileData(void)
 }
 
 
+/* Read a tile type and quota number from the level file.  Set the corresponding
+   quota for that kind of power-up.  If it's the first time, clear all the
+   power-ups.
+*/
+bool KeywordTileQuota(void)
+{
+  if (sFirstTileQuotaKeywordClears)
+  {
+    bzero(g_TileOwnerQuotas, sizeof(g_TileOwnerQuotas));
+    sFirstTileQuotaKeywordClears = false;
+  }
+
+  /* Read the tile type code. */
+  if (!LevelReadWord(g_TempBuffer, 255, ','))
+    return false;
+
+  /* Convert the level file letter to a tile type.  Do nothing fatal for
+     unknown possibly future level codes. */
+  tile_owner tileType;
+  for (tileType = 0; tileType < OWNER_MAX; tileType++)
+  {
+    if (g_TileOwnerLetters[tileType] == g_TempBuffer[0])
+      break;
+  }
+
+  /* Read the quota number and the rest of the line. */
+  if (!LevelReadLine(g_TempBuffer, 255))
+    return false;
+  uint8_t quotaAmount = atoi(g_TempBuffer);
+
+  /* Default unknown tile types ignored. */
+  if (tileType < OWNER_MAX)
+    g_TileOwnerQuotas[tileType] = quotaAmount;
+
+  return true;
+}
+
+
 /******************************************************************************
  * Handle all level keywords.  We have a table of the word and the
  * corresponding function to call.
@@ -769,6 +813,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"GameMode", KeywordGameMode},
   {"BoardSize", KeywordBoardSize},
   {"BoardTileData", KeywordBoardTileData},
+  {"TileQuota", KeywordTileQuota},
   {NULL, NULL}
 };
 
@@ -780,8 +825,12 @@ static bool ProcessLevelKeywords(void)
   #define MAX_LEVEL_KEYWORD_LENGTH 32
   char keyWord[MAX_LEVEL_KEYWORD_LENGTH];
 
+  sFirstTileQuotaKeywordClears = true;
+
   while (true)
   {
+    SoundUpdateIfNeeded();
+
     /* Read the next keyword.  Skip leading spaces.  Skip comment lines. */
 
     if (!LevelSkipSpaces())
@@ -821,10 +870,13 @@ static bool ProcessLevelKeywords(void)
     }
     if (pKeywordCall->keyword == NULL)
     { /* Unknown keyword, print a debug message and discard the rest. */
-      strcpy(g_TempBuffer, "Unknown keyword \"");
-      strcat(g_TempBuffer, keyWord);
-      strcat(g_TempBuffer, "\".\n");
-      DebugPrintString(g_TempBuffer);
+      if (keyWord[0] != 0) /* Only debug non-empty keywords. */
+      {
+        strcpy(g_TempBuffer, "Unknown keyword \"");
+        strcat(g_TempBuffer, keyWord);
+        strcat(g_TempBuffer, "\".\n");
+        DebugPrintString(g_TempBuffer);
+      }
       if (!LevelReadAndTrimLine(keyWord, sizeof(keyWord)))
         break; /* End of file while discarding the rest of the line. */
     }

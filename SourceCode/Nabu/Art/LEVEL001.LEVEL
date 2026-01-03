@@ -15,10 +15,12 @@ LevelNext: Timeout, WINP5
 
 # Only remove players when starting the game, sets win counts to zero.
 RemovePlayers:
-MaxAIPlayers: 0
+MaxAIPlayers: 1
+AIPlayerCodeStart: 0, 0, 0, 0 # All draw a letter N on screen.
+
 
 BoardSize: 32, 23
-InitialCount: 200
+InitialCount: 100
 BoardTileData:
 . . . . . . . . + + . 1
 . 2 2 . . . . . 

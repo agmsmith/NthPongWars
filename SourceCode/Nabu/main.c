@@ -202,6 +202,11 @@ static void ProcessKeyboard(void)
         s_KeepRunning = false;
         strcpy(gLevelName, "Quit");
       }
+      else if (letter == 27) /* Escape key, abort and go back to title screen. */
+      {
+        s_KeepRunning = false;
+        strcpy(gLevelName, "TITLE");
+      }
     }
   }
 }

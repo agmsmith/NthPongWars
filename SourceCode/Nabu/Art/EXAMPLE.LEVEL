@@ -226,3 +226,17 @@ S F B . . . . . . . S F B . . . . . . B F S . . . . . . . B F S
 # The rest is empty, no need to specify the remaining rows to get empty.
 END
 
+# Specify how many of each power-up tile you want on the board.  The tile
+# type is the same letter code as used in BoardTileData, followed by the
+# number of that power-up you want on the board.  The first use of this
+# keyword in a level clears all the quotas to zero.  The game will add tiles
+# about once every 8 seconds until it has reached quota, using a diagonally
+# travelling location so players can predict the location of the next added
+# power-up.  It's done round robin so that all tile types are checked and
+# have a chance to appear.  It will skip an addition if it would overwrite
+# an indestructible tile.  Don't go overboard with the animated tiles, they
+# take up a lot of CPU time and more than 3 or so will slow the game down.
+TileQuota: N, 1
+TileQuota: W, 3
+TileQuota: B, 2
+

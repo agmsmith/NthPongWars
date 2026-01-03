@@ -437,8 +437,10 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
     {
       uint8_t startCol, endCol, curCol, playerCol;
       uint8_t startRow, endRow, curRow, playerRow;
+      int16_t playerX, playerY;
       int8_t velocityX, velocityY;
       bool bounceOffX, bounceOffY;
+      int16_t bounceOffPixelX, bounceOffPixelY;
       tile_owner player_self_owner;
 
       if (pPlayer->brain == BRAIN_INACTIVE)
@@ -447,12 +449,20 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       if (pPlayer->pixel_flying_height >= FLYING_ABOVE_TILES_HEIGHT)
         continue;
 
-      int16_t playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
-      int16_t playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+      playerX = GET_FX_INTEGER(pPlayer->pixel_center_x);
+      playerY = GET_FX_INTEGER(pPlayer->pixel_center_y);
 
       playerCol = playerX / TILE_PIXEL_WIDTH;
       playerRow = playerY / TILE_PIXEL_WIDTH;
       player_self_owner = iPlayer + (tile_owner) OWNER_PLAYER_1;
+
+      int8_t missDistance, missMinusDistance;
+      if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
+        missDistance =
+          (TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2 + 1;
+      else
+        missDistance = TILE_PIXEL_WIDTH / 2 + 1;
+      missMinusDistance = -missDistance;
 
       /* Just need the +1/0/-1 for direction of velocity. */
       velocityX = TEST_FX(&pPlayer->step_velocity_x);
@@ -483,10 +493,16 @@ printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
 
       /* Keep track of the kind of bouncing the player will do.  Want to avoid
          bouncing an even number of times in the same direction, otherwise the
-         player goes through tiles.  So just collect one bounce in each axis. */
+         player goes through tiles.  So just collect one bounce in each axis.
+         Also collect the coordinates of the center of the closest tile they
+         bounce off , so we can later move the player outside the tile
+         (otherwise they can ram their way through a tile, even an
+         indestructible one). */
 
       bounceOffX = false;
       bounceOffY = false;
+      bounceOffPixelX = playerX;
+      bounceOffPixelY = playerY;
 
       for (curRow = startRow; curRow <= endRow; curRow++)
       {
@@ -510,14 +526,6 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
              the tile.  Theoretically should use the FX fixed point positions
              and velocities, but that's too much computation for a Z80 to do,
              so we use integer pixels. */
-
-          int8_t missDistance, missMinusDistance;
-          if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
-            missDistance =
-              ((TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2);
-          else
-            missDistance = (TILE_PIXEL_WIDTH / 2 + 1);
-          missMinusDistance = -missDistance;
 
           int8_t deltaPosX, deltaPosY;
           deltaPosX = playerX - pTile->pixel_center_x;
@@ -652,14 +660,27 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
              player is moving away. */
 
           bool velXIsTowardsTile, velYIsTowardsTile;
+          int16_t tilePixelXY;
 
           if (velocityX < 0)
           { /* If moving left, and to right of the tile, can be a hit. */
             velXIsTowardsTile = (deltaPosX >= 0);
+            if (velXIsTowardsTile)
+            {
+              tilePixelXY = pTile->pixel_center_x;
+              if (tilePixelXY > bounceOffPixelX)
+                bounceOffPixelX = tilePixelXY;
+            }
           }
           else if (velocityX > 0)
           { /* If moving right, and to left of the tile, can be a hit. */
             velXIsTowardsTile = (deltaPosX < 0);
+            if (velXIsTowardsTile)
+            {
+              tilePixelXY = pTile->pixel_center_x;
+              if (tilePixelXY < bounceOffPixelX)
+                bounceOffPixelX = tilePixelXY;
+            }
           }
           else /* Not moving much. */
           {
@@ -669,10 +690,22 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
           if (velocityY < 0)
           { /* If moving up, and below the tile, can be a hit. */
             velYIsTowardsTile = (deltaPosY >= 0);
+            if (velYIsTowardsTile)
+            {
+              tilePixelXY = pTile->pixel_center_y;
+              if (tilePixelXY > bounceOffPixelY)
+                bounceOffPixelY = tilePixelXY;
+            }
           }
           else if (velocityY > 0)
           { /* If moving down, and above the tile, can be a hit. */
             velYIsTowardsTile = (deltaPosY < 0);
+            if (velYIsTowardsTile)
+            {
+              tilePixelXY = pTile->pixel_center_y;
+              if (tilePixelXY < bounceOffPixelY)
+                bounceOffPixelY = tilePixelXY;
+            }
           }
           else /* Not moving much. */
           {
@@ -696,15 +729,28 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
       /* Now do the bouncing based on the directions we hit. */
 
       if (bounceOffX)
-      { /* Bounce off left or right side. */
+      {
+        /* Bounce off left or right side.  Same velocity reversal. */
         NEGATE_FX(&pPlayer->velocity_x);
         NEGATE_FX(&pPlayer->step_velocity_x);
+
+        /* Shove the player outside the tile side. */
+        INT_TO_FX(bounceOffPixelX + ((velocityX < 0)
+            ? (TILE_PIXEL_WIDTH / 2)
+            : - (TILE_PIXEL_WIDTH / 2)),
+          pPlayer->pixel_center_x);
       }
 
       if (bounceOffY)
       { /* Bounce off top or bottom side. */
         NEGATE_FX(&pPlayer->velocity_y);
         NEGATE_FX(&pPlayer->step_velocity_y);
+
+        /* Shove the player outside the tile side. */
+        INT_TO_FX(bounceOffPixelY + ((velocityY < 0)
+            ? (TILE_PIXEL_WIDTH / 2)
+            : - (TILE_PIXEL_WIDTH / 2)),
+          pPlayer->pixel_center_y);
       }
 
       if (bounceOffX || bounceOffY)

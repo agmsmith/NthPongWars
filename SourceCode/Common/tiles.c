@@ -589,7 +589,6 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
     tile_pointer *ppCachedTile = ppCacheRowStart;
     tile_pointer pOldCachedTile;
     uint8_t index;
-
     for (index = 0; index < MAX_RECENT_TILES; index++, ppCachedTile++)
     {
       pOldCachedTile = *ppCachedTile;

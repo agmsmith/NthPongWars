@@ -1484,6 +1484,24 @@ void DumpPlayersToTerminal(void)
 
   do {
     DebugPrintPlayerAssignment(pPlayer);
+ 
+    strcpy(g_TempBuffer, "Location (");
+    AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->pixel_center_x));
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->pixel_center_y));
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalUInt16(pPlayer->pixel_flying_height);
+    strcat(g_TempBuffer, "), velocity (");
+    AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->velocity_x));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->velocity_x));
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->velocity_y));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->velocity_y));
+    strcat(g_TempBuffer, ").\n");
+    DebugPrintString(g_TempBuffer);
+
     pPlayer++;
   } while (iPlayer-- != 0);
 }

@@ -218,6 +218,7 @@ FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
     {
       fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
         0xff /* Use a new file handle */);
+      SoundUpdateIfNeeded(); /* Each open attempt could take a while. */
       if (fileID != BAD_FILE_HANDLE)
         return fileID;
     }
@@ -325,6 +326,10 @@ void SoundUpdateIfNeeded(void)
    music playing during loading (assuming the frame interrupt is working).
    Returns FALSE if there wasn't enough data in the file.  TRUE if it succeeded.
 */
+/* Optionally read less in each chunk for smoother sound, but slower load. */
+#define MAX_COPY_TO_VRAM_READ_SIZE TEMPBUFFER_LEN
+COMPILER_VERIFY(TEMPBUFFER_LEN >= MAX_COPY_TO_VRAM_READ_SIZE);
+
 static bool CopyFileToVRAM(uint16_t AmountToCopy, FileHandleType FileID,
   uint16_t VRAMAddress, bool Triplicate)
 {
@@ -335,8 +340,8 @@ static bool CopyFileToVRAM(uint16_t AmountToCopy, FileHandleType FileID,
   {
     uint16_t amountToRead = amountRemaining;
     uint16_t amountRead;
-    if (amountToRead > TEMPBUFFER_LEN)
-      amountToRead = TEMPBUFFER_LEN;
+    if (amountToRead > MAX_COPY_TO_VRAM_READ_SIZE)
+      amountToRead = MAX_COPY_TO_VRAM_READ_SIZE;
     amountRead = rn_fileHandleReadSeq(FileID, g_TempBuffer,
       0 /* buffer offset */, amountToRead);
     SoundUpdateIfNeeded();
@@ -419,7 +424,6 @@ bool LoadScreenNSCR(const char *FileName)
   bool returnCode = false;
 
   fileID = OpenDataFile(FileName, "NSCR");
-  SoundUpdateIfNeeded();
   if (fileID == BAD_FILE_HANDLE)
     goto ErrorExit;
 
@@ -469,7 +473,6 @@ bool LoadScreenNCHR(const char *FileName)
   bool returnCode = false;
 
   fileID = OpenDataFile(FileName, "NCHR");
-  SoundUpdateIfNeeded();
   if (fileID == BAD_FILE_HANDLE)
     goto ErrorExit;
 
@@ -502,7 +505,6 @@ bool LoadScreenNFUL(const char *FileName)
   bool returnCode = false;
 
   fileID = OpenDataFile(FileName, "NFUL");
-  SoundUpdateIfNeeded();
   if (fileID == BAD_FILE_HANDLE)
     goto ErrorExit;
 
@@ -522,6 +524,7 @@ bool LoadScreenNFUL(const char *FileName)
       } while (j != 0);
     } while (--i != 0);
   }
+  SoundUpdateIfNeeded();
 
   /* Load tile patterns. */
   if (!CopyFileToVRAM(6144, fileID, _vdpPatternGeneratorTableAddr, false))

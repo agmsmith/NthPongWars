@@ -15,24 +15,24 @@ LevelNext: Timeout, WINP5
 
 # Only remove players when starting the game, sets win counts to zero.
 RemovePlayers:
-MaxAIPlayers: 4
+MaxAIPlayers: 0
 
 BoardSize: 32, 23
-InitialCount: 100
+InitialCount: 200
 BoardTileData:
-. . . . . . . . + +
-. 1 . . . . . . ] ] . W
-. . . . . . . . + +
-. . . . . . . . + +
-. 2 . . . . . . + +
-. . . . . . . . [ [ . S
-. . . . . . . . + +
-. 3 . . . . . . + +
+. . . . . . . . + + . 1
+. 2 2 . . . . . 
+. 2 . . . . . . 
+. . . . . . . . 
+. 2 2 2 2 . . . 
+. . . . . . . . 
+. . . . . . . . 
+. 3 3 3 3 . . . 
 . . . . . . . . ) ) . B
-. . . . . . . . + +
-. 4 . . . . . . + +
-. . . . . . . . + +
-. . . . . . . . ( ( . W
-+ + + + + + + + + +
-+ + + + + + + + + +
+. . . . . . . .
+. 4 . . . . . .
+. 4 . . . . . .
+. 4 . . . . . . ( ( . W
+. 4
+END
 

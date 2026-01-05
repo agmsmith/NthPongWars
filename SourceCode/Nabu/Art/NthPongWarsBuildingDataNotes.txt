@@ -89,11 +89,12 @@ I did have some code to load the ASCII *.DAT file and convert it on the fly
 into binary, but that takes 5 times longer than loading the binary, due to the
 sheer file size difference.
 
-So to convert *.DAT into *.NSCR, use an editor or regex to append ":" after
-each (NAME/PATTERN/MCOLOR/SPATT/SCOLOR) symbol, or just remove them.  You can
-still read a colonised .DAT file into ICVGM, but it will write it out without
-the colons.  Then assemble the colonised file with:
-z80asm -v -l -m -b -o=NTHPONG1.NSCR NthPong1.dat
+So to convert *.DAT into *.NSCR, copy the *.DAT to a *.asm file, use an
+editor or regex to append ":" after each (NAME/PATTERN/MCOLOR/SPATT/SCOLOR)
+symbol, or just remove them.  Try to keep the original file without colons
+around so you can edit it again with ICVGM.  Then assemble the colonised
+file with:
+z80asm -v -l -m -b -o=NTHPONG1.NSCR NthPong1.asm
 Remember to save a copy to the NABU Internet Adapter's Store/NTHPONG/ folder,
 and to my web server.
 

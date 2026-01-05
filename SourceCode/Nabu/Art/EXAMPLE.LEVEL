@@ -161,15 +161,11 @@ BoardSize: 32, 23
 # Specify the rectangle on the screen where the game board is displayed.  Lets
 # you have smaller game boards inside a bigger picture frame.  Values are X
 # character position of top left corner (0 to 31), Y of top left corner
-# (0 to 23), width in tiles, height in tiles.  The example uses all the screen
-# except the topmost line (where the scores are always displayed).
-# Not yet implemented.
-BoardScreen: 0, 1, 32, 23
-
-# Where is the screen inside the board area?  These are the tile X and Y
-# positions of the top left corner of the screen inside the game world.
-# Not yet implemented.
-BoardTopCorner: 0, 0
+# (0 to 23), width in tiles, height in tiles.  Then the final two are the
+# tile X and Y positions of the top left corner of the screen inside the
+# game world.  The example uses all the screen except the topmost line
+# (where the scores are always displayed).
+BoardScreen: 0, 1, 32, 23, 0, 0
 
 # Should the board scroll around to follow a player?  We'll use the lowest
 # scoring player to balance the game difficulty.  Since scrolling updates
@@ -229,13 +225,14 @@ END
 # Specify how many of each power-up tile you want on the board.  The tile
 # type is the same letter code as used in BoardTileData, followed by the
 # number of that power-up you want on the board.  The first use of this
-# keyword in a level clears all the quotas to zero.  The game will add tiles
+# keyword in a level clears all the quotas to zero.  The game will add a tile
 # about once every 8 seconds until it has reached quota, using a diagonally
 # travelling location so players can predict the location of the next added
 # power-up.  It's done round robin so that all tile types are checked and
 # have a chance to appear.  It will skip an addition if it would overwrite
 # an indestructible tile.  Don't go overboard with the animated tiles, they
-# take up a lot of CPU time and more than 3 or so will slow the game down.
+# take up a lot of CPU time and more than a total of 10 or so will slow the
+# game down.
 TileQuota: N, 1
 TileQuota: W, 3
 TileQuota: B, 2

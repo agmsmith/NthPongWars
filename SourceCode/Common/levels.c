@@ -43,6 +43,12 @@ static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
    need to be cleared the first time we see the keyword. */
 
+#define MAX_NUMERIC_ARGUMENTS 6
+static int16_t sNumericArgumentsDecoded[MAX_NUMERIC_ARGUMENTS];
+/* To avoid duplicating code, we have a generic function for reading in comma
+   separated arguments after a keyword.  That function deposits the values in
+   this array. */
+
 
 /* Checks the victory conditions and sets things up for loading the next level
    (depending on which player won).  Returns TRUE if the level was completed.
@@ -350,6 +356,48 @@ bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
 }
 
 
+/* Read some the comma separated arguments following a keyword, converting to
+   binary and storing in sNumericArgumentsDecoded[].  The number of arguments
+   is specified, if there are fewer then unfilled elements of the array will
+   be zero.  Returns FALSE if no data at all was read (usually due to end of
+   file).  Doesn't read the remainder of the line after the last number and
+   comma, so you may need to purge that.
+*/
+bool LevelReadNumericArguments(uint8_t NumberOfArguments)
+{
+  uint8_t i, maxCount;
+  char numberText[10];
+  bzero(sNumericArgumentsDecoded, sizeof(sNumericArgumentsDecoded));
+
+  maxCount = MAX_NUMERIC_ARGUMENTS;
+  if (NumberOfArguments < maxCount)
+    maxCount = NumberOfArguments;
+  for (i = 0; i < maxCount; i++)
+  {
+    if (!LevelReadWord(numberText, sizeof(numberText), ','))
+      break; /* End of file. */
+    sNumericArgumentsDecoded[i] = atoi(numberText);
+  }
+
+#if 0
+    strcpy(g_TempBuffer, "Read ");
+    AppendDecimalUInt16(i);
+    strcat(g_TempBuffer, " numeric arguments: ");
+    uint8_t j;
+    for (j = 0; j < i; j++)
+    {
+      AppendDecimalUInt16(sNumericArgumentsDecoded[j]);
+      if (j + 1 != i)
+        strcat(g_TempBuffer, ", ");
+    }
+    strcat(g_TempBuffer, ".\n");
+    DebugPrintString(g_TempBuffer);
+#endif
+
+  return i > 0; /* TRUE if at least one number was successfully read. */
+}
+
+
 /* This keyword loads a full screen (*.NFUL) graphic.  Returns true if you can
    continue processing, false to abort the level file load.  Should usually
    print a debug message if that happens.
@@ -384,21 +432,16 @@ bool KeywordCharFontSpriteScreen(void)
 */
 bool KeywordTextOnScreen(void)
 {
-  char numberText[10];
-  uint8_t marginData[4]; /* Line, left, more left, right margin */
-  uint8_t i;
-
   /* Read the line number, first left margin, subsequent left, right margin. */
 
-  for (i = 0; i < sizeof(marginData); i++)
-  {
-    if (!LevelReadWord(numberText, sizeof(numberText), ','))
-      return false;
-    marginData[i] = atoi(numberText);
-  }
+  if (!LevelReadNumericArguments(4))
+    return false;
 
   /* Yes, vdp_setCursor2() has input sanity checking. */
-  vdp_setCursor2(marginData[1] /* column */, marginData[0] /* row */);
+  vdp_setCursor2(sNumericArgumentsDecoded[1] /* column */,
+    sNumericArgumentsDecoded[0] /* row */);
+
+  /* Read the line of text from the level file and print it. */
 
   SoundUpdateIfNeeded();
   if (!LevelReadAndTrimLine(g_TempBuffer, 255))
@@ -406,7 +449,7 @@ bool KeywordTextOnScreen(void)
 
   SoundUpdateIfNeeded();
   vdp_printJustified((char *) StockTextMessages(g_TempBuffer),
-    marginData[2], marginData[3]);
+    sNumericArgumentsDecoded[2], sNumericArgumentsDecoded[3]);
 
   return true;
 }
@@ -439,9 +482,9 @@ bool KeywordBackgroundMusic(void)
 /* Make the current level end after a given number of seconds. */
 bool KeywordPlayTimeout(void)
 {
-  if (!LevelReadAndTrimLine(g_TempBuffer, 255))
+  if (!LevelReadNumericArguments(1))
     return false;
-  sVictoryTimeoutFrame = (uint16_t) atoi(g_TempBuffer) * 20 /* Assume 20hz */;
+  sVictoryTimeoutFrame = sNumericArgumentsDecoded[0] * 20 /* Assume 20hz */;
 
   if (sVictoryTimeoutFrame != 0)
   { /* User wants a timeout, we need a global frame number to trigger it. */
@@ -463,7 +506,7 @@ bool KeywordPlayTimeout(void)
 bool KeywordLevelNext(void)
 {
   char levelName[MAX_LEVEL_NAME_LENGTH];
-  char playerName[8];
+  char playerName[8]; /* Longest is "Timeout" */
 
   uint8_t iPlayer = MAX_PLAYERS + 3;
   /* 0 to 3 are players, 4 is Fire button, 5 is Timeout, 6 is All, 7 is none. */
@@ -556,8 +599,9 @@ bool KeywordRemovePlayers(void)
 */
 bool KeywordMaxAIPlayers(void)
 {
-  LevelReadAndTrimLine(g_TempBuffer, 255);
-  gLevelMaxAIPlayers = atoi(g_TempBuffer);
+  if (!LevelReadNumericArguments(1))
+    return false;
+  gLevelMaxAIPlayers = sNumericArgumentsDecoded[0];
 
   return true;
 }
@@ -568,15 +612,13 @@ bool KeywordMaxAIPlayers(void)
 */
 bool KeywordAIPlayerCodeStart(void)
 {
-  char numberText[10];
-  uint8_t iPlayer;
+  if (!LevelReadNumericArguments(MAX_PLAYERS))
+    return false;
 
+  uint8_t iPlayer;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
-  {
-    if (!LevelReadWord(numberText, sizeof(numberText), ','))
-      return false;
-    g_target_start_indices[iPlayer] = atoi(numberText);
-  }
+    g_target_start_indices[iPlayer] = sNumericArgumentsDecoded[iPlayer];
+
   return true;
 }
 
@@ -588,8 +630,9 @@ bool KeywordAIPlayerCodeStart(void)
 */
 bool KeywordCountdownStart(void)
 {
-  LevelReadAndTrimLine(g_TempBuffer, 255);
-  gVictoryStartingTileCount = atoi(g_TempBuffer);
+  if (!LevelReadNumericArguments(1))
+    return false;
+  gVictoryStartingTileCount = sNumericArgumentsDecoded[0];
 
   return true;
 }
@@ -638,19 +681,11 @@ bool KeywordGameMode(void)
 */
 bool KeywordBoardSize(void)
 {
-  char numberText[10];
-  uint8_t height;
-  uint8_t width;
-
-  /* Read the tile width number. */
-  if (!LevelReadWord(numberText, sizeof(numberText), ','))
+  if (!LevelReadNumericArguments(2))
     return false;
-  width = atoi(numberText);
 
-  /* Read the tile height number and advance to the next line. */
-  if (!LevelReadAndTrimLine(numberText, sizeof(numberText)))
-    return false;
-  height = atoi(numberText);
+  uint8_t width = sNumericArgumentsDecoded[0];
+  uint8_t height = sNumericArgumentsDecoded[1];
 
   /* Sanity check and use the numbers. */
 
@@ -677,6 +712,29 @@ bool KeywordBoardSize(void)
     g_play_area_height_tiles = 15;
     return false;
   }
+  return true;
+}
+
+
+/* Set the rectangle on the screen where the game board will be drawn.  Can be
+   smaller or larger than the actual board size.  Tiles won't get drawn outside
+   the rectangle, and non-existent tiles won't get drawn at all.  The four
+   arguments after the keyword are X character position of top left corner
+   (0 to 31), Y of top left corner (0 to 23), width in tiles, height in tiles.
+*/
+bool KeywordBoardScreen(void)
+{
+  if (!LevelReadNumericArguments(6))
+    return false;
+
+  g_screen_top_X_tiles = sNumericArgumentsDecoded[0];
+  g_screen_top_Y_tiles = sNumericArgumentsDecoded[1];
+  g_screen_width_tiles = sNumericArgumentsDecoded[2];
+  g_screen_height_tiles = sNumericArgumentsDecoded[3];
+  g_play_area_col_for_screen = sNumericArgumentsDecoded[4];
+  g_play_area_row_for_screen = sNumericArgumentsDecoded[5];
+
+  ActivateTileArrayWindow();
   return true;
 }
 
@@ -771,10 +829,11 @@ bool KeywordTileQuota(void)
       break;
   }
 
-  /* Read the quota number and the rest of the line. */
-  if (!LevelReadLine(g_TempBuffer, 255))
+  /* Read the quota number. */
+
+  if (!LevelReadNumericArguments(1))
     return false;
-  uint8_t quotaAmount = atoi(g_TempBuffer);
+  uint8_t quotaAmount = sNumericArgumentsDecoded[0];
 
   /* Default unknown tile types ignored. */
   if (tileType < OWNER_MAX)
@@ -812,6 +871,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"InitialCount", KeywordCountdownStart},
   {"GameMode", KeywordGameMode},
   {"BoardSize", KeywordBoardSize},
+  {"BoardScreen", KeywordBoardScreen},
   {"BoardTileData", KeywordBoardTileData},
   {"TileQuota", KeywordTileQuota},
   {NULL, NULL}
@@ -847,6 +907,13 @@ static bool ProcessLevelKeywords(void)
     if (!LevelReadWord(keyWord, sizeof(keyWord), ':'))
       break; /* End of file encountered.  Job done. */
 
+    if (keyWord[0] == 0) /* Empty line keyword, discard rest of line. */
+    {
+      if (!LevelReadAndTrimLine(keyWord, sizeof(keyWord)))
+        break; /* End of file while discarding. */
+      continue;
+    }
+
     strcpy(g_TempBuffer, "Now doing level keyword \"");
     strcat(g_TempBuffer, keyWord);
     strcat(g_TempBuffer, "\".\n");
@@ -870,13 +937,10 @@ static bool ProcessLevelKeywords(void)
     }
     if (pKeywordCall->keyword == NULL)
     { /* Unknown keyword, print a debug message and discard the rest. */
-      if (keyWord[0] != 0) /* Only debug non-empty keywords. */
-      {
-        strcpy(g_TempBuffer, "Unknown keyword \"");
-        strcat(g_TempBuffer, keyWord);
-        strcat(g_TempBuffer, "\".\n");
-        DebugPrintString(g_TempBuffer);
-      }
+      strcpy(g_TempBuffer, "Unknown keyword \"");
+      strcat(g_TempBuffer, keyWord);
+      strcat(g_TempBuffer, "\".\n");
+      DebugPrintString(g_TempBuffer);
       if (!LevelReadAndTrimLine(keyWord, sizeof(keyWord)))
         break; /* End of file while discarding the rest of the line. */
     }

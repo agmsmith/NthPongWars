@@ -2,8 +2,7 @@
 GameMode: PongWar
 Music: ONECOLN1
 ScreenFont: NTHPONG1
-ScreenText: 2, 7, 7, 32, _Classic Pong War_
-ScreenText: 12, 5, 5, 32, _Just a Screen Saver_
+ScreenChar: PONGWARS
 
 # After showing the win screen, will return to the title.
 LevelBookmark: TITLE
@@ -19,8 +18,10 @@ LevelNext: Timeout, WINP5
 # boring bounces around most of the time.  Though Humans can join in.
 RemovePlayers:
 MaxAIPlayers: 2
-BoardSize: 22, 22
 PlayTimeout: 600
+
+BoardSize: 22, 22
+BoardScreen: 5, 1, 22, 22, 0, 0
 BoardTileData:
 4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
 4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
@@ -99,6 +100,8 @@ END
 # Just want the purely bouncing around behaviour.
 AIPlayerCodeStart: 60, 60, 60, 60
 
-# Not too much interruption from the power-ups.
-TileQuota: S, 2
+# Not too much interruption from the power-ups.  But want to bash through a
+# tile in one shot like the original game, so scatter a lot of Bash
+# power-ups around.
+TileQuota: B, 10
 

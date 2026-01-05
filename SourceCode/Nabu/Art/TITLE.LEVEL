@@ -15,6 +15,10 @@ PlayTimeout: 5
 # Remove all players and reset win counts to zero.
 RemovePlayers:
 
+# Set default board size, arranged to fill all but top row of real screen.
+BoardSize: 32, 23
+BoardScreen: 0, 1, 32, 23, 0, 0
+
 # Default to lots of AI players.
 MaxAIPlayers: 4
 

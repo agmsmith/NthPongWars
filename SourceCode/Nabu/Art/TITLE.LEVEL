@@ -9,27 +9,10 @@ LevelNext: All, LEVEL001
 LevelNext: Left, Quit
 LevelNext: Right, CREDITS
 LevelNext: Up, PONGWARS
+LevelNext: Down, TUTORIAL001
 LevelNext: Timeout, GAMEDEMO
 PlayTimeout: 5
 
 # Remove all players and reset win counts to zero.
 RemovePlayers:
-
-# Set default board size, arranged to fill all but top row of real screen.
-BoardSize: 32, 23
-BoardScreen: 0, 1, 32, 23, 0, 0
-
-# Default to lots of AI players.
-MaxAIPlayers: 4
-
-# Set up default AI player personalities.
-AIPlayerCodeStart: 30, 40, 0, 30
-
-# Set up default Power-up quotas.
-TileQuota: N, 1 /* OWNER_PUP_NORMAL */
-TileQuota: H, 3 /* OWNER_PUP_STOP, using H for Halt */
-TileQuota: F, 2 /* OWNER_PUP_FLY */
-TileQuota: W, 2 /* OWNER_PUP_WIDER */
-TileQuota: B, 2 /* OWNER_PUP_BASH_WALL */
-TileQuota: S, 2 /* OWNER_PUP_SOLID */
 

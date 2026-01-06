@@ -1,0 +1,46 @@
+# The start of the series of tutorial levels, by Alexander G. M. Smith.
+# AGMS20260106 - started this file.
+# Tutorial001 is a set of lanes for each player, where they have to get
+# enough tiles of their colour to win.  Mostly about learning movement.
+# AI players just bounce around at a medium speed.
+LevelVersion: 20260106, NthPongWars
+GameMode: PongWar
+Music: SQUAROOT
+ScreenFont: TUTORIAL
+PlayTimeout: 120
+ScreenText: 22, 2, 0, 32, Fill in the blanks!  Fire/Yes
+ScreenText: 23, 2, 0, 32, for harvest, arrows to steer.
+LevelNext: All, TUTORIAL002
+LevelBookmark: TITLE
+LevelNext: Timeout, WINP5
+MaxAIPlayers: 1
+AIPlayerCodeStart: 80, 80, 80, 80
+BoardSize: 30, 19
+InitialCount: 100
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+.
+. 1
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 2
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 3
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 4
+.
+.
+END
+
+# No power-ups or other funny tiles.
+TileQuota: N, 0
+

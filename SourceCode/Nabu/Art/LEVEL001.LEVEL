@@ -13,28 +13,34 @@ LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
-# Only remove players when starting the game, sets win counts to zero.
-RemovePlayers:
 MaxAIPlayers: 1
 AIPlayerCodeStart: 0, 0, 0, 0 # All draw a letter N on screen.
-
 
 BoardSize: 32, 23
 InitialCount: 100
 BoardTileData:
-. . . . . . . . + + . 1
-. 2 2 . . . . . 
-. 2 . . . . . . 
-. . . . . . . . 
-. 2 2 2 2 . . . 
-. . . . . . . . 
-. . . . . . . . 
-. 3 3 3 3 . . . 
-. . . . . . . . ) ) . B
-. . . . . . . .
-. 4 . . . . . .
-. 4 . . . . . .
-. 4 . . . . . . ( ( . W
-. 4
+. . . . . . ( ( ( ( ( 
+. . . . . . ( . . . (
+. . . . . . ( . 1 . (
+. . . . . . ( . . . (
+. . . . . . ( ( ( ( ( 
+.
+. . . . . . ) ) ) ) )
+. . . . . . ) . . . )
+. . . . . . ) . 2 . )
+. . . . . . ) . . . )
+. . . . . . ) ) ) ) )  
+. 
+. . . . . . [ [ [ [ [
+. . . . . . [ . . . [ 
+. . . . . . [ . 3 . [
+. . . . . . [ . . . [ 
+. . . . . . [ [ [ [ [ 
+. 
+. . . . . . ] ] ] ] ]
+. . . . . . ] . . . ]
+. . . . . . ] . 4 . ]
+. . . . . . ] . . . ]
+. . . . . . ] ] ] ] ]
 END
 

@@ -1,0 +1,44 @@
+# Allow players to mix tutorial, by Alexander G. M. Smith.
+# AGMS20260106 - started this file.
+# Tutorial005 is a more open area where players can fight it out.
+LevelVersion: 20260106, NthPongWars
+GameMode: PongWar
+Music: SQUAROOT
+ScreenFont: TUTORIAL
+PlayTimeout: 120
+ScreenText: 22, 5, 0, 32, Open Plan Neighbours!
+ScreenText: 23, 0, 0, 32, More dodging around recommended.
+LevelNext: All, TUTORIAL006
+LevelBookmark: TITLE
+LevelNext: Timeout, WINP5
+MaxAIPlayers: 2
+AIPlayerCodeStart: 30, 30, 30, 30
+BoardSize: 30, 19
+InitialCount: 100
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+.
+. 1
+.
+.
+. . + + + + + + + + + + + . . . + + + + + + + + + + + +
+.
+. 2
+.
+.
+. . + + + + + + + + + + + . . . + + + + + + + + + + + +
+.
+. 3
+.
+.
+. . + + + + + + + + + + + . . . + + + + + + + + + + + +
+.
+. 4
+.
+.
+END
+
+# No power-ups or other funny tiles.
+TileQuota: N, 0
+

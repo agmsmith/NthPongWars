@@ -1,0 +1,46 @@
+# Allow players to mix tutorial, by Alexander G. M. Smith.
+# AGMS20260106 - started this file.
+# Tutorial005 is a set of lanes for each player, where they have to get
+# enough tiles of their colour to win.  However the ends of the lanes open
+# to a common area where they can fight it out.
+# AI players just bounce around at a medium speed.
+LevelVersion: 20260106, NthPongWars
+GameMode: PongWar
+ScreenFont: TUTORIAL
+PlayTimeout: 120
+ScreenText: 22, 6, 0, 32, Meet the Neighbours!
+ScreenText: 23, 1, 0, 32, Player vs Player Interactions.
+LevelNext: All, TUTORIAL005
+LevelBookmark: TITLE
+LevelNext: Timeout, WINP5
+MaxAIPlayers: 2
+AIPlayerCodeStart: 80, 80, 30, 80
+BoardSize: 30, 19
+InitialCount: 100
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+.
+. 1
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 2
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 3
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 4
+.
+.
+END
+
+# No power-ups or other funny tiles.
+TileQuota: N, 0
+

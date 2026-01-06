@@ -2,7 +2,8 @@
 # AGMS20251204 - started this file.
 # This one has all the options specified, which you likely won't use in a
 # real level file as some contradict others.  That's so you can see what's
-# available, and for testing the level reading code.
+# available, and for testing the level reading code.  Note that file names
+# are all uppercase due to Nabu Internet Adapter limitations.
 
 # For future compatibility, the version of the level file language can be
 # specified.  That way future game code can read older version files, or at
@@ -60,16 +61,6 @@ Music: SQUAROOT
 # into a *.NFUL file.  This will load TITLESCREEN.NFUL.
 ScreenFull: TITLESCREEN
 
-# When this much time has elapsed while running a level, the next level choice
-# for the timeout (see LevelNext: Timeout, LevelName) is used to load the next
-# level and the timeout pseudo-player #5 is declared the winner.  Mostly useful
-# for attract mode gameplay.  Timeout in seconds.  Internally it uses the frame
-# counter, assuming 20 frames per second, so 3276 seconds is the maximum, a bit
-# over 54 minutes.  Though if the game is running fast, like when displaying a
-# static screen, it will be 3 times faster.  Don't specify this keyword or use
-# zero for no timeout.
-PlayTimeout: 30
-
 # This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
 # about 7KB so it takes half a second to load.  This is the kind of screen you
 # need to see a game correctly, assuming the font and sprite parts have the
@@ -96,6 +87,16 @@ ScreenChar: HELP
 # keywords to get a similar effect.  Magic words you can use are "Copyright"
 # and "Version" to display those text items.
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
+
+# When this much time has elapsed while running a level, the next level choice
+# for the timeout (see LevelNext: Timeout, LevelName) is used to load the next
+# level and the timeout pseudo-player #5 is declared the winner.  Mostly useful
+# for attract mode gameplay.  Timeout in seconds.  Internally it uses the frame
+# counter, assuming 20 frames per second, so 3276 seconds is the maximum, a bit
+# over 54 minutes.  Though if the game is running fast, like when displaying a
+# static screen, it will be 3 times faster.  Don't specify this keyword or use
+# zero for no timeout.
+PlayTimeout: 30
 
 # This specifies which level gets played after this one finishes.  Base level
 # names can be up to 31 characters long.  The very first level is "Title".
@@ -142,8 +143,15 @@ MaxAIPlayers: 2
 # 00 - Draw a letter N on the game board.
 # 30 - Go up and down a side, then attack the leading player momentarily. 
 # 40 - Go up and down, full attack on leading Human if present else nothing.
-# 60 - Go at no-friction speed so don't thrust much, just bounce around.
+# 60 - Go at no-friction speed, occasionally go to corner, for Classic mode.
+# 80 - Go at no-friction speed, just bounce around.
 AIPlayerCodeStart: 30, 40, 0, 30
+
+# Set up a game board with the given width and height in tiles.  On the NABU
+# you can use up to 800 tiles, though full screen can display 32x24 = 768 tiles.
+# However, you can scroll the screen...  Usually you leave space for a score
+# line at the top of the screen.  Also the maximum height and width are 254.
+BoardSize: 32, 23
 
 # When playing in countdown mode, the first player to reach this many tiles in
 # their colour wins.  The count starts at this value and counts down about once
@@ -151,12 +159,6 @@ AIPlayerCodeStart: 30, 40, 0, 30
 # the level.  Use after BoardSize, which resets the count to the number of
 # tiles in the board.
 InitialCount: 100
-
-# Set up a game board with the given width and height in tiles.  On the NABU
-# you can use up to 800 tiles, though full screen can display 32x24 = 768 tiles.
-# However, you can scroll the screen...  Usually you leave space for a score
-# line at the top of the screen.  Also the maximum height and width are 254.
-BoardSize: 32, 23
 
 # Specify the rectangle on the screen where the game board is displayed.  Lets
 # you have smaller game boards inside a bigger picture frame.  Values are X
@@ -171,9 +173,9 @@ BoardScreen: 0, 1, 32, 23, 0, 0
 # scoring player to balance the game difficulty.  Since scrolling updates
 # are so slow (whole screen needs to be redrawn), it will only update when the
 # player goes off the screen, and at that point jump move them to the center of
-# the screen.  Use Yes or No.
+# the screen.  Use 1 for yes or 0 for no.
 # Not yet implemented.
-BoardScroll: No
+BoardScroll: 0
 
 # Specify the contents of the board.  Board height quantity of lines follow
 # this keyword (which doesn't have an argument), and board width non-space

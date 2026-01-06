@@ -124,7 +124,7 @@ target_list_item_record g_target_list[] = {
 /* Instruction 60 */ {8, TARGET_CODE_SPEED}, /* Go below friction speed. */
   {50, TARGET_CODE_POWER_UP}, /* Get middling distance power-ups. */
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
-  {0, TARGET_CODE_POWER_UP}, /* Don't chase power-ups, much. */
+  {0, TARGET_CODE_POWER_UP}, /* Don't chase power-ups. */
   {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
   {200, TARGET_CODE_DELAY}, /* Delay a while for idle bouncing. */
   {8, TARGET_CODE_SPEED}, /* Go below friction speed. */
@@ -134,6 +134,18 @@ target_list_item_record g_target_list[] = {
   {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
   {200, TARGET_CODE_DELAY}, /* Delay a while for idle bouncing. */
   {60, TARGET_CODE_GOTO},
+  {60, TARGET_CODE_GOTO},
+  {60, TARGET_CODE_GOTO},
+  {60, TARGET_CODE_GOTO},
+  {60, TARGET_CODE_GOTO},
+  {60, TARGET_CODE_GOTO},
+  {60, TARGET_CODE_GOTO},
+  {60, TARGET_CODE_GOTO},
+/* Instruction 80 */ {8, TARGET_CODE_SPEED}, /* Go below friction speed. */
+  {0, TARGET_CODE_POWER_UP}, /* Don't chase power-ups. */
+  {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
+  {200, TARGET_CODE_DELAY}, /* Delay a while for idle bouncing. */
+  {80, TARGET_CODE_GOTO},
 };
 
 /* Where to start the instructions for player 0 to player N-1. */

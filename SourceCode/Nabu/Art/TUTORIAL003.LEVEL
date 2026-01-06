@@ -1,0 +1,43 @@
+# Tutorial showing off the power-ups to new players, by Alexander G. M. Smith.
+# AGMS20260106 - started this file.
+# Tutorial003 is a set of lanes for each player, with a Solid power-up.
+LevelVersion: 20260106, NthPongWars
+GameMode: PongWar
+ScreenFont: TUTORIAL
+PlayTimeout: 120
+ScreenText: 22, 0, 0, 32, Laying it Down!  Solid trails to
+ScreenText: 23, 0, 0, 32, resist other players better.
+LevelNext: All, TUTORIAL004
+LevelBookmark: TITLE
+LevelNext: Timeout, WINP5
+MaxAIPlayers: 1
+AIPlayerCodeStart: 80, 80, 80, 80
+BoardSize: 30, 19
+InitialCount: 100
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+.
+. 1 . . . . . . . . . . . . . . . . . . . . . . . . . . S . 
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 2 . . . . . . . . . . . . . . . . . . . . . . . . . . S .
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 3 . . . . . . . . . . . . . . . . . . . . . . . . . . S .
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 4 . . . . . . . . . . . . . . . . . . . . . . . . . . S .
+.
+.
+END
+
+# No power-ups or other funny tiles.
+TileQuota: S, 4
+

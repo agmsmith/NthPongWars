@@ -1,0 +1,43 @@
+# Tutorial showing off the power-ups to new players, by Alexander G. M. Smith.
+# AGMS20260106 - started this file.
+# Tutorial003 is a set of lanes for each player, with a Wide power-up.
+LevelVersion: 20260106, NthPongWars
+GameMode: PongWar
+ScreenFont: TUTORIAL
+PlayTimeout: 120
+ScreenText: 22, 8, 0, 32, Wider is Better!
+ScreenText: 23, 0, 0, 32, Make wider trails, move faster.
+LevelNext: All, TUTORIAL003
+LevelBookmark: TITLE
+LevelNext: Timeout, WINP5
+MaxAIPlayers: 1
+AIPlayerCodeStart: 80, 80, 80, 80
+BoardSize: 30, 19
+InitialCount: 100
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+.
+. 1 . . . . . . . . . . . . . . . . . . . . . . . . . . W . 
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 2 . . . . . . . . . . . . . . . . . . . . . . . . . . W .
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 3 . . . . . . . . . . . . . . . . . . . . . . . . . . W .
+.
+.
++ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+.
+. 4 . . . . . . . . . . . . . . . . . . . . . . . . . . W .
+.
+.
+END
+
+# No power-ups or other funny tiles.
+TileQuota: N, 0
+

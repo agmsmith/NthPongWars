@@ -7,8 +7,13 @@ ScreenFont: TUTORIAL
 PlayTimeout: 120
 ScreenText: 22, 0, 0, 32, Laying it Down!  Solid trails to
 ScreenText: 23, 0, 0, 32, resist other players better.
+LevelBookmark: TUTORIAL004
 LevelNext: All, TUTORIAL004
-LevelBookmark: TITLE
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 MaxAIPlayers: 1
 AIPlayerCodeStart: 80, 80, 80, 80

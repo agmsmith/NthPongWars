@@ -7,8 +7,13 @@ ScreenFont: TUTORIAL
 PlayTimeout: 120
 ScreenText: 22, 0, 0, 32, Bash Away!  Destroy solid tiles
 ScreenText: 23, 0, 0, 32, faster with the Bash power-up.
-LevelNext: All, TITLE
 LevelBookmark: TITLE
+LevelNext: All, TITLE
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 MaxAIPlayers: 2
 AIPlayerCodeStart: 30, 30, 30, 30

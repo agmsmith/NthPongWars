@@ -637,7 +637,10 @@ void Simulate(void)
               avoid having the player or the one it collided with bouncing
               off the new tile repeatedly. */
 
-            if (!pPlayer->thrust_active && pPlayer->player_collision_count == 0)
+            if (!pPlayer->thrust_active && iStep == 0 &&
+            pPlayer->player_collision_count == 0 &&
+            (((((uint8_t) g_FrameCounter ^ iPlayer) & 3) == 0) ||
+            (pPlayer->power_up_timers[OWNER_PUP_SOLID])))
               SetTileOwner(pTile, player_self_owner);
 
             continue; /* Just glide over empty tiles, no bouncing. */
@@ -665,7 +668,7 @@ void Simulate(void)
                  not getting into the corner.  Though the OWNER_PUP_SOLID
                  power-up overrides this and increases age every frame.  Note
                  age is 3 bits in the tile record, so maximum 7. */
-              if (tileAge < 7 &&
+              if (tileAge < 7 && iStep == 0 &&
               (((((uint8_t) g_FrameCounter ^ iPlayer) & 3) == 0) ||
               (pPlayer->power_up_timers[OWNER_PUP_SOLID])))
               {

@@ -10,8 +10,13 @@ ScreenFont: TUTORIAL
 PlayTimeout: 120
 ScreenText: 22, 6, 0, 32, Meet the Neighbours!
 ScreenText: 23, 1, 0, 32, Player vs Player Interactions.
+LevelBookmark: TUTORIAL005
 LevelNext: All, TUTORIAL005
-LevelBookmark: TITLE
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 MaxAIPlayers: 2
 AIPlayerCodeStart: 80, 80, 30, 80

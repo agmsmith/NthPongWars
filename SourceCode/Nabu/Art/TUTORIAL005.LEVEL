@@ -8,8 +8,13 @@ ScreenFont: TUTORIAL
 PlayTimeout: 120
 ScreenText: 22, 5, 0, 32, Open Plan Neighbours!
 ScreenText: 23, 0, 0, 32, More dodging around recommended.
+LevelBookmark: TUTORIAL006
 LevelNext: All, TUTORIAL006
-LevelBookmark: TITLE
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 MaxAIPlayers: 2
 AIPlayerCodeStart: 30, 30, 30, 30

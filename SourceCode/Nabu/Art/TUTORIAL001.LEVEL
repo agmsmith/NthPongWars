@@ -11,14 +11,19 @@ ScreenFont: TUTORIAL
 PlayTimeout: 120
 ScreenText: 22, 2, 0, 32, Fill in the blanks!  Fire/Yes
 ScreenText: 23, 2, 0, 32, for harvest, arrows to steer.
+LevelBookmark: TUTORIAL002
 LevelNext: All, TUTORIAL002
-LevelBookmark: TITLE
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 RemovePlayers:
 MaxAIPlayers: 0
 AIPlayerCodeStart: 80, 80, 80, 80
 BoardSize: 30, 19
-InitialCount: 200
+InitialCount: 100
 BoardScreen: 1, 2, 30, 19, 0, 0
 BoardScroll: 0
 BoardTileData:

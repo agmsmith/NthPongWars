@@ -1,7 +1,8 @@
 # The start of the series of tutorial levels, by Alexander G. M. Smith.
 # AGMS20260106 - started this file.
-# Tutorial001 is a set of lanes for each player, where they have to get
-# enough tiles of their colour to win.  Mostly about learning movement.
+# Tutorial001 is a box around each player, where they have to get enough
+# tiles of their colour to win.  Mostly about learning movement.  And
+# testing physics simulation of walls, which have lots of problems.
 # AI players just bounce around at a medium speed.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
@@ -13,32 +14,33 @@ ScreenText: 23, 2, 0, 32, for harvest, arrows to steer.
 LevelNext: All, TUTORIAL002
 LevelBookmark: TITLE
 LevelNext: Timeout, WINP5
-MaxAIPlayers: 1
+RemovePlayers:
+MaxAIPlayers: 0
 AIPlayerCodeStart: 80, 80, 80, 80
 BoardSize: 30, 19
-InitialCount: 100
+InitialCount: 200
 BoardScreen: 1, 2, 30, 19, 0, 0
 BoardScroll: 0
 BoardTileData:
-.
-. 1
-.
-.
-+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
-.
-. 2
-.
-.
-+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
-.
-. 3
-.
-.
-+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
-.
-. 4
-.
-.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . 1 . . . . . . + . . . . . . 2 . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . 3 . . . . . . + . . . . . . 4 . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 END
 
 # No power-ups or other funny tiles.

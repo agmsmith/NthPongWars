@@ -1,6 +1,6 @@
 # Players mixing with Bash power-up tutorial, by Alexander G. M. Smith.
 # AGMS20260106 - started this file.
-# Tutorial006 is a more open area where players can fight it out.
+# Tutorial006 is an area where players can fight it out, with Bashing.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
 ScreenFont: TUTORIAL

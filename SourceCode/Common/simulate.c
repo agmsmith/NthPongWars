@@ -23,7 +23,7 @@
  * this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define DEBUG_PRINT_SIM 0 /* Turn on debug printfs, uses floating point. */
+#define DEBUG_PRINT_SIM 0 /* Turn on debug output. */
 
 #include "soundscreen.h"
 
@@ -32,21 +32,16 @@
  * Calculate the new position and velocity of all players.
  *
  * To avoid missing collisions with tiles, we do the update in smaller steps
- * where the most a player moves in a step is a single tile width or height.
+ * where the most a player moves in a step is a single tile width or height,
+ * or maybe even half a tile so we know which side of the tile a player hits.
  * All the players use the same number of steps, so collisions between players
  * are done at the place in the middle of the movement where they would
  * actually collide.  Fortunately we have 16 bits of fraction, so fractional
  * step updates should be fairly accurate in adding up to the full update
  * distance.
  *
- * To check for tile collisions with a newly calculated position, we only look
- * at the tile containing the new position and the three tiles adjacent, in the
- * quadrant in the direction that the player's position is offset from the
- * center of the current tile, since they could only be close enough to collide
- * with the nearer tiles (ball width == tile width == 8 pixels).  If the player
- * is exactly in the center of a tile, we have to check it and all 8
- * surrounding tiles.  Similarly, if it is exactly at the center X but not Y,
- * we have to check two quadrants (6 tiles including the current tile).  Think
+ * To check for tile collisions with a newly calculated position, we look at
+ * the tile containing the new position and the eight tiles adjacent.  Think
  * of a 3x3 tic-tac-toe board.
  *
  * Player collisions with players are found by testing all combinations, 4
@@ -56,10 +51,13 @@
  * tiles, it's a simple reflection of velocity.  Walls also ensure the new
  * position is not inside the wall, overriding it to be just outside the wall
  * if needed (otherwise you can get balls bouncing around inside the wall - a
- * fault in the original Pong game).  For players it's a momentum conserving
- * bounce, so possibly the hit player will end up moving faster.  The effect
- * (mostly speed changes) of the collisions in a time step are applied in the
- * order tiles, players, walls.
+ * fault in the original Pong game).  The same forcing of position outside a
+ * tile is used for tile collisions, otherwise players can force their way
+ * through a tile with sufficient acceleration.  For players it's a momentum
+ * conserving bounce, so possibly the hit player will end up moving faster.
+ * Well not quite, some separation acceleration is applied too, otherwise the
+ * players keep on hitting each other.  The effect (mostly speed changes) of
+ * the collisions in a time step are applied in the order tiles, players, walls.
  *
  * To save on compute, 16 bit integer coordinates (whole pixels) are used for
  * collision detection, with only the more precise fixed point numbers for
@@ -76,7 +74,7 @@ void Simulate(void)
   static uint8_t s_PreviousStepShiftCount = 0; /* To tell when it changes. */
 
 #if DEBUG_PRINT_SIM
-printf("\nStarting simulation update.\n");
+  DebugPrintString("\nStarting simulation update.\n");
 #endif
 
   /* Reduce adaptive harvest sound effect amount of harvest limit once per
@@ -94,7 +92,7 @@ printf("\nStarting simulation update.\n");
      (since we're finding absolute values of the velocity here anyway), which
      lags by a frame since it's determined before moving the player. */
 
-  maxVelocity = 0;
+  maxVelocity = 0; /* In quarter pixels per frame, for extra precision. */
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer != MAX_PLAYERS; iPlayer++, pPlayer++)
   {
@@ -156,21 +154,36 @@ printf("\nStarting simulation update.\n");
     }
 
 #if DEBUG_PRINT_SIM
-printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
-  GET_FX_FLOAT(pPlayer->pixel_center_x),
-  GET_FX_FLOAT(pPlayer->pixel_center_y),
-  GET_FX_FLOAT(pPlayer->velocity_x),
-  GET_FX_FLOAT(pPlayer->velocity_y)
-);
+    strcpy(g_TempBuffer, "Player #");
+    AppendDecimalUInt16(iPlayer);
+    strcat(g_TempBuffer, ": pos (");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->pixel_center_x));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->pixel_center_x));
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->pixel_center_y));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->pixel_center_y));
+    strcat(g_TempBuffer, "), vel (");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->velocity_x));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->velocity_x));
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->velocity_y));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->velocity_y));
+    strcat(g_TempBuffer, ").\n");
+    DebugPrintString(g_TempBuffer);
 #endif
-    int16_t tempSpeed;
+
+    int16_t tempPlayerSpeed;
 
     if (pPlayer->power_up_timers[OWNER_PUP_STOP])
     {
       pPlayer->power_up_timers[OWNER_PUP_STOP] = 0; /* No duration needed. */
       ZERO_FX(pPlayer->velocity_x);
       ZERO_FX(pPlayer->velocity_y);
-      tempSpeed = 0;
+      tempPlayerSpeed = 0;
     }
     else /* Find the player's Manhattan velocity, multiplied 4 precision. */
     {
@@ -179,39 +192,39 @@ printf("Player %d: pos (%f, %f), vel (%f,%f)\n", iPlayer,
       absVelocity = MUL4INT_FX(&pPlayer->velocity_x);
       if (absVelocity < 0)
         absVelocity = -absVelocity;
-      tempSpeed = absVelocity;
+      tempPlayerSpeed = absVelocity;
       if (absVelocity > maxVelocity)
         maxVelocity = absVelocity;
 
       absVelocity = MUL4INT_FX(&pPlayer->velocity_y);
       if (absVelocity < 0)
         absVelocity = -absVelocity;
-      tempSpeed += absVelocity;
+      tempPlayerSpeed += absVelocity;
       if (absVelocity > maxVelocity)
         maxVelocity = absVelocity;
-
-      maxVelocity /= 4; /* Needs to be in pixels per update. */
     }
 
     /* Save the Manhattan speed, into an 8 bit integer, which should be good
-       enough since it is integer pixels per frame, and 64 would be moving the
-       width of the screen every frame, way too fast to care about.  We use
-       four times the pixel speed so we can see movements of 1/4 of a pixel
-       per update.  Typically speeds are under 8 pixels per frame, and using
-       only pure thrusting seems to get you up to 4 pixels per frame, so you'd
-       see 0, 1, 2, 3 and 4 as normal speeds, which is too coarse a scale for
-       fine speed control. */
+       enough since it is integer pixels per frame, and 255 would be moving a
+       quarter the width of the screen every frame, way too fast to care about.
+       We use four times the pixel speed so we can see movements of 1/4 of a
+       pixel per update.  Typically speeds are under 8 pixels per frame (32
+       quarter pixels), otherwise the game will slow down dramatically due to
+       extra physics steps. */
 
-    if (tempSpeed < 0)
+    if (tempPlayerSpeed < 0)
       pPlayer->speed = 0; /* Shouldn't happen unless overflowed 16 bit speed! */
-    else if (tempSpeed >= 256)
+    else if (tempPlayerSpeed >= 256)
       pPlayer->speed = 255; /* Clamp at maximum unsigned 8 bit value. */
     else
-      pPlayer->speed = tempSpeed;
+      pPlayer->speed = tempPlayerSpeed;
   }
 
 #if DEBUG_PRINT_SIM
-printf("Max integer velocity component: %d\n", maxVelocity);
+  strcpy(g_TempBuffer, "Max velocity component: ");
+  AppendDecimalUInt16(maxVelocity);
+  strcat(g_TempBuffer, " (quarter pixels per update)\n");
+  DebugPrintString(g_TempBuffer);
 #endif
 
   /* Find the number of steps needed to ensure the maximum velocity is less
@@ -224,14 +237,19 @@ printf("Max integer velocity component: %d\n", maxVelocity);
   (numberOfSteps & 0x80) == 0;
   numberOfSteps += numberOfSteps, stepShiftCount++)
   {
-    /* See if the step size is less than a tile width. */
-    if (maxVelocity < TILE_PIXEL_WIDTH)
+    /* See if the step size is less than half a tile width. */
+    if (maxVelocity < TILE_PIXEL_WIDTH * 4 / 2 /* quarter pixel units */)
       break; /* Step size is small enough now. */
     maxVelocity >>= 1;
   }
 
 #if DEBUG_PRINT_SIM
-printf("Have %d steps, shift by %d\n", numberOfSteps, stepShiftCount);
+  strcpy(g_TempBuffer, "Have ");
+  AppendDecimalUInt16(numberOfSteps);
+  strcat(g_TempBuffer, " steps, shift by ");
+  AppendDecimalUInt16(stepShiftCount);
+  strcat(g_TempBuffer, ".\n");
+  DebugPrintString(g_TempBuffer);
 #endif
 
   /* Update our cached constant velocity change for collisions. */
@@ -255,12 +273,26 @@ printf("Have %d steps, shift by %d\n", numberOfSteps, stepShiftCount);
     pPlayer->step_velocity_y.as_int32 =
       pPlayer->velocity_y.as_int32 >> stepShiftCount;
 #if DEBUG_PRINT_SIM
-printf("Player %d: vel (%f, %f), step vel (%f, %f)\n", iPlayer,
-  GET_FX_FLOAT(pPlayer->velocity_x),
-  GET_FX_FLOAT(pPlayer->velocity_y),
-  GET_FX_FLOAT(pPlayer->step_velocity_x),
-  GET_FX_FLOAT(pPlayer->step_velocity_y)
-);
+    strcpy(g_TempBuffer, "Player #");
+    AppendDecimalUInt16(iPlayer);
+    strcat(g_TempBuffer, ": vel (");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->velocity_x));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->velocity_x));
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->velocity_y));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->velocity_y));
+    strcat(g_TempBuffer, "), step vel (");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->step_velocity_x));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->step_velocity_x));
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalInt16(GET_FX_INTEGER(pPlayer->step_velocity_y));
+    strcat(g_TempBuffer, ".");
+    AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->step_velocity_y));
+    strcat(g_TempBuffer, ").\n");
+    DebugPrintString(g_TempBuffer);
 #endif
   }
 
@@ -271,14 +303,17 @@ printf("Player %d: vel (%f, %f), step vel (%f, %f)\n", iPlayer,
 
      First update the position, then do player to player collisions (since that
      affects tile depositing - forced harvest mode after a collision), then
-     tile collisions and despositing and finally wall collisions (which ensure
+     tile collisions and depositing and finally wall collisions (which ensure
      that the player is back on the board so we don't have to worry about
      invalid coordinates after the simulation for a step is done). */
 
   for (iStep = 0; iStep < numberOfSteps; iStep ++)
   {
 #if DEBUG_PRINT_SIM
-printf("Substep %d:\n", iStep);
+    strcpy(g_TempBuffer, "Substep ");
+    AppendDecimalUInt16(iStep);
+    strcat(g_TempBuffer, ":\n");
+    DebugPrintString(g_TempBuffer);
 #endif
     /* Calculate the new position of all the players for this step; just
        add step velocity to position.  Need to do this before checking for any
@@ -294,10 +329,18 @@ printf("Substep %d:\n", iStep);
       ADD_FX(&pPlayer->pixel_center_y, &pPlayer->step_velocity_y,
         &pPlayer->pixel_center_y);
 #if DEBUG_PRINT_SIM
-printf("Player %d: new pos (%f, %f)\n", iPlayer,
-  GET_FX_FLOAT(pPlayer->pixel_center_x),
-  GET_FX_FLOAT(pPlayer->pixel_center_y)
-);
+      strcpy(g_TempBuffer, "Player #");
+      AppendDecimalUInt16(iPlayer);
+      strcat(g_TempBuffer, ": new pos (");
+      AppendDecimalInt16(GET_FX_INTEGER(pPlayer->pixel_center_x));
+      strcat(g_TempBuffer, ".");
+      AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->pixel_center_x));
+      strcat(g_TempBuffer, ", ");
+      AppendDecimalInt16(GET_FX_INTEGER(pPlayer->pixel_center_y));
+      strcat(g_TempBuffer, ".");
+      AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->pixel_center_y));
+      strcat(g_TempBuffer, ")\n");
+      DebugPrintString(g_TempBuffer);
 #endif
     }
 
@@ -365,7 +408,7 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       SWAP_FX(&pPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
       SWAP_FX(&pPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
 
-#if 1 /* Separate the players. */
+#if 1
       /* Separate the players if they are moving too slowly - add a velocity
          boost in the existing biggest velocity X or Y component. */
 
@@ -439,8 +482,6 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       uint8_t startRow, endRow, curRow, playerRow;
       int16_t playerX, playerY;
       int8_t velocityX, velocityY;
-      bool bounceOffX, bounceOffY;
-      int16_t bounceOffPixelX, bounceOffPixelY;
       tile_owner player_self_owner;
 
       if (pPlayer->brain == BRAIN_INACTIVE)
@@ -459,9 +500,10 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       int8_t missDistance, missMinusDistance;
       if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
         missDistance =
-          (TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2 + 1;
+          (TILE_PIXEL_WIDTH + 2 * PLAYER_PIXEL_DIAMETER_NORMAL + 1) / 2;
       else
-        missDistance = TILE_PIXEL_WIDTH / 2 + 1;
+        missDistance =
+          (TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL + 1) / 2;
       missMinusDistance = -missDistance;
 
       /* Just need the +1/0/-1 for direction of velocity. */
@@ -469,7 +511,18 @@ printf("Player %d: new pos (%f, %f)\n", iPlayer,
       velocityY = TEST_FX(&pPlayer->step_velocity_y);
 
 #if DEBUG_PRINT_SIM
-printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
+      strcpy(g_TempBuffer, "Player #");
+      AppendDecimalUInt16(iPlayer);
+      strcat(g_TempBuffer, ": collision tests at tile (");
+      AppendDecimalUInt16(playerCol);
+      strcat(g_TempBuffer, ", ");
+      AppendDecimalUInt16(playerRow);
+      strcat(g_TempBuffer, "), vel dir (");
+      AppendDecimalInt16(velocityX);
+      strcat(g_TempBuffer, ", ");
+      AppendDecimalInt16(velocityY);
+      strcat(g_TempBuffer, ").\n");
+      DebugPrintString(g_TempBuffer);
 #endif
       if (playerCol > 0)
         startCol = playerCol - 1;
@@ -499,21 +552,22 @@ printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
          (otherwise they can ram their way through a tile, even an
          indestructible one). */
 
-      bounceOffX = false;
-      bounceOffY = false;
+      bool bounceOffX = false;
+      bool bounceOffY = false;
 
-      /* Start bounce off edges far away on opposite side, so all tile sides
-         we may bounce off will be closer (can hit tile up to 2 tile widths
-         away from player).  Previously was initialising at the player position,
-         which was incorrect in some situations. */
+      /* Start bounce off coordinates (tile centers are used) far away on
+         opposite side, so all tile sides we may bounce off will be closer
+         (can hit tile up to 2 tile widths away from the player).  Previously
+         was initialising at the player position, which was incorrect in some
+         situations. */
 
-      bounceOffPixelX = playerX;
+      int16_t bounceOffPixelX = playerX;
       if (velocityX < 0)
         bounceOffPixelX -= TILE_PIXEL_WIDTH * 3 + PLAYER_PIXEL_DIAMETER_NORMAL;
       else if (velocityX > 0)
         bounceOffPixelX += TILE_PIXEL_WIDTH * 3 + PLAYER_PIXEL_DIAMETER_NORMAL;
 
-      bounceOffPixelY = playerY;
+      int16_t bounceOffPixelY = playerY;
       if (velocityY < 0)
         bounceOffPixelY -= TILE_PIXEL_WIDTH * 3 + PLAYER_PIXEL_DIAMETER_NORMAL;
       else if (velocityY > 0)
@@ -526,13 +580,7 @@ printf("Player %d (%d, %d) tile collisions:\n", iPlayer, playerCol, playerRow);
         tile_pointer pTile;
         pTile = g_tile_array_row_starts[curRow];
         if (pTile == NULL)
-        {
-#if DEBUG_PRINT_SIM
-printf("Bug: Failed to find tile on row %d for player %d.\n",
-  curRow, iPlayer);
-#endif
           break; /* Shouldn't happen. */
-        }
 
         pTile += startCol;
         for (curCol = startCol; curCol <= endCol; curCol++, pTile++)
@@ -544,19 +592,37 @@ printf("Bug: Failed to find tile on row %d for player %d.\n",
              and velocities, but that's too much computation for a Z80 to do,
              so we use integer pixels. */
 
-          int8_t deltaPosX, deltaPosY;
-          deltaPosX = playerX - pTile->pixel_center_x;
+          int8_t deltaPosX = playerX - pTile->pixel_center_x;
           if (deltaPosX >= missDistance || deltaPosX <= missMinusDistance)
             continue; /* Too far away, missed. */
 
-          deltaPosY = playerY - pTile->pixel_center_y;
+          int8_t deltaPosY = playerY - pTile->pixel_center_y;
           if (deltaPosY >= missDistance || deltaPosY <= missMinusDistance)
             continue; /* Too far away, missed. */
 
           tile_owner previousOwner = pTile->owner;
+
 #if DEBUG_PRINT_SIM
-printf("Player %d: Hit tile %s at (%d,%d)\n",
-  iPlayer, g_TileOwnerNames[previousOwner], curCol, curRow);
+          strcpy(g_TempBuffer, "Player #");
+          AppendDecimalUInt16(iPlayer);
+          strcat(g_TempBuffer, ": touches tile ");
+          strcat(g_TempBuffer, g_TileOwnerNames[previousOwner]);
+          if (previousOwner >= (tile_owner) OWNER_PLAYER_1 &&
+          previousOwner <= (tile_owner) OWNER_PLAYER_4)
+          {
+            strcat(g_TempBuffer, "/");
+            AppendDecimalUInt16(pTile->age);
+          }
+          strcat(g_TempBuffer, " at (");
+          AppendDecimalUInt16(curCol);
+          strcat(g_TempBuffer, ", ");
+          AppendDecimalUInt16(curRow);
+          strcat(g_TempBuffer, "), deltaPos (");
+          AppendDecimalInt16(deltaPosX);
+          strcat(g_TempBuffer, ", ");
+          AppendDecimalInt16(deltaPosY);
+          strcat(g_TempBuffer, ").\n");
+          DebugPrintString(g_TempBuffer);
 #endif
           /* Collided with empty tile? */
 
@@ -611,6 +677,24 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
             continue; /* Don't collide, keep moving over own tiles. */
           }
 
+#if DEBUG_PRINT_SIM
+          strcpy(g_TempBuffer, "Player #");
+          AppendDecimalUInt16(iPlayer);
+          strcat(g_TempBuffer, ": Hit tile ");
+          strcat(g_TempBuffer, g_TileOwnerNames[previousOwner]);
+          if (previousOwner >= (tile_owner) OWNER_PLAYER_1 &&
+          previousOwner <= (tile_owner) OWNER_PLAYER_4)
+          {
+            strcat(g_TempBuffer, "/");
+            AppendDecimalUInt16(pTile->age);
+          }
+          strcat(g_TempBuffer, " at (");
+          AppendDecimalUInt16(curCol);
+          strcat(g_TempBuffer, ", ");
+          AppendDecimalUInt16(curRow);
+          strcat(g_TempBuffer, "), check for effects.\n");
+          DebugPrintString(g_TempBuffer);
+#endif
           /* Hit someone else's tile or a power-up.  If it's a tile, it gets
              weakened (age decreases) and when done it gets destroyed and
              perhaps (depending on harvest mode) replaced by a player tile.
@@ -668,78 +752,236 @@ printf("Player %d: Hit tile %s at (%d,%d)\n",
               SetTileOwner(pTile, player_self_owner);
           }
 
-#if DEBUG_PRINT_SIM
-printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
-  iPlayer, curCol, curRow);
-#endif
           /* Do the bouncing.  First find out which side of the tile was hit,
-             based on the direction the player was moving.  No bounce if the
-             player is moving away. */
+             based on the side facing the player's current position.  It
+             actually is within collision distance of all sides, but don't
+             want to bounce off both sides of the tile.  No bounce if the
+             player is moving away from the selected side.  Also skip sides
+             that are adjacent to a bounceable tile, since they are between
+             tiles and can't be actually hit. */
 
-          bool velXIsTowardsTile, velYIsTowardsTile;
-          int16_t tilePixelXY;
+          int8_t absDeltaPosX, absDeltaPosY;
 
-          if (velocityX < 0)
-          { /* If moving left, and to right of the tile, can be a hit. */
-            velXIsTowardsTile = (deltaPosX >= 0);
-            if (velXIsTowardsTile)
-            {
-              tilePixelXY = pTile->pixel_center_x;
-              if (tilePixelXY > bounceOffPixelX)
-                bounceOffPixelX = tilePixelXY;
-            }
-          }
-          else if (velocityX > 0)
-          { /* If moving right, and to left of the tile, can be a hit. */
-            velXIsTowardsTile = (deltaPosX < 0);
-            if (velXIsTowardsTile)
-            {
-              tilePixelXY = pTile->pixel_center_x;
-              if (tilePixelXY < bounceOffPixelX)
-                bounceOffPixelX = tilePixelXY;
-            }
-          }
-          else /* Not moving much. */
+          if (deltaPosX < 0)
+            absDeltaPosX = -deltaPosX;
+          else
+            absDeltaPosX = deltaPosX;
+
+          if (deltaPosY < 0)
+            absDeltaPosY = -deltaPosY;
+          else
+            absDeltaPosY = deltaPosY;
+
+          if (absDeltaPosY >= absDeltaPosX)
           {
-            velXIsTowardsTile = false;
-          }
+            /* Player is off the top or bottom of the tile.  We are assuming
+               they aren't moving so fast that they have penetrated more than
+               half the tile thickness. */
 
-          if (velocityY < 0)
-          { /* If moving up, and below the tile, can be a hit. */
-            velYIsTowardsTile = (deltaPosY >= 0);
-            if (velYIsTowardsTile)
+            if (deltaPosY < 0)
             {
-              tilePixelXY = pTile->pixel_center_y;
-              if (tilePixelXY > bounceOffPixelY)
-                bounceOffPixelY = tilePixelXY;
+              /* Player is on top half of the tile.  The player position is
+                 inside a cone on the upwards Y axis of the tile center,
+                 bounded by the 45 degree diagonals abs(X)==abs(Y) relative to
+                 the tile center. */
+#if DEBUG_PRINT_SIM
+              strcpy(g_TempBuffer, "Player #");
+              AppendDecimalUInt16(iPlayer);
+              strcat(g_TempBuffer, ": Nearest to top side of tile.\n");
+              DebugPrintString(g_TempBuffer);
+#endif
+              if (velocityY > 0) /* Moving downward to hit it. */
+              {
+                /* Is there another non-empty tile above this tile?  If so,
+                   this side is impossible to actually hit. */
+
+                tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
+                if (curRow >= 1) /* Not at the top edge of the board. */
+                {
+                  tile_pointer pAdjacentTile;
+                  pAdjacentTile = g_tile_array_row_starts[curRow-1];
+                  adjacentOwner = pAdjacentTile[curCol].owner;
+                }
+
+                if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
+                adjacentOwner == player_self_owner)
+                {
+                  int16_t tilePixelXY = pTile->pixel_center_y;
+                  if (tilePixelXY < bounceOffPixelY)
+                    bounceOffPixelY = tilePixelXY;
+                  bounceOffY = true;
+#if DEBUG_PRINT_SIM
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Bounced off top side of tile with center Y of ");
+                  AppendDecimalUInt16(tilePixelXY);
+                  strcat(g_TempBuffer, ".\n");
+                  DebugPrintString(g_TempBuffer);
+#endif
+                }
+#if DEBUG_PRINT_SIM
+                else
+                {
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Can't bounce off top interior side of tile pair.\n");
+                  DebugPrintString(g_TempBuffer);
+                }
+#endif
+              }
+            }
+            else  /* Hit on bottom side of the tile. */
+            {
+#if DEBUG_PRINT_SIM
+              strcpy(g_TempBuffer, "Player #");
+              AppendDecimalUInt16(iPlayer);
+              strcat(g_TempBuffer, ": Nearest to bottom side of tile.\n");
+              DebugPrintString(g_TempBuffer);
+#endif
+              if (velocityY < 0) /* Moving upward to hit it. */
+              {
+                /* Is there another non-empty tile below this tile?  If so,
+                   this side is impossible to actually hit. */
+
+                tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
+                if (curRow < g_play_area_height_tiles - 1) /* Bottom board? */
+                {
+                  tile_pointer pAdjacentTile;
+                  pAdjacentTile = g_tile_array_row_starts[curRow+1];
+                  adjacentOwner = pAdjacentTile[curCol].owner;
+                }
+
+                if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
+                adjacentOwner == player_self_owner)
+                {
+                  int16_t tilePixelXY = pTile->pixel_center_y;
+                  if (tilePixelXY > bounceOffPixelY)
+                    bounceOffPixelY = tilePixelXY;
+                  bounceOffY = true;
+#if DEBUG_PRINT_SIM
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Bounced off bottom side of tile with center Y of ");
+                  AppendDecimalUInt16(tilePixelXY);
+                  strcat(g_TempBuffer, ".\n");
+                  DebugPrintString(g_TempBuffer);
+#endif
+                }
+#if DEBUG_PRINT_SIM
+                else
+                {
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Can't bounce off bottom interior side of tile pair.\n");
+                  DebugPrintString(g_TempBuffer);
+                }
+#endif
+              }
             }
           }
-          else if (velocityY > 0)
-          { /* If moving down, and above the tile, can be a hit. */
-            velYIsTowardsTile = (deltaPosY < 0);
-            if (velYIsTowardsTile)
-            {
-              tilePixelXY = pTile->pixel_center_y;
-              if (tilePixelXY < bounceOffPixelY)
-                bounceOffPixelY = tilePixelXY;
-            }
-          }
-          else /* Not moving much. */
+          else /* Hit on left or right of the tile. */
           {
-            velYIsTowardsTile = false;
+            /* Player is closer to left or right side of the tile than the
+               top/bottom. */
+
+            if (deltaPosX < 0)
+            {
+              /* Player is on left half of the tile. */
+#if DEBUG_PRINT_SIM
+                strcpy(g_TempBuffer, "Player #");
+                AppendDecimalUInt16(iPlayer);
+                strcat(g_TempBuffer, ": Nearest to left side of tile.\n");
+                DebugPrintString(g_TempBuffer);
+#endif
+              if (velocityX > 0) /* Need to be moving right to hit it. */
+              {
+                /* Is there another non-empty tile left of this tile?  If so,
+                   this side is impossible to actually hit. */
+
+                tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
+                if (curCol >= 1) /* Not at the left edge of the board. */
+                  adjacentOwner = pTile[-1].owner;
+
+                if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
+                adjacentOwner == player_self_owner)
+                {
+                  int16_t tilePixelXY = pTile->pixel_center_x;
+                  if (tilePixelXY < bounceOffPixelX)
+                    bounceOffPixelX = tilePixelXY;
+                  bounceOffX = true;
+#if DEBUG_PRINT_SIM
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Bounced off left side of tile with center X of ");
+                  AppendDecimalUInt16(tilePixelXY);
+                  strcat(g_TempBuffer, ".\n");
+                  DebugPrintString(g_TempBuffer);
+#endif
+                }
+#if DEBUG_PRINT_SIM
+                else
+                {
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Can't bounce off left interior side of tile pair.\n");
+                  DebugPrintString(g_TempBuffer);
+                }
+#endif
+              }
+            }
+            else /* Player is on right half of the tile.  */
+            {
+#if DEBUG_PRINT_SIM
+                strcpy(g_TempBuffer, "Player #");
+                AppendDecimalUInt16(iPlayer);
+                strcat(g_TempBuffer, ": Nearest to right side of tile.\n");
+                DebugPrintString(g_TempBuffer);
+#endif
+              if (velocityX < 0) /* Need to be moving left to hit it. */
+              {
+                /* Is there another non-empty tile right of this tile?  If so,
+                   this side is impossible to actually hit. */
+
+                tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
+                if (curCol < g_play_area_width_tiles - 1) /* Board right. */
+                  adjacentOwner = pTile[1].owner;
+
+                if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
+                adjacentOwner == player_self_owner)
+                {
+                  int16_t tilePixelXY = pTile->pixel_center_x;
+                  if (tilePixelXY > bounceOffPixelX)
+                    bounceOffPixelX = tilePixelXY;
+                  bounceOffX = true;
+#if DEBUG_PRINT_SIM
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Bounced off right side of tile with center X of ");
+                  AppendDecimalUInt16(tilePixelXY);
+                  strcat(g_TempBuffer, ".\n");
+                  DebugPrintString(g_TempBuffer);
+#endif
+                }
+#if DEBUG_PRINT_SIM
+                else
+                {
+                  strcpy(g_TempBuffer, "Player #");
+                  AppendDecimalUInt16(iPlayer);
+                  strcat(g_TempBuffer,
+                    ": Can't bounce off right interior side of tile pair.\n");
+                  DebugPrintString(g_TempBuffer);
+                }
+#endif
+              }
+            }
           }
-
-          /* Which side of the tile was hit?  Look for a velocity component
-             going towards the tile, and if both components are towards the
-             tile then use both.  The tile side which that velocity
-             runs into will be the bounce side and reflect that velocity
-             component.  Do nothing if moving away in both directions. */
-
-          if (velXIsTowardsTile)
-            bounceOffX = true;
-
-          if (velYIsTowardsTile)
-            bounceOffY = true;
         }
       }
 
@@ -752,11 +994,41 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
         NEGATE_FX(&pPlayer->step_velocity_x);
 
         /* Shove the player outside the tile side. */
-        INT_TO_FX(bounceOffPixelX +
-          ((velocityX < 0)
-            ? (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)
-            : - (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)),
-          pPlayer->pixel_center_x);
+
+        if (velocityX < 0) /* Player is moving leftwards. */
+        {
+          int16_t tileSideX = bounceOffPixelX + missDistance;
+          if (playerX < tileSideX) /* Has gone too far inside the tile. */
+          {
+            INT_TO_FX(tileSideX, pPlayer->pixel_center_x);
+#if DEBUG_PRINT_SIM
+            strcpy(g_TempBuffer, "Player #");
+            AppendDecimalUInt16(iPlayer);
+            strcat(g_TempBuffer,
+              ": Shoved to right side of tile, new player X is ");
+            AppendDecimalUInt16(tileSideX);
+            strcat(g_TempBuffer, ".\n");
+            DebugPrintString(g_TempBuffer);
+#endif
+          }
+        }
+        else /* Player is moving rightwards. */
+        {
+          int16_t tileSideX = bounceOffPixelX + missMinusDistance;
+          if (playerX > tileSideX) /* Has gone too far inside the tile. */
+          {
+            INT_TO_FX(tileSideX, pPlayer->pixel_center_x);
+#if DEBUG_PRINT_SIM
+            strcpy(g_TempBuffer, "Player #");
+            AppendDecimalUInt16(iPlayer);
+            strcat(g_TempBuffer,
+              ": Shoved to left side of tile, new player X is ");
+            AppendDecimalUInt16(tileSideX);
+            strcat(g_TempBuffer, ".\n");
+            DebugPrintString(g_TempBuffer);
+#endif
+          }
+        }
       }
 
       if (bounceOffY)
@@ -765,10 +1037,41 @@ printf("Player %d: Bouncing off occupied tile (%d,%d).\n",
         NEGATE_FX(&pPlayer->step_velocity_y);
 
         /* Shove the player outside the tile side. */
-        INT_TO_FX(bounceOffPixelY + ((velocityY < 0)
-            ? (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)
-            : - (TILE_PIXEL_WIDTH / 2 + PLAYER_PIXEL_DIAMETER_NORMAL / 2)),
-          pPlayer->pixel_center_y);
+
+        if (velocityY < 0) /* Player is moving upwards. */
+        {
+          int16_t tileSideY = bounceOffPixelY + missDistance;
+          if (playerY < tileSideY) /* Has gone too far inside the tile. */
+          {
+            INT_TO_FX(tileSideY, pPlayer->pixel_center_y);
+#if DEBUG_PRINT_SIM
+            strcpy(g_TempBuffer, "Player #");
+            AppendDecimalUInt16(iPlayer);
+            strcat(g_TempBuffer,
+              ": Shoved to bottom side of tile, new player Y is ");
+            AppendDecimalUInt16(tileSideY);
+            strcat(g_TempBuffer, ".\n");
+            DebugPrintString(g_TempBuffer);
+#endif
+          }
+        }
+        else /* Player is moving downwards. */
+        {
+          int16_t tileSideY = bounceOffPixelY + missMinusDistance;
+          if (playerY > tileSideY) /* Has gone too far inside the tile. */
+          {
+            INT_TO_FX(tileSideY, pPlayer->pixel_center_y);
+#if DEBUG_PRINT_SIM
+            strcpy(g_TempBuffer, "Player #");
+            AppendDecimalUInt16(iPlayer);
+            strcat(g_TempBuffer,
+              ": Shoved to top side of tile, new player Y is ");
+            AppendDecimalUInt16(tileSideY);
+            strcat(g_TempBuffer, ".\n");
+            DebugPrintString(g_TempBuffer);
+#endif
+          }
+        }
       }
 
       if (bounceOffX || bounceOffY)

@@ -31,5 +31,8 @@ extern void DebugPrintString(const char *MessageText);
    like printf("%u") does in Z88DK due to mangling the IX frame pointer. */
 extern char * AppendDecimalUInt16(uint16_t Number);
 
+/* Same, but prints negative numbers with a minus sign. */
+extern char * AppendDecimalInt16(int16_t Number);
+
 #endif /* _DEBUG_PRINT_H */
 

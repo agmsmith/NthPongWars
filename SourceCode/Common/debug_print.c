@@ -62,3 +62,17 @@ char * AppendDecimalUInt16(uint16_t Number)
   return fast_utoa(Number, g_TempBuffer + strlen(g_TempBuffer));
 }
 
+
+/*******************************************************************************
+ * Same, but prints negative numbers with a minus sign.
+ */
+char * AppendDecimalInt16(int16_t Number)
+{
+  if (Number < 0)
+  {
+    strcat(g_TempBuffer, "-");
+    Number = -Number;
+  }
+  return AppendDecimalUInt16((uint16_t) Number);
+}
+

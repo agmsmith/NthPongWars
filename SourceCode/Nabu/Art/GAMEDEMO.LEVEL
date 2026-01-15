@@ -33,6 +33,7 @@ LevelNext: Timeout, WINP5
 MaxAIPlayers: 4
 AIPlayerCodeStart: 30, 40, 0, 30
 BoardSize: 32, 23
+BoardScreen: 0, 1, 32, 23, 0, 0
 InitialCount: 100
 
 # Stop that red player from getting ahead too fast, with Fly near it.

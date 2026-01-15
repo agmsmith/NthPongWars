@@ -17,6 +17,7 @@ MaxAIPlayers: 1
 AIPlayerCodeStart: 0, 0, 0, 0 # All draw a letter N on screen.
 
 BoardSize: 32, 23
+BoardScreen: 0, 1, 32, 23, 0, 0
 InitialCount: 100
 BoardTileData:
 . . . . . . ( ( ( ( ( 

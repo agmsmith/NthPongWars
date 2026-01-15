@@ -104,7 +104,8 @@
 /* Temporary global buffer used for sprinting into and for intermediate storage
    during screen loading, etc.  Avoids using stack space. */
 #define TEMPBUFFER_LEN 512
-char g_TempBuffer[TEMPBUFFER_LEN];
+char g_TempBuffer[TEMPBUFFER_LEN] =
+  "Some initial buffer contents for g_TempBuffer.";
 
 /* Our own game include files, some are source code!  Comes after NABU-LIB.h
    has been included and g_TempBuffer defined. */

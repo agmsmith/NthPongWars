@@ -308,12 +308,14 @@ typedef struct player_struct {
   player_brain brain;
   /* What controls this player, or marks it as inactive (not drawn). */
 
-  union brain_info_union {
+  struct brain_info_struct {
     uint8_t iJoystick; /* For BRAIN_JOYSTICK, which joystick number? */
     player_algo_record algo; /* For BRAIN_ALGORITHM - various settings. */
   } brain_info;
   /* Extra information about this brain.  Joystick number for joysticks,
-     network identification for remote players, algorithm stuff for AI. */
+     network identification for remote players, algorithm stuff for AI.
+     Sometimes level loads set AI data (to set behaviour), even for Joystick
+     players, so use a struct rather than a union. */
 
   uint16_t last_brain_activity_time;
   /* Frame counter when the last brain activity was seen (joystick moved off

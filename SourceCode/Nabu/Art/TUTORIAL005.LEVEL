@@ -19,7 +19,7 @@ LevelNext: Timeout, WINP5
 MaxAIPlayers: 2
 AIPlayerCodeStart: 30, 30, 30, 30
 BoardSize: 30, 19
-InitialCount: 100
+InitialCount: 150
 BoardScreen: 1, 2, 30, 19, 0, 0
 BoardScroll: 0
 BoardTileData:

@@ -2,6 +2,7 @@
 # AGMS20260106 - started this file.
 # Tutorial006 is an area where players can fight it out, with Bashing.
 LevelVersion: 20260106, NthPongWars
+Music: Silence
 GameMode: PongWar
 ScreenFont: TUTORIAL
 PlayTimeout: 120

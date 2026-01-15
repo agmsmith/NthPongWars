@@ -781,7 +781,8 @@ bool KeywordBoardTileData(void)
         break; /* Ignore the rest of this line, no tiles here. */
       SetTileOwner(pTile, tileType);
 
-      /* If it is a player coloured tile, move the player there. */
+      /* If it is a player coloured tile, move the player there.  And upgrade
+         the tile to fully aged. */
 
       uint8_t iPlayer = tileType - OWNER_PLAYER_1;
       if (iPlayer < MAX_PLAYERS)
@@ -790,6 +791,10 @@ bool KeywordBoardTileData(void)
         pPlayer->starting_level_pixel_x = pTile->pixel_center_x;
         pPlayer->starting_level_pixel_y = pTile->pixel_center_y;
         pPlayer->starting_level_pixel_flying_height = FLYING_ABOVE_TILES_HEIGHT;
+
+        /* Also make it a fully aged / solid tile.  Mostly useful for the
+           classic Pong Wars look. */
+        pTile->age = 7;
       }
 
       /* Successfully set one tile, advance to the next column. */
@@ -1042,7 +1047,7 @@ const char *StockTextMessages(const char *MagicWord)
   {
     return
       "Welcome to the Nth Pong Wars NABU game.  "
-      "Copyright 2025 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
+      "Copyright 2026 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
       "Started in February 2024, see the blog at "
       "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
       "Released under the GNU General Public License version 3.\n";

@@ -497,13 +497,19 @@ void Simulate(void)
       playerRow = playerY / TILE_PIXEL_WIDTH;
       player_self_owner = iPlayer + (tile_owner) OWNER_PLAYER_1;
 
+      /* Tile miss distance affects how thick a trail the player leaves.  And
+         which tiles they bounce off of.  And with walls, the smallest gap they
+         can get through.  So we make the player slightly thinner than they
+         show on screen so that they leave a smaller trail.  Though too thin
+         and they can go through walls. */
+
       int8_t missDistance, missMinusDistance;
       if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
-        missDistance = /* Wider is 1.5 times as wide, 2X was too much. */
-          (TILE_PIXEL_WIDTH + 3 * PLAYER_PIXEL_DIAMETER_NORMAL / 2 + 1) / 2;
+        missDistance =
+          (TILE_PIXEL_WIDTH + 3 * PLAYER_PIXEL_DIAMETER_NORMAL / 2) / 2;
       else
         missDistance =
-          (TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL + 1) / 2;
+          (TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL) / 2;
       missMinusDistance = -missDistance;
 
       /* Just need the +1/0/-1 for direction of velocity. */
@@ -799,12 +805,13 @@ void Simulate(void)
                    this side is impossible to actually hit. */
 
                 tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
-                if (curRow >= 1) /* Not at the top edge of the board. */
-                {
-                  tile_pointer pAdjacentTile;
-                  pAdjacentTile = g_tile_array_row_starts[curRow-1];
-                  adjacentOwner = pAdjacentTile[curCol].owner;
-                }
+
+                tile_pointer pAdjacentTile =
+                  TileForColumnAndRow(curCol, curRow-1);
+                if (pAdjacentTile != NULL)
+                  adjacentOwner = pAdjacentTile->owner;
+                else /* Off top of board, effectively a wall there. */
+                  adjacentOwner = (tile_owner) OWNER_WALL_INDESTRUCTIBLE;
 
                 if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
                 adjacentOwner == player_self_owner)
@@ -849,12 +856,13 @@ void Simulate(void)
                    this side is impossible to actually hit. */
 
                 tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
-                if (curRow < g_play_area_height_tiles - 1) /* Bottom board? */
-                {
-                  tile_pointer pAdjacentTile;
-                  pAdjacentTile = g_tile_array_row_starts[curRow+1];
-                  adjacentOwner = pAdjacentTile[curCol].owner;
-                }
+
+                tile_pointer pAdjacentTile =
+                  TileForColumnAndRow(curCol, curRow+1);
+                if (pAdjacentTile != NULL)
+                  adjacentOwner = pAdjacentTile->owner;
+                else /* Off bottom of board, effectively a wall there. */
+                  adjacentOwner = (tile_owner) OWNER_WALL_INDESTRUCTIBLE;
 
                 if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
                 adjacentOwner == player_self_owner)
@@ -908,6 +916,8 @@ void Simulate(void)
                 tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
                 if (curCol >= 1) /* Not at the left edge of the board. */
                   adjacentOwner = pTile[-1].owner;
+                else /* Off left of board, effectively a wall there. */
+                  adjacentOwner = (tile_owner) OWNER_WALL_INDESTRUCTIBLE;
 
                 if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
                 adjacentOwner == player_self_owner)
@@ -954,6 +964,8 @@ void Simulate(void)
                 tile_owner adjacentOwner = (tile_owner) OWNER_EMPTY;
                 if (curCol < g_play_area_width_tiles - 1) /* Board right. */
                   adjacentOwner = pTile[1].owner;
+                else /* Off right of board, effectively a wall there. */
+                  adjacentOwner = (tile_owner) OWNER_WALL_INDESTRUCTIBLE;
 
                 if (adjacentOwner == (tile_owner) OWNER_EMPTY ||
                 adjacentOwner == player_self_owner)

@@ -16,6 +16,6 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
-InitialCount: 350
+InitialCount: 450
 MaxAIPlayers: 4
 

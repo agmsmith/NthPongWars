@@ -1292,7 +1292,7 @@ void UpdatePlayerInputs(void)
       {
         fx thrustAmount;
         INT_TO_FX(pPlayer->thrust_harvested, thrustAmount);
-        DIV2Nth_FX(&thrustAmount, 5);
+        DIV2Nth_FX(&thrustAmount, 6);
 
         if (player_velocity_octant <= 1 || player_velocity_octant == 7)
           ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);

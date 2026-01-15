@@ -499,8 +499,8 @@ void Simulate(void)
 
       int8_t missDistance, missMinusDistance;
       if (pPlayer->power_up_timers[OWNER_PUP_WIDER])
-        missDistance =
-          (TILE_PIXEL_WIDTH + 2 * PLAYER_PIXEL_DIAMETER_NORMAL + 1) / 2;
+        missDistance = /* Wider is 1.5 times as wide, 2X was too much. */
+          (TILE_PIXEL_WIDTH + 3 * PLAYER_PIXEL_DIAMETER_NORMAL / 2 + 1) / 2;
       else
         missDistance =
           (TILE_PIXEL_WIDTH + PLAYER_PIXEL_DIAMETER_NORMAL + 1) / 2;

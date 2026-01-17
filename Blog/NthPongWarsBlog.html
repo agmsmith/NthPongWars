@@ -2698,8 +2698,134 @@ parameter the AI code can change) is to save its old target coordinates and
 then change them to the closest power-up.  When it's done, it restores the
 old target and resumes its normal behaviour.
 
+<HR>
+<H2><A NAME="2026.01.16"></A>2026.01.16</H2>
+
+<H3>Physics Reworked and Tutorial Levels</H3>
+
+<P>As part of getting ready for the upcoming
+<A HREF="https://vcfed.org/vcf-montreal/">Montreal Vintage Computer
+Federation</A> convention, I decided to add some tutorial levels.  That meant
+adding some tiles that could act as solid walls, keeping the players apart
+while they learnt the basics.  Something that ended up looking like this:
+
+<P ALIGN="CENTER"><A HREF="20260116Tutorial.mp4"><IMG
+SRC="20260116Tutorial.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of the tutorial levels, as of January 16 2026]"></A><BR>
+<A HREF="20260116Tutorial.mp4">2026-01-16 Tutorial.mp4</A>
+
+<P>By the way, the music is unique to the winning player.  Maybe I should
+have a settings menu and a way of turning off the music :-)
+
+<H4>Walls?  What walls?</H4>
+
+<P>Of course, the first attempt didn't work too well.  Players could push their
+way through walls by hitting the fire button repeatedly.  The trouble was that
+the simulation code was just reversing the velocity when you got near a tile.
+If you were thrusting into the tile, steering action would reverse it back
+again and add a bit more velocity, until you got through.  Players could also
+go part way through a tile if they were moving fast enough.
+
+<P>The fix (found after drawing various player and tile situations on paper)
+was to instead figure out which side of the tile the player was closest to,
+and then push them back outside the tile if they were inside it.  I spent
+several days overhauling the simulation code, calculating the push-back
+distance and moving players away, and reducing the physics step size to half
+a tile, so you would always be on the appropriate side, not out the back side
+of the tile.  Also, don't let the players bounce off the sides of the tile
+where there's another adjacent tile up against it - makes for some weird
+backwards bounces.
+
+<P>The result is that the frame rate slowed down yet again from the extra
+physics steps and extra tile side calculations.  But now we have impermeable
+walls!  I'm thinking of adding level options to turn off some of those extra
+calculations, where wall accuracy isn't important, so you can go from 15
+frames per second back to 20.  Or just have fewer players, or a faster computer.
+
+<H4>Classic Pong Wars</H4>
+
+<P>I tried to make a level to recreate the <I>Pong Wars</I> game which
+inspired <I>Nth Pong Wars</I>.  As mentioned earlier, you can try out Koen
+van Gilst's web page Javascript Pong Wars at
+<A HREF="https://pong-wars.koenvangilst.nl/">https://pong-wars.koenvangilst.nl/</A>.
+I faked it by having two AI players that just pick up speed and then drift
+around, until they get bored and go to a corner.  Lots of Bash power-ups are
+scattered around to help them simulate the one-hit destruction of tiles in the
+original game.  However, it doesn't have the slight random variation in bounces
+that Pong Wars has, or the mostly diagonal movement, or the fast speed (too
+fast for gameplay?), but other than that it's identical! :-)
+
+<P ALIGN="CENTER"><A HREF="20260116Classic.mp4"><IMG
+SRC="20260116Classic.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of the classic Pong Wars level, as of January 16 2026]"></A><BR>
+<A HREF="20260116Classic.mp4">2026-01-16 Classic.mp4</A>
+
+<H4>Demonstration Mode</H4>
+
+<P>There's a demo mode in the game.  If you do nothing, it will play a demo
+level.  Which looks something like this, but changes every time it runs.
+
+<P ALIGN="CENTER"><A HREF="20260116Demo.mp4"><IMG
+SRC="20260116Demo.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of the demonstration level, as of January 16 2026]"></A><BR>
+<A HREF="20260116Demo.mp4">2026-01-16 Demo.mp4</A>
+
+<P>One AI player hunts Humans, another two hunt the highest scoring player,
+and the yellow guy is trying to draw a letter "N" on the screen.  The initial
+red player is handicapped by having a Fly power-up nearby, so they start flying
+and don't leave tile trails for a while.  Though if you touch the joystick or
+keyboard, you take over the green player.
+
+<H4>Credits</H4>
+
+<P>After the demo and on request, there's a sequence of credits screens
+with an obvious Easter egg.
+
+<P ALIGN="CENTER"><A HREF="20260116Credits.mp4"><IMG
+SRC="20260116Credits.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of the credits, as of January 16 2026]"></A><BR>
+<A HREF="20260116Credits.mp4">2026-01-16 Credits.mp4</A>
+
+<H4>Quit</H4>
+
+<P>You can also quit the game from the title screen or by hitting "q" on the
+keyboard, which reboots the NABU or restarts CP/M (though the game is now too
+large to fit in memory with CP/M).  You can also hit ESC on the keyboard to
+get back to the title screen.
+
+<P ALIGN="CENTER"><A HREF="20260116Quit.mp4"><IMG
+SRC="20260116Quit.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of the quit functionality, as of January 16 2026]"></A><BR>
+<A HREF="20260116Quit.mp4">2026-01-16 Quit.mp4</A>
+
+<H4>Main Game</H4>
+
+<P>I've only put in three levels of the main game so far.  With walls, a lot
+of different designs could be made, but that also requires some AI changes.
+As usual, up to 4 players can play, just tap the joystick or hit the Yes key
+to join in.  If you do nothing for 30 seconds, you get dropped from the game
+and maybe replaced by an AI, which you can then take over from, by hitting
+a key etc.
+
+<P>I'll have to add some score keeping, for the number of levels won in a
+campaign, and a high score screen to display that.  But that's something
+for later.
+
+<P ALIGN="CENTER"><A HREF="20260116Main.mp4"><IMG
+SRC="20260116Main.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of the main game levels, as of January 16 2026]"></A><BR>
+<A HREF="20260116Main.mp4">2026-01-16 Main.mp4</A>
+
+<P>Hmmm, too easy.  I need to add an AI that always hounds the leading player,
+not returning to their home corner at all.
+
+<P>Anyway, it's not finished, but it's good enough to show at the VCF
+convention.  It's one of the more recent NABU programs!  Well, until I port
+it to terminal sessions using ncurses, then it will be most recent for some
+other computer system - but not looking as good or sounding as great.
+
 <P>- Alex
 
-<P ALIGN="CENTER">Copyright &copy; 2025 by Alexander G. M. Smith.
+<P ALIGN="CENTER">Copyright &copy; 2026 by Alexander G. M. Smith.
 </BODY>
 </HTML>

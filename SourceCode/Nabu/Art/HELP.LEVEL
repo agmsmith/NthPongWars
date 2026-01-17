@@ -1,9 +1,0 @@
-# Display a help screen.
-GameMode: Trivia
-Music: ONECOLN1
-ScreenChar: HELP
-LevelNext: All, TITLE
-LevelNext: Down, HELP
-LevelNext: Right, COTTAGE
-LevelNext: Fire, LEVEL001
-

@@ -146,6 +146,11 @@ target_list_item_record g_target_list[] = {
   {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
   {200, TARGET_CODE_DELAY}, /* Delay a while for idle bouncing. */
   {80, TARGET_CODE_GOTO},
+  {80, TARGET_CODE_GOTO},
+/* Instruction 86 */ {28, 16}, /* End of 4th lane. */
+  {80, TARGET_CODE_GOTO},
+/* Instruction 88 */ {28, 11}, /* End of 3rd lane. */
+  {80, TARGET_CODE_GOTO},
 };
 
 /* Where to start the instructions for player 0 to player N-1. */

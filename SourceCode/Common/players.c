@@ -151,6 +151,13 @@ target_list_item_record g_target_list[] = {
   {80, TARGET_CODE_GOTO},
 /* Instruction 88 */ {28, 11}, /* End of 3rd lane. */
   {80, TARGET_CODE_GOTO},
+/* Instruction 90 */ {10, TARGET_CODE_SPEED}, /* Go below friction speed. */
+  {50, TARGET_CODE_POWER_UP}, /* Get middling distance power-ups. */
+  {4, TARGET_CODE_STEER}, /* Head to leading player.  Just bump into them. */
+  {6, TARGET_CODE_SPEED}, /* Slow down. */
+  {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
+  {5, TARGET_CODE_DELAY}, /* Delay 1 second idling and bouncing. */
+  {90, TARGET_CODE_GOTO},
 };
 
 /* Where to start the instructions for player 0 to player N-1. */

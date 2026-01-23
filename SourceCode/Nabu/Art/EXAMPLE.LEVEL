@@ -145,6 +145,9 @@ MaxAIPlayers: 2
 # 40 - Go up and down, full attack on leading Human if present else nothing.
 # 60 - Go at no-friction speed, occasionally go to corner, for Classic mode.
 # 80 - Go at no-friction speed, just bounce around.
+# 86 - Go to right side of bottom lane in tutorial.
+# 88 - Go to right side of second from bottom lane in tutorial.
+# 90 - Hunt the player mercilessly, stopping for a second between attacks.
 AIPlayerCodeStart: 30, 40, 0, 30
 
 # Set up a game board with the given width and height in tiles.  On the NABU

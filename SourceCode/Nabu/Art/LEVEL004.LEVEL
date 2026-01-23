@@ -1,0 +1,21 @@
+# Level #4.  AGMS20260123
+GameMode: PongWar
+Music: LOADSONG
+Music: BURNINR1
+ScreenFont: NTHPONG1
+ScreenText: 21, 5, 5, 32, _Tougher than Before_
+
+# After showing the win screen, will return to the full credits.
+LevelBookmark: CREDITS
+LevelNext: All, CREDITS
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
+
+BoardSize: 32, 23
+MaxAIPlayers: 4
+AIPlayerCodeStart: 90, 90, 0, 90
+

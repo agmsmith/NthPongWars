@@ -1,8 +1,8 @@
 # Level #4.  AGMS20260123
 GameMode: PongWar
-Music: LOADSONG
-Music: BURNINR1
-ScreenFont: NTHPONG1
+Music: LOADSONG.CHIPNSFX
+Music: BURNINR1.CHIPNSFX
+Screen: NTHPONG1.NSCR
 ScreenText: 21, 5, 5, 32, _Tougher than Before_
 
 # After showing the win screen, will return to the full credits.

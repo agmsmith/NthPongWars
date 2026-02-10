@@ -1,7 +1,7 @@
 # Player #2 Wins.
 GameMode: Slide
-Music: SQUAROOT
-ScreenFull: WINP2
+Music: SQUAROOT.CHIPNSFX
+Screen: WINP2.NFUL
 LevelNext: All, Bookmark
 PlayTimeout: 5
 

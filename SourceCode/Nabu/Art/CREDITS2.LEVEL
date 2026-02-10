@@ -1,6 +1,6 @@
 # Show the third credits screen, with music info.
 GameMode: Slide
-ScreenFull: CREDITS
+Screen: CREDITS.NFUL
 LevelNext: All, TITLE
 PlayTimeout: 7
 

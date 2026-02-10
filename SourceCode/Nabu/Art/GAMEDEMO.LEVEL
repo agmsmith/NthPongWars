@@ -1,7 +1,7 @@
 # A demonstration of the game, with all AIs.
 GameMode: PongWar
 Music: Default
-ScreenFont: NTHPONG1
+Screen: NTHPONG1.NSCR
 ScreenText: 22, 3, 3, 32, _Yellow is drawing a "N"_
 ScreenText: 23, 0, 0, 32, Others are hunting high scorers.
 ScreenText: 2, 30, 30, 32, D e m o n s t r a t i o n - L e v e l

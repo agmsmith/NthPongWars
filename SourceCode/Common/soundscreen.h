@@ -51,17 +51,20 @@ extern uint8_t g_harvest_sound_threshold;
 
 
 extern void PlaySound(sound_type sound_id, player_pointer pPlayer);
-/* Play a sound effect.  Given a player so we can customise sounds per player.
-   Plays with priority if the system can't play multiple sounds at once. */
+/* Play a sound effect.  Given a player so we can customise sounds per player
+   (usually with a different frequency / tone for each player).  Plays with
+   priority based on the sound_id if the system can't play multiple sounds
+   at once. */
 
 extern FileHandleType OpenDataFile(const char *fileNameBase,
   const char *extension);
 /* Open a file for sequential reading, using the given file name and extension
-   (the extension will usually be platform specific).  Will look in various
-   directories and online, returning the first one found.  Returns
-   BAD_FILE_HANDLE if it wasn't found anywhere and prints a debug message.
-   If it was found, you should close it when you've finished using it.  Uses
-   g_TempBuffer.  For NABU, use upper case names. */
+   (the extension will usually be platform specific, and if NULL or an empty
+   string then it won't be used).  Will look in various directories and online,
+   returning the first one found.  Returns BAD_FILE_HANDLE if it wasn't found
+   anywhere and prints a debug message.  If it was found, you should close it
+   when you've finished using it.  Uses g_TempBuffer.  For NABU, use upper
+   case names. */
 
 extern void CloseDataFile(FileHandleType fileHandle);
 /* Undoes OpenDataFile.  Does nothing when given BAD_FILE_HANDLE. */
@@ -69,11 +72,11 @@ extern void CloseDataFile(FileHandleType fileHandle);
 extern bool PlayMusic(const char *FileName);
 /* Starts the given piece of external music playing.  Assumes the sound library
    is initialised and a game loop (or screen loader) will update sound ticks.
-   Will look for that file in several places, using an extension specific to
-   the platform (so don't specify a file name extension).  "Silence" turns off
-   background music and "Default" plays the built-in music designed for when
-   the game is running (quieter, not too complex).  Returns true if successful.
-   If it returns false, it leaves whatever music was playing still playing. */
+   Will look for that file in several places, and may try a platform specific
+   extension if you don't specify one.  "Silence" turns off background music
+   and "Default" plays the built-in music designed for when the game is running
+   (quieter, not too complex).  Returns true if successful.  If it returns
+   false, it leaves whatever music was playing still playing. */
 
 extern void SoundUpdateIfNeeded(void);
 /* This is best called after every lengthy operation, like opening a file.

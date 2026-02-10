@@ -1,16 +1,18 @@
 # This is an example level file, for NthPongWars by Alexander G. M. Smith.
 # AGMS20251204 - started this file.
+
 # This one has all the options specified, which you likely won't use in a
-# real level file as some contradict others.  That's so you can see what's
-# available, and for testing the level reading code.  Note that file names
-# are all uppercase due to Nabu Internet Adapter limitations.
+# real level file as some contradict others and you can inherit the settings
+# from the previously run levels.  That's so you can see what's available, and
+# for testing the level reading code.  Note that file names are all uppercase
+# due to Nabu Internet Adapter limitations.
 
 # For future compatibility, the version of the level file language can be
 # specified.  That way future game code can read older version files, or at
 # least you'll have an idea of what the differences are between them (by
 # looking at the history of this example file).  The first argument is a
 # YYYYMMDD date code, the second is the name of the game.
-LevelVersion: 20251231, NthPongWars
+LevelVersion: 20260209, NthPongWars
 
 # As you can tell, a line that starts with a # is a comment.  Blank lines
 # and leading spaces are ignored too.
@@ -47,32 +49,40 @@ GameMode: Slide
 # a kind of slide show.
 
 # Start some background music.  Nabu uses the CHIPNSFX tracker+player suite,
-# http://cngsoft.no-ip.org/chipnsfx.htm though with the output assembler
-# converted to binary.  This will start the SQUAROOT.CHIPNSFX file playing.
-# Use a music file name of "Silence" to turn off the background music,
-# "Default" to play the built in gameplay music.
-Music: SQUAROOT
+# http://cngsoft.no-ip.org/chipnsfx.htm though with the music files converted
+# to binary for faster loading.  This will start the SQUAROOT.CHIPNSFX file
+# playing.  A default platform specific extension will be used (.CHIPNSFX for
+# NABU computers) if you don't provide one.  Use a music file name of "Silence"
+# to turn off the background music, "Default" to play the built in gameplay
+# music.
+Music: SQUAROOT.CHIPNSFX
 
 # Load a full screen bitmap graphic.  This is a 12KB file, so it will take
-# about 1 second to load.  Since the TMS9918A video chip in the NABU does only
+# about 1 second to load (or longer if running with a slow simulated serial
+# connection to the server, like ArcadeMania on the iPhone using the cellular
+# network).  Since the TMS9918A video chip in the NABU does only
 # character mapped graphics, a full screen is done with a custom font per
 # character.  So you can't play a game or see text when one of these is
 # displayed.  NthPongWarsBuildingDataNotes.txt explains how to make a picture
 # into a *.NFUL file.  This will load TITLESCREEN.NFUL.
-ScreenFull: TITLESCREEN
+Screen: TITLESCREEN.NFUL
 
 # This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
 # about 7KB so it takes half a second to load.  This is the kind of screen you
 # need to see a game correctly, assuming the font and sprite parts have the
-# graphics the game uses.  This example loads NTHPONG1.NSCR.
-ScreenFont: NTHPONG1
+# graphics the game uses.  This example loads NTHPONG1.NSCR.  Note that if you
+# don't specify a file name extension, .NSCR is assumed (it looks for a file
+# without an extension first, wasting time, so it's better to specify the
+# extension).
+Screen: NTHPONG1.NSCR
+Screen: NTHPONG1
 
 # This keyword loads just the name table, the characters of a screen (*.NCHR).
 # It's 768 bytes long, so it takes about 1/10 of a second to load.  It's
 # basically just the first part of a *.NSCR file, so you can create it the
 # same way.  The characters are displayed with whatever font is already loaded.
 # This one would load the text for a help screen from HELP.NCHR.
-ScreenChar: HELP
+Screen: HELP.NCHR
 
 # This draws some text on the screen, using whatever font is currently loaded.
 # You specify a line to start drawing the text, left margin for the first line

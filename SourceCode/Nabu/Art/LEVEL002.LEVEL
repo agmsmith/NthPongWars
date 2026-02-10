@@ -1,7 +1,7 @@
 # Level #2.  AGMS20251210
 GameMode: PongWar
 Music: Silence
-ScreenFont: NTHPONG1
+Screen: NTHPONG1.NSCR
 ScreenText: 21, 5, 5, 32, _The sound of silence?_
 
 # After showing the win screen, will go to the next level.

@@ -398,27 +398,26 @@ bool LevelReadNumericArguments(uint8_t NumberOfArguments)
 }
 
 
-/* This keyword loads a full screen (*.NFUL) graphic.  Returns true if you can
-   continue processing, false to abort the level file load.  Should usually
-   print a debug message if that happens.
+/* This keyword loads a screen (*.NFUL, *.NSCR, *.NCHR) graphic, defaulting to
+   .NSCR if an extension isn't specified.  Returns true if you can continue
+   processing, false to abort the level file load.  Should usually print a
+   debug message if that happens.
 */
-bool KeywordFullScreen(void)
+bool KeywordScreen(void)
 {
   char screenFileName[MAX_FILE_NAME_LENGTH];
   if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
-    return true;
-  return LoadScreenNFUL(screenFileName);
-}
+    return true; /* Just ignore missing file name lines. */
 
+  const char *pExtension;
+  pExtension = screenFileName + (strlen(screenFileName) - 5);
 
-/* This keyword loads a font based screen (*.NSCR) which includes sprites.
-   Returns false to abort the level file load.
-*/
-bool KeywordCharFontSpriteScreen(void)
-{
-  char screenFileName[MAX_FILE_NAME_LENGTH];
-  if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
-    return true;
+  if (strcasecmp(pExtension, ".NFUL") == 0)
+    return LoadScreenNFUL(screenFileName);
+
+  if (strcasecmp(pExtension, ".NCHR") == 0)
+    return LoadScreenNCHR(screenFileName);
+
   return LoadScreenNSCR(screenFileName);
 }
 
@@ -452,18 +451,6 @@ bool KeywordTextOnScreen(void)
     sNumericArgumentsDecoded[2], sNumericArgumentsDecoded[3]);
 
   return true;
-}
-
-
-/* This keyword loads just the name table, the characters of a screen (*.NCHR).
-   Uses the previously loaded font.  Returns false to abort the level file load.
-*/
-bool KeywordCharImageScreen(void)
-{
-  char screenFileName[MAX_FILE_NAME_LENGTH];
-  if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
-    return true;
-  return LoadScreenNCHR(screenFileName);
 }
 
 
@@ -862,9 +849,7 @@ typedef struct KeyWordCallStruct {
 } *KeyWordCallPointer;
 
 static struct KeyWordCallStruct kKeywordFunctionTable[] = {
-  {"ScreenFull", KeywordFullScreen},
-  {"ScreenFont", KeywordCharFontSpriteScreen},
-  {"ScreenChar", KeywordCharImageScreen},
+  {"Screen", KeywordScreen},
   {"ScreenText", KeywordTextOnScreen},
   {"Music", KeywordBackgroundMusic},
   {"PlayTimeout", KeywordPlayTimeout},

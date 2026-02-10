@@ -1,7 +1,8 @@
 # Load the Nth Pong Wars title screen, it's a full screen picture.
+LevelVersion: 20260209, NthPongWars
 GameMode: Trivia
-Music: ONECOLN1
-ScreenFull: TITLESCREEN
+Music: ONECOLN1.CHIPNSFX
+Screen: TITLESCREEN.NFUL
 
 # If a direction is  selected, start the game or show credits etc, else
 # wait 5 seconds and then show a demonstration of gameplay.

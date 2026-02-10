@@ -1,6 +1,6 @@
 # Show the second credits screen with version info, followed by others.
 GameMode: Trivia
-ScreenChar: TEXTSCREEN
+Screen: TEXTSCREEN.NCHR
 LevelBookmark: CREDITS2
 LevelNext: All, CREDITS2
 LevelNext: Left, COTTAGE

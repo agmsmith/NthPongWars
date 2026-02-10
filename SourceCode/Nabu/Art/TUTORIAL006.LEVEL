@@ -4,7 +4,7 @@
 LevelVersion: 20260106, NthPongWars
 Music: Silence
 GameMode: PongWar
-ScreenFont: TUTORIAL
+Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 0, 0, 32, Bash Away!  Destroy solid tiles
 ScreenText: 23, 0, 0, 32, faster with the Bash power-up.

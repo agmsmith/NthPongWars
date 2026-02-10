@@ -53,8 +53,10 @@ uint8_t g_harvest_sound_threshold = 0;
    play a sound. */
 
 
-/* Play a sound effect.  Given a player so we can customise sounds per player.
-   Plays with priority if the system can't play multiple sounds at once.
+/* Play a sound effect.  Given a player so we can customise sounds per player
+   (usually with a different frequency / tone for each player).  Plays with
+   priority based on the sound_id if the system can't play multiple sounds
+   at once.
 */
 void PlaySound(sound_type sound_id, player_pointer pPlayer)
 {
@@ -147,15 +149,18 @@ void PlaySound(sound_type sound_id, player_pointer pPlayer)
    strings may have vanished by then.  Also useful for generating error
    messages about higher level errors while loading. */
 static const char *sSetUpFileNameBase;
-static const char *sSetUpExtension;
+static const char *sSetUpExtension; /* NULL or empty string if no extension. */
 
 /* Utility function to set up the path name, returns length of the string. */
 static uint8_t SetUpPathInTempBuffer(const char *prefix)
 {
   strcpy(g_TempBuffer, prefix);
   strcat(g_TempBuffer, sSetUpFileNameBase);
-  strcat(g_TempBuffer, ".");
-  strcat(g_TempBuffer, sSetUpExtension);
+  if (sSetUpExtension != NULL && sSetUpExtension[0] != 0)
+  {
+    strcat(g_TempBuffer, ".");
+    strcat(g_TempBuffer, sSetUpExtension);
+  }
 
 #if 0
   /* Convert the whole pathname string to upper case. */
@@ -172,12 +177,12 @@ static uint8_t SetUpPathInTempBuffer(const char *prefix)
 }
 
 /* Open a file for sequential reading, using the given file name and extension
-   (the extension will usually be platform specific).  Will look in various
-   directories and online, returning the first one found.  Returns
-   BAD_FILE_HANDLE if it wasn't found anywhere and prints a debug message.
-   If it was found, you should close it when you've finished using it.  Uses
-   g_TempBuffer (on success the path name used is in the buffer).  For NABU,
-   use upper case names.
+   (the extension will usually be platform specific, and if NULL or an empty
+   string then it won't be used).  Will look in various directories and online,
+   returning the first one found.  Returns BAD_FILE_HANDLE if it wasn't found
+   anywhere and prints a debug message.  If it was found, you should close it
+   when you've finished using it.  Uses g_TempBuffer.  For NABU, use upper
+   case names.
 */
 FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
 {
@@ -247,11 +252,11 @@ void CloseDataFile(FileHandleType fileHandle)
 
 /* Starts the given piece of external music playing.  Assumes the sound library
    is initialised and a game loop (or screen loader) will update sound ticks.
-   Will look for that file in several places, using an extension specific to
-   the platform (so don't specify a file name extension).  "Silence" turns off
-   background music and "Default" plays the built-in music designed for when
-   the game is running (quieter, not too complex).  Returns true if successful.
-   If it returns false, it leaves whatever music was playing still playing.
+   Will look for that file in several places, and may try a platform specific
+   extension if you don't specify one.  "Silence" turns off background music
+   and "Default" plays the built-in music designed for when the game is running
+   (quieter, not too complex).  Returns true if successful.  If it returns
+   false, it leaves whatever music was playing still playing.
 */
 #ifdef NABU_H
 #define MAX_MUSIC_BUFFER_SIZE 1500 /* Bigest ChipsNSfx song we can play, +1. */
@@ -282,9 +287,13 @@ bool PlayMusic(const char *FileName)
   uint16_t amountRead;
   uint8_t fileID;
 
-  fileID = OpenDataFile(FileName, "CHIPNSFX");
+  fileID = OpenDataFile(FileName, NULL);
   if (fileID == BAD_FILE_HANDLE)
-    goto ErrorExit;
+  {
+    fileID = OpenDataFile(FileName, "CHIPNSFX");
+    if (fileID == BAD_FILE_HANDLE)
+      goto ErrorExit;
+  }
 
   bzero(gLoadedMusic, MAX_MUSIC_BUFFER_SIZE); /* For easier debugging. */
   amountRead = rn_fileHandleReadSeq(fileID, gLoadedMusic,
@@ -327,6 +336,7 @@ void SoundUpdateIfNeeded(void)
    Returns FALSE if there wasn't enough data in the file.  TRUE if it succeeded.
 */
 /* Optionally read less in each chunk for smoother sound, but slower load. */
+/* #define MAX_COPY_TO_VRAM_READ_SIZE (TEMPBUFFER_LEN / 2) */
 #define MAX_COPY_TO_VRAM_READ_SIZE TEMPBUFFER_LEN
 COMPILER_VERIFY(TEMPBUFFER_LEN >= MAX_COPY_TO_VRAM_READ_SIZE);
 
@@ -383,7 +393,7 @@ static bool CopyFileToVRAM(uint16_t AmountToCopy, FileHandleType FileID,
 #if RESET_SCREEN_TO_BLACK_AND_WHITE && defined(NABU_H)
 /* Reset the colour table to just black and white, so that you can more clearly
    see the pattern data of the next screen while it is loading.  Though this
-   does make the loading slower, so comment it out if needed.
+   does make the loading very very slightly slower, so comment it out if needed.
 */
 static void SetColoursToBlackAndWhite(void)
 {
@@ -393,7 +403,7 @@ static void SetColoursToBlackAndWhite(void)
     do {
       uint8_t j = 0;
       do {
-        IO_VDPDATA = 0xF1; /* White on pixels, black off pixels. */
+        IO_VDPDATA = 0xF1; /* White "on" pixels, black "off" pixels. */
       } while (++j != 0);
     } while (--i != 0);
   }
@@ -423,9 +433,13 @@ bool LoadScreenNSCR(const char *FileName)
   uint8_t fileID = BAD_FILE_HANDLE;
   bool returnCode = false;
 
-  fileID = OpenDataFile(FileName, "NSCR");
+  fileID = OpenDataFile(FileName, NULL);
   if (fileID == BAD_FILE_HANDLE)
-    goto ErrorExit;
+  {
+    fileID = OpenDataFile(FileName, "NSCR");
+    if (fileID == BAD_FILE_HANDLE)
+      goto ErrorExit;
+  }
 
 #if RESET_SCREEN_TO_BLACK_AND_WHITE
   SetColoursToBlackAndWhite();
@@ -472,9 +486,13 @@ bool LoadScreenNCHR(const char *FileName)
   uint8_t fileID = BAD_FILE_HANDLE;
   bool returnCode = false;
 
-  fileID = OpenDataFile(FileName, "NCHR");
+  fileID = OpenDataFile(FileName, NULL);
   if (fileID == BAD_FILE_HANDLE)
-    goto ErrorExit;
+  {
+    fileID = OpenDataFile(FileName, "NCHR");
+    if (fileID == BAD_FILE_HANDLE)
+      goto ErrorExit;
+  }
 
   /* Load name table. */
   if (!CopyFileToVRAM(768, fileID, _vdpPatternNameTableAddr, false))
@@ -504,9 +522,13 @@ bool LoadScreenNFUL(const char *FileName)
   uint8_t fileID = BAD_FILE_HANDLE;
   bool returnCode = false;
 
-  fileID = OpenDataFile(FileName, "NFUL");
+  fileID = OpenDataFile(FileName, NULL);
   if (fileID == BAD_FILE_HANDLE)
-    goto ErrorExit;
+  {
+    fileID = OpenDataFile(FileName, "NFUL");
+    if (fileID == BAD_FILE_HANDLE)
+      goto ErrorExit;
+  }
 
 #if RESET_SCREEN_TO_BLACK_AND_WHITE
   SetColoursToBlackAndWhite();

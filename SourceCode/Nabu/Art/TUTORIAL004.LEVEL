@@ -6,7 +6,7 @@
 # AI players just bounce around at a medium speed.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
-ScreenFont: TUTORIAL
+Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 6, 0, 32, Meet the Neighbours!
 ScreenText: 23, 1, 0, 32, Player vs Player Interactions.

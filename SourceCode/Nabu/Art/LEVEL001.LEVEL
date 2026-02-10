@@ -1,7 +1,7 @@
 # The first level!  Set up the correct font for gameplay.
 GameMode: PongWar
 Music: Default
-ScreenFont: NTHPONG1
+Screen: NTHPONG1.NSCR
 ScreenText: 21, 4, 4, 32, _The First Level is Easy_
 
 LevelBookmark: LEVEL002

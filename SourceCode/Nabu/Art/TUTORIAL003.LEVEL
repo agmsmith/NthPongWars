@@ -3,7 +3,7 @@
 # Tutorial003 is a set of lanes for each player, with a Solid power-up.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
-ScreenFont: TUTORIAL
+Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 0, 0, 32, Laying it Down!  Solid trails to
 ScreenText: 23, 0, 0, 32, resist other players better.

@@ -3,7 +3,7 @@
 # Tutorial005 is a more open area where players can fight it out.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
-ScreenFont: TUTORIAL
+Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 5, 0, 32, Open Plan Neighbours!
 ScreenText: 23, 0, 0, 32, More dodging around recommended.

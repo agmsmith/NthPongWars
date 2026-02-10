@@ -1,8 +1,7 @@
 # Load a picture of the family cottage, it's a full screen picture.
 GameMode: Slide
-# A file name with lots of space before and after it.
-Music:   ONECOLN1     
-ScreenFull: COTTAGE
+Music:   ONECOLN1.CHIPNSFX
+Screen: COTTAGE.NFUL
 LevelNext: All, Bookmark
 PlayTimeout: 7
 

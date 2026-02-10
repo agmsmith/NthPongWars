@@ -3,7 +3,7 @@
 # Tutorial002 is a set of lanes for each player, with a Wide power-up.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
-ScreenFont: TUTORIAL
+Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 8, 0, 32, Wider is Better!
 ScreenText: 23, 0, 0, 32, Make wider trails, move faster.

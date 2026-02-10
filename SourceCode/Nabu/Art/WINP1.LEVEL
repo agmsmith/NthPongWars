@@ -1,6 +1,6 @@
 # Player #1 Wins.
 GameMode: Slide
-Music: LOADSONG.CHIPNSFX
+Music: LOADSONG
 Screen: WINP1.NFUL
 LevelNext: All, Bookmark
 PlayTimeout: 5

@@ -176,15 +176,17 @@ static uint8_t SetUpPathInTempBuffer(const char *prefix)
   return strlen(g_TempBuffer);
 }
 
-/* Open a file for sequential reading, using the given file name and extension
-   (the extension will usually be platform specific, and if NULL or an empty
-   string then it won't be used).  Will look in various directories and online,
+
+/* Open a file for sequential reading, using the given file name.  If extension
+   is specified (not NULL or empty), will append a period and the extension
+   string to the file name.  Will look in various directories and online,
    returning the first one found.  Returns BAD_FILE_HANDLE if it wasn't found
-   anywhere and prints a debug message.  If it was found, you should close it
-   when you've finished using it.  Uses g_TempBuffer.  For NABU, use upper
-   case names.
+   anywhere and prints a debug message.  If it was found, it sets the optional
+   file size argument if it isn't NULL.  You should close the file when you've
+   finished using it.  Uses g_TempBuffer.  For NABU, use upper case names.
 */
-FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
+FileHandleType OpenDataFile(const char *fileNameBase, const char *extension,
+  int32_t *pFileSize)
 {
   FileHandleType fileID;
 #ifdef NABU_H
@@ -197,9 +199,13 @@ FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
 #ifdef NABU_H
   static const char * sPathsToTry[] = {
     /* First try the NTHPONG directory on the NABU Internet Adapter server.
-       Note that directory separator is a backslash since the adapter was
-       written originally in Windows.  Also it needs uppercase. */
+       This is where the data files usually are.  Note that directory separator
+       is a backslash since the adapter was written originally in Windows.
+       Also it needs uppercase. */
     "NTHPONG\\",
+
+    /* Try no directory, in case the user specified a full URL. */
+    "",
 
     /* Try Alex's web server.  Hopefully the Internet Adapter will read it once
        and then cache it.  Need HTTP, not HTTPS.  Cache isn't that fast; it
@@ -219,13 +225,18 @@ FileHandleType OpenDataFile(const char *fileNameBase, const char *extension)
   while ((pPath = sPathsToTry[iPath++]) != NULL)
   {
     nameLen = SetUpPathInTempBuffer(pPath);
-    if (rn_fileSize(nameLen, g_TempBuffer) > 0) /* See if the file exists. */
+    int32_t fileSize = rn_fileSize(nameLen, g_TempBuffer);
+    if (fileSize > 0) /* Size bigger than zero if the file exists. */
     {
       fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
         0xff /* Use a new file handle */);
       SoundUpdateIfNeeded(); /* Each open attempt could take a while. */
       if (fileID != BAD_FILE_HANDLE)
+      {
+        if (pFileSize != NULL)
+          *pFileSize = fileSize;
         return fileID;
+      }
     }
   }
 #endif /* NABU_H */
@@ -287,13 +298,9 @@ bool PlayMusic(const char *FileName)
   uint16_t amountRead;
   uint8_t fileID;
 
-  fileID = OpenDataFile(FileName, NULL);
+  fileID = OpenDataFile(FileName, "CHIPNSFX", NULL /* No size. */);
   if (fileID == BAD_FILE_HANDLE)
-  {
-    fileID = OpenDataFile(FileName, "CHIPNSFX");
-    if (fileID == BAD_FILE_HANDLE)
-      goto ErrorExit;
-  }
+    goto ErrorExit;
 
   bzero(gLoadedMusic, MAX_MUSIC_BUFFER_SIZE); /* For easier debugging. */
   amountRead = rn_fileHandleReadSeq(fileID, gLoadedMusic,
@@ -332,8 +339,9 @@ void SoundUpdateIfNeeded(void)
    given VRAM address.  If Triplicate is TRUE then data is also written to
    VRAM address + 2K and VRAM address + 4K.  Uses g_TempBuffer, which can be
    smaller than the AmountToCopy.  Updates sound tick as needed so you can have
-   music playing during loading (assuming the frame interrupt is working).
-   Returns FALSE if there wasn't enough data in the file.  TRUE if it succeeded.
+   music playing during loading (assuming the frame counter interrupt is
+   working).  Returns FALSE if there wasn't enough data in the file.  TRUE if
+   it succeeded.
 */
 /* Optionally read less in each chunk for smoother sound, but slower load. */
 /* #define MAX_COPY_TO_VRAM_READ_SIZE (TEMPBUFFER_LEN / 2) */
@@ -420,151 +428,147 @@ static void PrintMissingDataError(void)
 }
 
 
-#ifdef NABU_H
-/* Read a character mapped screen picture, with fonts and sprites, into video
-   RAM.  The original file is *.DAT created by ICVGM (a Windows tool), which
-   gets assembled into a binary file.  Since we're running in graphics mode 2,
-   the font needs to be triplicated for each third of the screen.  Uses
-   g_TempBuffer.  Returns true if successful, false (and prints a debug message)
-   if it couldn't open the file or there isn't enough data in the file.
+/* Read a character mapped screen picture from a file with that name, and stores
+   it in video memory (which means the user sees it loading).  Preferably the
+   file name includes an extension, though if it doesn't we will use the file
+   size to determine what kind of file it is.  We won't try possible extensions
+   if the file doesn't exist.  The various kinds of file are:
+
+   *.NSCR has text, fonts and sprites.  The original file is *.DAT created by
+   ICVGM (a Windows tool), which gets assembled into a binary file.  Since
+   we're running in graphics mode 2, the font needs to be triplicated for each
+   third of the screen.
+
+   *.NCHR Has just the characters making up the screen, assumes fonts are
+   already loaded by a previous .NSCR load.  Thus it loads really quickly.
+   Can be generated by only using the first part of a binary file created by
+   assembling output from ICVGM.
+
+   .*NFUL Read a full screen bitmap (no usable fonts so printing text doesn't
+   work) into video RAM.  Usually a *.NFUL file created by the Dithertron
+   online tool.  https://8bitworkshop.com/dithertron/#sys=msx
+
+   Uses g_TempBuffer.  Returns TRUE if successful, FALSE (and prints a debug
+   message) if it couldn't open the file or there isn't enough data in the
+   file.
 */
-bool LoadScreenNSCR(const char *FileName)
+bool LoadScreen(const char *FileName)
 {
   uint8_t fileID = BAD_FILE_HANDLE;
   bool returnCode = false;
+  int32_t fileSize = 0;
 
-  fileID = OpenDataFile(FileName, NULL);
+  fileID = OpenDataFile(FileName, NULL /* No extension */, &fileSize);
   if (fileID == BAD_FILE_HANDLE)
+    goto ErrorExit;
+
+#ifdef NABU_H
+  /* Figure out which kind of file it is.  Extension is the first clue, file
+     size is the second.  Hunt for the last period in the file name to find the
+     extension.  Stop at a directory boundary (/ or \) since we don't care if
+     the directory name has a period in it.  Watch out for empty string name. */
+
+  enum FileTypesEnum {
+    FT_NONE = 0,
+    FT_NFUL,
+    FT_NSCR,
+    FT_NCHR} fileType;
+
+  const char *pExtension = FileName + strlen(FileName);
+  while (pExtension != FileName)
   {
-    fileID = OpenDataFile(FileName, "NSCR");
-    if (fileID == BAD_FILE_HANDLE)
-      goto ErrorExit;
+    if (*pExtension == '.' || *pExtension == '/' || *pExtension == '\\')
+      break;
+    pExtension--;
+  }
+  fileType = FT_NONE;
+  if (strcasecmp(pExtension, ".NFUL") == 0)
+    fileType = FT_NFUL;
+  else if (strcasecmp(pExtension, ".NSCR") == 0)
+    fileType = FT_NSCR;
+  else if (strcasecmp(pExtension, ".NCHR") == 0)
+    fileType = FT_NCHR;
+
+  /* If no known extension, use file size to determine the kind of picture. */
+
+  if (fileType == FT_NONE)
+  {
+    if (fileSize < 6976)
+      fileType = FT_NCHR; /* Usually .NCHR is 768 bytes. */
+    else if (fileSize < 12288)
+      fileType = FT_NSCR; /* Usually .NSCR is 6976 bytes. */
+    else
+      fileType = FT_NFUL; /* Usually .NFUL is 12288 bytes. */
   }
 
+  /* Reset colours to black and white, for picture types where we are loading
+     colour data, so that it looks better as the pixels load. */
+
 #if RESET_SCREEN_TO_BLACK_AND_WHITE
-  SetColoursToBlackAndWhite();
+  if (fileType != FT_NCHR)
+    SetColoursToBlackAndWhite();
 #endif
 
   /* Load name table. */
-  if (!CopyFileToVRAM(768, fileID, _vdpPatternNameTableAddr, false))
-    goto ErrorMissingData;
 
-  /* Load tile patterns. */
-  if (!CopyFileToVRAM(2048, fileID, _vdpPatternGeneratorTableAddr, true))
-    goto ErrorMissingData;
-
-  /* Load tile colours. */
-  if (!CopyFileToVRAM(2048, fileID, _vdpColorTableAddr, true))
-    goto ErrorMissingData;
-
-  /* Load sprite patterns. */
-  if (!CopyFileToVRAM(2048, fileID, _vdpSpriteGeneratorTableAddr, false))
-    goto ErrorMissingData;
-
-  returnCode = true;
-  goto ErrorExit;
-
-ErrorMissingData:
-  PrintMissingDataError();
-
-ErrorExit:
-  CloseDataFile(fileID);
-  return returnCode;
-}
-#endif /* NABU_H */
-
-
-#ifdef NABU_H
-/* Read just the characters making up the screen, assumes fonts are already
-   loaded.  Can be generated by only using the first part of a *.DAT created
-   by ICVGM (a Windows tool), assembled into a binary file.  Uses g_TempBuffer.
-   Returns true if successful, false (and prints a debug message) if it
-   couldn't open the file or there isn't enough data in the file.
-*/
-bool LoadScreenNCHR(const char *FileName)
-{
-  uint8_t fileID = BAD_FILE_HANDLE;
-  bool returnCode = false;
-
-  fileID = OpenDataFile(FileName, NULL);
-  if (fileID == BAD_FILE_HANDLE)
+  if (fileType == FT_NFUL)
   {
-    fileID = OpenDataFile(FileName, "NCHR");
-    if (fileID == BAD_FILE_HANDLE)
-      goto ErrorExit;
-  }
-
-  /* Load name table. */
-  if (!CopyFileToVRAM(768, fileID, _vdpPatternNameTableAddr, false))
-    goto ErrorMissingData;
-
-  returnCode = true;
-  goto ErrorExit;
-
-ErrorMissingData:
-  PrintMissingDataError();
-
-ErrorExit:
-  CloseDataFile(fileID);
-  return returnCode;
-}
-#endif /* NABU_H */
-
-
-#ifdef NABU_H
-/* Read a full screen bitmap (no usable fonts so printing text doesn't work)
-   into video RAM.  Usually a *.NFUL file created by Dithertron.  Uses
-   g_TempBuffer.  Returns true if successful, false (and prints a debug message)
-   if it couldn't open the file or there isn't enough data in the file.
-*/
-bool LoadScreenNFUL(const char *FileName)
-{
-  uint8_t fileID = BAD_FILE_HANDLE;
-  bool returnCode = false;
-
-  fileID = OpenDataFile(FileName, NULL);
-  if (fileID == BAD_FILE_HANDLE)
-  {
-    fileID = OpenDataFile(FileName, "NFUL");
-    if (fileID == BAD_FILE_HANDLE)
-      goto ErrorExit;
-  }
-
-#if RESET_SCREEN_TO_BLACK_AND_WHITE
-  SetColoursToBlackAndWhite();
-#endif
-
-  /* Reset the name table to the identity function. */
-
-  vdp_setWriteAddress(_vdpPatternNameTableAddr);
-  { /* Put in a block so i and j are temporary variables. */
-    uint8_t i = 3;
-    do {
-      uint8_t j = 0;
+    /* Reset the name table to the identity function for full screen bitmap. */
+    vdp_setWriteAddress(_vdpPatternNameTableAddr);
+    { /* Put in a block so i and j are temporary variables. */
+      uint8_t i = 3;
       do {
-        IO_VDPDATA = j++;
-      } while (j != 0);
-    } while (--i != 0);
+        uint8_t j = 0;
+        do {
+          IO_VDPDATA = j++;
+        } while (j != 0);
+      } while (--i != 0);
+    }
+    SoundUpdateIfNeeded();
   }
-  SoundUpdateIfNeeded();
+  else /* .NCHR and .NSCR have name table as the first thing in the file. */
+  {
+    if (!CopyFileToVRAM(768, fileID, _vdpPatternNameTableAddr, false))
+      goto ErrorMissingData;
+  }
 
-  /* Load tile patterns. */
-  if (!CopyFileToVRAM(6144, fileID, _vdpPatternGeneratorTableAddr, false))
-    goto ErrorMissingData;
+  /* Load pattern table and colours for the patterns.  NCHR doesn't have any.
+     NSCR also has sprite data. */
 
-  /* Load tile colours. */
-  if (!CopyFileToVRAM(6144, fileID, _vdpColorTableAddr, false))
-    goto ErrorMissingData;
+  if (fileType == FT_NFUL)
+  {
+    /* Load tile patterns. */
+    if (!CopyFileToVRAM(6144, fileID, _vdpPatternGeneratorTableAddr, false))
+      goto ErrorMissingData;
+
+    /* Load tile colours. */
+    if (!CopyFileToVRAM(6144, fileID, _vdpColorTableAddr, false))
+      goto ErrorMissingData;
+  }
+  else if (fileType == FT_NSCR)
+  {
+    /* Load tile patterns. */
+    if (!CopyFileToVRAM(2048, fileID, _vdpPatternGeneratorTableAddr, true))
+      goto ErrorMissingData;
+
+    /* Load tile colours. */
+    if (!CopyFileToVRAM(2048, fileID, _vdpColorTableAddr, true))
+      goto ErrorMissingData;
+
+    /* Load sprite patterns. */
+    if (!CopyFileToVRAM(2048, fileID, _vdpSpriteGeneratorTableAddr, false))
+      goto ErrorMissingData;
+  }
 
   returnCode = true;
   goto ErrorExit;
 
 ErrorMissingData:
   PrintMissingDataError();
+#endif /* NABU_H */
 
 ErrorExit:
   CloseDataFile(fileID);
   return returnCode;
 }
-#endif /* NABU_H */
 

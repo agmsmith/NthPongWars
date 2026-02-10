@@ -6,7 +6,7 @@
 # AI players just bounce around at a medium speed.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
-Music: SQUAROOT.CHIPNSFX
+Music: SQUAROOT
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 2, 0, 32, Fill in the blanks!  Fire/Yes

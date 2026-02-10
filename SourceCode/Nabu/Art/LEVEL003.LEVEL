@@ -1,7 +1,7 @@
 # Level #3.  AGMS20251219
 GameMode: PongWar
-Music: SQUAROOT.CHIPNSFX
-Music: MELTDOWN.CHIPNSFX
+Music: SQUAROOT
+Music: MELTDOWN
 Screen: NTHPONG1.NSCR
 ScreenText: 21, 9, 9, 32, _The Long One_
 

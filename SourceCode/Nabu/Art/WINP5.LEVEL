@@ -1,7 +1,7 @@
 # Player #5 (not a player) Wins.
 GameMode: Slide
 Music: Silence
-Music: PINKPNTH.CHIPNSFX
+Music: PINKPNTH
 Screen: WINP5.NFUL
 LevelNext: All, Bookmark
 PlayTimeout: 5

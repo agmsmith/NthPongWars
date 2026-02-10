@@ -1,6 +1,6 @@
 # Player #0 Wins.
 GameMode: Slide
-Music: UNDERWTR.CHIPNSFX
+Music: UNDERWTR
 Screen: WINP0.NFUL
 LevelNext: All, Bookmark
 PlayTimeout: 5

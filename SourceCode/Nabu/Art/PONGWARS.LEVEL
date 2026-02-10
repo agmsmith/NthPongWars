@@ -1,6 +1,6 @@
 # Classic Pong Wars.  AGMS20260102
 GameMode: PongWar
-Music: ONECOLN1.CHIPNSFX
+Music: ONECOLN1
 # Need the font and sprites as usual.
 Screen: NTHPONG1.NSCR
 # But have a different background screen for the game's square play area.

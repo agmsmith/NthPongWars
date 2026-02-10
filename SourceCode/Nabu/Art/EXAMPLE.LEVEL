@@ -52,10 +52,9 @@ GameMode: Slide
 # http://cngsoft.no-ip.org/chipnsfx.htm though with the music files converted
 # to binary for faster loading.  This will start the SQUAROOT.CHIPNSFX file
 # playing.  A default platform specific extension will be used (.CHIPNSFX for
-# NABU computers) if you don't provide one.  Use a music file name of "Silence"
-# to turn off the background music, "Default" to play the built in gameplay
-# music.
-Music: SQUAROOT.CHIPNSFX
+# NABU computers).  Use a music file name of "Silence" to turn off the
+# background music, "Default" to play the built in gameplay music.
+Music: SQUAROOT
 
 # Load a full screen bitmap graphic.  This is a 12KB file, so it will take
 # about 1 second to load (or longer if running with a slow simulated serial
@@ -64,18 +63,16 @@ Music: SQUAROOT.CHIPNSFX
 # character mapped graphics, a full screen is done with a custom font per
 # character.  So you can't play a game or see text when one of these is
 # displayed.  NthPongWarsBuildingDataNotes.txt explains how to make a picture
-# into a *.NFUL file.  This will load TITLESCREEN.NFUL.
+# into a *.NFUL file.  This will load TITLESCREEN.NFUL.  If you use a name
+# without an extension, it will look for a file with no extension and then use
+# the file size to determine which picture format it is.
 Screen: TITLESCREEN.NFUL
 
 # This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
 # about 7KB so it takes half a second to load.  This is the kind of screen you
 # need to see a game correctly, assuming the font and sprite parts have the
-# graphics the game uses.  This example loads NTHPONG1.NSCR.  Note that if you
-# don't specify a file name extension, .NSCR is assumed (it looks for a file
-# without an extension first, wasting time, so it's better to specify the
-# extension).
+# graphics the game uses.  This example loads NTHPONG1.NSCR.
 Screen: NTHPONG1.NSCR
-Screen: NTHPONG1
 
 # This keyword loads just the name table, the characters of a screen (*.NCHR).
 # It's 768 bytes long, so it takes about 1/10 of a second to load.  It's

@@ -409,16 +409,7 @@ bool KeywordScreen(void)
   if (!LevelReadAndTrimLine(screenFileName, sizeof(screenFileName)))
     return true; /* Just ignore missing file name lines. */
 
-  const char *pExtension;
-  pExtension = screenFileName + (strlen(screenFileName) - 5);
-
-  if (strcasecmp(pExtension, ".NFUL") == 0)
-    return LoadScreenNFUL(screenFileName);
-
-  if (strcasecmp(pExtension, ".NCHR") == 0)
-    return LoadScreenNCHR(screenFileName);
-
-  return LoadScreenNSCR(screenFileName);
+  return LoadScreen(screenFileName);
 }
 
 
@@ -971,7 +962,7 @@ bool LoadLevelFile(void)
   sVictoryTimeoutFrame = 0;
   gLevelMaxAIPlayers = MAX_PLAYERS;
 
-  sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL");
+  sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL", NULL /* No size */);
   if (sLevelFileHandle == BAD_FILE_HANDLE)
     return false; /* OpenDataFile will have printed an error message. */
   DebugPrintString("Now loading level file \"");

@@ -1,6 +1,6 @@
 # Player #3 Wins.
 GameMode: Slide
-Music: ONECOLN1.CHIPNSFX
+Music: ONECOLN1
 Screen: WINP3.NFUL
 LevelNext: All, Bookmark
 PlayTimeout: 5

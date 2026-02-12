@@ -51,6 +51,7 @@ uint8_t gLevelMaxAIPlayers = MAX_PLAYERS;
 
 uint8_t g_FrictionSpeed = 16;
 fx g_FrictionSpeedFx;
+uint8_t g_FrictionShift = 7;
 
 fx g_SeparationVelocityFxAdd;
 fx g_SeparationVelocityFxStepAdd;
@@ -1394,10 +1395,16 @@ void UpdatePlayerInputs(void)
       if (pPlayer->speed >= g_FrictionSpeed)
       {
         static fx portionOfVelocity;
-        DIV256_FX(pPlayer->velocity_x, portionOfVelocity);
-        SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity, &pPlayer->velocity_x);
-        DIV256_FX(pPlayer->velocity_y, portionOfVelocity);
-        SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity, &pPlayer->velocity_y);
+
+        COPY_FX(&pPlayer->velocity_x, &portionOfVelocity);
+        DIV2Nth_FX(&portionOfVelocity, g_FrictionShift);
+        SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity,
+          &pPlayer->velocity_x);
+
+        COPY_FX(&pPlayer->velocity_y, &portionOfVelocity);
+        DIV2Nth_FX(&portionOfVelocity, g_FrictionShift);
+        SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity,
+          &pPlayer->velocity_y);
       }
   #endif
 

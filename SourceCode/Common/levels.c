@@ -841,6 +841,19 @@ bool KeywordPhysicsFrictionSpeed(void)
 }
 
 
+/* The amount of velocity to remove due to friction, as a power of 2.  Divides
+   velocity by 2**n and then subtracts that from the velocity.
+*/
+bool KeywordPhysicsFrictionShift(void)
+{
+  if (!LevelReadNumericArguments(1))
+    return false;
+
+  g_FrictionShift = sNumericArgumentsDecoded[0];
+  return true;
+}
+
+
 /* Increase the velocity of a colliding player by this many quarter pixels per
    frame.
 */
@@ -914,6 +927,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"BoardScreen", KeywordBoardScreen},
   {"BoardTileData", KeywordBoardTileData},
   {"PhysicsFrictionSpeed", KeywordPhysicsFrictionSpeed},
+  {"PhysicsFrictionShift", KeywordPhysicsFrictionShift},
   {"PhysicsSeparatePlayersSpeed", KeywordPhysicsSeparatePlayersSpeed},
   {"PhysicsMoreStepsSpeed", KeywordPhysicsMoreStepsSpeed},
   {"PhysicsTurnRate", KeywordPhysicsTurnRate},

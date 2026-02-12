@@ -19,6 +19,7 @@ RemovePlayers:
 
 # Set default physics behaviour.
 PhysicsFrictionSpeed: 13
+PhysicsFrictionShift: 7
 PhysicsSeparatePlayersSpeed: 6
 PhysicsMoreStepsSpeed: 16
 PhysicsTurnRate: 8

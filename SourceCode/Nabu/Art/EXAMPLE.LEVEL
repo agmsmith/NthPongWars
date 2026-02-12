@@ -258,11 +258,18 @@ TileQuota: B, 2 # OWNER_PUP_BASH_WALL
 # The speed at which velocity starts being reduced by friction.  In quarter
 # pixels speed per frame.  Below this speed, players move effortlessly, good
 # for classic pong-wars simulation.  At or above this speed, players get slowed
-# down slightly (1/256 of velocity reduced each frame).  The recommended value
-# is to turn on friction if you are moving at or faster than a half tile width
-# (tiles are 8 pixels wide, 4 pixels * quarter = 16), since that's when extra
-# physics steps get added.  Maximum 255.
+# down slightly.  The recommended value is to turn on friction if you are
+# moving at or faster than a half tile width (tiles are 8 pixels wide,
+# 4 pixels * quarter = 16), since that's when extra physics steps get added.
+# Maximum 255.
 PhysicsFrictionSpeed: 16
+
+# How much should a player's speed be slowed down each frame by friction?
+# It's expressed as a power of 2 shift.  A good value is 7 (2**7 = 128) which
+# slows down by subtracting velocity/128 from the velocity.  8 is nice too.
+# 0 means slow down velocity by (2**0 = 1) velocity/1, which makes velocity
+# zero so everything doesn't move, not too useful.
+PhysicsFrictionShift: 7
 
 # When players collide and they are moving too slow (making them collide again
 # in the next frame, we use FrictionSpeed to decide if they are slow), increase

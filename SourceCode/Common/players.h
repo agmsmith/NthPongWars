@@ -420,6 +420,13 @@ extern int16_t g_play_area_wall_top_y;
 extern uint8_t g_FrictionSpeed;
 extern fx g_FrictionSpeedFx;
 
+/* How much should a player's speed be slowed down each frame by friction?
+   It's expressed as a power of 2 shift.  A good value is 7 (2**7 = 128) which
+  slows down by subtracting velocity/128 from the velocity.  8 is nice too.
+  0 means slow down velocity by (2**0 = 1) velocity/1, which makes velocity
+  zero so everything doesn't move, not too useful. */
+extern uint8_t g_FrictionShift;
+
 /* When players collide and they are moving too slow (making them collide again
    in the next frame, we use g_FrictionSpeed to decide if they are slow),
    increase the velocity of a player by this many pixels per frame.  If you

@@ -46,10 +46,10 @@ BoardTileData:
 END
 
 # Set up default Power-up quotas.
-TileQuota: N, 1 /* OWNER_PUP_NORMAL */
-TileQuota: H, 3 /* OWNER_PUP_STOP, using H for Halt */
-TileQuota: F, 2 /* OWNER_PUP_FLY */
-TileQuota: W, 2 /* OWNER_PUP_WIDER */
-TileQuota: B, 2 /* OWNER_PUP_BASH_WALL */
-TileQuota: S, 2 /* OWNER_PUP_SOLID */
+TileQuota: N, 1 # OWNER_PUP_NORMAL
+TileQuota: H, 3 # OWNER_PUP_STOP, using H for Halt
+TileQuota: F, 2 # OWNER_PUP_FLY
+TileQuota: W, 2 # OWNER_PUP_WIDER
+TileQuota: B, 2 # OWNER_PUP_BASH_WALL
+TileQuota: S, 2 # OWNER_PUP_SOLID
 

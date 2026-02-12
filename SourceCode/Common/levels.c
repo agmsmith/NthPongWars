@@ -826,9 +826,68 @@ bool KeywordTileQuota(void)
 }
 
 
+/* The speed at which velocity starts being reduced by friction.  In quarter
+   pixels speed per frame.
+*/
+bool KeywordPhysicsFrictionSpeed(void)
+{
+  if (!LevelReadNumericArguments(1))
+    return false;
+
+  g_FrictionSpeed = sNumericArgumentsDecoded[0];
+  INT_TO_FX(g_FrictionSpeed, g_FrictionSpeedFx);
+  DIV2Nth_FX(&g_FrictionSpeedFx, 2); /* Divide by 4 = quarters */
+  return true;
+}
+
+
+/* Increase the velocity of a colliding player by this many quarter pixels per
+   frame.
+*/
+bool KeywordPhysicsSeparatePlayersSpeed(void)
+{
+  if (!LevelReadNumericArguments(1))
+    return false;
+
+  INT_TO_FX(sNumericArgumentsDecoded[0], g_SeparationVelocityFxAdd);
+  DIV2Nth_FX(&g_SeparationVelocityFxAdd, 2); /* Divide by 4 = quarters */
+  return true;
+}
+
+
+/*  If the player is moving at or faster than this many quarter pixels per
+    physics step, add more steps.
+*/
+bool KeywordPhysicsMoreStepsSpeed(void)
+{
+  if (!LevelReadNumericArguments(1))
+    return false;
+
+  g_PhysicsStepSizeLimit = sNumericArgumentsDecoded[0];
+  if (g_PhysicsStepSizeLimit <= 0)
+    g_PhysicsStepSizeLimit = 1;
+  return true;
+}
+
+
+/* How fast can the players turn?  Measured in quarter pixels per frame.
+*/
+
+bool KeywordPhysicsTurnRate(void)
+{
+  if (!LevelReadNumericArguments(1))
+    return false;
+
+  g_PhysicsTurnRate = sNumericArgumentsDecoded[0];
+  INT_TO_FX(g_PhysicsTurnRate, g_TurnRateFx);
+  DIV2Nth_FX(&g_TurnRateFx, 2); /* Divide by 4 = quarters */
+  return true;
+}
+
+
 /******************************************************************************
  * Handle all level keywords.  We have a table of the word and the
- * corresponding function to call.
+ * corresponding function to call (in order of most frequent first).
  */
 
 typedef bool (*KeywordFunctionPointer)(void);
@@ -840,13 +899,13 @@ typedef struct KeyWordCallStruct {
 } *KeyWordCallPointer;
 
 static struct KeyWordCallStruct kKeywordFunctionTable[] = {
-  {"Screen", KeywordScreen},
-  {"ScreenText", KeywordTextOnScreen},
-  {"Music", KeywordBackgroundMusic},
-  {"PlayTimeout", KeywordPlayTimeout},
   {"LevelNext", KeywordLevelNext},
+  {"ScreenText", KeywordTextOnScreen},
+  {"TileQuota", KeywordTileQuota},
+  {"Music", KeywordBackgroundMusic},
+  {"Screen", KeywordScreen},
   {"LevelBookmark", KeywordLevelBookmark},
-  {"RemovePlayers", KeywordRemovePlayers},
+  {"PlayTimeout", KeywordPlayTimeout},
   {"MaxAIPlayers", KeywordMaxAIPlayers},
   {"AIPlayerCodeStart", KeywordAIPlayerCodeStart},
   {"InitialCount", KeywordCountdownStart},
@@ -854,7 +913,11 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"BoardSize", KeywordBoardSize},
   {"BoardScreen", KeywordBoardScreen},
   {"BoardTileData", KeywordBoardTileData},
-  {"TileQuota", KeywordTileQuota},
+  {"PhysicsFrictionSpeed", KeywordPhysicsFrictionSpeed},
+  {"PhysicsSeparatePlayersSpeed", KeywordPhysicsSeparatePlayersSpeed},
+  {"PhysicsMoreStepsSpeed", KeywordPhysicsMoreStepsSpeed},
+  {"PhysicsTurnRate", KeywordPhysicsTurnRate},
+  {"RemovePlayers", KeywordRemovePlayers},
   {NULL, NULL}
 };
 

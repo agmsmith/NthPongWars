@@ -17,3 +17,9 @@ PlayTimeout: 5
 # Remove all players and reset win counts to zero.
 RemovePlayers:
 
+# Set default physics behaviour.
+PhysicsFrictionSpeed: 13
+PhysicsSeparatePlayersSpeed: 6
+PhysicsMoreStepsSpeed: 16
+PhysicsTurnRate: 8
+

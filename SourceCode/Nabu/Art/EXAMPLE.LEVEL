@@ -199,29 +199,29 @@ BoardScroll: 0
 # tile data).  The player tiles are used for selecting a starting location
 # for the corresponding player.  The letter codes (upper/lower case is
 # significant) currently are:
-# '.', /* OWNER_EMPTY */
-# '1', /* OWNER_PLAYER_1 */
-# '2', /* OWNER_PLAYER_2 */
-# '3', /* OWNER_PLAYER_3 */
-# '4', /* OWNER_PLAYER_4 */
-# '+', /* OWNER_WALL_INDESTRUCTIBLE */
-# '(', /* OWNER_WALL_DESTRUCTIBLE_P1 */
-# ')', /* OWNER_WALL_DESTRUCTIBLE_P2 */
-# '[', /* OWNER_WALL_DESTRUCTIBLE_P3 */
-# ']', /* OWNER_WALL_DESTRUCTIBLE_P4 */
-# 'N', /* OWNER_PUP_NORMAL */
-# 'H', /* OWNER_PUP_STOP, using H for Halt */
-# 'F', /* OWNER_PUP_FLY */
-# 'W', /* OWNER_PUP_WIDER */
-# 'B', /* OWNER_PUP_BASH_WALL */
-# 'S', /* OWNER_PUP_SOLID */
+# '.' # OWNER_EMPTY
+# '1' # OWNER_PLAYER_1
+# '2' # OWNER_PLAYER_2
+# '3' # OWNER_PLAYER_3
+# '4' # OWNER_PLAYER_4
+# '+' # OWNER_WALL_INDESTRUCTIBLE
+# '(' # OWNER_WALL_DESTRUCTIBLE_P1
+# ')' # OWNER_WALL_DESTRUCTIBLE_P2
+# '[' # OWNER_WALL_DESTRUCTIBLE_P3
+# ']' # OWNER_WALL_DESTRUCTIBLE_P4
+# 'N' # OWNER_PUP_NORMAL
+# 'H' # OWNER_PUP_STOP, using H for Halt
+# 'F' # OWNER_PUP_FLY
+# 'W' # OWNER_PUP_WIDER
+# 'B' # OWNER_PUP_BASH_WALL
+# 'S' # OWNER_PUP_SOLID
 BoardTileData:
 1 . . . . . . . . . 2 . . . . . . . . . . 3 . . . . . . . . . 4
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 # A row of halt/stop markers.  You can break through them.
-# Maybe later we'll have STOPs that are indestructible, or ones
-# which only one particular player can destroy.
+# We also can have walls that are indestructible, or ones which only
+# one particular player can destroy.
 H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H
 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 W . . . . . . . . . W . . . . . . . . . . W . . . . . . . . . W
@@ -245,7 +245,50 @@ END
 # an indestructible tile.  Don't go overboard with the animated tiles, they
 # take up a lot of CPU time and more than a total of 10 or so will slow the
 # game down.
-TileQuota: N, 1
-TileQuota: W, 3
-TileQuota: B, 2
+TileQuota: N, 1 # OWNER_PUP_NORMAL
+TileQuota: W, 3 # OWNER_PUP_WIDER
+TileQuota: B, 2 # OWNER_PUP_BASH_WALL
+
+# The next few are physics properties which change the behaviour of the game.
+# Note that it can go into silly bullet time if players move too fast with
+# accurate physics enabled.  That's because it takes longer to compute a frame
+# in multiple small steps to handle the higher speed, so the fastest player
+# seems to move at normal speeds while everyone else and the music is slow.
+
+# The speed at which velocity starts being reduced by friction.  In quarter
+# pixels speed per frame.  Below this speed, players move effortlessly, good
+# for classic pong-wars simulation.  At or above this speed, players get slowed
+# down slightly (1/256 of velocity reduced each frame).  The recommended value
+# is to turn on friction if you are moving at or faster than a half tile width
+# (tiles are 8 pixels wide, 4 pixels * quarter = 16), since that's when extra
+# physics steps get added.  Maximum 255.
+PhysicsFrictionSpeed: 16
+
+# When players collide and they are moving too slow (making them collide again
+# in the next frame, we use FrictionSpeed to decide if they are slow), increase
+# the velocity of a player by this many quarter pixels per frame.  If you make
+# this too big, you'll get into slow bullet time due to players moving too
+# fast.  But it makes for very dramatic player collisions!  The recommended
+# value is 1 pixel per frame, so 4 quarter pixels.
+PhysicsSeparatePlayersSpeed: 4
+
+# If the player is moving at or faster than this much per physics step, add
+# more steps.  The idea is that you don't want to have players going through
+# tiles, so keep the physics velocity step updates half a tile at most
+# (otherwise a player can move more than half way through a tile and then when
+# finding the nearest side of the tile to do bouncing, the wrong side of the
+# tile can be choosen).  Units of quarter pixels, so 8 pixel wide tile, want
+# 4 pixels, so step size should be 16 for accurate collisions.  If you make
+# it larger, the game moves faster (frame rate increases due to not doing as
+# many steps) but you have inaccurate tile and player collisions.  So a level
+# with walls that you want to be impenetrable should keep this at 16.
+PhysicsMoreStepsSpeed: 16
+
+# How fast can the players turn?  Measured in quarter pixels per frame.  If
+# you're moving too fast, you have a wider turn.  If your speed is less than
+# this, you have a sharp turn.  Set to zero to have decent but not super sharp
+# turns all the time (makes the frame rate slightly slower by calculating rate
+# from current velocity).  Set to a large value like 255 to have sharp turns
+# all the time.  A good rate is 1.5 pixels, so 6 quarter pixels.
+PhysicsTurnRate: 6
 

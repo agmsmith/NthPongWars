@@ -412,19 +412,46 @@ extern int16_t g_play_area_wall_right_x;
 extern int16_t g_play_area_wall_top_y;
 
 /* When player speed is greater than this in quarter pixels/frame, friction is
-   applied.  Needs to be under 8 pixels per frame (32 in value), which is when
+   applied.  Needs to be under 4 pixels per frame (16 in value), which is when
    an extra physics step gets added and that slows everything down.  Also if it
    is too high, AI players get stuck in corners bouncing off the sides while
    trying to get to the corner tile.  Also used for controlling turning radius
    while steering, so things get wild if you go too fast. */
-#define FRICTION_SPEED 12
+extern uint8_t g_FrictionSpeed;
+extern fx g_FrictionSpeedFx;
 
-/* Amount to add to the velocity of one of the players to separate them if
-   needed.  g_SeparationVelocityFxAdd set once in in InitialisePlayers(),
-   g_SeparationVelocityFxStepAdd updated in Simulate() when the step size
-   changes. */
+/* When players collide and they are moving too slow (making them collide again
+   in the next frame, we use g_FrictionSpeed to decide if they are slow),
+   increase the velocity of a player by this many pixels per frame.  If you
+   make this too big, you'll get into slow bullet time due to players moving
+   too fast.  But it makes for very dramatic player collisions!  The
+   recommended value is 1 pixel per frame.  g_SeparationVelocityFxAdd set once
+   in in InitialisePlayers() and by levels, g_SeparationVelocityFxStepAdd
+   updated in Simulate() when the step size changes. */
 extern fx g_SeparationVelocityFxAdd;
 extern fx g_SeparationVelocityFxStepAdd;
+
+/* If the player is moving at or faster than this many quarter pixels per
+   physics step, add more steps.  The idea is that you don't want to have
+   players going through tiles, so keep the physics velocity step updates half
+   a tile at most (otherwise a player can move more than half way through a
+   tile and then when finding the nearest side of the tile to do bouncing,
+   the wrong side of the tile can be choosen).  Units of quarter pixels, so
+   8 pixel wide tile, want 4 pixels, so step size should be 16 for accurate
+   collisions.  If you make it larger, the game moves faster (frame rate
+   increases due to not doing as many steps) but you have inaccurate tile
+   and player collisions.  So a level with walls that you want to be
+   impenetrable should keep this at 16.  Minimum value is 1. */
+extern uint8_t g_PhysicsStepSizeLimit;
+
+/* How fast can the players turn?  Measured in quarter pixels per frame.  If
+   you're moving too fast, you have a wider turn.  If your speed is less than
+   this, you have a sharp turn.  Set to zero to have decent but not super sharp
+   turns all the time (makes the frame rate slightly slower by calculating rate
+   from current velocity).  Set to a large value like 255 to have sharp turns
+   all the time.  A good rate is 1.5 pixels, so 6 quarter pixels. */
+extern uint8_t g_PhysicsTurnRate;
+extern fx g_TurnRateFx; /* Same value in pixels per frame. */
 
 extern void InitialisePlayers(void);
 /* Set up the initial player data, mostly colours and animations. */

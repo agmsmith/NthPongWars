@@ -237,8 +237,9 @@ void Simulate(void)
   (numberOfSteps & 0x80) == 0;
   numberOfSteps += numberOfSteps, stepShiftCount++)
   {
-    /* See if the step size is less than half a tile width. */
-    if (maxVelocity < TILE_PIXEL_WIDTH * 4 / 2 /* quarter pixel units */)
+    /* See if the step size is less than half a tile width, or whatever the
+       level file says is an acceptable simulation resolution. */
+    if (maxVelocity < g_PhysicsStepSizeLimit)
       break; /* Step size is small enough now. */
     maxVelocity >>= 1;
   }
@@ -256,8 +257,9 @@ void Simulate(void)
 
   if (s_PreviousStepShiftCount != stepShiftCount)
   {
-    g_SeparationVelocityFxStepAdd.as_int32 =
-      g_SeparationVelocityFxAdd.as_int32 >> stepShiftCount;
+    COPY_FX(&g_SeparationVelocityFxAdd, &g_SeparationVelocityFxStepAdd);
+    if (stepShiftCount != 0)
+      DIV2Nth_FX(&g_SeparationVelocityFxStepAdd, stepShiftCount);
     s_PreviousStepShiftCount = stepShiftCount;
   }
 
@@ -419,15 +421,12 @@ void Simulate(void)
       COPY_ABS_FX(&deltaVelXfx, &absVelX);
       COPY_ABS_FX(&deltaVelYfx, &absVelY);
 
-      fx tooSlowSpeedFx;
-      INT_TO_FX(FRICTION_SPEED, tooSlowSpeedFx);
-
       /* Find out which velocity component is larger. */
       if (COMPARE_FX(&absVelX, &absVelY) >= 0)
       {
         /* X velocity difference is bigger than Y.  Is it big enough to make
            the players separate already fast enough?  If it's small, tweak. */
-        if (COMPARE_FX(&absVelX, &tooSlowSpeedFx) < 0)
+        if (COMPARE_FX(&absVelX, &g_FrictionSpeedFx) < 0)
         {
           if (IS_NEGATIVE_FX(&deltaVelXfx)) /* Other player is moving right. */
           {
@@ -449,7 +448,7 @@ void Simulate(void)
       {
         /* Is it big enough to make the players separate already fast enough?
            If it's small, tweak. */
-        if (COMPARE_FX(&absVelY, &tooSlowSpeedFx) < 0)
+        if (COMPARE_FX(&absVelY, &g_FrictionSpeedFx) < 0)
         {
           if (IS_NEGATIVE_FX(&deltaVelYfx)) /* Other player is moving down. */
           {

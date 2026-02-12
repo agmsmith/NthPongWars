@@ -22,6 +22,12 @@ RemovePlayers:
 MaxAIPlayers: 2
 PlayTimeout: 600
 
+# Set fast inaccurate physics behaviour.
+PhysicsFrictionSpeed: 20
+PhysicsSeparatePlayersSpeed: 10
+PhysicsMoreStepsSpeed: 16
+PhysicsTurnRate: 10
+
 BoardSize: 22, 22
 BoardScreen: 5, 1, 22, 22, 0, 0
 BoardTileData:

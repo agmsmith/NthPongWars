@@ -12,7 +12,7 @@ LevelNext: Right, CREDITS
 LevelNext: Up, PONGWARS
 LevelNext: Down, TUTORIAL001
 LevelNext: Timeout, GAMEDEMO
-PlayTimeout: 5
+PlayTimeout: 8
 
 # Remove all players and reset win counts to zero.
 RemovePlayers:

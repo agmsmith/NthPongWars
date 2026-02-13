@@ -135,6 +135,7 @@ target_list_item_record g_target_list[] = {
   {0, TARGET_CODE_STEER}, /* Steer to your own corner. */
   {0, TARGET_CODE_POWER_UP}, /* Don't chase power-ups. */
   {16, TARGET_CODE_SPEED}, /* Faster speed. */
+  {11, 11}, /* Head to center of board, makes for a diagonal movement. */
   {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
   {200, TARGET_CODE_DELAY}, /* Delay a while for idle bouncing. */
   {8, TARGET_CODE_SPEED}, /* Go below friction speed. */
@@ -142,10 +143,9 @@ target_list_item_record g_target_list[] = {
   {2, TARGET_CODE_STEER}, /* Steer to opposite corner. */
   {0, TARGET_CODE_POWER_UP}, /* Don't chase power-ups, much. */
   {16, TARGET_CODE_SPEED}, /* Faster speed. */
+  {11, 11}, /* Head to center of board, makes for a diagonal movement. */
   {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
   {200, TARGET_CODE_DELAY}, /* Delay a while for idle bouncing. */
-  {60, TARGET_CODE_GOTO},
-  {60, TARGET_CODE_GOTO},
   {60, TARGET_CODE_GOTO},
   {60, TARGET_CODE_GOTO},
   {60, TARGET_CODE_GOTO},

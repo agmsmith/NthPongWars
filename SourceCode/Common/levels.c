@@ -768,7 +768,8 @@ bool KeywordBoardTileData(void)
         player_pointer pPlayer = g_player_array + iPlayer;
         pPlayer->starting_level_pixel_x = pTile->pixel_center_x;
         pPlayer->starting_level_pixel_y = pTile->pixel_center_y;
-        pPlayer->starting_level_pixel_flying_height = FLYING_ABOVE_TILES_HEIGHT;
+        pPlayer->starting_level_pixel_flying_height =
+          2 * FLYING_ABOVE_TILES_HEIGHT; /* Players slowly lower at start. */
 
         /* Also make it a fully aged / solid tile.  Mostly useful for the
            classic Pong Wars look. */

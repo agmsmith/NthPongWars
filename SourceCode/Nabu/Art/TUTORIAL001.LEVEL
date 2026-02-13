@@ -51,3 +51,6 @@ END
 # No power-ups or other funny tiles.
 TileQuota: N, 0
 
+# Use solid tiles to keep it simple initially, no age effects.
+TileAgeFeature: 0
+

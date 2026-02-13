@@ -299,3 +299,9 @@ PhysicsMoreStepsSpeed: 16
 # all the time.  A good rate is 1.5 pixels, so 6 quarter pixels.
 PhysicsTurnRate: 6
 
+# Turn on or off tile aging.  Tile age on means tiles have eight states with
+# the last one being fully solid.  Also they need more bounces against them to
+# be destroyed.  1 for tiles with ages, 0 for simple on or off tiles (mostly
+# for Classic Pong Wars, makes bash power-up useless).
+TileAgeFeature: 1
+

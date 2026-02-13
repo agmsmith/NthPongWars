@@ -1,12 +1,14 @@
-# Allow players to mix tutorial, by Alexander G. M. Smith.
-# AGMS20260106 - started this file.
-# Tutorial005 is a more open area where players can fight it out.
-LevelVersion: 20260106, NthPongWars
+# The start of the series of tutorial levels, by Alexander G. M. Smith.
+# AGMS20260212 - started this file.
+# Tutorial005 is a box around each player, where they have to get enough
+# tiles of their colour to win, but now with aged tiles and a Solid power-up.
+LevelVersion: 20260209, NthPongWars
 GameMode: PongWar
+Music: SQUAROOT
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
-ScreenText: 22, 5, 0, 32, Open Plan Neighbours!
-ScreenText: 23, 0, 0, 32, More dodging around recommended.
+ScreenText: 22, 2, 0, 32, Fill in the blanks!  Use the
+ScreenText: 23, 0, 0, 32, Solid power-up to fill faster.
 LevelBookmark: TUTORIAL006
 LevelNext: All, TUTORIAL006
 LevelNext: P0, WINP0
@@ -15,32 +17,33 @@ LevelNext: P2, WINP2
 LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
-MaxAIPlayers: 2
-AIPlayerCodeStart: 30, 30, 30, 30
+RemovePlayers:
+MaxAIPlayers: 0
+AIPlayerCodeStart: 80, 80, 80, 80
 BoardSize: 30, 19
-InitialCount: 150
+InitialCount: 100
 BoardScreen: 1, 2, 30, 19, 0, 0
 BoardScroll: 0
 BoardTileData:
-.
-. 1
-.
-.
-. . + + + + + + + + + + + . . . + + + + + + + + + + + +
-.
-. 2
-.
-.
-. . + + + + + + + + + + + . . . + + + + + + + + + + + +
-.
-. 3
-.
-.
-. . + + + + + + + + + + + . . . + + + + + + + + + + + +
-.
-. 4
-.
-.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . S . 1 . . . . . . + . . . . S . 2 . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . S + . . . . . . . . . . . S + .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . S . 3 . . . . . . + . . . . S . 4 . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . S + . . . . . . . . . . . S + .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 END
 
 # No power-ups or other funny tiles.

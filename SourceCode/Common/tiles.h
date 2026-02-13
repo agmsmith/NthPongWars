@@ -51,10 +51,11 @@ typedef enum tile_owner_enum {
   OWNER_PLAYER_3,
   OWNER_PLAYER_4,
   OWNER_WALL_INDESTRUCTIBLE,
-  OWNER_WALL_DESTRUCTIBLE_P1, /* Indestructible to all except player 1. */
-  OWNER_WALL_DESTRUCTIBLE_P2,
-  OWNER_WALL_DESTRUCTIBLE_P3,
-  OWNER_WALL_DESTRUCTIBLE_P4,
+  OWNER_TRACKED_FOR_QUOTA, /* Marks the first tile type we do quotas for. */
+  OWNER_WALL_DESTRUCTIBLE_P1 = OWNER_TRACKED_FOR_QUOTA,
+  OWNER_WALL_DESTRUCTIBLE_P2, /* Indestructible to all except player 2. */
+  OWNER_WALL_DESTRUCTIBLE_P3, /* Indestructible to all except player 3. */
+  OWNER_WALL_DESTRUCTIBLE_P4, /* Indestructible to all except player 4. */
   OWNER_PUP_NORMAL, /* Power-up that makes you normal.  Also first power up. */
   OWNER_PUP_STOP, /* Power-up that makes you stop. */
   OWNER_PUPS_WITH_DURATION, /* Power-ups that have a timeout start here. */
@@ -82,8 +83,8 @@ extern const char g_TileOwnerLetters[OWNER_MAX];
 extern const char *g_TileAnimData[OWNER_MAX];
 
 /* How many of each kind of power-up tile do we want on screen?  Checks every
-   few seconds and makes a new power up if below quota.  Non-power-up quotas
-   are ignored. */
+   few seconds and makes a new power up if below quota.  Only power-ups and
+   destroyable walls quotas are tracked. */
 extern uint8_t g_TileOwnerQuotas[OWNER_MAX];
 
 /* Number of each kind of tile on the screen.  Some are player tiles, some are
@@ -91,6 +92,12 @@ extern uint8_t g_TileOwnerQuotas[OWNER_MAX];
    also need the count of the number of each kind of power-up to determine when
    to make a new one. */
 extern uint16_t g_TileOwnerCounts[OWNER_MAX];
+
+/* Turn on or off tile aging.  Tile age on means tiles have eight states with
+   the last one being fully solid.  Also they need more bounces against them to
+   be destroyed.  1 for tiles with ages, 0 for simple on or off tiles (mostly
+   for Classic Pong Wars). */
+extern uint8_t g_TileAgeFeature;
 
 /* This is the main tile status record.  There is one for each tile in the
    playing area, which can include off-screen tiles if the play area is bigger

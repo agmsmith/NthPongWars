@@ -27,6 +27,7 @@ PhysicsFrictionSpeed: 20
 PhysicsSeparatePlayersSpeed: 10
 PhysicsMoreStepsSpeed: 16
 PhysicsTurnRate: 10
+TileAgeFeature: 0
 
 BoardSize: 22, 22
 BoardScreen: 5, 1, 22, 22, 0, 0
@@ -110,6 +111,9 @@ AIPlayerCodeStart: 60, 60, 60, 60
 
 # Not too much interruption from the power-ups.  But want to bash through a
 # tile in one shot like the original game, so scatter a lot of Bash
-# power-ups around.
-TileQuota: B, 10
+# power-ups around.  Nope, now we have the TileAgeFeature, no bash needed,
+# well except for randomness.
+TileQuota: B, 0
+TileQuota: [, 3 # OWNER_WALL_DESTRUCTIBLE_P3
+TileQuota: ], 3 # OWNER_WALL_DESTRUCTIBLE_P4
 

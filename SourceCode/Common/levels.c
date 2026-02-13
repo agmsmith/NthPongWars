@@ -898,6 +898,20 @@ bool KeywordPhysicsTurnRate(void)
 }
 
 
+/* Do we have tiles which have multiple ages, getting more solid as they are
+   passed over?
+*/
+
+bool KeywordTileAgeFeature(void)
+{
+  if (!LevelReadNumericArguments(1))
+    return false;
+
+  g_TileAgeFeature = sNumericArgumentsDecoded[0];
+  return true;
+}
+
+
 /******************************************************************************
  * Handle all level keywords.  We have a table of the word and the
  * corresponding function to call (in order of most frequent first).
@@ -931,6 +945,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"PhysicsSeparatePlayersSpeed", KeywordPhysicsSeparatePlayersSpeed},
   {"PhysicsMoreStepsSpeed", KeywordPhysicsMoreStepsSpeed},
   {"PhysicsTurnRate", KeywordPhysicsTurnRate},
+  {"TileAgeFeature", KeywordTileAgeFeature},
   {"RemovePlayers", KeywordRemovePlayers},
   {NULL, NULL}
 };

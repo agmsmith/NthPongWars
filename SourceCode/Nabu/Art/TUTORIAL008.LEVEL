@@ -1,0 +1,49 @@
+# Players mixing with Bash power-up tutorial, by Alexander G. M. Smith.
+# AGMS20260106 - started this file.
+# Tutorial008 is an area where players can fight it out, with Bashing.
+LevelVersion: 20260106, NthPongWars
+Music: Silence
+GameMode: PongWar
+Screen: TUTORIAL.NSCR
+PlayTimeout: 120
+ScreenText: 22, 1, 0, 32, Bash Away!  Destroy solid tiles
+ScreenText: 23, 1, 0, 32, faster with the Bash power-up.
+LevelBookmark: TITLE
+LevelNext: All, TITLE
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
+MaxAIPlayers: 2
+AIPlayerCodeStart: 30, 30, 30, 30
+BoardSize: 30, 19
+InitialCount: 150
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+.
+. 1
+.
+.
+. . + + + + + + + + + + + . B . + + + + + + + + + + + +
+.
+. 2
+.
+.
+. . + + + + + + + + + + + . B . + + + + + + + + + + + +
+.
+. 3
+.
+.
+. . + + + + + + + + + + + . B . + + + + + + + + + + + +
+.
+. 4
+.
+.
+END
+
+# Just some bash power-ups.
+TileQuota: B, 4
+

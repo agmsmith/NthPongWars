@@ -1,15 +1,17 @@
-# Players mixing with Bash power-up tutorial, by Alexander G. M. Smith.
+# Allow players to mix tutorial, by Alexander G. M. Smith.
 # AGMS20260106 - started this file.
-# Tutorial006 is an area where players can fight it out, with Bashing.
+# Tutorial006 is a set of lanes for each player, where they have to get
+# enough tiles of their colour to win.  However the ends of the lanes open
+# to a common area where they can fight it out.
+# AI players just bounce around at a medium speed.
 LevelVersion: 20260106, NthPongWars
-Music: Silence
 GameMode: PongWar
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
-ScreenText: 22, 0, 0, 32, Bash Away!  Destroy solid tiles
-ScreenText: 23, 0, 0, 32, faster with the Bash power-up.
-LevelBookmark: TITLE
-LevelNext: All, TITLE
+ScreenText: 22, 6, 0, 32, Meet the Neighbours!
+ScreenText: 23, 1, 0, 32, Player vs Player Interactions.
+LevelBookmark: TUTORIAL007
+LevelNext: All, TUTORIAL007
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
@@ -17,9 +19,9 @@ LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 MaxAIPlayers: 2
-AIPlayerCodeStart: 30, 30, 30, 30
+AIPlayerCodeStart: 80, 80, 88, 86
 BoardSize: 30, 19
-InitialCount: 150
+InitialCount: 100
 BoardScreen: 1, 2, 30, 19, 0, 0
 BoardScroll: 0
 BoardTileData:
@@ -27,23 +29,23 @@ BoardTileData:
 . 1
 .
 .
-. . + + + + + + + + + + + . B . + + + + + + + + + + + +
++ + + + + + + + + + + + + + + + + + + + + + + + + + + +
 .
 . 2
 .
 .
-. . + + + + + + + + + + + . B . + + + + + + + + + + + +
++ + + + + + + + + + + + + + + + + + + + + + + + + + + +
 .
 . 3
 .
 .
-. . + + + + + + + + + + + . B . + + + + + + + + + + + +
++ + + + + + + + + + + + + + + + + + + + + + + + + + + +
 .
 . 4
 .
 .
 END
 
-# Just some bash power-ups.
-TileQuota: B, 4
+# No power-ups or other funny tiles.
+TileQuota: N, 0
 

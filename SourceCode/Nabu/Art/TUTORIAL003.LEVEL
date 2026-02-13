@@ -1,12 +1,13 @@
 # Tutorial showing off the power-ups to new players, by Alexander G. M. Smith.
-# AGMS20260106 - started this file.
-# Tutorial003 is a set of lanes for each player, with a Solid power-up.
-LevelVersion: 20260106, NthPongWars
+# AGMS20260212 - started this file.
+# Tutorial003 is a set of lanes for each player, showing tile aging.
+LevelVersion: 20260209, NthPongWars
 GameMode: PongWar
+Music: LOADSONG
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
-ScreenText: 22, 0, 0, 32, Laying it Down!  Solid trails to
-ScreenText: 23, 0, 0, 32, resist other players better.
+ScreenText: 22, 2, 0, 32, Less Solid Tiles!  Need many
+ScreenText: 23, 0, 0, 32, passes to break or make tiles.
 LevelBookmark: TUTORIAL004
 LevelNext: All, TUTORIAL004
 LevelNext: P0, WINP0
@@ -22,27 +23,30 @@ InitialCount: 100
 BoardScreen: 1, 2, 30, 19, 0, 0
 BoardScroll: 0
 BoardTileData:
-.
-. 1 . . . . S . . . . . . . . 1 . . . . . . . . . . . . S . 
-.
-.
-+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
-.
-. 2 . . . . S . . . . . . . . 2 . . . . . . . . . . . . S .
-.
-.
-+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
-.
-. 3 . . . . S . . . . . . . . 3 . . . . . . . . . . . . S .
-.
-.
-+ + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
-.
-. 4 . . . . S . . . . . . . . 4 . . . . . . . . . . . . S .
-.
-.
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . 1 . . . + . . . 2 . . . + . . . 3 . . . + . . . 4 . .
 END
 
 # No power-ups or other funny tiles.
-TileQuota: S, 4
+TileQuota: S, 0
+
+# Turn on tile aging.
+TileAgeFeature: 1
 

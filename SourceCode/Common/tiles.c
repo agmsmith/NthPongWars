@@ -100,13 +100,13 @@ const char *g_TileAnimData[OWNER_MAX] =
 #endif /* NABU_H */
 };
 
-uint8_t g_TileOwnerQuotas[OWNER_MAX] = { /* Non-power-ups are ignored. */
+uint8_t g_TileOwnerQuotas[OWNER_MAX] = {
   0, /* OWNER_EMPTY */
   0, /* OWNER_PLAYER_1 */
   0, /* OWNER_PLAYER_2 */
   0, /* OWNER_PLAYER_3 */
   0, /* OWNER_PLAYER_4 */
-  0, /* OWNER_WALL_INDESTRUCTIBLE */
+  0, /* OWNER_WALL_INDESTRUCTIBLE  Up to this are ignored for quotas. */
   0, /* OWNER_WALL_DESTRUCTIBLE_P1 */
   0, /* OWNER_WALL_DESTRUCTIBLE_P2 */
   0, /* OWNER_WALL_DESTRUCTIBLE_P3 */
@@ -132,6 +132,8 @@ static uint8_t s_TileQuotaRowIncrement = 3;
    over an old one, replacing it. */
 
 uint16_t g_TileOwnerCounts[OWNER_MAX];
+
+uint8_t g_TileAgeFeature = 1;
 
 uint8_t g_play_area_height_tiles = 24;
 uint8_t g_play_area_width_tiles = 32;
@@ -517,7 +519,10 @@ tile_owner SetTileOwner(tile_pointer pTile, tile_owner newOwner)
   pTile->owner = newOwner;
   pTile->animationIndex = 0;
   pTile->animDelayCount = MAX_ANIM_DELAY_COUNT;
-  pTile->age = 0; /* Freshly taken over ownership of tile, reset age. */
+  if (g_TileAgeFeature)
+    pTile->age = 0; /* Freshly taken over ownership of tile, reset age. */
+  else
+    pTile->age = 7; /* Fully solid tile at first hit, max age. */
   RequestTileRedraw(pTile);
 
   /* Keeping score, and tracking kinds of tiles in play. */
@@ -654,7 +659,7 @@ void AddNextPowerUpTile(void)
       break;
     }
     if (++quotaIndex >= (tile_owner) OWNER_MAX)
-      quotaIndex = OWNER_PUP_NORMAL;
+      quotaIndex = (tile_owner) OWNER_TRACKED_FOR_QUOTA; /* Back to first. */
   } while (quotaIndex != s_TileQuotaNextIndex);
 
   if (!foundUnderQuota)
@@ -662,14 +667,14 @@ void AddNextPowerUpTile(void)
 
   s_TileQuotaNextIndex = quotaIndex + 1;
   if (s_TileQuotaNextIndex >= (tile_owner) OWNER_MAX)
-    s_TileQuotaNextIndex = OWNER_PUP_NORMAL;
+    s_TileQuotaNextIndex = (tile_owner) OWNER_TRACKED_FOR_QUOTA;
 
   tile_pointer pTile = g_tile_array_row_starts[s_TileQuotaNextRow];
   if (pTile != NULL && s_TileQuotaNextColumn < g_play_area_width_tiles)
   {
     pTile += s_TileQuotaNextColumn;
     if (pTile->owner < (tile_owner) OWNER_WALL_INDESTRUCTIBLE)
-      SetTileOwner(pTile, quotaIndex);
+      SetTileOwner(pTile, quotaIndex); /* Only overwrite player/empty tiles. */
   }
 
   /* Advance to the next tile position, for next time. */

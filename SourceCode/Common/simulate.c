@@ -713,7 +713,8 @@ void Simulate(void)
           if (previousOwner >= (tile_owner) OWNER_PLAYER_1 &&
           previousOwner <= (tile_owner) OWNER_PLAYER_4)
           {
-            if (tileAge == 0 || pPlayer->power_up_timers[OWNER_PUP_BASH_WALL])
+            if (g_TileAgeFeature == 0 || tileAge == 0 ||
+            pPlayer->power_up_timers[OWNER_PUP_BASH_WALL])
               takeOverTile = true;
             else /* Wear down the tile. */
             {

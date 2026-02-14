@@ -30,6 +30,12 @@ static const bool k_WhiteNoiseSound[SOUND_MAX] = {
   false, /* SOUND_WALL_HIT */
   false, /* SOUND_TILE_HIT */
   false, /* SOUND_TILE_HIT_COPY */
+  false, /* SOUND_PUP_WIDER */
+  true, /* SOUND_PUP_BASH */
+  false, /* SOUND_PUP_SOLID */
+  false, /* SOUND_PUP_STOP */
+  true, /* SOUND_PUP_FLY */
+  false, /* SOUND_PUP_NORMAL */
   true,  /* SOUND_BALL_HIT */
 };
 /* Identifies which sound effects use the white noise generator, which will be
@@ -42,9 +48,36 @@ static void *k_SoundTrackPointers[SOUND_MAX] = {
   NthEffectsWallHit,
   NthEffectsTileHit,
   NthEffectsTileHitCopy, /* A copy so we can customise sound for dual plays. */
+  NthEffectsPUPWider,
+  NthEffectsPUPBash,
+  NthEffectsPUPSolid,
+  NthEffectsPUPStop,
+  NthEffectsPUPFly,
+  NthEffectsPUPNormal,
   NthEffectsBallOnBall,
 };
+
+const uint8_t g_TileOwnerToSoundID[OWNER_MAX] =
+{
+  SOUND_NULL, /* OWNER_EMPTY */
+  SOUND_NULL, /* OWNER_PLAYER_1 */
+  SOUND_NULL, /* OWNER_PLAYER_2 */
+  SOUND_NULL, /* OWNER_PLAYER_3 */
+  SOUND_NULL, /* OWNER_PLAYER_4 */
+  SOUND_NULL, /* OWNER_WALL_INDESTRUCTIBLE */
+  SOUND_NULL, /* OWNER_WALL_DESTRUCTIBLE_P1 */
+  SOUND_NULL, /* OWNER_WALL_DESTRUCTIBLE_P2 */
+  SOUND_NULL, /* OWNER_WALL_DESTRUCTIBLE_P3 */
+  SOUND_NULL, /* OWNER_WALL_DESTRUCTIBLE_P4 */
+  SOUND_PUP_NORMAL, /* OWNER_PUP_NORMAL */
+  SOUND_PUP_STOP, /* OWNER_PUP_STOP */
+  SOUND_PUP_FLY, /* OWNER_PUP_FLY */
+  SOUND_PUP_WIDER, /* OWNER_PUP_WIDER */
+  SOUND_PUP_BASH, /* OWNER_PUP_BASH_WALL */
+  SOUND_PUP_SOLID, /* OWNER_PUP_SOLID */
+};
 #endif /* NABU_H */
+
 
 uint8_t g_harvest_sound_threshold = 0;
 /* Cut down on the number of times the harvest sound is played, using an

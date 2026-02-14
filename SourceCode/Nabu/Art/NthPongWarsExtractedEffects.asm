@@ -51,6 +51,37 @@ _NthEffectsBallOnBall:
  db $006F
  db $00F0
 
+_NthEffectsPUPNormal:
+ db $00F5,4
+ db $6F+4,$00FE,$F4,$00FC,$53,36,24,12,$6F+1,$006F
+ db $00F0
+
+_NthEffectsPUPStop:
+ db $00F5,4
+ db $6F+4,$00FE,$FC,$00FC,$63,24,$6F+1,$006F
+ db $00F0
+
+_NthEffectsPUPFly:
+ db $00F5,4
+ db $6F+3,$00FE,$E8,$00FA,$E0,$00FF,$70,26,38,50,$6F+1,$006F
+ db $00F0
+
+_NthEffectsPUPWider:
+ db $00F5,4
+ db $6F+7,$00FE,$F4,$00FD,$04,35,$6F+1,$006F
+ db $00F0
+
+_NthEffectsPUPBash:
+ db $00F5,4
+ db $6F+6,$00FE,$6F,$00FA,$30,$00FF,$10,$00FD,$04,12,$6F+1,$006F
+ db $00F0
+
+_NthEffectsPUPSolid:
+ db $00F5,4
+ db $00FE,$F0,$00FD,$03,31,43,55,67,79,91,$006E,$006F
+ db $00F0
+
+
 ; ===
 PUBLIC _NthEffects_a_z
 PUBLIC _NthEffectsSilence
@@ -62,4 +93,10 @@ PUBLIC _NthEffectsTileHitCopyNote
 PUBLIC _NthEffectsHarvest
 PUBLIC _NthEffectsHarvestPlayer
 PUBLIC _NthEffectsBallOnBall
+PUBLIC _NthEffectsPUPNormal
+PUBLIC _NthEffectsPUPStop
+PUBLIC _NthEffectsPUPFly
+PUBLIC _NthEffectsPUPWider
+PUBLIC _NthEffectsPUPBash
+PUBLIC _NthEffectsPUPSolid
 

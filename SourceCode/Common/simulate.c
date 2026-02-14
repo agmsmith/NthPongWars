@@ -736,6 +736,7 @@ void Simulate(void)
           else /* A power up tile. */
           {
             takeOverTile = true;
+            PlaySound(g_TileOwnerToSoundID[previousOwner], pPlayer);
 
             /* Activate a power up.  Since the power-up count down clock wraps
                at 256, and counts at a 5hz rate, allow for several power ups in

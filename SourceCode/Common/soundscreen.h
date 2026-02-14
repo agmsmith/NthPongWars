@@ -28,10 +28,21 @@ typedef enum sounds_enum { /* List of all sounds, in increasing priority. */
   SOUND_WALL_HIT, /* Ball colliding with a wall. */
   SOUND_TILE_HIT, /* Ball colliding with a tile. */
   SOUND_TILE_HIT_COPY, /* Internal copy for simultaneous sound, don't use. */
+  SOUND_PUP_WIDER, /* Power-up that makes you wider. */
+  SOUND_PUP_BASH, /* Power-up that lets you bash through tiles. */
+  SOUND_PUP_SOLID, /* Power-up that makes you trail solid tiles. */
+  SOUND_PUP_STOP, /* Power-up that stops motion. */
+  SOUND_PUP_FLY, /* Power-up that starts you flying. */
+  SOUND_PUP_NORMAL, /* Power-up that resets you to normal, losing everything. */
   SOUND_BALL_HIT, /* Ball colliding with another ball, has noise. */
   SOUND_MAX
   };
 typedef uint8_t sound_type; /* Want it to be 8 bits, not 16. */
+
+extern const uint8_t g_TileOwnerToSoundID[OWNER_MAX];
+/* Given a tile owner for a power-up as the index, returns the corresponding
+   sound_type (SOUND_NULL for unimplemented ones). */
+
 
 /* We can open a data file to load music or screen data, using a platform
    specific file handle.  It has a special value for errors. */

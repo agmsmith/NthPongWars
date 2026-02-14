@@ -22,7 +22,12 @@ heard after the sound effect:
 2 - Tile Bip (use channel 1 or 0)
 3 - Harvest (use channel 2)  Instrument xxxxNxxxxxx player number 1-4 variation.
 4 - Ball on Ball (use channel 2)
-
+5 - Power-up Normal (lose everything) (use channel 0 or 1).
+6 - Power-up Stop (use channel 0 or 1).
+7 - Power-up Fly (use channel 2).
+8 - Power-up Wider (use channel 0 or 1).
+9 - Power-up Bash (use channel 2).
+10- Power-up Solid (use channel 0 or 1).
 
 Compiling Music
 

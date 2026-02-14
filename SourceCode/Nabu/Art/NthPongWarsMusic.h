@@ -18,5 +18,12 @@ extern uint8_t NthEffectsHarvest[], NthEffectsHarvestPlayer[];
 
 extern uint8_t NthEffectsBallOnBall[];
 
+extern uint8_t NthEffectsPUPNormal[];
+extern uint8_t NthEffectsPUPStop[];
+extern uint8_t NthEffectsPUPFly[];
+extern uint8_t NthEffectsPUPWider[];
+extern uint8_t NthEffectsPUPBash[];
+extern uint8_t NthEffectsPUPSolid[];
+
 #endif /* _NTHPONGMUSIC_H */
 

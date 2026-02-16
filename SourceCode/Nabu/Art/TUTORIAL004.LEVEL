@@ -3,6 +3,7 @@
 # Tutorial004 is a set of lanes for each player, with a Bash power-up.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
+Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 5, 0, 32, Bash power-up gets you

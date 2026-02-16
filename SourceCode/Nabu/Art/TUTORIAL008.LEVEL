@@ -2,14 +2,14 @@
 # AGMS20260106 - started this file.
 # Tutorial008 is an area where players can fight it out, with Bashing.
 LevelVersion: 20260106, NthPongWars
-Music: Silence
 GameMode: PongWar
+Music: Default
 Screen: TUTORIAL.NSCR
-PlayTimeout: 120
+PlayTimeout: 180
 ScreenText: 22, 1, 0, 32, Bash Away!  Destroy solid tiles
 ScreenText: 23, 1, 0, 32, faster with the Bash power-up.
-LevelBookmark: TITLE
-LevelNext: All, TITLE
+LevelBookmark: TUTORIAL009
+LevelNext: All, TUTORIAL009
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2

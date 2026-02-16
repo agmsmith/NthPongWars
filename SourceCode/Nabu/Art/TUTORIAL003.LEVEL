@@ -3,7 +3,7 @@
 # Tutorial003 is a set of lanes for each player, showing tile aging.
 LevelVersion: 20260209, NthPongWars
 GameMode: PongWar
-Music: LOADSONG
+Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 2, 0, 32, Less Solid Tiles!  Need many

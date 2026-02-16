@@ -4,11 +4,11 @@
 # tiles of their colour to win, but now with aged tiles and a Solid power-up.
 LevelVersion: 20260209, NthPongWars
 GameMode: PongWar
-Music: SQUAROOT
+Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 22, 2, 0, 32, Fill in the blanks!  Use the
-ScreenText: 23, 0, 0, 32, Solid power-up to fill faster.
+ScreenText: 23, 1, 0, 32, Solid power-up to fill faster.
 LevelBookmark: TUTORIAL006
 LevelNext: All, TUTORIAL006
 LevelNext: P0, WINP0

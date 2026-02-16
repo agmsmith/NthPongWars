@@ -45,40 +45,37 @@ _NthEffectsHarvestPlayer:
 
 _NthEffectsBallOnBall:
  db $00F5,4
- db $6F+4,$00FE,$F8,$00FA,$CC,$00FF,$7E,$006C,$6F+1,$006F
- db $006F
- db $006F
- db $006F
+ db $6F+4,$00FE,$F8,$00FA,$CC,$00FF,$7E,$006C
  db $00F0
 
 _NthEffectsPUPNormal:
  db $00F5,4
- db $6F+4,$00FE,$F4,$00FC,$53,36,24,12,$6F+1,$006F
+ db $6F+4,$00FE,$F4,$00FC,$53,36,24,12
  db $00F0
 
 _NthEffectsPUPStop:
  db $00F5,4
- db $6F+4,$00FE,$FC,$00FC,$63,24,$6F+1,$006F
+ db $6F+4,$00FE,$FC,$00FC,$63,24
  db $00F0
 
 _NthEffectsPUPFly:
  db $00F5,4
- db $6F+3,$00FE,$E8,$00FA,$E0,$00FF,$70,26,38,50,$6F+1,$006F
+ db $6F+3,$00FE,$E8,$00FA,$E0,$00FF,$70,14,26,$6F+4,38
  db $00F0
 
 _NthEffectsPUPWider:
  db $00F5,4
- db $6F+7,$00FE,$F4,$00FD,$04,35,$6F+1,$006F
+ db $6F+7,$00FE,$F4,$00FD,$04,35
  db $00F0
 
 _NthEffectsPUPBash:
  db $00F5,4
- db $6F+6,$00FE,$6F,$00FA,$30,$00FF,$10,$00FD,$04,12,$6F+1,$006F
+ db $6F+6,$00FE,$6F,$00FA,$30,$00FF,$10,$00FD,$04,12
  db $00F0
 
 _NthEffectsPUPSolid:
  db $00F5,4
- db $00FE,$F0,$00FD,$03,31,43,55,67,79,91,$006E,$006F
+ db $00FE,$F0,$00FD,$03,31,43,55,67,$00FC,$00,79
  db $00F0
 
 

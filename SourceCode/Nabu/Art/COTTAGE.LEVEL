@@ -1,6 +1,6 @@
 # Load a picture of the family cottage, it's a full screen picture.
 GameMode: Slide
-Music:   ONECOLN1
+Music: ONECOLN1
 Screen: COTTAGE.NFUL
 LevelNext: All, Bookmark
 PlayTimeout: 7

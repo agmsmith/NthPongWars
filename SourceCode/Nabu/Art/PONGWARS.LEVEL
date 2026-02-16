@@ -23,37 +23,37 @@ MaxAIPlayers: 2
 PlayTimeout: 600
 
 # Set fast inaccurate physics behaviour.
-PhysicsFrictionSpeed: 22
+PhysicsFrictionSpeed: 32
 PhysicsSeparatePlayersSpeed: 10
-PhysicsMoreStepsSpeed: 22
-PhysicsTurnRate: 10
+PhysicsMoreStepsSpeed: 32
+PhysicsTurnRate: 35
 TileAgeFeature: 0
 
 BoardSize: 22, 22
 BoardScreen: 5, 1, 22, 22, 0, 0
 BoardTileData:
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
-4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+4 ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ 3
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
+] ] ] ] ] ] ] ] ] ] ] [ [ [ [ [ [ [ [ [ [ [
 END
 
 # Just want the purely bouncing around behaviour.
@@ -63,7 +63,7 @@ AIPlayerCodeStart: 60, 60, 60, 60
 # tile in one shot like the original game, so scatter a lot of Bash
 # power-ups around.  Nope, now we have the TileAgeFeature, no bash needed,
 # well except for randomness.
-TileQuota: B, 0
+TileQuota: W, 1
 TileQuota: [, 3 # OWNER_WALL_DESTRUCTIBLE_P3
 TileQuota: ], 3 # OWNER_WALL_DESTRUCTIBLE_P4
 

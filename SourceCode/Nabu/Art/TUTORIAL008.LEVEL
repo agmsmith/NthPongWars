@@ -6,8 +6,8 @@ GameMode: PongWar
 Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 180
-ScreenText: 22, 1, 0, 32, Bash Away!  Destroy solid tiles
-ScreenText: 23, 1, 0, 32, faster with the Bash power-up.
+ScreenText: 22, 1, 0, 32, Bash Away!  Destroy opponent's
+ScreenText: 23, 0, 0, 32, tiles faster with Bash power-up.
 LevelBookmark: TUTORIAL009
 LevelNext: All, TUTORIAL009
 LevelNext: P0, WINP0

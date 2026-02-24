@@ -178,7 +178,7 @@ typedef struct tile_struct {
    minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
    you still have a limit of TILES_MAX_ROWS on the number of rows, and 256 on
    columns since both of those get stored in bytes. */
-#define TILES_ARRAY_SIZE 800
+#define TILES_ARRAY_SIZE 1000
 #define TILES_MAX_ROWS 256
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation
@@ -214,7 +214,8 @@ extern uint16_t g_play_area_width_pixels;
 extern uint16_t gVictoryStartingTileCount;
 
 /* Size of the screen area we can draw tiles in, Only the active area is
-   considered, score and other stuff around the visible area isn't included. */
+   considered, score and other stuff around the visible area isn't included.
+   Set by the user and clipped to actual screen size. */
 extern uint8_t g_screen_height_tiles;
 extern uint8_t g_screen_width_tiles;
 extern uint8_t g_screen_top_X_tiles;

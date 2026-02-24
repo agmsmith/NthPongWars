@@ -355,9 +355,9 @@ void ActivateTileArrayWindow(void)
   uint16_t vdpAddress;
 
   /* Sanitise the screen rectangle to be on screen, and not negative in width
-     or height, though it can be zero width or height.  Assume the screen is 32
-     characters wide and 24 lines tall on the NABU, since that's the graphics
-     mode, and having constants avoids an expensive general multiplication. */
+     or height, though it can be zero width or height (very fast to draw!).
+     Assume the screen is 32 characters wide and 24 lines tall on the NABU,
+     since that's the graphics 2 mode. */
 
   const uint8_t SCREEN_WIDTH = 32;
   const uint8_t SCREEN_HEIGHT = 24;
@@ -377,8 +377,15 @@ void ActivateTileArrayWindow(void)
     g_screen_height_tiles = SCREEN_HEIGHT - g_screen_top_Y_tiles;
 
   /* Find the location of the screen in play area coordinates.  Top left
-     included, bottom right is just past the end.  Can be partially or
-     completely outside the play area, clipped to be reasonable. */
+     included, bottom right is just past the end.  We try to make the screen
+     be completely in the play area (assuming the play area is larger), else
+     you have spots on screen that aren't updated. */
+
+  if (g_play_area_col_for_screen > g_play_area_width_tiles - g_screen_width_tiles)
+    g_play_area_col_for_screen = g_play_area_width_tiles - g_screen_width_tiles;
+
+  if (g_play_area_row_for_screen > g_play_area_height_tiles - g_screen_height_tiles)
+    g_play_area_row_for_screen = g_play_area_height_tiles - g_screen_height_tiles;
 
   s_PlayScreenLeft = g_play_area_col_for_screen;
   if (s_PlayScreenLeft >= g_play_area_width_tiles)

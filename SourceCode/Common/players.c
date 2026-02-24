@@ -61,6 +61,8 @@ uint8_t g_PhysicsStepSizeLimit = 16;
 uint8_t g_PhysicsTurnRate = 6;
 fx g_TurnRateFx;
 
+bool g_scroll_to_follow_player = false;
+
 uint8_t g_KeyboardFakeJoystickStatus;
 #ifndef NABU_H
   uint8_t g_JoystickStatus[4];
@@ -204,7 +206,6 @@ void InitialisePlayers(void)
 
     pPlayer->starting_level_pixel_x = pixelCoord;
     pPlayer->starting_level_pixel_y = pixelCoord;
-    pPlayer->starting_level_pixel_flying_height = 15;
     pixelCoord += 32;
 
     /* Make them all inactive players.  AI players get added later while the
@@ -253,7 +254,7 @@ void InitialisePlayersForNewLevel(void)
   {
     INT_TO_FX(pPlayer->starting_level_pixel_x, pPlayer->pixel_center_x);
     INT_TO_FX(pPlayer->starting_level_pixel_y, pPlayer->pixel_center_y);
-    pPlayer->pixel_flying_height = pPlayer->starting_level_pixel_flying_height;
+    pPlayer->pixel_flying_height = MAX_FLYING_HEIGHT;
     INT_TO_FX(0, pPlayer->velocity_x);
     INT_TO_FX(0, pPlayer->velocity_y);
     pPlayer->player_collision_count = 0;
@@ -1462,6 +1463,119 @@ void DeassignPlayersFromDevices(void)
     }
     pPlayer++;
   } while (iPlayer-- != 0);
+}
+
+
+/* Moves the screen to follow the lowest scoring Human player, or AI if no
+   Humans.  Scrolls the screen so that player is visible.  Will trigger a
+   scroll to move them back to the center of the screen if they go too far
+   away from center.  Does nothing if g_scroll_to_follow_player; is false.
+*/
+void UpdateScreenScrollToShowPlayer(void)
+{
+  if (!g_scroll_to_follow_player)
+    return;
+
+  if (g_FrameCounter & 4) /* Only check once in a while to save CPU. */
+    return;
+
+  /* Find the player of interest.  Lowest scoring Human to balance the game,
+     or if none then highest scoring AI since that's of interest to the
+     spectators. */
+
+  player_pointer pLowestHuman = NULL;
+  uint16_t LowestHumanScore = 0;
+  player_pointer pHighestAI = NULL;
+  uint16_t HighestAIScore = 0;
+
+  uint8_t iPlayer;
+  player_pointer pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
+      continue;
+
+    uint16_t newScore = GetPlayerScore(iPlayer);
+
+    if (pPlayer->brain == ((player_brain) BRAIN_ALGORITHM))
+    {
+      if (pHighestAI == NULL || newScore > HighestAIScore)
+      {
+        pHighestAI = pPlayer;
+        HighestAIScore = newScore;
+      }
+    }
+    else /* Presumably a Human (joystick, keyboard), or network player. */
+    {
+      if (pLowestHuman == NULL || newScore < LowestHumanScore)
+      {
+        pLowestHuman = pPlayer;
+        LowestHumanScore = newScore;
+      }
+    }
+  }
+
+  if (pLowestHuman)
+    pPlayer = pLowestHuman;
+  else
+    pPlayer = pHighestAI;
+  if (pPlayer == NULL)
+    return; /* No players active. */
+
+  /* What is the location of the player in screen tiles?  If off screen, move
+     the screen so that the player is in the center. */
+
+  int16_t playerPlayAreaPixelX = GET_FX_INTEGER(pPlayer->pixel_center_x);
+  int16_t playerPlayAreaTileX = playerPlayAreaPixelX / TILE_PIXEL_WIDTH;
+  int16_t playerScreenTileX = playerPlayAreaTileX - g_play_area_col_for_screen;
+
+  int16_t playerPlayAreaPixelY = GET_FX_INTEGER(pPlayer->pixel_center_y);
+  int16_t playerPlayAreaTileY = playerPlayAreaPixelY / TILE_PIXEL_WIDTH;
+  int16_t playerScreenTileY = playerPlayAreaTileY - g_play_area_row_for_screen;
+
+  if (playerScreenTileX < 0 || playerScreenTileX >= g_screen_width_tiles ||
+  playerScreenTileY < 0 || playerScreenTileY >= g_screen_height_tiles)
+  {
+    int16_t newScreenTopLeftTileX;
+    int16_t newScreenTopLeftTileY;
+
+#define DEBUG_PRINT_SCROLLING 0
+#if DEBUG_PRINT_SCROLLING
+    strcpy(g_TempBuffer, "Scrolling screen from top left tile (");
+    AppendDecimalUInt16(g_play_area_col_for_screen);
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalUInt16(g_play_area_row_for_screen);
+    strcat(g_TempBuffer, ") to (");
+#endif
+
+    newScreenTopLeftTileX = playerPlayAreaTileX - (g_screen_width_tiles / 2);
+    if (newScreenTopLeftTileX < 0)
+      g_play_area_col_for_screen = 0;
+    else
+      g_play_area_col_for_screen = newScreenTopLeftTileX; 
+
+    newScreenTopLeftTileY = playerPlayAreaTileY - (g_screen_height_tiles / 2);
+    if (newScreenTopLeftTileY < 0)
+      g_play_area_row_for_screen = 0;
+    else
+      g_play_area_row_for_screen = newScreenTopLeftTileY;
+
+#if DEBUG_PRINT_SCROLLING
+    AppendDecimalUInt16(g_play_area_col_for_screen);
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalUInt16(g_play_area_row_for_screen);
+    strcat(g_TempBuffer, ") due to player #");
+    AppendDecimalUInt16(pPlayer->player_array_index);
+    strcat(g_TempBuffer, " (");
+    AppendDecimalUInt16(playerPlayAreaTileX);
+    strcat(g_TempBuffer, ", ");
+    AppendDecimalUInt16(playerPlayAreaTileY);
+    strcat(g_TempBuffer, ") being off screen.\n");
+    DebugPrintString(g_TempBuffer);
+#endif
+
+    ActivateTileArrayWindow();
+  }
 }
 
 

@@ -77,6 +77,10 @@ extern const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS];
 #endif /* NABU_H */
 
 
+/* TRUE to follow the lowest scoring Human player, or AI if no Humans. */
+extern bool g_scroll_to_follow_player;
+
+
 /* The various brains that can run a player.
 */
 typedef enum brain_enum {
@@ -244,7 +248,6 @@ typedef struct player_struct {
 
   int16_t starting_level_pixel_x;
   int16_t starting_level_pixel_y;
-  uint8_t starting_level_pixel_flying_height;
   /* The initial position of the players in pixels on the game board.  Set by
      the level loader and used by InitialisePlayersForNewLevel. */
 
@@ -481,6 +484,12 @@ extern void UpdatePlayerInputs(void);
    inputs if needed.  Then use the joystick inputs to modify the player's
    velocities (steering if just specifying a direction, thrusting if the fire
    button is pressed too). */
+
+extern void UpdateScreenScrollToShowPlayer(void);
+/* Moves the screen to follow the lowest scoring Human player, or AI if no
+   Humans.  Scrolls the screen so that player is visible.  Will trigger a
+   scroll to move them back to the center of the screen if they go too far
+   away from center.  Does nothing if g_scroll_to_follow_player; is false. */
 
 #ifdef NABU_H
 extern void CopyPlayersToSprites(void);

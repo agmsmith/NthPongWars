@@ -347,6 +347,7 @@ void main(void)
       if (gVictoryModeHighestTileCount) /* If running the Pong Wars game. */
       {
         Simulate();
+        UpdateScreenScrollToShowPlayer(); /* May move tiles around, do first. */
         if ((g_FrameCounter & 0x3F) == 0) /* Do after simulation, to let the */
           AddNextPowerUpTile(); /* player see a power-up before hitting it. */
         UpdateTileAnimations();
@@ -404,22 +405,6 @@ void main(void)
         if (g_ScoreGoal-- == 0)
           g_ScoreGoal = 9; /* Shouldn't happen, somebody should have won. */
       }
-#if 0
-      /* Every once in a while move the screen around the play area. */
-
-      if ((g_FrameCounter & 0x1ff) == 0)
-      {
-        g_play_area_col_for_screen += 3;
-        if (g_play_area_col_for_screen >= g_play_area_width_tiles)
-        {
-          g_play_area_col_for_screen = 0;
-          g_play_area_row_for_screen += 3;
-          if (g_play_area_row_for_screen >= g_play_area_height_tiles)
-            g_play_area_row_for_screen = 0;
-        }
-        ActivateTileArrayWindow();
-      }
-#endif
 
 #if 0 /* Check for corrupted memory every frame. */
       if (memcmp(s_OriginalLocationZeroMemory, NULL,

@@ -184,7 +184,6 @@ BoardScreen: 0, 1, 32, 23, 0, 0
 # are so slow (whole screen needs to be redrawn), it will only update when the
 # player goes off the screen, and at that point jump move them to the center of
 # the screen.  Use 1 for yes or 0 for no.
-# Not yet implemented.
 BoardScroll: 0
 
 # Specify the contents of the board.  Board height quantity of lines follow

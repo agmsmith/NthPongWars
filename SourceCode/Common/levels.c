@@ -768,8 +768,6 @@ bool KeywordBoardTileData(void)
         player_pointer pPlayer = g_player_array + iPlayer;
         pPlayer->starting_level_pixel_x = pTile->pixel_center_x;
         pPlayer->starting_level_pixel_y = pTile->pixel_center_y;
-        pPlayer->starting_level_pixel_flying_height =
-          2 * FLYING_ABOVE_TILES_HEIGHT; /* Players slowly lower at start. */
 
         /* Also make it a fully aged / solid tile.  Mostly useful for the
            classic Pong Wars look. */
@@ -886,7 +884,6 @@ bool KeywordPhysicsMoreStepsSpeed(void)
 
 /* How fast can the players turn?  Measured in quarter pixels per frame.
 */
-
 bool KeywordPhysicsTurnRate(void)
 {
   if (!LevelReadNumericArguments(1))
@@ -902,13 +899,24 @@ bool KeywordPhysicsTurnRate(void)
 /* Do we have tiles which have multiple ages, getting more solid as they are
    passed over?
 */
-
 bool KeywordTileAgeFeature(void)
 {
   if (!LevelReadNumericArguments(1))
     return false;
 
-  g_TileAgeFeature = sNumericArgumentsDecoded[0];
+  g_TileAgeFeature = (sNumericArgumentsDecoded[0] != 0);
+  return true;
+}
+
+
+/* Turn on or off the automatic scrolling to follow an active player.
+*/
+bool KeywordAutoBoardScrollFeature(void)
+{
+  if (!LevelReadNumericArguments(1))
+    return false;
+
+  g_scroll_to_follow_player = (sNumericArgumentsDecoded[0] != 0);
   return true;
 }
 
@@ -941,6 +949,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"BoardSize", KeywordBoardSize},
   {"BoardScreen", KeywordBoardScreen},
   {"BoardTileData", KeywordBoardTileData},
+  {"BoardScroll", KeywordAutoBoardScrollFeature},
   {"PhysicsFrictionSpeed", KeywordPhysicsFrictionSpeed},
   {"PhysicsFrictionShift", KeywordPhysicsFrictionShift},
   {"PhysicsSeparatePlayersSpeed", KeywordPhysicsSeparatePlayersSpeed},

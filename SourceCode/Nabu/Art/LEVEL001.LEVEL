@@ -13,8 +13,8 @@ LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
-MaxAIPlayers: 1
-AIPlayerCodeStart: 0, 0, 0, 0 # All draw a letter N on screen.
+MaxAIPlayers: 4
+AIPlayerCodeStart: 90, 90, 90, 90 # All are hunting hounders.
 
 BoardSize: 32, 23
 BoardScreen: 0, 1, 32, 23, 0, 0

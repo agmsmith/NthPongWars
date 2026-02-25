@@ -6,9 +6,8 @@ Screen: NTHPONG1.NSCR
 ScreenText: 21, 9, 9, 32, _Cowboy Time_
 ScreenText: 22, 1, 1, 32, _Herd the Other Players Around_
 
-# After showing the win screen, will return to the full credits.
-LevelBookmark: CREDITS
-LevelNext: All, CREDITS
+LevelBookmark: LEVEL005
+LevelNext: All, LEVEL005
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
@@ -17,18 +16,19 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
+InitialCount: 200
 BoardScreen: 0, 1, 32, 23, 0, 0
 BoardTileData:
 .
-. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ] . 1
-. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ]
-. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ]
-. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ]
-. . . . . [ [ [ [ [ N [ [ [ [ [ ] ] ] ] ] N ] ] ] ] ]
-. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ]
-. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ]
-. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ]
-. . . . . [ [ [ [ [ [ [ [ [ H [ ] ] H ] ] ] ] ] ] ] ]
+. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] [ [ ] ] ] ] ] ] . 1
+. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] [ [ ] ] ] ] ] ]
+. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] [ [ ] ] ] ] ] ]
+. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] [ [ ] ] ] ] ] ]
+. . . . . [ [ [ [ [ N [ [ [ [ [ ] ] ] [ [ N ] ] ] ] ]
+. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] [ [ ] ] ] ] ] ]
+. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] [ [ ] ] ] ] ] ]
+. . . . . [ [ [ [ [ [ [ [ [ [ [ ] ] ] [ [ ] ] ] ] ] ]
+. . . . . [ [ [ [ [ [ [ [ [ H [ ] ] H [ [ ] ] ] ] ] ]
 . . . . . [ [ [ [ [ [ [ [ [ [ H ] H ] F ] ] ] ] ] ] ]
 . . . . . ] ] ] ] ] [ [ ] ] ] ] H [ [ [ [ [ [ [ [ [ 3
 . . . . . ] ] ] ] ] [ [ ] F ] H [ H [ [ [ [ [ [ [ [ [

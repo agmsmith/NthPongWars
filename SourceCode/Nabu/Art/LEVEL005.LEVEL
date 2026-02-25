@@ -1,0 +1,51 @@
+# Level #5.  AGMS20260224
+GameMode: PongWar
+Music: Silence
+Screen: NTHPONG1.NSCR
+ScreenText: 21, 9, 9, 32, _ Scroll'n _
+
+# After showing the win screen, will return to the full credits.
+LevelBookmark: CREDITS
+LevelNext: All, CREDITS
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
+
+BoardSize: 46, 17
+InitialCount: 600
+BoardScreen: 0, 4, 32, 17, 0, 0
+BoardScroll: 1
+BoardTileData:
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . H . . . . . . . . . . . . . . . . H . . . . . . . . . . . . . . 
+. . . . . . . . H . . . . H . . . . . . . . . . . . . . . . . . H . . . . H . . . . . . . . 
+. . . H . . . H . . . . H . . . . . . . . . . 1 . . . . . . . . . H . . . . H . . . H . . . 
+3 . H . . . H . . . . H H H H H H H H . . . . . . . . H H H H H H H H . . . . H . . . H . 2 
+. . . H . . . H . . . . H . . . . . . . . . . . . . . . . . . . . H . . . . H . . . H . . . 
+. . . . . . . . H . . . . H . . . . . . . . . 4 . . . . . . . . H . . . . H . . . . . . . . 
+. . . . . . . . . . . . . . H . . . . . . . . . . . . . . . . H . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+END
+
+# Set up default Power-up quotas.
+TileQuota: N, 1 # OWNER_PUP_NORMAL
+TileQuota: H, 1 # OWNER_PUP_STOP - using H for Halt
+TileQuota: F, 2 # OWNER_PUP_FLY
+TileQuota: W, 2 # OWNER_PUP_WIDER
+TileQuota: B, 4 # OWNER_PUP_BASH_WALL
+TileQuota: S, 2 # OWNER_PUP_SOLID
+
+MaxAIPlayers: 3
+AIPlayerCodeStart: 90, 90, 0, 90
+

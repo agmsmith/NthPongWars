@@ -819,146 +819,167 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   { /* Keep on waiting until the countdown has finished. */
     pPlayer->brain_info.algo.delay_remaining--;
   }
-  else if (pPlayer->brain_info.algo.divert_to_pTile)
+  else /* Not just hovering around a target, see if new target needed. */
   {
-    /* Busy diverting to a nearby "good" power-up.  Is it still there?  If
-       someone else takes it, or we take it, or if we are too far above it to
-       pick it up, end diversion. */
-
-    if (pPlayer->brain_info.algo.divert_to_pTile->owner <
-    (tile_owner) OWNER_PUPS_GOOD_FOR_AI ||
-    pPlayer->pixel_flying_height >= FLYING_ABOVE_TILES_HEIGHT)
+    if (pPlayer->brain_info.algo.divert_to_pTile)
     {
-      /* Resume normal targeting. */
-      pPlayer->brain_info.algo.divert_to_pTile = NULL;
-      pPlayer->brain_info.algo.target_pixel_x =
-        pPlayer->brain_info.algo.divert_saved_pixel_x;
-      pPlayer->brain_info.algo.target_pixel_y =
-        pPlayer->brain_info.algo.divert_saved_pixel_y;
+      /* Busy diverting to a nearby "good" power-up.  Is it still there?  If
+         someone else takes it, or we take it, or if we are too far above it to
+         pick it up, end diversion. */
+
+      if (pPlayer->brain_info.algo.divert_to_pTile->owner <
+      (tile_owner) OWNER_PUPS_GOOD_FOR_AI ||
+      pPlayer->pixel_flying_height >= FLYING_ABOVE_TILES_HEIGHT)
+      {
+        /* Resume normal targeting. */
+        pPlayer->brain_info.algo.divert_to_pTile = NULL;
+        pPlayer->brain_info.algo.target_pixel_x =
+          pPlayer->brain_info.algo.divert_saved_pixel_x;
+        pPlayer->brain_info.algo.target_pixel_y =
+          pPlayer->brain_info.algo.divert_saved_pixel_y;
+      }
     }
-  }
-  else if (pPlayer->brain_info.algo.target_distance >
-  PLAYER_PIXEL_DIAMETER_NORMAL)
-  {
-    /* Not yet close enough to the target.  Continue hunting. */
-  }
-  else
-  { /* No more waiting, at target and delay has finished, do current opcode
-       actions and point to next one for next time. */
 
-    target_list_item_record currentOpcode;
-    currentOpcode = g_target_list[pPlayer->brain_info.algo.target_list_index++];
-
-    switch (currentOpcode.target_tile_y)
+    if (pPlayer->brain_info.algo.target_distance >
+    PLAYER_PIXEL_DIAMETER_NORMAL &&
+    pPlayer->brain_info.algo.stuck_time_remaining != 0)
     {
-    case TARGET_CODE_SPEED:
-      pPlayer->brain_info.algo.desired_speed = currentOpcode.target_tile_x;
-      break;
+      /* Not yet close enough to the target.  Continue hunting using same
+         settings as previous update.  But not forever, in case we get stuck. */
+      pPlayer->brain_info.algo.stuck_time_remaining--;
+    }
+    else
+    { /* No more waiting, at target and delay has finished or got stuck,
+         do current opcode actions and point to next one for next time. */
+#if 1
+      if (pPlayer->brain_info.algo.stuck_time_remaining == 0)
+      {
+        strcpy(g_TempBuffer, "Player #");
+        AppendDecimalUInt16(pPlayer->player_array_index);
+        strcat(g_TempBuffer,
+          " stuck timeout happened, now doing instruction #");
+        AppendDecimalUInt16(pPlayer->brain_info.algo.target_list_index);
+        strcat(g_TempBuffer, ".\n");
+        DebugPrintString(g_TempBuffer);
+      }
+#endif
 
-    case TARGET_CODE_STEER:
-      /* X coordinate is 0 to 3 to steer towards a corner.  Zero for your corner
-         of the board, 1 for next player's corner, 2 for next next player and 3
-         for the next next next player.  4 to target a rival player with the
-         highest score, 5 to target the human with the highest score, other
-         values make you drift rather than steer. */
-      if (currentOpcode.target_tile_x <= 3)
-      { /* Target your own corner of the game board, or the next ones around. */
-        uint8_t iMyself = (3 &
-          (pPlayer->player_array_index + currentOpcode.target_tile_x));
-        if (iMyself == 0 || iMyself == 3)
-          pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH;
-        else
-          pPlayer->brain_info.algo.target_pixel_x =
-            g_play_area_width_tiles * (int16_t) TILE_PIXEL_WIDTH -
-            TILE_PIXEL_WIDTH;
-        if (iMyself == 0 || iMyself == 1)
-          pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH;
-        else
-          pPlayer->brain_info.algo.target_pixel_y =
-            g_play_area_height_tiles * (int16_t) TILE_PIXEL_WIDTH -
-            TILE_PIXEL_WIDTH;
+      target_list_item_record currentOpcode;
+      currentOpcode = g_target_list[pPlayer->brain_info.algo.target_list_index++];
+
+      pPlayer->brain_info.algo.stuck_time_remaining = 50; /* 10 seconds */
+
+      switch (currentOpcode.target_tile_y)
+      {
+      case TARGET_CODE_SPEED:
+        pPlayer->brain_info.algo.desired_speed = currentOpcode.target_tile_x;
+        break;
+
+      case TARGET_CODE_STEER:
+        /* X coordinate is 0 to 3 to steer towards a corner.  Zero for your corner
+           of the board, 1 for next player's corner, 2 for next next player and 3
+           for the next next next player.  4 to target a rival player with the
+           highest score, 5 to target the human with the highest score, other
+           values make you drift rather than steer. */
+        if (currentOpcode.target_tile_x <= 3)
+        { /* Target your own corner of the game board, or the next ones around. */
+          uint8_t iMyself = (3 &
+            (pPlayer->player_array_index + currentOpcode.target_tile_x));
+          if (iMyself == 0 || iMyself == 3)
+            pPlayer->brain_info.algo.target_pixel_x = TILE_PIXEL_WIDTH;
+          else
+            pPlayer->brain_info.algo.target_pixel_x =
+              g_play_area_width_tiles * (int16_t) TILE_PIXEL_WIDTH -
+              TILE_PIXEL_WIDTH;
+          if (iMyself == 0 || iMyself == 1)
+            pPlayer->brain_info.algo.target_pixel_y = TILE_PIXEL_WIDTH;
+          else
+            pPlayer->brain_info.algo.target_pixel_y =
+              g_play_area_height_tiles * (int16_t) TILE_PIXEL_WIDTH -
+              TILE_PIXEL_WIDTH;
+          pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
+          pPlayer->brain_info.algo.steer = true;
+        }
+        else if (currentOpcode.target_tile_x == 4 ||
+        currentOpcode.target_tile_x == 5)
+        { /* Target the rival player with highest score. */
+          uint8_t iMyself = pPlayer->player_array_index;
+          uint8_t iBestPlayer = MAX_PLAYERS; /* Also code for don't target. */
+          uint16_t maxScore = 0;
+          bool onlyHumans = (currentOpcode.target_tile_x == 5);
+          uint8_t iPlayer;
+          for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
+          {
+            if (iPlayer == iMyself)
+              continue;
+            uint16_t theirScore = GetPlayerScore(iPlayer);
+            if (theirScore < maxScore) /* Note - zero can be a high score. */
+              continue;
+            if (onlyHumans && g_player_array[iPlayer].brain == BRAIN_ALGORITHM)
+              continue; /* Reject AI players. */
+
+            /* Got a better player. */
+            maxScore = theirScore;
+            iBestPlayer = iPlayer;
+          }
+          pPlayer->brain_info.algo.steer = true;
+          pPlayer->brain_info.algo.target_player = iBestPlayer;
+          if (iBestPlayer >= MAX_PLAYERS)
+          {
+            /* No target player found, set current position as the static target
+               location, so that this opcode completes successfully very soon.
+               So you can target the best Human player, and if no Humans are
+               playing, the opcode will do almost nothing. */
+
+            pPlayer->brain_info.algo.target_pixel_x = playerX;
+            pPlayer->brain_info.algo.target_pixel_y = playerY;
+          }
+        }
+        else /* Unknown steering orders, just drift. */
+        {
+          joystickOutput = (joystickOutput & Joy_Button); /* Use no direction. */
+          pPlayer->brain_info.algo.steer = false; /* Just drift. */
+        }
+        break;
+
+      case TARGET_CODE_DELAY:
+        pPlayer->brain_info.algo.delay_remaining = currentOpcode.target_tile_x;
+        break;
+
+      case TARGET_CODE_GOTO:
+        pPlayer->brain_info.algo.target_list_index = currentOpcode.target_tile_x;
+        break;
+
+      case TARGET_CODE_POWER_UP:
+        pPlayer->brain_info.algo.divert_powerup_distance =
+          currentOpcode.target_tile_x;
+        break;
+
+      default:
+        /* Just a pair of X and Y column/row target coordinates, go to center of
+           that tile (any closer to walls and you bounce off the wall).  Clip to
+           just inside the actual board size so you don't get AI's trying to go
+           past the edge of the board when you load a smaller board than what the
+           opcodes use. */
+
+        uint8_t tileX;
+        tileX = currentOpcode.target_tile_x;
+        if (tileX >= g_play_area_width_tiles - 1)
+          tileX = g_play_area_width_tiles - 2;
+        pPlayer->brain_info.algo.target_pixel_x =
+          tileX * TILE_PIXEL_WIDTH;
+
+        uint8_t tileY;
+        tileY = currentOpcode.target_tile_y;
+        if (tileY >= g_play_area_height_tiles - 1)
+          tileY = g_play_area_height_tiles - 2;
+        pPlayer->brain_info.algo.target_pixel_y =
+          tileY * TILE_PIXEL_WIDTH;
+
         pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
         pPlayer->brain_info.algo.steer = true;
+        break;
       }
-      else if (currentOpcode.target_tile_x == 4 ||
-      currentOpcode.target_tile_x == 5)
-      { /* Target the rival player with highest score. */
-        uint8_t iMyself = pPlayer->player_array_index;
-        uint8_t iBestPlayer = MAX_PLAYERS; /* Also code for don't target. */
-        uint16_t maxScore = 0;
-        bool onlyHumans = (currentOpcode.target_tile_x == 5);
-        uint8_t iPlayer;
-        for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++)
-        {
-          if (iPlayer == iMyself)
-            continue;
-          uint16_t theirScore = GetPlayerScore(iPlayer);
-          if (theirScore < maxScore) /* Note - zero can be a high score. */
-            continue;
-          if (onlyHumans && g_player_array[iPlayer].brain == BRAIN_ALGORITHM)
-            continue; /* Reject AI players. */
-
-          /* Got a better player. */
-          maxScore = theirScore;
-          iBestPlayer = iPlayer;
-        }
-        pPlayer->brain_info.algo.steer = true;
-        pPlayer->brain_info.algo.target_player = iBestPlayer;
-        if (iBestPlayer >= MAX_PLAYERS)
-        {
-          /* No target player found, set current position as the static target
-             location, so that this opcode completes successfully very soon.
-             So you can target the best Human player, and if no Humans are
-             playing, the opcode will do almost nothing. */
-
-          pPlayer->brain_info.algo.target_pixel_x = playerX;
-          pPlayer->brain_info.algo.target_pixel_y = playerY;
-        }
-      }
-      else /* Unknown steering orders, just drift. */
-      {
-        joystickOutput = (joystickOutput & Joy_Button); /* Use no direction. */
-        pPlayer->brain_info.algo.steer = false; /* Just drift. */
-      }
-      break;
-
-    case TARGET_CODE_DELAY:
-      pPlayer->brain_info.algo.delay_remaining = currentOpcode.target_tile_x;
-      break;
-
-    case TARGET_CODE_GOTO:
-      pPlayer->brain_info.algo.target_list_index = currentOpcode.target_tile_x;
-      break;
-
-    case TARGET_CODE_POWER_UP:
-      pPlayer->brain_info.algo.divert_powerup_distance =
-        currentOpcode.target_tile_x;
-      break;
-
-    default:
-      /* Just a pair of X and Y column/row target coordinates, go to center of
-         that tile (any closer to walls and you bounce off the wall).  Clip to
-         just inside the actual board size so you don't get AI's trying to go
-         past the edge of the board when you load a smaller board than what the
-         opcodes use. */
-
-      uint8_t tileX;
-      tileX = currentOpcode.target_tile_x;
-      if (tileX >= g_play_area_width_tiles - 1)
-        tileX = g_play_area_width_tiles - 2;
-      pPlayer->brain_info.algo.target_pixel_x =
-        tileX * TILE_PIXEL_WIDTH;
-
-      uint8_t tileY;
-      tileY = currentOpcode.target_tile_y;
-      if (tileY >= g_play_area_height_tiles - 1)
-        tileY = g_play_area_height_tiles - 2;
-      pPlayer->brain_info.algo.target_pixel_y =
-        tileY * TILE_PIXEL_WIDTH;
-
-      pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
-      pPlayer->brain_info.algo.steer = true;
-      break;
     }
   }
 
@@ -1552,7 +1573,7 @@ void UpdateScreenScrollToShowPlayer(void)
     if (newScreenTopLeftTileX < 0)
       g_play_area_col_for_screen = 0;
     else
-      g_play_area_col_for_screen = newScreenTopLeftTileX; 
+      g_play_area_col_for_screen = newScreenTopLeftTileX;
 
     newScreenTopLeftTileY = playerPlayAreaTileY - (g_screen_height_tiles / 2);
     if (newScreenTopLeftTileY < 0)

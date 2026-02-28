@@ -112,7 +112,7 @@ typedef struct player_algo_struct {
     /* Do a harvest if speed is less than this many pixels/frame. */
 
   bool speed_hysteresis;
-    /* Internal algorithm use, go over desired speed a bit before coasting. */ 
+    /* Internal algorithm use, go over desired speed a bit before coasting. */
 
   int16_t target_pixel_x;
   int16_t target_pixel_y;
@@ -148,6 +148,13 @@ typedef struct player_algo_struct {
     /* Num AI frames remaining in the time delay opcode.  Usually means the
        AI will keep on heading towards the thing it was targeting even if it
        has reached it - good for annoying players. */
+
+  uint8_t stuck_time_remaining;
+    /* Num AI frames remaining before we time-out the current instruction and
+       advance to the next.  Needed because the AI often gets stuck in a corner
+       doing a circular bounce off the walls.  Decremented each time we aren't
+       at the target yet while trying to go there.  Reset to a large number
+       when a new instruction is started. */
 } player_algo_record, *player_algo_pointer;
 
 /* When a target_list_item with a Y coordinate containing these magic values is

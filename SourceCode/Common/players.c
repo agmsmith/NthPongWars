@@ -162,9 +162,10 @@ target_list_item_record g_target_list[] = {
   {80, TARGET_CODE_GOTO},
 /* Instruction 88 */ {28, 11}, /* End of 3rd lane. */
   {80, TARGET_CODE_GOTO},
-/* Instruction 90 */ {10, TARGET_CODE_SPEED}, /* Go below friction speed. */
+/* Instruction 90 */ {15, TARGET_CODE_SPEED}, /* Go below friction speed. */
   {50, TARGET_CODE_POWER_UP}, /* Get middling distance power-ups. */
   {4, TARGET_CODE_STEER}, /* Head to leading player.  Just bump into them. */
+  {5, TARGET_CODE_DELAY}, /* Delay 1 second attacking leading player. */
   {6, TARGET_CODE_SPEED}, /* Slow down. */
   {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
   {5, TARGET_CODE_DELAY}, /* Delay 1 second idling and bouncing. */
@@ -867,7 +868,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       target_list_item_record currentOpcode;
       currentOpcode = g_target_list[pPlayer->brain_info.algo.target_list_index++];
 
-      pPlayer->brain_info.algo.stuck_time_remaining = 50; /* 10 seconds */
+      pPlayer->brain_info.algo.stuck_time_remaining = 100; /* 20 seconds */
 
       switch (currentOpcode.target_tile_y)
       {

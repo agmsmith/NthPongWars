@@ -40,6 +40,15 @@ const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
 };
 #endif /* NABU_H */
 
+const char* gBrainNames[BRAIN_MAX] =
+{
+  "Inactive", /* BRAIN_INACTIVE */
+  "Keyboard", /* BRAIN_KEYBOARD */
+  "Joystick", /* BRAIN_JOYSTICK */
+  "Network", /* BRAIN_NETWORK */
+  "Algorithm", /* BRAIN_ALGORITHM */
+};
+
 player_record g_player_array[MAX_PLAYERS];
 
 int16_t g_play_area_wall_bottom_y;
@@ -760,10 +769,10 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
   if (desiredSpeed == (uint8_t) 255)
   {
     /* Code for always harvest, used for not leaving a trail.  Well, except
-       when stopped, then coast/harvest alternate updates else the AI player
-       gets stuck. */
+       when nearly stopped, then coast/harvest alternate updates else the AI
+       player gets stuck. */
 
-    if (pPlayer->speed != 0 || !wasHarvesting)
+    if (pPlayer->speed >= 2 || !wasHarvesting)
       joystickOutput |= Joy_Button;
   }
   else
@@ -838,6 +847,11 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
           pPlayer->brain_info.algo.divert_saved_pixel_x;
         pPlayer->brain_info.algo.target_pixel_y =
           pPlayer->brain_info.algo.divert_saved_pixel_y;
+
+#if 0 /* Optional debug message to report reverting players. */
+        DebugPrintString("Finished tile divert for ");
+        DumpPlayerStateToTerminal(pPlayer);
+#endif
       }
     }
 
@@ -852,7 +866,8 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     else
     { /* No more waiting, at target and delay has finished or got stuck,
          do current opcode actions and point to next one for next time. */
-#if 1
+
+#if 1 /* Optional debug message to report stuck players. */
       if (pPlayer->brain_info.algo.stuck_time_remaining == 0)
       {
         strcpy(g_TempBuffer, "Player #");
@@ -868,7 +883,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
       target_list_item_record currentOpcode;
       currentOpcode = g_target_list[pPlayer->brain_info.algo.target_list_index++];
 
-      pPlayer->brain_info.algo.stuck_time_remaining = 100; /* 20 seconds */
+      pPlayer->brain_info.algo.stuck_time_remaining = 150; /* 30 seconds */
 
       switch (currentOpcode.target_tile_y)
       {
@@ -938,8 +953,9 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         }
         else /* Unknown steering orders, just drift. */
         {
-          joystickOutput = (joystickOutput & Joy_Button); /* Use no direction. */
+          joystickOutput = (joystickOutput & Joy_Button); /* No direction. */
           pPlayer->brain_info.algo.steer = false; /* Just drift. */
+          pPlayer->brain_info.algo.target_distance = 0; /* Already at target. */
         }
         break;
 
@@ -984,7 +1000,9 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     }
   }
 
-  /* Update the steering direction, and detect closeness to targets. */
+  /* Update the steering direction, and detect closeness to targets.  Note that
+     target distance isn't updated when drifting, and gets set to zero in drift
+     mode so that we don't later get stuck waiting to get to a target. */
 
   if (pPlayer->brain_info.algo.steer)
   {
@@ -1044,6 +1062,12 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 
       if (bestTile != NULL && bestDistance <= powerUpMaxPixelDistance)
       {
+#if 0 /* Optional debug message to report diverting players. */
+        DebugPrintString("Diverting ");
+        DumpPlayerStateToTerminal(pPlayer);
+        DebugPrintString("  to tile ");
+        DumpOneTileToDebug(bestTile);
+#endif
         pPlayer->brain_info.algo.divert_to_pTile = bestTile;
         pPlayer->brain_info.algo.divert_saved_pixel_x =
           pPlayer->brain_info.algo.target_pixel_x;
@@ -1108,7 +1132,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 /* Internal utility function for printing to debug output what player is
    controlled by what device.  Uses g_TempBuffer.
 */
-void DebugPrintPlayerAssignment(player_pointer pPlayer)
+static void DebugPrintPlayerAssignment(player_pointer pPlayer)
 {
   strcpy(g_TempBuffer, "Player #");
   AppendDecimalUInt16(pPlayer->player_array_index);
@@ -1675,20 +1699,13 @@ void CopyPlayersToSprites(void)
 #endif /* NABU_H */
 
 
-/* For debugging, print all the player assignments on the terminal.
-   Uses g_TempBuffer.
+/* For debugging, print information about a single player.  Uses g_TempBuffer.
 */
-void DumpPlayersToTerminal(void)
+void DumpPlayerStateToTerminal(player_pointer pPlayer)
 {
-  uint8_t iPlayer = MAX_PLAYERS - 1;
-  player_pointer pPlayer = g_player_array;
-
-  DebugPrintString("Player data dump...\n");
-
-  do {
-    DebugPrintPlayerAssignment(pPlayer);
-
-    strcpy(g_TempBuffer, "Location (");
+    strcpy(g_TempBuffer, "Player #");
+    AppendDecimalUInt16(pPlayer->player_array_index);
+    strcat(g_TempBuffer, " Location (");
     AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->pixel_center_x));
     strcat(g_TempBuffer, ", ");
     AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->pixel_center_y));
@@ -1702,9 +1719,46 @@ void DumpPlayersToTerminal(void)
     AppendDecimalUInt16(GET_FX_INTEGER(pPlayer->velocity_y));
     strcat(g_TempBuffer, ".");
     AppendDecimalUInt16(GET_FX_FRACTION(pPlayer->velocity_y));
-    strcat(g_TempBuffer, ").\n");
+    strcat(g_TempBuffer, "), ");
+    strcat(g_TempBuffer, gBrainNames[pPlayer->brain]);
+    if (pPlayer->brain == (player_brain) BRAIN_JOYSTICK)
+    {
+      strcat(g_TempBuffer, " #");
+      AppendDecimalUInt16(pPlayer->brain_info.iJoystick);
+    }
+    else if (pPlayer->brain == (player_brain) BRAIN_ALGORITHM)
+    {
+      strcat(g_TempBuffer, " ");
+      strcat(g_TempBuffer, pPlayer->brain_info.algo.steer ? "Steer" : "Drift");
+      strcat(g_TempBuffer, ", PC ");
+      AppendDecimalUInt16(pPlayer->brain_info.algo.target_list_index);
+      strcat(g_TempBuffer, ", Target (");
+      AppendDecimalUInt16(pPlayer->brain_info.algo.target_pixel_x);
+      strcat(g_TempBuffer, ", ");
+      AppendDecimalUInt16(pPlayer->brain_info.algo.target_pixel_y);
+      strcat(g_TempBuffer, "), TPlayer #");
+      AppendDecimalUInt16(pPlayer->brain_info.algo.target_player);
+      strcat(g_TempBuffer, ", TDistance ");
+      AppendDecimalUInt16(pPlayer->brain_info.algo.target_distance);
+    }
+    strcat(g_TempBuffer, ".\n");
     DebugPrintString(g_TempBuffer);
+}
 
+
+/* For debugging, print all the player assignments and state on the terminal.
+   Uses g_TempBuffer.
+*/
+void DumpPlayersToTerminal(void)
+{
+  uint8_t iPlayer = MAX_PLAYERS - 1;
+  player_pointer pPlayer = g_player_array;
+
+  DebugPrintString("Player data dump...\n");
+
+  do {
+    DebugPrintPlayerAssignment(pPlayer);
+    DumpPlayerStateToTerminal(pPlayer);
     pPlayer++;
   } while (iPlayer-- != 0);
 }

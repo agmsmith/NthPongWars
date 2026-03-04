@@ -93,6 +93,8 @@ typedef enum brain_enum {
 };
 typedef uint8_t player_brain; /* Want it to be 8 bits, not 16. */
 
+extern const char* gBrainNames[BRAIN_MAX]; /* Readable player_brain names. */
+
 
 /* When algorithms control the player, we select which algos we want for
    different functions and can set parameters for them.  Some of these options
@@ -507,8 +509,11 @@ extern void CopyPlayersToSprites(void);
    updated during display look bad. */
 #endif /* NABU_H */
 
+extern void DumpPlayerStateToTerminal(player_pointer pPlayer);
+/* For debugging, print information about a single player. Uses g_TempBuffer. */
+
 extern void DumpPlayersToTerminal(void);
-/* For debugging, print all the player assignments on the terminal.
+/* For debugging, print all the player assignments and state on the terminal.
    Uses g_TempBuffer. */
 
 #endif /* _PLAYERS_H */

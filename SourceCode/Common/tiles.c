@@ -176,7 +176,7 @@ uint8_t g_cache_dirty_screen_tiles_index = 0;
 /*******************************************************************************
  * Debug function to print the state of a tile.
  */
-static void DumpOneTileToDebug(tile_pointer pTile)
+void DumpOneTileToDebug(tile_pointer pTile)
 {
   if (pTile == NULL)
   {

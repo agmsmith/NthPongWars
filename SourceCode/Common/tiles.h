@@ -326,6 +326,9 @@ extern void CopyTilesToScreen(void);
   Clear the dirty_screen flags of the ones updated.  Works for NABU and Curses
   screens. */
 
+extern void DumpOneTileToDebug(tile_pointer pTile);
+/* Debug function to print the state of a tile. */
+
 extern void DumpTilesToTerminal(void);
 /* For debugging, print all the tiles on the terminal.  For the NABU, this works
    best if you redirect output (STAT CON:=UC1:) to be over the network (rather

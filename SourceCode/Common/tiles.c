@@ -20,8 +20,9 @@
 
 /******************************************************************************/
 
-tile_record g_tile_array[TILES_ARRAY_SIZE];
-tile_pointer g_tile_array_row_starts[TILES_MAX_ROWS];
+uint16_t gTileArraySize = 0; /* Set during startup to available memory space. */
+tile_pointer g_tile_array = NULL; /* Points to the start of the array. */
+tile_pointer g_tile_array_row_starts[TILES_MAX_ROWS]; /* Index into array. */
 
 const char * g_TileOwnerNames[OWNER_MAX] = {
   "Empty", /* OWNER_EMPTY */
@@ -273,7 +274,7 @@ bool InitTileArray(void)
   g_play_area_num_tiles = g_play_area_height_tiles * g_play_area_width_tiles;
   if (g_play_area_num_tiles == 0)
     return false;
-  if (g_play_area_num_tiles > TILES_ARRAY_SIZE)
+  if (g_play_area_num_tiles > gTileArraySize)
     return false;
   g_play_area_end_tile = g_tile_array + g_play_area_num_tiles;
   gVictoryStartingTileCount = g_play_area_num_tiles;
@@ -934,6 +935,11 @@ void DumpTilesToTerminal(void)
   for (index = 0; index < (tile_owner) OWNER_MAX; index++)
     DumpPowerUpCacheToDebug(index);
 #endif /* DUMP_TILE_POWERUP_CACHE */
+
+  strcpy(g_TempBuffer, "Max ");
+  AppendDecimalUInt16(gTileArraySize);
+  strcat(g_TempBuffer, " tiles available.\n");
+  DebugPrintString(g_TempBuffer);
 
   strcpy(g_TempBuffer, "Play area ");
   AppendDecimalUInt16((uint16_t) g_play_area_width_tiles);

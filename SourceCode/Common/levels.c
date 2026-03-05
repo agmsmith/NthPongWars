@@ -1132,16 +1132,11 @@ const char *StockTextMessages(const char *MagicWord)
   }
   else if (strcasecmp(MagicWord, kMagicWordVersion) == 0)
   {
-    uint16_t totalMem, largestMem;
-
     strcpy(g_TempBuffer, "Using D. J. Sures NABU-LIB, compiled with "
       "the Z88DK build environment (using the SDCC compiler).  "
-      "Compiled on " __DATE__ " at " __TIME__ ".  Heap has ");
-    mallinfo(&totalMem, &largestMem);
-    AppendDecimalUInt16(totalMem);
-    strcat (g_TempBuffer, " bytes free, largest ");
-    AppendDecimalUInt16(largestMem);
-    strcat(g_TempBuffer, ".\n");
+      "Compiled on " __DATE__ " at " __TIME__ ".  Free memory has space for ");
+    AppendDecimalUInt16(gTileArraySize);
+    strcat(g_TempBuffer, " game tiles.\n");
     return g_TempBuffer;
   }
 

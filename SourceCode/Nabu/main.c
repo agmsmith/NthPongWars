@@ -293,8 +293,21 @@ void main(void)
   HitAnyKey(NULL);
 #endif
 
-  /* Set up the tiles.  Directly map play area to screen for now rather than
-     using a scrolling window, which is quite slow. */
+  /* Set up the tiles.  Allocate all free memory for tiles.  Directly map play
+     area to screen rather than using scrolling to keep it simple initially. */
+
+  {
+    uint16_t totalMem, largestMem;
+
+    mallinfo(&totalMem, &largestMem);
+    g_tile_array = malloc(largestMem);
+    gTileArraySize = largestMem / sizeof(tile_record);
+    if (gTileArraySize < 768 || g_tile_array == NULL)
+    {
+      HitAnyKey("Not enough free memory for 768 tiles.  Can't run.\n");
+      return;
+    }
+  }
 
   g_play_area_height_tiles = 23;
   g_play_area_width_tiles = 32;

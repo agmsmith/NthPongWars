@@ -171,20 +171,22 @@ typedef struct tile_struct {
 
 } tile_record, *tile_pointer;
 
-/* We keep a global array of tiles, rather than dynamically allocating them.
-   It has to be at least as large as the play area, which can be bigger than
-   the actual screen size, if we're using windowing to show a portion of the
-   area on computers with lower resolution screens.  NABU screen is 32x24, so
-   minimum 768 tiles.  Even if ROWS * COLUMNS is less than TILES_ARRAY_SIZE,
-   you still have a limit of TILES_MAX_ROWS on the number of rows, and 256 on
-   columns since both of those get stored in bytes. */
-#define TILES_ARRAY_SIZE 1000
+/* We keep a global array of tiles, allocated at startup as big as available
+   free memory lets us.  It has to be at least as large as the play area, which
+   can be bigger than the actual screen size, if we're using windowing to show
+   a portion of the area on computers with lower resolution screens.  NABU
+   screen is 32x24, so minimum 768 tiles.  Even if ROWS * COLUMNS is less than
+   gTileArraySize, you still have a limit of TILES_MAX_ROWS on the number of
+   rows, and 256 on columns since both of those get stored in bytes. */
+extern uint16_t gTileArraySize;
 #define TILES_MAX_ROWS 256
 
 /* An array of tiles.  To avoid using alloc/free with resulting fragmentation
-   of the minuscule NABU memory, it is a static array sized in advance to be
-   as large as possible. */
-extern tile_record g_tile_array[TILES_ARRAY_SIZE];
+   of the minuscule NABU memory, it is allocated at the start of the program to
+   be as large as possible, and then never changed.  This also lets us have
+   more code in the executable (limited by the NABU boot loader to 59K), by not
+   including the array in the executable. */
+extern tile_pointer g_tile_array; /* Points to the start of the array. */
 
 /* We keep an array of pointers to the start of each row of tiles, to save on
    doing a slow multiplication.  Just index this array with the Y coordinate
@@ -193,7 +195,7 @@ extern tile_record g_tile_array[TILES_ARRAY_SIZE];
 extern tile_pointer g_tile_array_row_starts[TILES_MAX_ROWS];
 
 /* Size of the current play area, in tiles.  This can be larger or smaller than
-   the screen size.  Hopefully width * height <= TILES_ARRAY_SIZE, if not then
+   the screen size.  Hopefully width * height <= gTileArraySize, if not then
    tiles after the end of the array are ignored (bottom of the play area) and
    the game may not work properly. */
 extern uint8_t g_play_area_height_tiles;

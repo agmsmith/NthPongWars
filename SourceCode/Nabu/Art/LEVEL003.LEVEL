@@ -4,6 +4,7 @@ Music: SQUAROOT
 Music: MELTDOWN
 Screen: NTHPONG1.NSCR
 ScreenText: 21, 9, 9, 32, _The Long One_
+ScreenText: 22, 2, 2, 32, _Or so it seems right now._
 
 # After showing the win screen, will return to the short form credits.
 LevelBookmark: LEVEL004

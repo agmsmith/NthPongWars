@@ -47,6 +47,7 @@
 
 #pragma output noprotectmsdos /* No need for MS-DOS test and warning. */
 #pragma output noredir /* No command line file redirection. */
+#pragma output CLIB_EXIT_STACK_SIZE = 0 /* Not using atexit() functions. */
 #ifdef __NABU_BARE__
   #pragma output nostreams /* No disk based file streams? */
   #pragma output nofileio /* Sets CLIB_OPEN_MAX to zero, also use -lndos? */
@@ -56,7 +57,7 @@
 #endif
 #pragma output nogfxglobals /* No global variables from Z88DK for graphics. */
 
-#pragma define CRT_STACK_SIZE=1024
+#pragma define CRT_STACK_SIZE = 1024
 /* Reserve space for local variables on the stack, the remainder goes in the
    heap for malloc()/free() to distribute.  The Z88DK C runtime uses a default
    of 512 bytes of stack.  NABU Cloud CP/M has 200 bytes at the very end of

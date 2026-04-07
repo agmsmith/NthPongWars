@@ -269,11 +269,17 @@ typedef struct player_struct {
      Simulate() as part of the velocity updates, so it will lag a frame.  It's
      (abs(velocity_x) + abs(velocity_y)) * 4. */
 
+  bool velocity_octant_invalid;
+    /* If true then velocity_octant needs recalculating right now, not waiting
+       for the next timeout.  Gets set when the player is likely to have
+       changed direction (for things like bouncing off a wall). */
+
   uint8_t velocity_octant;
   /* Direction the velocity is going in, calculated from velocity x,y but only
-     when needed (if joystick direction used or harvest succssful), by
-     UpdatePlayerInputs().  Actually this is the lower boundary of the octant,
-     the upper one is 45 degrees clockwise from this. */
+     when needed (if joystick direction used or harvest successful or lots of
+     time has passed or if velocity_octant_invalid), by UpdatePlayerInputs().
+     Actually this is the lower boundary of the octant, the upper one is 45
+     degrees clockwise from this. */
 
   bool velocity_octant_right_on;
   /* Set to TRUE if the velocity is right along the velocity_octant.  Needed so

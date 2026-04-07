@@ -402,7 +402,9 @@ void Simulate(void)
       /* A player on player collision has happened!  Exchange velocities. */
 
       pPlayer->player_collision_count += 15; /* Take a while to recover. */
+      pPlayer->velocity_octant_invalid = true;
       pOtherPlayer->player_collision_count += 15;
+      pOtherPlayer->velocity_octant_invalid = true;
       PlaySound(SOUND_BALL_HIT, pPlayer);
 
       SWAP_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x);
@@ -1091,7 +1093,10 @@ void Simulate(void)
       }
 
       if (bounceOffX || bounceOffY)
+      {
+        pPlayer->velocity_octant_invalid = true; /* Moving in new direction. */
         PlaySound(SOUND_TILE_HIT, pPlayer);
+      }
     }
 
     /* Bounce the players off the walls.  Also forces their position to be on
@@ -1113,6 +1118,8 @@ void Simulate(void)
           NEGATE_FX(&pPlayer->step_velocity_x);
         }
         INT_TO_FX(g_play_area_wall_left_x, pPlayer->pixel_center_x);
+
+        pPlayer->velocity_octant_invalid = true; /* Moving in new direction. */
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
@@ -1124,6 +1131,8 @@ void Simulate(void)
           NEGATE_FX(&pPlayer->step_velocity_x);
         }
         INT_TO_FX(g_play_area_wall_right_x, pPlayer->pixel_center_x);
+
+        pPlayer->velocity_octant_invalid = true; /* Moving in new direction. */
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
@@ -1137,6 +1146,8 @@ void Simulate(void)
           NEGATE_FX(&pPlayer->step_velocity_y);
         }
         INT_TO_FX(g_play_area_wall_bottom_y, pPlayer->pixel_center_y);
+
+        pPlayer->velocity_octant_invalid = true; /* Moving in new direction. */
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
 
@@ -1148,6 +1159,8 @@ void Simulate(void)
           NEGATE_FX(&pPlayer->step_velocity_y);
         }
         INT_TO_FX(g_play_area_wall_top_y, pPlayer->pixel_center_y);
+
+        pPlayer->velocity_octant_invalid = true; /* Moving in new direction. */
         PlaySound(SOUND_WALL_HIT, pPlayer);
       }
     }

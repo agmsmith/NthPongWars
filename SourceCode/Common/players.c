@@ -867,7 +867,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     { /* No more waiting, at target and delay has finished or got stuck,
          do current opcode actions and point to next one for next time. */
 
-#if 1 /* Optional debug message to report stuck players. */
+#if 0 /* Optional debug message to report stuck players. */
       if (pPlayer->brain_info.algo.stuck_time_remaining == 0)
       {
         strcpy(g_TempBuffer, "Player #");
@@ -1341,13 +1341,14 @@ void UpdatePlayerInputs(void)
       /* Update the direction the player's velocity is pointing in.  It's only
          used here for modifying velocity direction, not in the physics
          simulation.  Needed for applying harvest, and for steering.  Only
-         update it if needed, and occasionally every 16th frame to keep AI's
+         update it if needed, and occasionally every 32nd frame to keep AI's
          pointed in the right direction. */
 
       uint8_t player_velocity_octant = 0;
       if (pPlayer->thrust_harvested ||
       (joyStickData & (Joy_Up | Joy_Down | Joy_Right | Joy_Left)) ||
-      ((uint8_t) g_FrameCounter & 15) == (iPlayer << 2))
+      pPlayer->velocity_octant_invalid ||
+      ((uint8_t) g_FrameCounter & 31) == (iPlayer << 3))
       {
         player_velocity_octant = VECTOR_FX_TO_OCTANT(
           &pPlayer->velocity_x, &pPlayer->velocity_y);
@@ -1355,6 +1356,7 @@ void UpdatePlayerInputs(void)
           ((player_velocity_octant & 0x80) != 0);
         player_velocity_octant &= 7; /* Low 3 bits contain octant number. */
         pPlayer->velocity_octant = player_velocity_octant;
+        pPlayer->velocity_octant_invalid = false;
       }
 
       /* If thrusted in the last frame and harvested some points, speed up in

@@ -1,0 +1,11 @@
+# Show the high score screen.
+GameMode: Trivia
+Music: Silence
+Music: TECHTED3
+Screen: TEXTSCREEN.NSCR
+LevelNext: All, CREDITS
+PlayTimeout: 7
+ScreenText: 5, 13, 4, 28, Insert
+ScreenText: 7, 11, 4, 28, High Score
+ScreenText: 9, 10, 4, 28, Screen Here
+

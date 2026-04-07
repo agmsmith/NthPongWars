@@ -6,8 +6,8 @@ Screen: NTHPONG1.NSCR
 ScreenText: 21, 9, 9, 32, _ Scroll'n _
 
 # After showing the win screen, will return to the full credits.
-LevelBookmark: CREDITS
-LevelNext: All, CREDITS
+LevelBookmark: HIGHSCORE
+LevelNext: All, HIGHSCORE
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2

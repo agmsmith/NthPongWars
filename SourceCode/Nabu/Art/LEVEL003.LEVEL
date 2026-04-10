@@ -4,9 +4,9 @@ Music: SQUAROOT
 Music: MELTDOWN
 Screen: NTHPONG1.NSCR
 ScreenText: 21, 9, 9, 32, _The Long One_
-ScreenText: 22, 2, 2, 32, _Or so it seems right now._
+ScreenText: 22, 3, 3, 32, (Or so it seems right now)
 
-# After showing the win screen, will return to the short form credits.
+# After showing the win screen, will advance to the next level.
 LevelBookmark: LEVEL004
 LevelNext: All, LEVEL004
 LevelNext: P0, WINP0
@@ -18,5 +18,16 @@ LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
 InitialCount: 450
+
 MaxAIPlayers: 4
+# Back to default AI player personalities.
+AIPlayerCodeStart: 30, 40, 0, 30
+
+# Back to default Power-up quotas.
+TileQuota: N, 1 # OWNER_PUP_NORMAL
+TileQuota: H, 3 # OWNER_PUP_STOP - using H for Halt
+TileQuota: F, 2 # OWNER_PUP_FLY
+TileQuota: W, 2 # OWNER_PUP_WIDER
+TileQuota: B, 2 # OWNER_PUP_BASH_WALL
+TileQuota: S, 2 # OWNER_PUP_SOLID
 

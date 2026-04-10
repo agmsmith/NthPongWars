@@ -272,8 +272,9 @@ void InitialisePlayersForNewLevel(void)
     pPlayer->joystick_inputs = 0;
     pPlayer->brain_info.algo.target_list_index =
       g_target_start_indices[iPlayer];
-    pPlayer->brain_info.algo.steer = true;
+    pPlayer->brain_info.algo.steer = false;
     pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
+    pPlayer->last_brain_activity_time = g_FrameCounter;
 #ifdef NABU_H
     pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
     pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
@@ -1283,10 +1284,11 @@ void UpdatePlayerInputs(void)
   /* See if we need to add an AI player to make the quota of AI players.  But
      only check about once every eight seconds. */
 
-  if ((uint8_t) g_FrameCounter == (uint8_t) 187 && gLevelMaxAIPlayers > 0)
+  if ((uint8_t) g_FrameCounter == (uint8_t) 187)
   {
     uint8_t numAIPlayers = 0;
     player_pointer pFreePlayer = NULL;
+    player_pointer pAIPlayer = NULL;
 
     pPlayer = g_player_array;
     for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
@@ -1294,9 +1296,19 @@ void UpdatePlayerInputs(void)
       if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
         pFreePlayer = pPlayer;
       else if (pPlayer->brain == ((player_brain) BRAIN_ALGORITHM))
+      {
+        pAIPlayer = pPlayer;
         numAIPlayers++;
+      }
     }
-    if (numAIPlayers < gLevelMaxAIPlayers && pFreePlayer != NULL)
+    if (numAIPlayers > gLevelMaxAIPlayers)
+    {
+      /* Too many AI players, remove one.  Happens usually when carrying over
+         AI players from the previous level. */
+      pAIPlayer->brain = (player_brain) BRAIN_INACTIVE;
+      DebugPrintPlayerAssignment(pAIPlayer);
+    }
+    else if (numAIPlayers < gLevelMaxAIPlayers && pFreePlayer != NULL)
     {
       /* Make an AI player. */
       bzero(&pFreePlayer->brain_info, sizeof(pFreePlayer->brain_info));

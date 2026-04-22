@@ -2865,6 +2865,58 @@ All the sound effects, one after another: <A HREF="20260215PowerUpSounds.mp3">20
 screen loading, which is now one function that examines file extensions and
 file size to determine how to load a picture into video memory.
 
+<HR>
+<H2><A NAME="2026.04.22"></A>2026.04.22</H2>
+
+<H3>Redo Math as 16 Bit Fixed Point</H3>
+
+<P>Game speed is getting terribly slow, and the biggest slowdown happens in the
+physics code when it adds extra simulation steps for fast moving objects.  I'm
+going to switch from 32 bit numbers (16 bit integer + 16 bit fraction) to 16
+bit numbers (11 bit integer, 5 bit fraction).
+
+<P>Why that 11/5 bit split?  It will work with sufficient accuracy (1/32
+is the smallest fraction of velocity, for game running at 30hz that gives one
+pixel per second slow movement) and enough capacity (+/-1023 pixels = 128 tiles
+maximum board width).  It also lets the Z80 use its 16 bit instructions to do
+addition, but takes more time to shift bits to get at the integer part of a
+number.  Also it can pass those values around by value, even returning them in
+a register rather on the stack, which saves many instructions too.
+
+<P>I did a test to see which techniques worked best in a function call to add
+two 16 bit numbers.  Instruction size is strongly related to execution speed,
+since it has to read all those instruction bytes one by one from memory, so
+I'll use that as a proxy for speed.
+
+<PRE>int16_t AddByValue(int16_t First, int16_t Second)
+{
+  return First + Second;
+}
+
+int16_t AddByReference(int16_t *First, int16_t *Second)
+{
+  return *First + *Second;
+}
+
+void AddAllByPointers(int16_t *First, int16_t *Second,int16_t *Sum)
+{
+  *Sum = *First + *Second;
+}
+
+#define AddByMacro(First, Second) ((First) + (Second))
+</PRE>
+
+<P><B>Pass by value</B> uses 22 bytes to do the call and 23 bytes for the subroutine
+code, totalling <B>45 bytes</B>.
+
+<P><B>Pass by reference</B> (result returned in a register) totalled 18+31 = <B>49 bytes</B>.
+
+<P><B>Pass by pointers</B> (result via pointer) totalled 23+39 = <B>62 bytes</B>.
+
+<P>Using an <B>inline macro</B> totalled <B>17 bytes</B>.
+
+<P>I like that macro one!  Will try to do it that way.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2026 by Alexander G. M. Smith.

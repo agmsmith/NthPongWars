@@ -48,7 +48,7 @@ void COPY_FX(pfx x, pfx y)
   ldi
   __endasm;
 #else /* Generic C implementation. */
-  y->as_int32 = x->as_int32;
+  y->as_int = x->as_int;
 #endif
 }
 
@@ -84,9 +84,9 @@ SwapLoop:
 #else /* Generic C implementation. */
   fx tempFX;
 
-  tempFX.as_int32 = x->as_int32;
-  x->as_int32 = y->as_int32;
-  y->as_int32 = tempFX.as_int32;
+  tempFX.as_int = x->as_int;
+  x->as_int = y->as_int;
+  y->as_int = tempFX.as_int;
 #endif
 }
 
@@ -121,7 +121,7 @@ void NEGATE_FX(pfx x)
   ld    (hl),a
   __endasm;
 #else /* Generic C implementation. */
-  x->as_int32 = -x->as_int32;
+  x->as_int = -x->as_int;
 #endif
 }
 
@@ -164,7 +164,7 @@ void COPY_NEGATE_FX(pfx x, pfx y)
   ld    (bc),a
   __endasm;
 #else /* Generic C implementation. */
-  y->as_int32 = -x->as_int32;
+  y->as_int = -x->as_int;
 #endif
 }
 
@@ -216,7 +216,7 @@ void ADD_FX(pfx x, pfx y, pfx z)
   ld    (de),a
   __endasm;
 #else /* Generic C implementation. */
-  z->as_int32 = x->as_int32 + y->as_int32;
+  z->as_int = x->as_int + y->as_int;
 #endif
 }
 
@@ -268,7 +268,7 @@ void SUBTRACT_FX(pfx x, pfx y, pfx z)
   ld    (de),a
   __endasm;
 #else /* Generic C implementation. */
-  z->as_int32 = x->as_int32 - y->as_int32;
+  z->as_int = x->as_int - y->as_int;
 #endif
 }
 
@@ -346,9 +346,9 @@ ZeroCompare:
   __endasm;
   return 0;       /* Need at least one return in C, else get warning. */
 #else /* Generic C implementation. */
-  if (x->as_int32 < y->as_int32)
+  if (x->as_int < y->as_int)
     return -1;
-  else if (x->as_int32 == y->as_int32)
+  else if (x->as_int == y->as_int)
     return 0;
   return 1;
 #endif
@@ -388,9 +388,9 @@ ZeroTest:
   __endasm;
   return 0;       /* Need at least one return in C, else get warning. */
 #else /* Generic C implementation. */
-  if (x->as_int32 < 0)
+  if (x->as_int < 0)
     return -1;
-  else if (x->as_int32 == 0)
+  else if (x->as_int == 0)
     return 0;
   return 1;
 #endif
@@ -423,7 +423,7 @@ void DIV2_FX(pfx x)
   jp    (hl)      /* Return using saved return address. */
   __endasm;
 #else
-  x->as_int32 >>= 1;
+  x->as_int >>= 1;
 #endif
 }
 
@@ -471,7 +471,7 @@ Div2nthDone:
   ld    (hl),c
   __endasm;
 #else
-  x->as_int32 >>= n;
+  x->as_int >>= n;
 #endif
 }
 

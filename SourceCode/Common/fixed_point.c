@@ -42,9 +42,7 @@ void COPY_FX(pfx x, pfx y)
   dec   hl
   ld    l,(hl)
   ld    h,a       /* hl points to argument x. */
-  ldi             /* Copy 4 bytes, faster to do 4 ldi's than use ldir. */
-  ldi
-  ldi
+  ldi             /* Copy 2 bytes, faster to do ldi's than use ldir. */
   ldi
   __endasm;
 #else /* Generic C implementation. */
@@ -70,13 +68,12 @@ void SWAP_FX(pfx x, pfx y)
   dec   hl
   ld    l,(hl)
   ld    h,a       /* hl points to argument x. */
-  ld    b,4       /* Loop counter, 4 bytes to swap. */
+  ld    b,2       /* Loop counter, 2 bytes to swap. */
 SwapLoop:
   ld    c,(hl)
   ld    a,(de)
-  ex    de,hl
-  ld    (hl),c
-  ld    (de),a
+  ld    (hl),a
+  ld    (de),c
   inc   de
   inc   hl
   djnz  SwapLoop  /* Decrement b (not bc, just b), jump if not zero. */
@@ -102,19 +99,11 @@ void NEGATE_FX(pfx x)
   ld    e,(hl)
   inc   hl
   ld    d,(hl)
-  ex    de,hl     /* hl now points to 32 bits of fx data from x. */
+  ex    de,hl     /* hl now points to bits of fx data from x. */
   xor   a,a       /* Zeroes register A, also annoyingly clears carry flag. */
   ld    b,a       /* Save zero so we can rezero without clearing carry. */
   sub   a,(hl)    /* Less bytes using "sub" than starting with 2 byte "neg". */
   ld    (hl),a    /* Overwrite one byte with the result. */
-  inc   hl
-  ld    a,b
-  sbc   a,(hl)
-  ld    (hl),a
-  inc   hl
-  ld    a,b
-  sbc   a,(hl)
-  ld    (hl),a
   inc   hl
   ld    a,b
   sbc   a,(hl)
@@ -152,16 +141,6 @@ void COPY_NEGATE_FX(pfx x, pfx y)
   ld    a,e
   sbc   a,(hl)
   ld    (bc),a
-  inc   hl
-  inc   bc
-  ld    a,e
-  sbc   a,(hl)
-  ld    (bc),a
-  inc   hl
-  inc   bc
-  ld    a,e
-  sbc   a,(hl)
-  ld    (bc),a
   __endasm;
 #else /* Generic C implementation. */
   y->as_int = -x->as_int;
@@ -182,7 +161,7 @@ void ADD_FX(pfx x, pfx y, pfx z)
   add   hl,sp     /* Get pointer to argument x, will put in bc. */
   ld    c,(hl)
   inc   hl
-  ld    b,(hl)    /* bc now has pointer to x's fx data, a 32 bit integer. */
+  ld    b,(hl)    /* bc now has pointer to x's fx data. */
   inc   hl
   ld    e,(hl)
   inc   hl
@@ -193,21 +172,9 @@ void ADD_FX(pfx x, pfx y, pfx z)
   ld    h,(hl)    /* Yes, you can do that, mangle hl with (hl) data. */
   ld    l,a       /* Temporarily hl has pointer to z's fx data. */
   ex    de,hl     /* de has z, hl has y, needed for add a,(hl) instruction. */
-  ld    a,(bc)    /* Do the 32 bit addition, x + y = z in effect. */
+  ld    a,(bc)    /* Do the 16 bit addition, x + y = z in effect. */
   add   a,(hl)
   ld    (de),a    /* Save result in z, can overwrite x or y, but that's OK. */
-  inc   hl
-  inc   bc
-  inc   de
-  ld    a,(bc)
-  adc   a,(hl)
-  ld    (de),a
-  inc   hl
-  inc   bc
-  inc   de
-  ld    a,(bc)
-  adc   a,(hl)
-  ld    (de),a
   inc   hl
   inc   bc
   inc   de
@@ -234,7 +201,7 @@ void SUBTRACT_FX(pfx x, pfx y, pfx z)
   add   hl,sp     /* Get pointer to argument x, will put in bc. */
   ld    c,(hl)
   inc   hl
-  ld    b,(hl)    /* bc now has pointer to x's fx data, a 32 bit integer. */
+  ld    b,(hl)    /* bc now has pointer to x's fx data. */
   inc   hl
   ld    e,(hl)
   inc   hl
@@ -245,21 +212,9 @@ void SUBTRACT_FX(pfx x, pfx y, pfx z)
   ld    h,(hl)    /* Yes, you can do that, mangle hl with (hl) data. */
   ld    l,a       /* Temporarily hl has pointer to z's fx data. */
   ex    de,hl     /* de has z, hl has y, needed for sbc a,(hl) instruction. */
-  ld    a,(bc)    /* Do the 32 bit subtraction, x - y = z in effect. */
+  ld    a,(bc)    /* Do the 16 bit subtraction, x - y = z in effect. */
   sub   a,(hl)
   ld    (de),a    /* Save result in z, can overwrite x or y, but that's OK. */
-  inc   hl
-  inc   bc
-  inc   de
-  ld    a,(bc)
-  sbc   a,(hl)
-  ld    (de),a
-  inc   hl
-  inc   bc
-  inc   de
-  ld    a,(bc)
-  sbc   a,(hl)
-  ld    (de),a
   inc   hl
   inc   bc
   inc   de
@@ -310,7 +265,7 @@ int8_t COMPARE_FX(pfx x, pfx y)
   inc   hl
   ld    d,(hl)    /* de now has pointer to y's fx data. */
   ex    de,hl     /* But need y to be in hl for only sbc a,(regpair) opcode. */
-  ld    a,(bc)    /* Do the 32 bit comparison, x - y in effect. */
+  ld    a,(bc)    /* Do the 16 bit comparison, x - y in effect. */
   sub   a,(hl)
   ld    e,a       /* Collect bits to see if whole result is zero. */
   inc   hl
@@ -318,16 +273,6 @@ int8_t COMPARE_FX(pfx x, pfx y)
   ld    a,(bc)
   sbc   a,(hl)
   ld    d,a
-  inc   hl
-  inc   bc
-  ld    a,(bc)
-  sbc   a,(hl)
-  ld    iyl,a
-  inc   hl
-  inc   bc
-  ld    a,(bc)
-  sbc   a,(hl)
-  ld    iyh,a
   jp    PO,NoOverflowCompare /* Pity, no jr jump relative for overflow tests. */
   xor   a,0x80    /* Signed value overflowed, sign bit is reversed, fix it. */
 NoOverflowCompare:
@@ -335,9 +280,7 @@ NoOverflowCompare:
   ld    l,0xFF    /* Negative result, so X < Y. */
   ret
 PositiveCompare:
-  ld    a,iyh     /* See if the complete result is zero. */
-  or    a,iyl
-  or    a,d
+  ld    a,d     /* See if the complete result is zero. */
   or    a,e
   jr    z,ZeroCompare
   ld    l,0x01
@@ -367,16 +310,12 @@ int8_t TEST_FX(pfx x)
   ld    a,(hl)
   inc   hl
   ld    h,(hl)
-  ld    l,a       /* hl now has pointer to x's fx data, a 32 bit integer. */
+  ld    l,a       /* hl now has pointer to x's fx data, an integer. */
   ld    a,(hl)    /* First, least significant, byte of data. */
   inc   hl
   or    a,(hl)
-  inc   hl
-  or    a,(hl)
-  inc   hl
-  or    a,(hl)
   jr    z,ZeroTest
-  ld    a,(hl)
+  ld    a,(hl)    /* Get most significant byte, check sign bit for negative. */
   or    a,a
   jp    P,PositiveTest
   ld    l,0xFF    /* Negative result, so X < 0. */
@@ -409,16 +348,10 @@ void DIV2_FX(pfx x)
   pop   de        /* Get return address into de. */
   pop   hl        /* Get pointer to argument x, will put in hl. */
   push  hl        /* Put it back so caller can clean up stack as expected. */
-  inc   hl        /* Add 3 to hl, to start at most significant byte of x. */
-  inc   hl
-  inc   hl
+  inc   hl        /* Add 1 to hl, to start at most significant byte of x. */
   sra   (hl)      /* Shift right, duplicating high sign bit, modifies memory. */
   dec   hl
   rr    (hl)      /* Rotate right, using the carry bit from previous shift. */
-  dec   hl
-  rr    (hl)
-  dec   hl
-  rr    (hl)      /* Last rotation and we're done.  Result already in memory. */
   ex    de,hl
   jp    (hl)      /* Return using saved return address. */
   __endasm;
@@ -430,7 +363,7 @@ void DIV2_FX(pfx x)
 
 /* Divide the FX by two to the Nth.  Same as shifting the given value arithmetic
    right by N bits (sign bit extended, so works with negative numbers too).
-   Load 32 bits in to bc and de registers to do shifts, A counts down from N.
+   Load 16 bits in to bc registers to do shifts, A counts down from N.
 */
 void DIV2Nth_FX(pfx x, uint8_t n)
 {
@@ -445,28 +378,18 @@ void DIV2Nth_FX(pfx x, uint8_t n)
   ld    b,(hl)
   dec   hl        /* Get low byte of pointer to x. */
   ld    l,(hl)
-  ld    h,b       /* hl now has pointer to x's fx data, a 32 bit integer. */
-  ld    c,(hl)    /* Copy X to bcde registers, starting with low byte. */
+  ld    h,b       /* hl now has pointer to x's fx data, a 16 bit integer. */
+  ld    c,(hl)    /* Copy X to bc registers, starting with low byte. */
   inc   hl
-  ld    b,(hl)
-  inc   hl
-  ld    d,(hl)
-  inc   hl
-  ld    e,(hl)
+  ld    b,(hl)    /* High byte of raw integer in b. */
 Div2nthLoop:
   dec   a       /* Reduce the counter N. */
   jp    M,Div2nthDone /* Minus means we're done.  Also works for N=0 case. */
-  sra   e       /* Shift right, duplicating high sign bit. */
-  rr    d
-  rr    b
+  sra   b       /* Shift right, duplicating high sign bit. */
   rr    c
   jr    Div2nthLoop
 Div2nthDone:
-  ld    (hl),e /* Write the result back to variable X's data area. */
-  dec   hl
-  ld    (hl),d
-  dec   hl
-  ld    (hl),b
+  ld    (hl),b /* Write the result back to variable X's data area. */
   dec   hl
   ld    (hl),c
   __endasm;
@@ -478,13 +401,9 @@ Div2nthDone:
 
 /* Multiply by 4 and return the integer portion.
 */
-int16_t MUL4INT_FX(pfx x)
+fx_whole_integer MUL4INT_FX(pfx x)
 {
-  int16_t intPart;
-  uint8_t fracPart;
-  intPart = x->portions.integer * 4;
-  fracPart = (x->portions.fraction >> 14);
-  return intPart | fracPart;
+  return (fx_whole_integer) (x->as_int >> (FX_BITS_FRACTION - 2));
 }
 
 

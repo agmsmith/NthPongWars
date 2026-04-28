@@ -229,7 +229,8 @@ void main(void)
   ZERO_FX(gfx_Constant_Zero);
   INT_TO_FX(1, gfx_Constant_One);
   COPY_NEGATE_FX(&gfx_Constant_One, &gfx_Constant_MinusOne);
-  INT_FRACTION_TO_FX(0 /* int */, 0x2000 /* fraction */, gfx_Constant_Eighth);
+  INT_FRACTION_TO_FX(0 /* int */, MAX_FX_FRACTION / 8 + 1 /* fraction */,
+    gfx_Constant_Eighth);
   COPY_NEGATE_FX(&gfx_Constant_Eighth, &gfx_Constant_MinusEighth);
 
   /* So CP/M users can see the welcome text. */

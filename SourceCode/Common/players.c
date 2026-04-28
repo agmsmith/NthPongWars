@@ -265,8 +265,8 @@ void InitialisePlayersForNewLevel(void)
     INT_TO_FX(pPlayer->starting_level_pixel_x, pPlayer->pixel_center_x);
     INT_TO_FX(pPlayer->starting_level_pixel_y, pPlayer->pixel_center_y);
     pPlayer->pixel_flying_height = MAX_FLYING_HEIGHT;
-    INT_TO_FX(0, pPlayer->velocity_x);
-    INT_TO_FX(0, pPlayer->velocity_y);
+    ZERO_FX(pPlayer->velocity_x);
+    ZERO_FX(pPlayer->velocity_y);
     pPlayer->player_collision_count = 0;
     bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
     pPlayer->joystick_inputs = 0;

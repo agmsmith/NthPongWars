@@ -64,12 +64,12 @@ uint16_t AmountToRead, uint8_t *DecodedBuffer)
       else if (letter >= '0' && letter <= '9')
       {
         if (dollar_found)
-          number = number << 4 | (letter - '0');
+          number = (number << 4) | (letter - '0');
       }
       else if (letter >= 'A' && letter <= 'F')
       {
         if (dollar_found)
-          number = number << 4 | (letter - ('A' - 10));
+          number = (number << 4) | (letter - ('A' - 10));
       }
       else /* Some other characters, including CRLF, maybe number end? */
       {

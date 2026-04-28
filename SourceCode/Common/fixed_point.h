@@ -44,19 +44,19 @@
   #define FX_BYTES_WHOLE 2
   #define FX_BITS_INT 11
   #define FX_BITS_FRACTION 5
-  #define _MAX_FX_FRACTION 0x1F /* Internal use, fraction is unsigned int. */
-  #define _MAX_FX_INT 0x03FF /* Internal use, max positive integer. */
+  #define MAX_FX_FRACTION 0x1F /* Internal use, fraction is unsigned int. */
+  #define MAX_FX_INT 0x03FF /* Internal use, max positive integer. */
   typedef int16_t fx_whole_integer; /* The whole FX number fits this integer. */
 #else /* More generic code, int and fractional parts are both 16 bits. */
   #define FX_BITS_WHOLE 32
   #define FX_BYTES_WHOLE 4
   #define FX_BITS_INT 16
   #define FX_BITS_FRACTION 16
-  #define _MAX_FX_FRACTION 0xFFFF /* Internal use, fraction is unsigned int. */
-  #define _MAX_FX_INT 0x7FFF /* Internal use, max positive integer. */
+  #define MAX_FX_FRACTION 0xFFFF /* Internal use, fraction is unsigned int. */
+  #define MAX_FX_INT 0x7FFF /* Internal use, max positive integer. */
   typedef int32_t fx_whole_integer;
 #endif
-#define _FX_UNITY_FLOAT ((float) (((int32_t) 1) << FX_BITS_FRACTION))
+#define FX_UNITY_FLOAT ((float) (((int32_t) 1) << FX_BITS_FRACTION))
 
 /* Our floating point data type "fx", can be interpreted as an integer
    to do math (addition, subtraction) or parts can be extracted, or converted
@@ -114,19 +114,19 @@ extern fx gfx_Constant_MinusEighth;
 /* Setting and getting.  Mostly inline code, limited by 8 bit compilers. */
 extern void COPY_FX(pfx x, pfx y); /* Copy value of X to Y. */
 extern void SWAP_FX(pfx x, pfx y); /* Exchange values of X and Y. */
-#define FLOAT_TO_FX(fpa, x) {x.as_int = fpa * _FX_UNITY_FLOAT;}
+#define FLOAT_TO_FX(fpa, x) {x.as_int = fpa * FX_UNITY_FLOAT;}
 #define GET_FX_FRACTION(x) (x.portions.fraction)
 
 #ifdef NABU_H
-  #define GET_FX_INTEGER(x) (x.portions.int_low + 256 * x.portions.int_high)
+  #define GET_FX_INTEGER(x) (x.as_int >> FX_BITS_FRACTION)
 #else /* More generic 16.16 fixed point implementation. */
   #define GET_FX_INTEGER(x) (x.portions.integer)
 #endif
 
-#define GET_FX_FLOAT(x) (x.as_int / _FX_UNITY_FLOAT)
+#define GET_FX_FLOAT(x) (x.as_int / FX_UNITY_FLOAT)
 
 #ifdef NABU_H
-  #define INT_TO_FX(inta, x) {x.portions.as_int = (inta << FX_BITS_FRACTION); }
+  #define INT_TO_FX(inta, x) {x.as_int = (inta << FX_BITS_FRACTION); }
 #else /* More generic 16.16 fixed point implementation. */
   #define INT_TO_FX(inta, x) {x.portions.integer = inta; x.portions.fraction = 0; }
 #endif
@@ -160,7 +160,9 @@ extern void ABS_FX(pfx x);
 extern void COPY_ABS_FX(pfx x, pfx y);
 
 /* IS_NEGATIVE_FX(pfx x) returns TRUE if the number is negative. */
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#ifdef NABU_H
+  #define IS_NEGATIVE_FX(x) ((x)->portions.int_high & 0x80)
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
   #define IS_NEGATIVE_FX(x) ((x)->as_bytes[3] & 0x80)
 #else /* Big endian. */
   #define IS_NEGATIVE_FX(x) ((x)->as_bytes[0] & 0x80)
@@ -186,13 +188,13 @@ extern void DIV2_FX(pfx x);
 extern void DIV2Nth_FX(pfx x, uint8_t n);
 
 /* Divide a by 4 and put into b. */
-#define DIV4_FX(a, b) {b.as_int32 = a.as_int32 / 4; }
+#define DIV4_FX(a, b) {b.as_int = a.as_int / 4; }
 
 /* Divide a by 256 and put into b. */
-#define DIV256_FX(a, b) {b.as_int32 = a.as_int32 / 256; }
+#define DIV256_FX(a, b) {b.as_int = a.as_int / 256; }
 
 /* Multiply by 4 and return the integer portion. */
-extern int16_t MUL4INT_FX(pfx x);
+extern fx_whole_integer MUL4INT_FX(pfx x);
 
 /* Convert a 2D vector into an octant angle direction.  Returns octant number
    in lower 3 bits of the result.  Result high bit is set if the vector is

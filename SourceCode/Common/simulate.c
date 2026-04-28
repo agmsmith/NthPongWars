@@ -270,10 +270,10 @@ void Simulate(void)
   {
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
-    pPlayer->step_velocity_x.as_int32 =
-      pPlayer->velocity_x.as_int32 >> stepShiftCount;
-    pPlayer->step_velocity_y.as_int32 =
-      pPlayer->velocity_y.as_int32 >> stepShiftCount;
+    pPlayer->step_velocity_x.as_int =
+      (pPlayer->velocity_x.as_int >> stepShiftCount);
+    pPlayer->step_velocity_y.as_int =
+      (pPlayer->velocity_y.as_int >> stepShiftCount);
 #if DEBUG_PRINT_SIM
     strcpy(g_TempBuffer, "Player #");
     AppendDecimalUInt16(iPlayer);

@@ -498,17 +498,21 @@ head_towards_octant, head_clockwise);
 
   if (g_PhysicsTurnRate == 0) /* Means calculate it based on velocity. */
   {
-    COPY_FX(&pPlayer->velocity_x, &turnAmount);
-    ABS_FX(&turnAmount);
-    if (IS_NEGATIVE_FX(&pPlayer->velocity_y))
-      SUBTRACT_FX(&turnAmount, &pPlayer->velocity_y, &turnAmount);
+    COPY_FX(pPlayer->velocity_x, turnAmount);
+    ABS_FX(turnAmount);
+    if (IS_NEGATIVE_FX(pPlayer->velocity_y))
+    { /* Macro for SUBTRACT_FX can be { stuff }, so use extra {} around it. */
+      SUBTRACT_FX(turnAmount, pPlayer->velocity_y, turnAmount);
+    }
     else
-      ADD_FX(&turnAmount, &pPlayer->velocity_y, &turnAmount);
+    {
+      ADD_FX(turnAmount, pPlayer->velocity_y, turnAmount);
+    }
     DIV2_FX(&turnAmount); /* Don't make turns too boringly sharp. */
   }
   else /* Using a constant turn rate limit. */
   {
-    COPY_FX(&g_TurnRateFx, &turnAmount);
+    COPY_FX(g_TurnRateFx, turnAmount);
   }
 
   switch (head_towards_octant)
@@ -517,18 +521,18 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce negative Y towards 0, add to positive X. */
         fx positiveY;
-        COPY_NEGATE_FX(&pPlayer->velocity_y, &positiveY);
+        COPY_NEGATE_FX(pPlayer->velocity_y, positiveY);
         if (COMPARE_FX(&positiveY, &turnAmount) < 0)
-          COPY_FX(&positiveY, &turnAmount); /* Limited by available Y. */
-        ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-        ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          COPY_FX(positiveY, turnAmount); /* Limited by available Y. */
+        ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+        ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
       }
       else
       { /* Reduce positive Y towards 0, add to positive X. */
         if (COMPARE_FX(&pPlayer->velocity_y, &turnAmount) < 0)
-          COPY_FX(&pPlayer->velocity_y, &turnAmount);
-        SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-        ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          COPY_FX(pPlayer->velocity_y, turnAmount);
+        SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+        ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
       }
       break;
 
@@ -536,35 +540,35 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce positive X, add to positive Y until equal balance. */
         fx balance;
-        SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        SUBTRACT_FX(pPlayer->velocity_x, pPlayer->velocity_y, balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y|
              Note that we can't just subtract/add the half balance from both,
              since there could be rounding errors in the last bit. */
           DIV2_FX(&balance);
-          SUBTRACT_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
-          COPY_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+          SUBTRACT_FX(pPlayer->velocity_x, balance, pPlayer->velocity_x);
+          COPY_FX(pPlayer->velocity_x, pPlayer->velocity_y);
         }
         else
         {
-          SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
-          ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
+          SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
+          ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
         }
       }
       else
       { /* Reduce positive Y, add to positive X until equal balance. */
         fx balance;
-        SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        SUBTRACT_FX(pPlayer->velocity_y, pPlayer->velocity_x, balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
           DIV2_FX(&balance);
-          SUBTRACT_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
-          COPY_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+          SUBTRACT_FX(pPlayer->velocity_y, balance, pPlayer->velocity_y);
+          COPY_FX(pPlayer->velocity_y, pPlayer->velocity_x);
         }
         else
         {
-          SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-          ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+          ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
         }
       }
       break;
@@ -573,18 +577,18 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce positive X towards 0, add to positive Y. */
         if (COMPARE_FX(&pPlayer->velocity_x, &turnAmount) < 0)
-          COPY_FX(&pPlayer->velocity_x, &turnAmount);
-        SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
-        ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
+          COPY_FX(pPlayer->velocity_x, turnAmount);
+        SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
+        ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
       }
       else
       { /* Reduce negative X towards 0, add to positive Y. */
         fx positiveX;
-        COPY_NEGATE_FX(&pPlayer->velocity_x, &positiveX);
+        COPY_NEGATE_FX(pPlayer->velocity_x, positiveX);
         if (COMPARE_FX(&positiveX, &turnAmount) < 0)
-          COPY_FX(&positiveX, &turnAmount);
-        ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
-        ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
+          COPY_FX(positiveX, turnAmount);
+        ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
+        ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
       }
       break;
 
@@ -592,34 +596,34 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce positive Y, increase negative X until equal balance. */
         fx balance;
-        ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
+        ADD_FX(pPlayer->velocity_y, pPlayer->velocity_x, balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
           DIV2_FX(&balance);
-          SUBTRACT_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
-          COPY_NEGATE_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+          SUBTRACT_FX(pPlayer->velocity_y, balance, pPlayer->velocity_y);
+          COPY_NEGATE_FX(pPlayer->velocity_y, pPlayer->velocity_x);
         }
         else
         {
-          SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-          SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+          SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
         }
       }
       else
       { /* Reduce negative X, increase positive Y until equal balance. */
         fx balance;
-        ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
-        NEGATE_FX(&balance);
+        ADD_FX(pPlayer->velocity_x, pPlayer->velocity_y, balance);
+        NEGATE_FX(balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
           DIV2_FX(&balance);
-          ADD_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
-          COPY_NEGATE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+          ADD_FX(pPlayer->velocity_x, balance, pPlayer->velocity_x);
+          COPY_NEGATE_FX(pPlayer->velocity_x, pPlayer->velocity_y);
         }
         else
         {
-          ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-          ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+          ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
         }
       }
       break;
@@ -628,18 +632,18 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce positive Y towards 0, increase negative X. */
         if (COMPARE_FX(&pPlayer->velocity_y, &turnAmount) < 0)
-          COPY_FX(&pPlayer->velocity_y, &turnAmount);
-        SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-        SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          COPY_FX(pPlayer->velocity_y, turnAmount);
+        SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+        SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
       }
       else
       { /* Reduce negative Y towards 0, increase negative X. */
         fx positiveY;
-        COPY_NEGATE_FX(&pPlayer->velocity_y, &positiveY);
+        COPY_NEGATE_FX(pPlayer->velocity_y, positiveY);
         if (COMPARE_FX(&positiveY, &turnAmount) < 0)
-          COPY_FX(&positiveY, &turnAmount);
-        ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-        SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          COPY_FX(positiveY, turnAmount);
+        ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+        SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
       }
       break;
 
@@ -647,35 +651,35 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce negative X, increase negative Y until equal balance. */
         fx balance;
-        SUBTRACT_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
-        NEGATE_FX(&balance);
+        SUBTRACT_FX(pPlayer->velocity_x, pPlayer->velocity_y, balance);
+        NEGATE_FX(balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
           DIV2_FX(&balance);
-          ADD_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
-          COPY_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+          ADD_FX(pPlayer->velocity_x, balance, pPlayer->velocity_x);
+          COPY_FX(pPlayer->velocity_x, pPlayer->velocity_y);
         }
         else
         {
-          ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
-          SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
+          ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
+          SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
         }
       }
       else
       { /* Reduce negative Y, increase negative X until equal balance. */
         fx balance;
-        SUBTRACT_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
-        NEGATE_FX(&balance);
+        SUBTRACT_FX(pPlayer->velocity_y, pPlayer->velocity_x, balance);
+        NEGATE_FX(balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
           DIV2_FX(&balance);
-          ADD_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
-          COPY_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+          ADD_FX(pPlayer->velocity_y, balance, pPlayer->velocity_y);
+          COPY_FX(pPlayer->velocity_y, pPlayer->velocity_x);
         }
         else
         {
-          ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-          SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+          SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
         }
       }
       break;
@@ -684,18 +688,18 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce negative X towards 0, increase negative Y. */
         fx positiveX;
-        COPY_NEGATE_FX(&pPlayer->velocity_x, &positiveX);
+        COPY_NEGATE_FX(pPlayer->velocity_x, positiveX);
         if (COMPARE_FX(&positiveX, &turnAmount) < 0)
-          COPY_FX(&positiveX, &turnAmount);
-        ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
-        SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
+          COPY_FX(positiveX, turnAmount);
+        ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
+        SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
       }
       else
       { /* Reduce positive X towards 0, increase negative Y. */
         if (COMPARE_FX(&pPlayer->velocity_x, &turnAmount) < 0)
-          COPY_FX(&pPlayer->velocity_x, &turnAmount);
-        SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
-        SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
+          COPY_FX(pPlayer->velocity_x, turnAmount);
+        SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
+        SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
       }
       break;
 
@@ -703,34 +707,34 @@ head_towards_octant, head_clockwise);
       if (head_clockwise)
       { /* Reduce negative Y, increase positive X until equal balance. */
         fx balance;
-        ADD_FX(&pPlayer->velocity_y, &pPlayer->velocity_x, &balance);
-        NEGATE_FX(&balance);
+        ADD_FX(pPlayer->velocity_y, pPlayer->velocity_x, balance);
+        NEGATE_FX(balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
           DIV2_FX(&balance);
-          ADD_FX(&pPlayer->velocity_y, &balance, &pPlayer->velocity_y);
-          COPY_NEGATE_FX(&pPlayer->velocity_y, &pPlayer->velocity_x);
+          ADD_FX(pPlayer->velocity_y, balance, pPlayer->velocity_y);
+          COPY_NEGATE_FX(pPlayer->velocity_y, pPlayer->velocity_x);
         }
         else
         {
-          ADD_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
-          ADD_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
+          ADD_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
+          ADD_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
         }
       }
       else
       { /* Reduce positive X, increase negative Y until equal balance. */
         fx balance;
-        ADD_FX(&pPlayer->velocity_x, &pPlayer->velocity_y, &balance);
+        ADD_FX(pPlayer->velocity_x, pPlayer->velocity_y, balance);
         if (COMPARE_FX(&balance, &turnAmount) < 0)
         { /* Make it be exactly on the octant diagonal line, with |X|==|Y| */
           DIV2_FX(&balance);
-          SUBTRACT_FX(&pPlayer->velocity_x, &balance, &pPlayer->velocity_x);
-          COPY_NEGATE_FX(&pPlayer->velocity_x, &pPlayer->velocity_y);
+          SUBTRACT_FX(pPlayer->velocity_x, balance, pPlayer->velocity_x);
+          COPY_NEGATE_FX(pPlayer->velocity_x, pPlayer->velocity_y);
         }
         else
         {
-          SUBTRACT_FX(&pPlayer->velocity_y, &turnAmount, &pPlayer->velocity_y);
-          SUBTRACT_FX(&pPlayer->velocity_x, &turnAmount, &pPlayer->velocity_x);
+          SUBTRACT_FX(pPlayer->velocity_y, turnAmount, pPlayer->velocity_y);
+          SUBTRACT_FX(pPlayer->velocity_x, turnAmount, pPlayer->velocity_x);
         }
       }
       break;
@@ -868,7 +872,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
     { /* No more waiting, at target and delay has finished or got stuck,
          do current opcode actions and point to next one for next time. */
 
-#if 0 /* Optional debug message to report stuck players. */
+#if 1 /* Optional debug message to report stuck players. */
       if (pPlayer->brain_info.algo.stuck_time_remaining == 0)
       {
         strcpy(g_TempBuffer, "Player #");
@@ -1384,14 +1388,22 @@ void UpdatePlayerInputs(void)
         DIV2Nth_FX(&thrustAmount, 6);
 
         if (player_velocity_octant <= 1 || player_velocity_octant == 7)
-          ADD_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
+        { /* If ADD_FX is a macro with {} internally, will cause problems. */
+          ADD_FX(pPlayer->velocity_x, thrustAmount, pPlayer->velocity_x);
+        }
         else if (player_velocity_octant >= 3 && player_velocity_octant <= 5)
-          SUBTRACT_FX(&pPlayer->velocity_x, &thrustAmount, &pPlayer->velocity_x);
+        { /* So enclose in an extra set of {} so the "if" statement works. */
+          SUBTRACT_FX(pPlayer->velocity_x, thrustAmount, pPlayer->velocity_x);
+        }
 
         if (player_velocity_octant >= 1 && player_velocity_octant <= 3)
-          ADD_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+        { /* If ADD_FX is a macro with {} internally, will cause problems. */
+          ADD_FX(pPlayer->velocity_y, thrustAmount, pPlayer->velocity_y);
+        }
         else if (player_velocity_octant >= 5)
-          SUBTRACT_FX(&pPlayer->velocity_y, &thrustAmount, &pPlayer->velocity_y);
+        { /* So enclose in an extra set of {} so the "if" statement works. */
+          SUBTRACT_FX(pPlayer->velocity_y, thrustAmount, pPlayer->velocity_y);
+        }
 
         /* Play a sound for harvesting.  Maybe, if nobody else is doing it. */
         PlaySound(SOUND_HARVEST, pPlayer);
@@ -1457,15 +1469,15 @@ void UpdatePlayerInputs(void)
       {
         static fx portionOfVelocity;
 
-        COPY_FX(&pPlayer->velocity_x, &portionOfVelocity);
+        COPY_FX(pPlayer->velocity_x, portionOfVelocity);
         DIV2Nth_FX(&portionOfVelocity, g_FrictionShift);
-        SUBTRACT_FX(&pPlayer->velocity_x, &portionOfVelocity,
-          &pPlayer->velocity_x);
+        SUBTRACT_FX(pPlayer->velocity_x, portionOfVelocity,
+          pPlayer->velocity_x);
 
-        COPY_FX(&pPlayer->velocity_y, &portionOfVelocity);
+        COPY_FX(pPlayer->velocity_y, portionOfVelocity);
         DIV2Nth_FX(&portionOfVelocity, g_FrictionShift);
-        SUBTRACT_FX(&pPlayer->velocity_y, &portionOfVelocity,
-          &pPlayer->velocity_y);
+        SUBTRACT_FX(pPlayer->velocity_y, portionOfVelocity,
+          pPlayer->velocity_y);
       }
   #endif
 

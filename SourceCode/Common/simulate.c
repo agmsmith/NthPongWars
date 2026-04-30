@@ -257,7 +257,7 @@ void Simulate(void)
 
   if (s_PreviousStepShiftCount != stepShiftCount)
   {
-    COPY_FX(&g_SeparationVelocityFxAdd, &g_SeparationVelocityFxStepAdd);
+    COPY_FX(g_SeparationVelocityFxAdd, g_SeparationVelocityFxStepAdd);
     if (stepShiftCount != 0)
       DIV2Nth_FX(&g_SeparationVelocityFxStepAdd, stepShiftCount);
     s_PreviousStepShiftCount = stepShiftCount;
@@ -271,11 +271,11 @@ void Simulate(void)
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
-    COPY_FX(&pPlayer->velocity_x.as_int, &pPlayer->step_velocity_x.as_int);
+    COPY_FX(pPlayer->velocity_x, pPlayer->step_velocity_x);
     if (stepShiftCount > 0)
       DIV2Nth_FX(&pPlayer->step_velocity_x, stepShiftCount);
 
-    COPY_FX(&pPlayer->velocity_y.as_int, &pPlayer->step_velocity_y.as_int);
+    COPY_FX(pPlayer->velocity_y, pPlayer->step_velocity_y);
     if (stepShiftCount > 0)
       DIV2Nth_FX(&pPlayer->step_velocity_y, stepShiftCount);
 
@@ -331,10 +331,10 @@ void Simulate(void)
     {
       if (pPlayer->brain == BRAIN_INACTIVE)
         continue;
-      ADD_FX(&pPlayer->pixel_center_x, &pPlayer->step_velocity_x,
-        &pPlayer->pixel_center_x);
-      ADD_FX(&pPlayer->pixel_center_y, &pPlayer->step_velocity_y,
-        &pPlayer->pixel_center_y);
+      ADD_FX(pPlayer->pixel_center_x, pPlayer->step_velocity_x,
+        pPlayer->pixel_center_x);
+      ADD_FX(pPlayer->pixel_center_y, pPlayer->step_velocity_y,
+        pPlayer->pixel_center_y);
 #if DEBUG_PRINT_SIM
       strcpy(g_TempBuffer, "Player #");
       AppendDecimalUInt16(iPlayer);
@@ -412,21 +412,21 @@ void Simulate(void)
       pOtherPlayer->velocity_octant_invalid = true;
       PlaySound(SOUND_BALL_HIT, pPlayer);
 
-      SWAP_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x);
-      SWAP_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y);
-      SWAP_FX(&pPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
-      SWAP_FX(&pPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
+      SWAP_FX(pPlayer->velocity_x, pOtherPlayer->velocity_x);
+      SWAP_FX(pPlayer->velocity_y, pOtherPlayer->velocity_y);
+      SWAP_FX(pPlayer->step_velocity_x, pOtherPlayer->step_velocity_x);
+      SWAP_FX(pPlayer->step_velocity_y, pOtherPlayer->step_velocity_y);
 
 #if 1
       /* Separate the players if they are moving too slowly - add a velocity
          boost in the existing biggest velocity X or Y component. */
 
       fx deltaVelXfx, deltaVelYfx;
-      SUBTRACT_FX(&pPlayer->velocity_x, &pOtherPlayer->velocity_x, &deltaVelXfx);
-      SUBTRACT_FX(&pPlayer->velocity_y, &pOtherPlayer->velocity_y, &deltaVelYfx);
+      SUBTRACT_FX(pPlayer->velocity_x, pOtherPlayer->velocity_x, deltaVelXfx);
+      SUBTRACT_FX(pPlayer->velocity_y, pOtherPlayer->velocity_y, deltaVelYfx);
       fx absVelX, absVelY;
-      COPY_ABS_FX(&deltaVelXfx, &absVelX);
-      COPY_ABS_FX(&deltaVelYfx, &absVelY);
+      COPY_ABS_FX(deltaVelXfx, absVelX);
+      COPY_ABS_FX(deltaVelYfx, absVelY);
 
       /* Find out which velocity component is larger. */
       if (COMPARE_FX(&absVelX, &absVelY) >= 0)
@@ -435,19 +435,19 @@ void Simulate(void)
            the players separate already fast enough?  If it's small, tweak. */
         if (COMPARE_FX(&absVelX, &g_FrictionSpeedFx) < 0)
         {
-          if (IS_NEGATIVE_FX(&deltaVelXfx)) /* Other player is moving right. */
+          if (IS_NEGATIVE_FX(deltaVelXfx)) /* Other player is moving right. */
           {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pOtherPlayer->velocity_x, &pOtherPlayer->velocity_x);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pOtherPlayer->step_velocity_x, &pOtherPlayer->step_velocity_x);
+            ADD_FX(g_SeparationVelocityFxAdd,
+              pOtherPlayer->velocity_x, pOtherPlayer->velocity_x);
+            ADD_FX(g_SeparationVelocityFxStepAdd,
+              pOtherPlayer->step_velocity_x, pOtherPlayer->step_velocity_x);
           }
           else /* Player moving right, so add to its velocity to separate. */
           {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pPlayer->velocity_x, &pPlayer->velocity_x);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pPlayer->step_velocity_x, &pPlayer->step_velocity_x);
+            ADD_FX(g_SeparationVelocityFxAdd,
+              pPlayer->velocity_x, pPlayer->velocity_x);
+            ADD_FX(g_SeparationVelocityFxStepAdd,
+              pPlayer->step_velocity_x, pPlayer->step_velocity_x);
           }
         }
       }
@@ -457,19 +457,19 @@ void Simulate(void)
            If it's small, tweak. */
         if (COMPARE_FX(&absVelY, &g_FrictionSpeedFx) < 0)
         {
-          if (IS_NEGATIVE_FX(&deltaVelYfx)) /* Other player is moving down. */
+          if (IS_NEGATIVE_FX(deltaVelYfx)) /* Other player is moving down. */
           {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pOtherPlayer->velocity_y, &pOtherPlayer->velocity_y);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pOtherPlayer->step_velocity_y, &pOtherPlayer->step_velocity_y);
+            ADD_FX(g_SeparationVelocityFxAdd,
+              pOtherPlayer->velocity_y, pOtherPlayer->velocity_y);
+            ADD_FX(g_SeparationVelocityFxStepAdd,
+              pOtherPlayer->step_velocity_y, pOtherPlayer->step_velocity_y);
           }
           else /* Player is moving down, so add to its velocity to separate. */
           {
-            ADD_FX(&g_SeparationVelocityFxAdd,
-              &pPlayer->velocity_y, &pPlayer->velocity_y);
-            ADD_FX(&g_SeparationVelocityFxStepAdd,
-              &pPlayer->step_velocity_y, &pPlayer->step_velocity_y);
+            ADD_FX(g_SeparationVelocityFxAdd,
+              pPlayer->velocity_y, pPlayer->velocity_y);
+            ADD_FX(g_SeparationVelocityFxStepAdd,
+              pPlayer->step_velocity_y, pPlayer->step_velocity_y);
           }
         }
       }
@@ -1013,8 +1013,8 @@ void Simulate(void)
       if (bounceOffX)
       {
         /* Bounce off left or right side.  Same velocity reversal. */
-        NEGATE_FX(&pPlayer->velocity_x);
-        NEGATE_FX(&pPlayer->step_velocity_x);
+        NEGATE_FX(pPlayer->velocity_x);
+        NEGATE_FX(pPlayer->step_velocity_x);
 
         /* Shove the player outside the tile side. */
 
@@ -1056,8 +1056,8 @@ void Simulate(void)
 
       if (bounceOffY)
       { /* Bounce off top or bottom side. */
-        NEGATE_FX(&pPlayer->velocity_y);
-        NEGATE_FX(&pPlayer->step_velocity_y);
+        NEGATE_FX(pPlayer->velocity_y);
+        NEGATE_FX(pPlayer->step_velocity_y);
 
         /* Shove the player outside the tile side. */
 
@@ -1117,10 +1117,10 @@ void Simulate(void)
 
       if (playerX < g_play_area_wall_left_x)
       {
-        if (IS_NEGATIVE_FX(&pPlayer->velocity_x))
+        if (IS_NEGATIVE_FX(pPlayer->velocity_x))
         {
-          NEGATE_FX(&pPlayer->velocity_x);
-          NEGATE_FX(&pPlayer->step_velocity_x);
+          NEGATE_FX(pPlayer->velocity_x);
+          NEGATE_FX(pPlayer->step_velocity_x);
         }
         INT_TO_FX(g_play_area_wall_left_x, pPlayer->pixel_center_x);
 
@@ -1130,10 +1130,10 @@ void Simulate(void)
 
       if (playerX > g_play_area_wall_right_x)
       {
-        if (!IS_NEGATIVE_FX(&pPlayer->velocity_x))
+        if (!IS_NEGATIVE_FX(pPlayer->velocity_x))
         {
-          NEGATE_FX(&pPlayer->velocity_x);
-          NEGATE_FX(&pPlayer->step_velocity_x);
+          NEGATE_FX(pPlayer->velocity_x);
+          NEGATE_FX(pPlayer->step_velocity_x);
         }
         INT_TO_FX(g_play_area_wall_right_x, pPlayer->pixel_center_x);
 
@@ -1145,10 +1145,10 @@ void Simulate(void)
 
       if (playerY > g_play_area_wall_bottom_y)
       {
-        if (!IS_NEGATIVE_FX(&pPlayer->velocity_y))
+        if (!IS_NEGATIVE_FX(pPlayer->velocity_y))
         {
-          NEGATE_FX(&pPlayer->velocity_y);
-          NEGATE_FX(&pPlayer->step_velocity_y);
+          NEGATE_FX(pPlayer->velocity_y);
+          NEGATE_FX(pPlayer->step_velocity_y);
         }
         INT_TO_FX(g_play_area_wall_bottom_y, pPlayer->pixel_center_y);
 
@@ -1158,10 +1158,10 @@ void Simulate(void)
 
       if (playerY < g_play_area_wall_top_y)
       {
-        if (IS_NEGATIVE_FX(&pPlayer->velocity_y))
+        if (IS_NEGATIVE_FX(pPlayer->velocity_y))
         {
-          NEGATE_FX(&pPlayer->velocity_y);
-          NEGATE_FX(&pPlayer->step_velocity_y);
+          NEGATE_FX(pPlayer->velocity_y);
+          NEGATE_FX(pPlayer->step_velocity_y);
         }
         INT_TO_FX(g_play_area_wall_top_y, pPlayer->pixel_center_y);
 

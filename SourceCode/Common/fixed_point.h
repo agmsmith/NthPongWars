@@ -112,61 +112,66 @@ extern fx gfx_Constant_Eighth;
 extern fx gfx_Constant_MinusEighth;
 
 /* Setting and getting.  Mostly inline code, limited by 8 bit compilers. */
-extern void COPY_FX(pfx x, pfx y); /* Copy value of X to Y. */
-extern void SWAP_FX(pfx x, pfx y); /* Exchange values of X and Y. */
-#define FLOAT_TO_FX(fpa, x) {x.as_int = fpa * FX_UNITY_FLOAT;}
-#define GET_FX_FRACTION(x) (x.portions.fraction)
+#define COPY_FX(x, y) { (y).as_int = (x).as_int; } /* Copy value of X to Y. */
+#define SWAP_FX(x, y); { fx_whole_integer temp = (y).as_int; \
+  (y).as_int = (x).as_int; (x).as_int = temp; }  /* Exchange values of X, Y. */
+#define FLOAT_TO_FX(fpa, x) { (x).as_int = (fpa) * FX_UNITY_FLOAT; }
+#define GET_FX_FRACTION(x) ((x).portions.fraction)
 
 #ifdef NABU_H
-  #define GET_FX_INTEGER(x) (x.as_int >> FX_BITS_FRACTION)
+  #define GET_FX_INTEGER(x) ((x).as_int >> FX_BITS_FRACTION)
 #else /* More generic 16.16 fixed point implementation. */
-  #define GET_FX_INTEGER(x) (x.portions.integer)
+  #define GET_FX_INTEGER(x) ((x).portions.integer)
 #endif
 
-#define GET_FX_FLOAT(x) (x.as_int / FX_UNITY_FLOAT)
+#define GET_FX_FLOAT(x) ((x).as_int / FX_UNITY_FLOAT)
 
 #ifdef NABU_H
-  #define INT_TO_FX(inta, x) {x.as_int = (inta << FX_BITS_FRACTION); }
+  #define INT_TO_FX(inta, x) { (x).as_int = ((inta) << FX_BITS_FRACTION); }
 #else /* More generic 16.16 fixed point implementation. */
-  #define INT_TO_FX(inta, x) {x.portions.integer = inta; x.portions.fraction = 0; }
+  #define INT_TO_FX(inta, x) { \
+    (x).portions.integer = (inta); (x).portions.fraction = 0; }
 #endif
 
 #ifdef NABU_H
-  #define INT_FRACTION_TO_FX(inta, fracb, x) {x.as_int = (inta << FX_BITS_FRACTION) | (fracb); }
+  #define INT_FRACTION_TO_FX(inta, fracb, x) { \
+    (x).as_int = ((inta) << FX_BITS_FRACTION) | (fracb); }
 #else /* More generic 16.16 fixed point implementation. */
-  #define INT_FRACTION_TO_FX(inta, fracb, x) {x.portions.integer = inta; x.portions.fraction = fracb; }
+  #define INT_FRACTION_TO_FX(inta, fracb, x) { \
+    (x).portions.integer = (inta); (x).portions.fraction = (fracb); }
 #endif
 
-#define ZERO_FX(x) {x.as_int = 0; }
+#define ZERO_FX(x) { (x).as_int = 0; }
 
 /* Negate, done by subtracting from 0 and overwriting the value. */
-extern void NEGATE_FX(pfx x);
+#define NEGATE_FX(x) { (x).as_int = -(x).as_int; }
 
 /* Negate and copy in one step.  Y is set to -X. */
-extern void COPY_NEGATE_FX(pfx x, pfx y);
+#define COPY_NEGATE_FX(x, y) { (y).as_int = -(x).as_int; }
 
 /* Add fx values x and y and put the result in fx value z (which can safely
    overwrite x or y if it is the same address as them). */
-extern void ADD_FX(pfx x, pfx y, pfx z);
+#define ADD_FX(x, y, z) { (z).as_int = (x).as_int + (y).as_int; }
 
 /* Put fx value x - y into z (which can safely overwrite x or y even if they
    have the same address as z). */
-extern void SUBTRACT_FX(pfx x, pfx y, pfx z);
+#define SUBTRACT_FX(x, y, z) { (z).as_int = (x).as_int - (y).as_int; }
+
+/* IS_NEGATIVE_FX(x) returns TRUE if the number is negative. */
+#ifdef NABU_H /* Has a 16 bit value. */
+  #define IS_NEGATIVE_FX(x) ((x).portions.int_high & 0x80)
+#elif __BYTE_ORDER == __LITTLE_ENDIAN  /* 32 bit values, little endian? */
+  #define IS_NEGATIVE_FX(x) ((x).as_bytes[3] & 0x80)
+#else /* Big endian. */
+  #define IS_NEGATIVE_FX(x) ((x).as_bytes[0] & 0x80)
+#endif
 
 /* Put fx absolute value of x into x. */
-extern void ABS_FX(pfx x);
+#define ABS_FX(x) { if (IS_NEGATIVE_FX(x)) NEGATE_FX(x); }
 
 /* Copies the absolute value of x into y. */
-extern void COPY_ABS_FX(pfx x, pfx y);
-
-/* IS_NEGATIVE_FX(pfx x) returns TRUE if the number is negative. */
-#ifdef NABU_H
-  #define IS_NEGATIVE_FX(x) ((x)->portions.int_high & 0x80)
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
-  #define IS_NEGATIVE_FX(x) ((x)->as_bytes[3] & 0x80)
-#else /* Big endian. */
-  #define IS_NEGATIVE_FX(x) ((x)->as_bytes[0] & 0x80)
-#endif
+#define COPY_ABS_FX(x, y) { if (IS_NEGATIVE_FX(x)) \
+  COPY_NEGATE_FX(x, y) else COPY_FX(x, y); }
 
 /* Compare two values X & Y, return a small integer (so it can be returned in
    a register rather than on the stack) which is -1 if X < Y, zero if X = Y,

@@ -189,14 +189,14 @@ void Simulate(void)
     {
       int16_t absVelocity;
 
-      absVelocity = MUL4INT_FX(&pPlayer->velocity_x);
+      absVelocity = MUL4INT_FX(pPlayer->velocity_x);
       if (absVelocity < 0)
         absVelocity = -absVelocity;
       tempPlayerSpeed = absVelocity;
       if (absVelocity > maxVelocity)
         maxVelocity = absVelocity;
 
-      absVelocity = MUL4INT_FX(&pPlayer->velocity_y);
+      absVelocity = MUL4INT_FX(pPlayer->velocity_y);
       if (absVelocity < 0)
         absVelocity = -absVelocity;
       tempPlayerSpeed += absVelocity;
@@ -259,7 +259,7 @@ void Simulate(void)
   {
     COPY_FX(g_SeparationVelocityFxAdd, g_SeparationVelocityFxStepAdd);
     if (stepShiftCount != 0)
-      DIV2Nth_FX(&g_SeparationVelocityFxStepAdd, stepShiftCount);
+      DIV2Nth_FX(g_SeparationVelocityFxStepAdd, stepShiftCount);
     s_PreviousStepShiftCount = stepShiftCount;
   }
 
@@ -273,11 +273,11 @@ void Simulate(void)
 
     COPY_FX(pPlayer->velocity_x, pPlayer->step_velocity_x);
     if (stepShiftCount > 0)
-      DIV2Nth_FX(&pPlayer->step_velocity_x, stepShiftCount);
+      DIV2Nth_FX(pPlayer->step_velocity_x, stepShiftCount);
 
     COPY_FX(pPlayer->velocity_y, pPlayer->step_velocity_y);
     if (stepShiftCount > 0)
-      DIV2Nth_FX(&pPlayer->step_velocity_y, stepShiftCount);
+      DIV2Nth_FX(pPlayer->step_velocity_y, stepShiftCount);
 
 #if DEBUG_PRINT_SIM
     strcpy(g_TempBuffer, "Player #");
@@ -429,11 +429,11 @@ void Simulate(void)
       COPY_ABS_FX(deltaVelYfx, absVelY);
 
       /* Find out which velocity component is larger. */
-      if (COMPARE_FX(&absVelX, &absVelY) >= 0)
+      if (COMPARE_FX(absVelX, absVelY) >= 0)
       {
         /* X velocity difference is bigger than Y.  Is it big enough to make
            the players separate already fast enough?  If it's small, tweak. */
-        if (COMPARE_FX(&absVelX, &g_FrictionSpeedFx) < 0)
+        if (COMPARE_FX(absVelX, g_FrictionSpeedFx) < 0)
         {
           if (IS_NEGATIVE_FX(deltaVelXfx)) /* Other player is moving right. */
           {
@@ -455,7 +455,7 @@ void Simulate(void)
       {
         /* Is it big enough to make the players separate already fast enough?
            If it's small, tweak. */
-        if (COMPARE_FX(&absVelY, &g_FrictionSpeedFx) < 0)
+        if (COMPARE_FX(absVelY, g_FrictionSpeedFx) < 0)
         {
           if (IS_NEGATIVE_FX(deltaVelYfx)) /* Other player is moving down. */
           {
@@ -519,8 +519,8 @@ void Simulate(void)
       missMinusDistance = -missDistance;
 
       /* Just need the +1/0/-1 for direction of velocity. */
-      velocityX = TEST_FX(&pPlayer->step_velocity_x);
-      velocityY = TEST_FX(&pPlayer->step_velocity_y);
+      velocityX = TEST_FX(pPlayer->step_velocity_x);
+      velocityY = TEST_FX(pPlayer->step_velocity_y);
 
 #if DEBUG_PRINT_SIM
       strcpy(g_TempBuffer, "Player #");

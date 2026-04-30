@@ -176,30 +176,33 @@ extern fx gfx_Constant_MinusEighth;
 /* Compare two values X & Y, return a small integer (so it can be returned in
    a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
    +1 if X > Y. */
-extern int8_t COMPARE_FX(pfx x, pfx y);
+#define COMPARE_FX(x, y) ( ((x).as_int < (y).as_int) ? (int8_t) -1 : \
+  ((x).as_int == (y).as_int) ? (int8_t) 0 : (int8_t) 1 )
 
 /* Compare value X against zero and return a small integer which is
    -1 if X < 0, zero if X == 0, +1 if X > 0. */
-extern int8_t TEST_FX(pfx x);
+#define TEST_FX(x)  ( ((x).as_int < 0) ? (int8_t) -1 : \
+  ((x).as_int == 0) ? (int8_t) 0 : (int8_t) 1 )
 
 /* Divide the FX by two.  Same as shifting the given value arithmetic right
    (sign bit extended, so works with negative numbers too) by one bit.  1 bit
    is extra efficient in that we can shift directly in memory.
 */
-extern void DIV2_FX(pfx x);
+#define DIV2_FX(x) { (x).as_int >>= 1; }
 
 /* Divide the FX by two to the Nth.  Same as shifting the given value arithmetic
    right by N bits (sign bit extended, so works with negative numbers too) */
-extern void DIV2Nth_FX(pfx x, uint8_t n);
+#define DIV2Nth_FX(x, n) { (x).as_int >>= n; }
 
 /* Divide a by 4 and put into b. */
-#define DIV4_FX(a, b) {b.as_int = a.as_int / 4; }
+#define DIV4_FX(a, b) { (b).as_int = (a).as_int / 4; }
 
 /* Divide a by 256 and put into b. */
-#define DIV256_FX(a, b) {b.as_int = a.as_int / 256; }
+#define DIV256_FX(a, b) { (b).as_int = (a).as_int / 256; }
 
 /* Multiply by 4 and return the integer portion. */
-extern fx_whole_integer MUL4INT_FX(pfx x);
+#define MUL4INT_FX(x) ((x).as_int >> (FX_BITS_FRACTION - 2))
+
 
 /* Convert a 2D vector into an octant angle direction.  Returns octant number
    in lower 3 bits of the result.  Result high bit is set if the vector is

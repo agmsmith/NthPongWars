@@ -835,7 +835,7 @@ bool KeywordPhysicsFrictionSpeed(void)
 
   g_FrictionSpeed = sNumericArgumentsDecoded[0];
   INT_TO_FX(g_FrictionSpeed, g_FrictionSpeedFx);
-  DIV2Nth_FX(&g_FrictionSpeedFx, 2); /* Divide by 4 = quarters */
+  DIV2Nth_FX(g_FrictionSpeedFx, 2); /* Divide by 4 = quarters */
   return true;
 }
 
@@ -862,7 +862,7 @@ bool KeywordPhysicsSeparatePlayersSpeed(void)
     return false;
 
   INT_TO_FX(sNumericArgumentsDecoded[0], g_SeparationVelocityFxAdd);
-  DIV2Nth_FX(&g_SeparationVelocityFxAdd, 2); /* Divide by 4 = quarters */
+  DIV2Nth_FX(g_SeparationVelocityFxAdd, 2); /* Divide by 4 = quarters */
   return true;
 }
 
@@ -891,7 +891,7 @@ bool KeywordPhysicsTurnRate(void)
 
   g_PhysicsTurnRate = sNumericArgumentsDecoded[0];
   INT_TO_FX(g_PhysicsTurnRate, g_TurnRateFx);
-  DIV2Nth_FX(&g_TurnRateFx, 2); /* Divide by 4 = quarters */
+  DIV2Nth_FX(g_TurnRateFx, 2); /* Divide by 4 = quarters */
   return true;
 }
 

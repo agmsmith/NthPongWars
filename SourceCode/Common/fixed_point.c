@@ -25,167 +25,6 @@ fx gfx_Constant_Eighth;
 fx gfx_Constant_MinusEighth;
 
 
-/* Compare two values X & Y, return a small integer (so it can be returned in
-   a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
-   +1 if X > Y. */
-int8_t COMPARE_FX(pfx x, pfx y)
-{
-#ifdef NABU_H
-  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
-  y;
-  __asm
-  ld    hl,2      /* Hop over return address. */
-  add   hl,sp     /* Get pointer to argument x, will put in bc. */
-  ld    c,(hl)
-  inc   hl
-  ld    b,(hl)    /* bc now has pointer to x's fx data, a 32 bit integer. */
-  inc   hl
-  ld    e,(hl)
-  inc   hl
-  ld    d,(hl)    /* de now has pointer to y's fx data. */
-  ex    de,hl     /* But need y to be in hl for only sbc a,(regpair) opcode. */
-  ld    a,(bc)    /* Do the 16 bit comparison, x - y in effect. */
-  sub   a,(hl)
-  ld    e,a       /* Collect bits to see if whole result is zero. */
-  inc   hl
-  inc   bc
-  ld    a,(bc)
-  sbc   a,(hl)
-  ld    d,a
-  jp    PO,NoOverflowCompare /* Pity, no jr jump relative for overflow tests. */
-  xor   a,0x80    /* Signed value overflowed, sign bit is reversed, fix it. */
-NoOverflowCompare:
-  jp    P,PositiveCompare
-  ld    l,0xFF    /* Negative result, so X < Y. */
-  ret
-PositiveCompare:
-  ld    a,d     /* See if the complete result is zero. */
-  or    a,e
-  jr    z,ZeroCompare
-  ld    l,0x01
-  ret
-ZeroCompare:
-  __endasm;
-  return 0;       /* Need at least one return in C, else get warning. */
-#else /* Generic C implementation. */
-  if (x->as_int < y->as_int)
-    return -1;
-  else if (x->as_int == y->as_int)
-    return 0;
-  return 1;
-#endif
-}
-
-
-/* Compare value X against zero and return a small integer which is
-   -1 if X < 0, zero if X == 0, +1 if X > 0. */
-int8_t TEST_FX(pfx x)
-{
-#ifdef NABU_H
-  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
-  __asm
-  ld    hl,2      /* Hop over return address. */
-  add   hl,sp     /* Get pointer to argument x, will put in bc. */
-  ld    a,(hl)
-  inc   hl
-  ld    h,(hl)
-  ld    l,a       /* hl now has pointer to x's fx data, an integer. */
-  ld    a,(hl)    /* First, least significant, byte of data. */
-  inc   hl
-  or    a,(hl)
-  jr    z,ZeroTest
-  ld    a,(hl)    /* Get most significant byte, check sign bit for negative. */
-  or    a,a
-  jp    P,PositiveTest
-  ld    l,0xFF    /* Negative result, so X < 0. */
-  ret
-PositiveTest:
-  ld    l,0x01
-  ret
-ZeroTest:
-  __endasm;
-  return 0;       /* Need at least one return in C, else get warning. */
-#else /* Generic C implementation. */
-  if (x->as_int < 0)
-    return -1;
-  else if (x->as_int == 0)
-    return 0;
-  return 1;
-#endif
-}
-
-
-/* Divide the FX by two.  Same as shifting the given value arithmetic right
-   (sign bit extended, so works with negative numbers too) by one bit.  1 bit
-   is extra efficient in that we can shift directly in memory.
-*/
-void DIV2_FX(pfx x)
-{
-#ifdef NABU_H
-  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
-  __asm
-  pop   de        /* Get return address into de. */
-  pop   hl        /* Get pointer to argument x, will put in hl. */
-  push  hl        /* Put it back so caller can clean up stack as expected. */
-  inc   hl        /* Add 1 to hl, to start at most significant byte of x. */
-  sra   (hl)      /* Shift right, duplicating high sign bit, modifies memory. */
-  dec   hl
-  rr    (hl)      /* Rotate right, using the carry bit from previous shift. */
-  ex    de,hl
-  jp    (hl)      /* Return using saved return address. */
-  __endasm;
-#else
-  x->as_int >>= 1;
-#endif
-}
-
-
-/* Divide the FX by two to the Nth.  Same as shifting the given value arithmetic
-   right by N bits (sign bit extended, so works with negative numbers too).
-   Load 16 bits in to bc registers to do shifts, A counts down from N.
-*/
-void DIV2Nth_FX(pfx x, uint8_t n)
-{
-#ifdef NABU_H
-  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
-  n;
-  __asm
-  ld    hl,4      /* Hop over return address and pointer x. */
-  add   hl,sp     /* Get pointer to argument N. */
-  ld    a,(hl)    /* Store N in register A. */
-  dec   hl        /* Get high byte of pointer to x. */
-  ld    b,(hl)
-  dec   hl        /* Get low byte of pointer to x. */
-  ld    l,(hl)
-  ld    h,b       /* hl now has pointer to x's fx data, a 16 bit integer. */
-  ld    c,(hl)    /* Copy X to bc registers, starting with low byte. */
-  inc   hl
-  ld    b,(hl)    /* High byte of raw integer in b. */
-Div2nthLoop:
-  dec   a       /* Reduce the counter N. */
-  jp    M,Div2nthDone /* Minus means we're done.  Also works for N=0 case. */
-  sra   b       /* Shift right, duplicating high sign bit. */
-  rr    c
-  jr    Div2nthLoop
-Div2nthDone:
-  ld    (hl),b /* Write the result back to variable X's data area. */
-  dec   hl
-  ld    (hl),c
-  __endasm;
-#else
-  x->as_int >>= n;
-#endif
-}
-
-
-/* Multiply by 4 and return the integer portion.
-*/
-fx_whole_integer MUL4INT_FX(pfx x)
-{
-  return (fx_whole_integer) (x->as_int >> (FX_BITS_FRACTION - 2));
-}
-
-
 /* Convert a 2D vector into an octant angle direction.  Returns octant number
    in lower 3 bits of the result.  Result high bit is set if the vector is
    exactly on the angle, else zero.
@@ -209,8 +48,8 @@ uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
   uint8_t octantLower = 0xFF; /* An invalid value you should never see. */
   bool rightOnOctant = false; /* If velocity is exactly in octant direction. */
 
-  xDir = TEST_FX(vector_x);
-  yDir = TEST_FX(vector_y);
+  xDir = TEST_FX(*vector_x);
+  yDir = TEST_FX(*vector_y);
 
   if (xDir == 0) /* X == 0 */
   {
@@ -237,7 +76,7 @@ uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
     else if (yDir >= 0) /* X > 0, Y > 0 */
     {
       int8_t xyDelta;
-      xyDelta = COMPARE_FX(vector_x, vector_y);
+      xyDelta = COMPARE_FX(*vector_x, *vector_y);
       if (xyDelta > 0) /* |X| > |Y| */
         octantLower = 0;
       else /* |X| <= |Y| */
@@ -251,7 +90,7 @@ uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
       int8_t xyDelta;
       fx negativeY;
       COPY_NEGATE_FX(*vector_y, negativeY);
-      xyDelta = COMPARE_FX(vector_x, &negativeY);
+      xyDelta = COMPARE_FX(*vector_x, negativeY);
       if (xyDelta >= 0) /* |X| >= |Y| */
       {
         octantLower = 7;
@@ -273,7 +112,7 @@ uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
       int8_t xyDelta;
       fx negativeX;
       COPY_NEGATE_FX(*vector_x, negativeX);
-      xyDelta = COMPARE_FX(&negativeX, vector_y);
+      xyDelta = COMPARE_FX(negativeX, *vector_y);
       if (xyDelta >= 0) /* |X| >= |Y| */
       {
         octantLower = 3;
@@ -285,7 +124,7 @@ uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y)
     else /* X < 0, Y < 0 */
     {
       int8_t xyDelta;
-      xyDelta = COMPARE_FX(vector_x, vector_y);
+      xyDelta = COMPARE_FX(*vector_x, *vector_y);
       if (xyDelta < 0) /* |X| > |Y| */
         octantLower = 4;
       else /* |X| <= |Y| */

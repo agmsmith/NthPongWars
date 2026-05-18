@@ -273,7 +273,11 @@ void InitialisePlayersForNewLevel(void)
     pPlayer->brain_info.algo.target_list_index =
       g_target_start_indices[iPlayer];
     pPlayer->brain_info.algo.steer = false;
+    pPlayer->brain_info.algo.target_distance = 0;
     pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
+    pPlayer->brain_info.algo.divert_to_pTile = NULL;
+    pPlayer->brain_info.algo.delay_remaining = 0;
+    pPlayer->brain_info.algo.stuck_time_remaining = 10; /* 2 seconds. */
     pPlayer->last_brain_activity_time = g_FrameCounter;
 #ifdef NABU_H
     pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
@@ -853,7 +857,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         pPlayer->brain_info.algo.target_pixel_y =
           pPlayer->brain_info.algo.divert_saved_pixel_y;
 
-#if 0 /* Optional debug message to report reverting players. */
+#if 1 /* Optional debug message to report reverting players. */
         DebugPrintString("Finished tile divert for ");
         DumpPlayerStateToTerminal(pPlayer);
 #endif
@@ -1067,7 +1071,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 
       if (bestTile != NULL && bestDistance <= powerUpMaxPixelDistance)
       {
-#if 0 /* Optional debug message to report diverting players. */
+#if 1 /* Optional debug message to report diverting players. */
         DebugPrintString("Diverting ");
         DumpPlayerStateToTerminal(pPlayer);
         DebugPrintString("  to tile ");

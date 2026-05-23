@@ -1,14 +1,14 @@
 /******************************************************************************
  * Nth Pong Wars, fixed_point.h for fixed point math operations.
  *
- * I want to use 11.5 (11 bits of integer, 5 bits of fraction, total 16 bits)
- * math for our velocities and positions.  That means screens up to 1024 pixels
- * wide (plus a sign bit), and slowest speed at 1/32 of a pixel per update, so
- * players can move as slow as one pixel per second.  If bit shifting is too
- * slow I could use 3 byte numbers with an 8 bit fraction.  But that's hard to
- * get a C compiler to do natively, so we're defaulting to 4 byte numbers
- * (16 bits of integer, 16 bits of fraction) for the generic version of this
- * math code.
+ * I want to use 16.8 (16 bits of integer, 8 bits of fraction, total 24 bits)
+ * math for our velocities and positions.  That means screens up to 32K pixels
+ * wide (plus a sign bit), and slowest speed at 1/256 of a pixel per update, so
+ * players can move as slow as one pixel per second (1/32 of a pixel wasn't
+ * small enough, players were getting stuck due to rounding errors).  But that's
+ * hard to get a C compiler to do natively, so we're defaulting to 4 byte
+ * numbers (16 bits of integer, 16 bits of fraction) for the generic version of
+ * this math code.
  *
  * Addition and subtraction are done as plain integers, just the interpretation
  * of the bits as integer with fraction is different.  Multiplication and
@@ -39,22 +39,25 @@
  * Constants, types.
  */
 
-#ifdef NABU_H /* Z80, which is little endian, 5 bit fraction, 11 bit integer. */
-  #define FX_BITS_WHOLE 16
-  #define FX_BYTES_WHOLE 2
-  #define FX_BITS_INT 11
-  #define FX_BITS_FRACTION 5
-  #define MAX_FX_FRACTION 0x1F /* Internal use, fraction is unsigned int. */
-  #define MAX_FX_INT 0x03FF /* Internal use, max positive integer. */
-  typedef int16_t fx_whole_integer; /* The whole FX number fits this integer. */
+#ifdef NABU_H /* Z80, which is little endian, 8 bit fraction, 16 bit integer. */
+  #define FX_BITS_WHOLE 24
+  #define FX_BYTES_WHOLE 3
+  #define FX_BITS_INT 16
+  typedef int16_t fx_type_for_integer_part;
+  #define FX_BITS_FRACTION 8
+  typedef uint8_t fx_type_for_fraction_part;
+  #define MAX_FX_FRACTION 0xFF /* Internal use, fraction is unsigned int. */
+  #define MAX_FX_INT 0x7FFF /* Internal use, max positive integer. */
 #else /* More generic code, int and fractional parts are both 16 bits. */
   #define FX_BITS_WHOLE 32
   #define FX_BYTES_WHOLE 4
   #define FX_BITS_INT 16
+  typedef int16_t fx_type_for_integer_part;
   #define FX_BITS_FRACTION 16
+  typedef uint16_t fx_type_for_fraction_part;
   #define MAX_FX_FRACTION 0xFFFF /* Internal use, fraction is unsigned int. */
   #define MAX_FX_INT 0x7FFF /* Internal use, max positive integer. */
-  typedef int32_t fx_whole_integer;
+  typedef int32_t fx_whole_integer; /* Can add whole FX in a plain integer. */
 #endif
 #define FX_UNITY_FLOAT ((float) (((int32_t) 1) << FX_BITS_FRACTION))
 
@@ -65,37 +68,41 @@
    Write the game code in a macro call style (using #defines instead of
    actual subroutines unless the generated code is long enough to make a
    common subroutine to save space over time) and avoid using + and - directly
-   on the fx as integers in higher level code.
+   on the fx as integers in higher level code (not supported in 24 bit mode).
 */
 typedef struct fx_bits_struct {
   /* Fields are ordered so that they combine fraction and whole portions into
      a full size integer of the same endianness.  So we can use a single
-     integer add to add both fraction and integer in one shot.
+     integer add to add both fraction and integer in one shot.  But not on the
+     Z80 without the waste of doing a 32 bit add and throwing away a byte.
 
      Note that fractional parts are unsigned, and may be weird if the whole
      number is negative (take the absolute value of the whole fx, then look at
      the fractional part). */
-  #ifdef NABU_H /* Z80, which is little endian and only using 16 bits total. */
-    unsigned int fraction : FX_BITS_FRACTION; /* SDCC compiler doesn't pack */
-    unsigned int int_low : (8 - FX_BITS_FRACTION); /* bits across bytes, */
-    int int_high : 8; /* so integer part is split up somewhat awkwardly. */
-  #else /* More generic code. */
+  #ifdef NABU_H /* Z80, which is little endian and only using 24 bits total. */
+    fx_type_for_fraction_part fraction; /* Just 8 bits, unsigned, first since */
+    fx_type_for_integer_part integer; /* little endian order. 16 bits signed. */
+  #else /* More generic code.  Has 16.16 number format. */
     #if __BYTE_ORDER == __LITTLE_ENDIAN
-      uint16_t fraction;
-      int16_t integer;
+      fx_type_for_fraction_part fraction;
+      fx_type_for_integer_part integer;
     #else /* __BIG_ENDIAN */
-      int16_t integer;
-      uint16_t fraction;
+      fx_type_for_integer_part integer;
+      fx_type_for_fraction_part fraction;
     #endif
   #endif
 } fx_bits;
 
 
 typedef union fx_union {
+  #ifndef NABU_H
   /* So you can treat the whole thing as an integer to do additions in one shot,
      but best not to use this in game code in case we switch to 3 byte fx or
      some other custom integer format. */
   fx_whole_integer as_int;
+  #else /* bleeble - remove else case once no more Nabu as_int references. */
+  int32_t as_int;
+  #endif
 
   /* Or access individual bytes in the number. */
   uint8_t as_bytes[FX_BYTES_WHOLE];
@@ -111,39 +118,72 @@ extern fx gfx_Constant_MinusOne;
 extern fx gfx_Constant_Eighth;
 extern fx gfx_Constant_MinusEighth;
 
-/* Setting and getting.  Mostly inline code, limited by 8 bit compilers. */
-#define COPY_FX(x, y) { (y).as_int = (x).as_int; } /* Copy value of X to Y. */
+/* Setting and getting.  Can be inline code rather than a function call. */
+
+/* COPY_FX(x, y) - Copy value of X to Y. */
+#ifdef NABU_H
+  #define COPY_FX(x, y) { \
+  uint8_t *px = (x).as_bytes + 0; \
+  uint8_t *py = (y).as_bytes + 0; \
+  *py++ = *px++; \
+  *py++ = *px++; \
+  *py = *px; \
+  }
+#else /* Generic version. */
+  #define COPY_FX(x, y) { (y).as_int = (x).as_int; }
+#endif
+
+/* SWAP_FX(x, y) - Exchange values of X, Y. */
+#ifdef NABU_H
+#define SWAP_FX(x, y); { \
+  uint8_t *px = (x).as_bytes + 0; \
+  uint8_t *py = (y).as_bytes + 0; \
+  uint8_t temp; \
+  temp = *px ; *px = *py; *py = temp; px++; py++; \
+  temp = *px ; *px = *py; *py = temp; px++; py++; \
+  temp = *px ; *px = *py; *py = temp; px++; py++; \
+  }
+#else /* Generic version. */
 #define SWAP_FX(x, y); { fx_whole_integer temp = (y).as_int; \
-  (y).as_int = (x).as_int; (x).as_int = temp; }  /* Exchange values of X, Y. */
+  (y).as_int = (x).as_int; (x).as_int = temp; }
+#endif
+
+/* FLOAT_TO_FX(fpa, x) - convert floating point number fpa to FX in x. */
+#ifdef NABU_H
+#define FLOAT_TO_FX(fpa, x) { \
+  int32_t tempwhole = (fpa) * FX_UNITY_FLOAT; \
+  (x).portions.fraction = tempwhole; \
+  (x).portions.integer = (tempwhole >> 8); \
+  }
+#else /* Generic version. */
 #define FLOAT_TO_FX(fpa, x) { (x).as_int = (fpa) * FX_UNITY_FLOAT; }
+#endif
+
 #define GET_FX_FRACTION(x) ((x).portions.fraction)
+#define GET_FX_INTEGER(x) ((x).portions.integer)
 
+/* GET_FX_FLOAT(x) - get the floating point value of x. */
 #ifdef NABU_H
-  #define GET_FX_INTEGER(x) ((x).as_int >> FX_BITS_FRACTION)
-#else /* More generic 16.16 fixed point implementation. */
-  #define GET_FX_INTEGER(x) ((x).portions.integer)
-#endif
-
+#define GET_FX_FLOAT(x) ( \
+  ((x).portions.fraction + \
+  ((int32_t) (x).portions.integer << FX_BITS_FRACTION)) \
+  / FX_UNITY_FLOAT)
+#else /* Generic version. */
 #define GET_FX_FLOAT(x) ((x).as_int / FX_UNITY_FLOAT)
-
-#ifdef NABU_H
-  #define INT_TO_FX(inta, x) { (x).as_int = ((inta) << FX_BITS_FRACTION); }
-#else /* More generic 16.16 fixed point implementation. */
-  #define INT_TO_FX(inta, x) { \
-    (x).portions.integer = (inta); (x).portions.fraction = 0; }
 #endif
 
-#ifdef NABU_H
-  #define INT_FRACTION_TO_FX(inta, fracb, x) { \
-    (x).as_int = ((inta) << FX_BITS_FRACTION) | (fracb); }
-#else /* More generic 16.16 fixed point implementation. */
-  #define INT_FRACTION_TO_FX(inta, fracb, x) { \
-    (x).portions.integer = (inta); (x).portions.fraction = (fracb); }
-#endif
+/* INT_TO_FX(inta, x) - Convert an integer to an FX. */
+#define INT_TO_FX(inta, x) { \
+  (x).portions.integer = (inta); (x).portions.fraction = 0; }
 
-#define ZERO_FX(x) { (x).as_int = 0; }
+/* INT_FRACTION_TO_FX(inta, fracb, x) - Assign an integer and fraction to FX. */
+#define INT_FRACTION_TO_FX(inta, fracb, x) { \
+  (x).portions.integer = (inta); (x).portions.fraction = (fracb); }
 
-/* Negate, done by subtracting from 0 and overwriting the value. */
+/* ZERO_FX(x) - Set an FX to zero. */
+#define ZERO_FX(x) { (x).portions.integer = 0; (x).portions.fraction = 0;}
+
+/* NEGATE_FX(x) - Done by subtracting from 0 and overwriting the value. */
 #define NEGATE_FX(x) { (x).as_int = -(x).as_int; }
 
 /* Negate and copy in one step.  Y is set to -X. */
@@ -224,6 +264,9 @@ extern fx gfx_Constant_MinusEighth;
 
 extern uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y);
 extern uint8_t INT16_TO_OCTANT(int16_t vector_x, int16_t vector_y);
+
+/* Run some test cases for the FX library. */
+extern void FX_Tests(void);
 
 #endif /* _FIXED_POINT_H */
 

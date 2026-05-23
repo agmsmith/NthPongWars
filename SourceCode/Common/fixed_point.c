@@ -231,3 +231,4 @@ uint8_t INT16_TO_OCTANT(int16_t vector_x, int16_t vector_y)
     octantLower |= 0x80;
   return octantLower;
 }
+

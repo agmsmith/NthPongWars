@@ -82,12 +82,24 @@ void FX_Tests(void)
   fx LocalB;
   fx LocalC;
   printf("\nRunning the FX Fixed Point math code tests.  AGMS20260523\n");
+  printf("Compiled on " __DATE__ " at " __TIME__ ".\n");
 
   COPY_FX(gfx_Constant_One, TestX);
   COPY_FX(gfx_Constant_One, LocalA);
   COPY_FX(LocalA, LocalB);
 
+  FLOAT_TO_FX(-32109.876, TestX);
+  FLOAT_TO_FX(12345.6789, LocalA);
+  printf("SWAP_FX %d.%d (%f)\n  with %d.%d (%f)\n",
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX),
+    GET_FX_INTEGER(LocalA), GET_FX_FRACTION(LocalA), GET_FX_FLOAT(LocalA));
   SWAP_FX(TestX, LocalA);
+  printf("  yields %d.%d (%f) and\n  %d.%d (%f).\n",
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX),
+    GET_FX_INTEGER(LocalA), GET_FX_FRACTION(LocalA), GET_FX_FLOAT(LocalA));
+
+  /* Look at assembler code to see how the macro gets compiled for
+     local vs global variables. */
   SWAP_FX(LocalA, LocalB);
 
   TestFloatA += 12345.6789;
@@ -114,12 +126,61 @@ void FX_Tests(void)
   printf("INT_TO_FX integer %d to FX %d.%d.\n", TestInt16A,
     GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX));
 
-  INT_FRACTION_TO_FX(33000, 129, LocalB);
-  printf("INT_FRACTION_TO_FX (33000, 129) should overflow to FX %d.%d.\n",
-    GET_FX_INTEGER(LocalB), GET_FX_FRACTION(LocalB));
+  INT_FRACTION_TO_FX(-10000, 100, LocalB);
+  printf("INT_FRACTION_TO_FX (-10000, 100) to FX %d.%d (%f).\n",
+    GET_FX_INTEGER(LocalB), GET_FX_FRACTION(LocalB), GET_FX_FLOAT(LocalB));
 
-  ZERO_FX(LocalB);
-  printf("ZERO_FX to FX %d.%d.\n",
-    GET_FX_INTEGER(LocalB), GET_FX_FRACTION(LocalB));
+  printf("NEGATE_FX %d.%d (%f) to ",
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX));
+  NEGATE_FX(TestX);
+  printf("%d.%d (%f).\n",
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX));
+
+  FLOAT_TO_FX(5432.625, LocalB);
+  printf("NEGATE_FX %d.%d (%f) to ",
+    GET_FX_INTEGER(LocalB), GET_FX_FRACTION(LocalB), GET_FX_FLOAT(LocalB));
+  NEGATE_FX(LocalB);
+  printf("%d.%d (%f).\n",
+    GET_FX_INTEGER(LocalB), GET_FX_FRACTION(LocalB), GET_FX_FLOAT(LocalB));
+
+  COPY_NEGATE_FX(LocalB, LocalC);
+  printf("COPY_NEGATE_FX to %d.%d (%f).\n",
+    GET_FX_INTEGER(LocalC), GET_FX_FRACTION(LocalC), GET_FX_FLOAT(LocalC));
+
+  FLOAT_TO_FX(-6543.556, TestX);
+  FLOAT_TO_FX(8765.778, LocalA);
+  ADD_FX(TestX, LocalA, TestZ);
+  printf("ADD_FX %d.%d (%f)\n  plus  %d.%d (%f)\n  has sum %d.%d (%f).\n",
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX),
+    GET_FX_INTEGER(LocalA), GET_FX_FRACTION(LocalA), GET_FX_FLOAT(LocalA),
+    GET_FX_INTEGER(TestZ), GET_FX_FRACTION(TestZ), GET_FX_FLOAT(TestZ));
+
+  COPY_ABS_FX(TestX, LocalC);
+  printf("COPY_ABS_FX %d.%d (%f)\n  yields %d.%d (%f).\n",
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX),
+    GET_FX_INTEGER(LocalC), GET_FX_FRACTION(LocalC), GET_FX_FLOAT(LocalC));
+
+  COPY_ABS_FX(LocalA, LocalC);
+  printf("COPY_ABS_FX %d.%d (%f)\n  yields %d.%d (%f).\n",
+    GET_FX_INTEGER(LocalA), GET_FX_FRACTION(LocalA), GET_FX_FLOAT(LocalA),
+    GET_FX_INTEGER(LocalC), GET_FX_FRACTION(LocalC), GET_FX_FLOAT(LocalC));
+
+  printf("COMPARE_FX(%f, %f) is %d.\n",
+    GET_FX_FLOAT(LocalA), GET_FX_FLOAT(TestX), COMPARE_FX(LocalA, TestX));
+
+  printf("COMPARE_FX(%f, %f) is %d.\n",
+    GET_FX_FLOAT(TestX), GET_FX_FLOAT(LocalA), COMPARE_FX(TestX, LocalA));
+
+  printf("COMPARE_FX(%f, %f) is %d.\n",
+    GET_FX_FLOAT(TestX), GET_FX_FLOAT(TestX), COMPARE_FX(TestX, TestX));
+
+  printf("TEST_FX(%f) is %d.\n",
+    GET_FX_FLOAT(LocalA), TEST_FX(LocalA));
+
+  printf("TEST_FX(%f) is %d.\n",
+    GET_FX_FLOAT(TestX), TEST_FX(TestX));
+
+  printf("TEST_FX(%f) is %d.\n",
+    GET_FX_FLOAT(gfx_Constant_Zero), TEST_FX(gfx_Constant_Zero));
 }
 

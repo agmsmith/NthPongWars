@@ -151,9 +151,10 @@ extern fx gfx_Constant_MinusEighth;
 /* FLOAT_TO_FX(fpa, x) - convert floating point number fpa to FX in x. */
 #ifdef NABU_H
 #define FLOAT_TO_FX(fpa, x) { \
-  int32_t tempwhole = (fpa) * FX_UNITY_FLOAT; \
-  (x).portions.fraction = tempwhole; \
-  (x).portions.integer = (tempwhole >> 8); \
+  int32_t tempwhole = (int32_t) ((fpa) * FX_UNITY_FLOAT); \
+  (x).portions.fraction = (fx_type_for_fraction_part) tempwhole; \
+  (x).portions.integer = \
+    (fx_type_for_integer_part) (tempwhole >> FX_BITS_FRACTION); \
   }
 #else /* Generic version. */
 #define FLOAT_TO_FX(fpa, x) { (x).as_int = (fpa) * FX_UNITY_FLOAT; }
@@ -184,45 +185,73 @@ extern fx gfx_Constant_MinusEighth;
 #define ZERO_FX(x) { (x).portions.integer = 0; (x).portions.fraction = 0;}
 
 /* NEGATE_FX(x) - Done by subtracting from 0 and overwriting the value. */
+#ifdef NABU_H
+extern void NEGATE_FX_ASM(pfx x);
+#define NEGATE_FX(x) { NEGATE_FX_ASM(&(x)); }
+#else /* Generic version. */
 #define NEGATE_FX(x) { (x).as_int = -(x).as_int; }
-
-/* Negate and copy in one step.  Y is set to -X. */
-#define COPY_NEGATE_FX(x, y) { (y).as_int = -(x).as_int; }
-
-/* Add fx values x and y and put the result in fx value z (which can safely
-   overwrite x or y if it is the same address as them). */
-#define ADD_FX(x, y, z) { (z).as_int = (x).as_int + (y).as_int; }
-
-/* Put fx value x - y into z (which can safely overwrite x or y even if they
-   have the same address as z). */
-#define SUBTRACT_FX(x, y, z) { (z).as_int = (x).as_int - (y).as_int; }
-
-/* IS_NEGATIVE_FX(x) returns TRUE if the number is negative. */
-#ifdef NABU_H /* Has a 16 bit value. */
-  #define IS_NEGATIVE_FX(x) ((x).portions.int_high & 0x80)
-#elif __BYTE_ORDER == __LITTLE_ENDIAN  /* 32 bit values, little endian? */
-  #define IS_NEGATIVE_FX(x) ((x).as_bytes[3] & 0x80)
-#else /* Big endian. */
-  #define IS_NEGATIVE_FX(x) ((x).as_bytes[0] & 0x80)
 #endif
 
-/* Put fx absolute value of x into x. */
+/* COPY_NEGATE_FX(x, y) - Negate and copy in one step.  Y is set to -X. */
+#ifdef NABU_H
+extern void COPY_NEGATE_FX_ASM(pfx x, pfx y);
+#define COPY_NEGATE_FX(x, y) { COPY_NEGATE_FX_ASM(&(x), &(y)); }
+#else /* Generic version. */
+#define COPY_NEGATE_FX(x, y) { (y).as_int = -(x).as_int; }
+#endif
+
+/* ADD_FX(x, y, z) - Add fx values x and y and put the result in fx value z
+   (which can safely overwrite x or y if it is the same address as them). */
+#ifdef NABU_H
+extern void ADD_FX_ASM(pfx x, pfx y, pfx z);
+#define ADD_FX(x, y, z) { ADD_FX_ASM(&(x), &(y), &(z)); }
+#else /* Generic version. */
+#define ADD_FX(x, y, z) { (z).as_int = (x).as_int + (y).as_int; }
+#endif
+
+/* SUBTRACT_FX(x, y, z) - Put fx value x - y into z (which can safely overwrite
+   x or y even if they have the same address as z). */
+#ifdef NABU_H
+extern void SUBTRACT_FX_ASM(pfx x, pfx y, pfx z);
+#define SUBTRACT_FX(x, y, z) { SUBTRACT_FX_ASM(&(x), &(y), &(z)); }
+#else /* Generic version. */
+#define SUBTRACT_FX(x, y, z) { (z).as_int = (x).as_int - (y).as_int; }
+#endif
+
+/* IS_NEGATIVE_FX(x) returns TRUE if the number is negative. */
+#if __BYTE_ORDER == __LITTLE_ENDIAN /* Look at high byte's high bit. */
+  #define IS_NEGATIVE_FX(x) (((x).as_bytes[FX_BYTES_WHOLE-1]) & 0x80)
+#else /* Big endian, look at lower address byte for the sign. */
+  #define IS_NEGATIVE_FX(x) (((x).as_bytes[0]) & 0x80)
+#endif
+
+/* ABS_FX(x) - Put fx absolute value of x into x. */
 #define ABS_FX(x) { if (IS_NEGATIVE_FX(x)) NEGATE_FX(x); }
 
-/* Copies the absolute value of x into y. */
+/* COPY_ABS_FX(x, y) - Copies the absolute value of x into y. */
 #define COPY_ABS_FX(x, y) { if (IS_NEGATIVE_FX(x)) \
   COPY_NEGATE_FX(x, y) else COPY_FX(x, y); }
 
-/* Compare two values X & Y, return a small integer (so it can be returned in
-   a register rather than on the stack) which is -1 if X < Y, zero if X = Y,
-   +1 if X > Y. */
+/* COMPARE_FX(x, y) - Compare two values X & Y, return a small integer (so it
+   can be returned in a register rather than on the stack) which is -1 if X < Y,
+   zero if X = Y, +1 if X > Y. */
+#ifdef NABU_H
+extern int8_t COMPARE_FX_ASM(pfx x, pfx y);
+#define COMPARE_FX(x, y) ( COMPARE_FX_ASM(&(x), &(y)) )
+#else /* Generic version. */
 #define COMPARE_FX(x, y) ( ((x).as_int < (y).as_int) ? (int8_t) -1 : \
   ((x).as_int == (y).as_int) ? (int8_t) 0 : (int8_t) 1 )
+#endif
 
-/* Compare value X against zero and return a small integer which is
-   -1 if X < 0, zero if X == 0, +1 if X > 0. */
+/* TEST_FX(x) - Compare value X against zero and return a small integer which
+   is -1 if X < 0, zero if X == 0, +1 if X > 0. */
+#ifdef NABU_H
+extern int8_t TEST_FX_ASM(pfx x);
+#define TEST_FX(x)  ( TEST_FX_ASM(&(x)) )
+#else /* Generic version. */
 #define TEST_FX(x)  ( ((x).as_int < 0) ? (int8_t) -1 : \
   ((x).as_int == 0) ? (int8_t) 0 : (int8_t) 1 )
+#endif
 
 /* Divide the FX by two.  Same as shifting the given value arithmetic right
    (sign bit extended, so works with negative numbers too) by one bit.  1 bit

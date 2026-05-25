@@ -46,6 +46,8 @@
 
 #include "fixed_point.c" /* Our own fixed point math. */
 
+void FX_Tests(void);
+
 
 /*******************************************************************************
  * Main program, just runs the tests.
@@ -195,5 +197,15 @@ void FX_Tests(void)
   printf("DIV2Nth_FX of %f by 9 is %d.%d (%f).\n",
     TestFloatA,
     GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX));
+
+  TestFloatA = -1234.567;
+  FLOAT_TO_FX(TestFloatA, TestX);
+  printf("MUL4INT_FX 4 times %f is %d.\n",
+    TestFloatA, MUL4INT_FX(TestX));
+
+  TestFloatA = 7654.321;
+  FLOAT_TO_FX(TestFloatA, TestX);
+  printf("MUL4INT_FX 4 times %f is %d.\n",
+    TestFloatA, MUL4INT_FX(TestX));
 }
 

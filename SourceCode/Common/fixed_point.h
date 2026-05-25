@@ -274,14 +274,12 @@ extern void DIV2Nth_FX_ASM(pfx x, uint8_t n);
 #define DIV2Nth_FX(x, n) { (x).as_int >>= n; }
 #endif
 
-/* Divide a by 4 and put into b. */
-#define DIV4_FX(a, b) { (b).as_int = (a).as_int / 4; }
-
-/* Divide a by 256 and put into b. */
-#define DIV256_FX(a, b) { (b).as_int = (a).as_int / 256; }
-
-/* Multiply by 4 and return the integer portion. */
+/* MUL4INT_FX(x) - Multiply by 4 and return the integer portion. */
+#ifdef NABU_H
+#define MUL4INT_FX(x) (((x).portions.fraction >> (FX_BITS_FRACTION - 2)) + ((x).portions.integer << 2))
+#else /* Generic version. */
 #define MUL4INT_FX(x) ((x).as_int >> (FX_BITS_FRACTION - 2))
+#endif
 
 
 /* Convert a 2D vector into an octant angle direction.  Returns octant number
@@ -304,9 +302,6 @@ extern void DIV2Nth_FX_ASM(pfx x, uint8_t n);
 
 extern uint8_t VECTOR_FX_TO_OCTANT(pfx vector_x, pfx vector_y);
 extern uint8_t INT16_TO_OCTANT(int16_t vector_x, int16_t vector_y);
-
-/* Run some test cases for the FX library. */
-extern void FX_Tests(void);
 
 #endif /* _FIXED_POINT_H */
 

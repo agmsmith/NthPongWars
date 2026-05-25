@@ -182,5 +182,18 @@ void FX_Tests(void)
 
   printf("TEST_FX(%f) is %d.\n",
     GET_FX_FLOAT(gfx_Constant_Zero), TEST_FX(gfx_Constant_Zero));
+
+  TestFloatA = -6543.556;
+  FLOAT_TO_FX(TestFloatA, TestX);
+  DIV2_FX(TestX);
+  printf("DIV2_FX of %f is %d.%d (%f).\n",
+    TestFloatA,
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX));
+
+  FLOAT_TO_FX(TestFloatA, TestX);
+  DIV2Nth_FX(TestX, 9);
+  printf("DIV2Nth_FX of %f by 9 is %d.%d (%f).\n",
+    TestFloatA,
+    GET_FX_INTEGER(TestX), GET_FX_FRACTION(TestX), GET_FX_FLOAT(TestX));
 }
 

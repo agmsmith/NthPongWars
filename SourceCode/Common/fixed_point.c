@@ -264,6 +264,73 @@ ZeroTest:
 #endif
 
 
+#ifdef NABU_H
+/* Divide the FX by two.  Same as shifting the given value arithmetic right
+   (sign bit extended, so works with negative numbers too) by one bit.  1 bit
+   is extra efficient on the Z80 in that we can shift directly in memory.
+*/
+void DIV2_FX_ASM(pfx x)
+{
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  __asm
+  pop   de        /* Get return address into de. */
+  pop   hl        /* Get pointer to argument x, will put in hl. */
+  push  hl        /* Put it back so caller can clean up stack as expected. */
+  inc   hl        /* Add 2 to hl, to start at most significant byte of x. */
+  inc   hl
+  sra   (hl)      /* Shift right, duplicating high sign bit, modifies memory. */
+  dec   hl
+  rr    (hl)      /* Rotate right, using the carry bit from previous shift. */
+  dec   hl
+  rr    (hl)      /* Last rotation and we're done.  Result already in memory. */
+  ex    de,hl
+  jp    (hl)      /* Return using saved return address. */
+  __endasm;
+}
+#endif
+
+
+#ifdef NABU_H
+/* Divide the FX by two to the Nth.  Same as shifting the given value arithmetic
+   right by N bits (sign bit extended, so works with negative numbers too).
+   Load 32 bits in to bc and de registers to do shifts, A counts down from N.
+*/
+void DIV2Nth_FX_ASM(pfx x, uint8_t n)
+{
+  x; /* Just avoid warning about unused argument, doesn't add any opcodes. */
+  n;
+  __asm
+  ld    hl,4      /* Hop over return address and pointer x. */
+  add   hl,sp     /* Get pointer to argument N. */
+  ld    a,(hl)    /* Store N in register A. */
+  dec   hl        /* Get high byte of pointer to x. */
+  ld    b,(hl)
+  dec   hl        /* Get low byte of pointer to x. */
+  ld    l,(hl)
+  ld    h,b       /* hl now has pointer to x's fx data, a 24 bit integer. */
+  ld    b,(hl)    /* Copy X to bcd registers, starting with low byte. */
+  inc   hl
+  ld    c,(hl)
+  inc   hl
+  ld    d,(hl)
+Div2nthLoop:
+  dec   a       /* Reduce the counter N. */
+  jp    M,Div2nthDone /* Minus means we're done.  Also works for N=0 case. */
+  sra   d       /* Shift right, duplicating high sign bit. */
+  rr    c
+  rr    b
+  jr    Div2nthLoop
+Div2nthDone:
+  ld    (hl),d /* Write the result back to variable X's data area. */
+  dec   hl
+  ld    (hl),c
+  dec   hl
+  ld    (hl),b
+  __endasm;
+}
+#endif
+
+
 /* Convert a 2D vector into an octant angle direction.  Returns octant number
    in lower 3 bits of the result.  Result high bit is set if the vector is
    exactly on the angle, else zero.

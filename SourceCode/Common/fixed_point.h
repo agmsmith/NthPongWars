@@ -253,15 +253,26 @@ extern int8_t TEST_FX_ASM(pfx x);
   ((x).as_int == 0) ? (int8_t) 0 : (int8_t) 1 )
 #endif
 
-/* Divide the FX by two.  Same as shifting the given value arithmetic right
-   (sign bit extended, so works with negative numbers too) by one bit.  1 bit
-   is extra efficient in that we can shift directly in memory.
-*/
+/* DIV2_FX(x) - Divide the FX by two.  Same as shifting the given value
+   arithmetic right (sign bit extended, so works with negative numbers too) by
+   one bit.  1 bit is extra efficient on the Z80 in that we can shift directly
+   in memory. */
+#ifdef NABU_H
+extern void DIV2_FX_ASM(pfx x);
+#define DIV2_FX(x) { DIV2_FX_ASM(&(x)); }
+#else /* Generic version. */
 #define DIV2_FX(x) { (x).as_int >>= 1; }
+#endif
 
-/* Divide the FX by two to the Nth.  Same as shifting the given value arithmetic
-   right by N bits (sign bit extended, so works with negative numbers too) */
+/* DIV2Nth_FX(x, n) - Divide the FX by two to the Nth.  Same as shifting the
+   given value arithmetic right by N bits (sign bit extended, so works with
+   negative numbers too) */
+#ifdef NABU_H
+extern void DIV2Nth_FX_ASM(pfx x, uint8_t n);
+#define DIV2Nth_FX(x, n) { DIV2Nth_FX_ASM(&(x), (n)); }
+#else /* Generic version. */
 #define DIV2Nth_FX(x, n) { (x).as_int >>= n; }
+#endif
 
 /* Divide a by 4 and put into b. */
 #define DIV4_FX(a, b) { (b).as_int = (a).as_int / 4; }

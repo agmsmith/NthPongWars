@@ -31,7 +31,7 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 # Want all AI players, though a Human can join in if they wish.
-MaxAIPlayers: 4
+DesiredPlayerCount: 4
 AIPlayerCodeStart: 30, 40, 0, 30
 BoardSize: 32, 23
 BoardScreen: 0, 1, 32, 23, 0, 0

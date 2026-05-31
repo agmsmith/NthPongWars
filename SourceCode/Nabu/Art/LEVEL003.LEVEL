@@ -19,7 +19,7 @@ LevelNext: Timeout, WINP5
 BoardSize: 32, 23
 InitialCount: 450
 
-MaxAIPlayers: 4
+DesiredPlayerCount: 4
 # Back to default AI player personalities.
 AIPlayerCodeStart: 30, 40, 0, 30
 

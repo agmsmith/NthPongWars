@@ -41,7 +41,7 @@ static uint16_t sVictoryTimeoutFrame = 0;
 
 static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
-   need to be cleared the first time we see the keyword. */
+   need to be cleared the first time we see the keyword for any tile quota. */
 
 #define MAX_NUMERIC_ARGUMENTS 6
 static int16_t sNumericArgumentsDecoded[MAX_NUMERIC_ARGUMENTS];
@@ -233,7 +233,7 @@ static bool LevelSkipSpaces(void)
    Returns true if it read some data, false if it ran into end of file
    immediately while trying to read data.  Buffer will be NUL terminated.
    BufferSize should be at least 2, max 255, zero will trash memory, 1 will
-   have spurrious end of file indications.
+   have spurious end of file indications.
 */
 
 /* Make sure our large temp buffer is safe to use in LevelReadLine() with a
@@ -572,15 +572,14 @@ bool KeywordRemovePlayers(void)
 }
 
 
-/* Set the desired number of AI players.  More AI players get added every few
-  seconds to meet this quota if there are empty player spots.
+/* Set the desired number of players.  More AI players get added (or removed)
+  every few seconds to meet this quota if there are empty or excess players.
 */
-bool KeywordMaxAIPlayers(void)
+bool KeywordDesiredPlayers(void)
 {
   if (!LevelReadNumericArguments(1))
     return false;
-  gLevelMaxAIPlayers = sNumericArgumentsDecoded[0];
-
+  gLevelDesiredNumberOfPlayers = sNumericArgumentsDecoded[0];
   return true;
 }
 
@@ -942,7 +941,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"Screen", KeywordScreen},
   {"LevelBookmark", KeywordLevelBookmark},
   {"PlayTimeout", KeywordPlayTimeout},
-  {"MaxAIPlayers", KeywordMaxAIPlayers},
+  {"DesiredPlayerCount", KeywordDesiredPlayers},
   {"AIPlayerCodeStart", KeywordAIPlayerCodeStart},
   {"InitialCount", KeywordCountdownStart},
   {"GameMode", KeywordGameMode},
@@ -1062,7 +1061,7 @@ bool LoadLevelFile(void)
   /* Some things that need to be reset at the start of a level. */
   gVictoryWinningPlayer = MAX_PLAYERS + 2;
   sVictoryTimeoutFrame = 0;
-  gLevelMaxAIPlayers = MAX_PLAYERS;
+  gLevelDesiredNumberOfPlayers = MAX_PLAYERS;
 
   sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL", NULL /* No size */);
   if (sLevelFileHandle == BAD_FILE_HANDLE)

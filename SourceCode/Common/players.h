@@ -417,8 +417,9 @@ typedef struct player_struct {
 extern player_record g_player_array[MAX_PLAYERS];
 
 /* When running, if there are some empty player slots, add AI players into them
-   until this number of AI players is reached. */
-extern uint8_t gLevelMaxAIPlayers;
+   until this number of active players is reached, or if there are too many
+   players, remove excess AI players. */
+extern uint8_t gLevelDesiredNumberOfPlayers;
 
 /* Calculated by InitialisePlayersForNewLevel(), these are the adjusted game
    coordinates pixel boundaries of the play area.  Adjusted by the ball radius

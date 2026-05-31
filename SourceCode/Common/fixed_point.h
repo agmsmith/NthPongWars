@@ -97,11 +97,8 @@ typedef struct fx_bits_struct {
 typedef union fx_union {
   #ifndef NABU_H
   /* So you can treat the whole thing as an integer to do additions in one shot,
-     but best not to use this in game code in case we switch to 3 byte fx or
-     some other custom integer format. */
+     but best not to use this in game code since it doesn't exist on the Z80. */
   fx_whole_integer as_int;
-  #else /* bleeble - remove else case once no more Nabu as_int references. */
-  int32_t as_int;
   #endif
 
   /* Or access individual bytes in the number. */
@@ -121,32 +118,19 @@ extern fx gfx_Constant_MinusEighth;
 /* Setting and getting.  Can be inline code rather than a function call. */
 
 /* COPY_FX(x, y) - Copy value of X to Y. */
-#ifdef NABU_H
-  #define COPY_FX(x, y) { \
-  uint8_t *px = (x).as_bytes + 0; \
-  uint8_t *py = (y).as_bytes + 0; \
-  *py++ = *px++; \
-  *py++ = *px++; \
-  *py = *px; \
-  }
-#else /* Generic version. */
-  #define COPY_FX(x, y) { (y).as_int = (x).as_int; }
-#endif
+#define COPY_FX(x, y) { \
+  (y).portions.fraction = (x).portions.fraction; \
+  (y).portions.integer = (x).portions.integer; }
 
 /* SWAP_FX(x, y) - Exchange values of X, Y. */
-#ifdef NABU_H
 #define SWAP_FX(x, y); { \
-  uint8_t *px = (x).as_bytes + 0; \
-  uint8_t *py = (y).as_bytes + 0; \
-  uint8_t temp; \
-  temp = *px ; *px = *py; *py = temp; px++; py++; \
-  temp = *px ; *px = *py; *py = temp; px++; py++; \
-  temp = *px ; *px = *py; *py = temp; px++; py++; \
+  fx_type_for_fraction_part oldXFraction = (x).portions.fraction; \
+  (x).portions.fraction = (y).portions.fraction; \
+  (y).portions.fraction = oldXFraction; \
+  fx_type_for_integer_part oldXinteger = (x).portions.integer; \
+  (x).portions.integer = (y).portions.integer; \
+  (y).portions.integer = oldXinteger; \
   }
-#else /* Generic version. */
-#define SWAP_FX(x, y); { fx_whole_integer temp = (y).as_int; \
-  (y).as_int = (x).as_int; (x).as_int = temp; }
-#endif
 
 /* FLOAT_TO_FX(fpa, x) - convert floating point number fpa to FX in x. */
 #ifdef NABU_H
@@ -175,11 +159,11 @@ extern fx gfx_Constant_MinusEighth;
 
 /* INT_TO_FX(inta, x) - Convert an integer to an FX. */
 #define INT_TO_FX(inta, x) { \
-  (x).portions.integer = (inta); (x).portions.fraction = 0; }
+  (x).portions.fraction = 0; (x).portions.integer = (inta); }
 
 /* INT_FRACTION_TO_FX(inta, fracb, x) - Assign an integer and fraction to FX. */
 #define INT_FRACTION_TO_FX(inta, fracb, x) { \
-  (x).portions.integer = (inta); (x).portions.fraction = (fracb); }
+  (x).portions.fraction = (fracb); (x).portions.integer = (inta); }
 
 /* ZERO_FX(x) - Set an FX to zero. */
 #define ZERO_FX(x) { (x).portions.integer = 0; (x).portions.fraction = 0;}

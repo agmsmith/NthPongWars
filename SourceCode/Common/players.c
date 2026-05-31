@@ -56,7 +56,7 @@ int16_t g_play_area_wall_left_x;
 int16_t g_play_area_wall_right_x;
 int16_t g_play_area_wall_top_y;
 
-uint8_t gLevelMaxAIPlayers = MAX_PLAYERS;
+uint8_t gLevelDesiredNumberOfPlayers = MAX_PLAYERS;
 
 uint8_t g_FrictionSpeed = 16;
 fx g_FrictionSpeedFx;
@@ -186,7 +186,8 @@ uint8_t g_target_start_indices[MAX_PLAYERS] =
 {30, 40, 0, 30};
 
 
-/* Set up the initial player data, mostly colours and animations. */
+/* Set up the initial player data at the beginning of a game (series of levels),
+   mostly colours and animations, and score counters. */
 void InitialisePlayers(void)
 {
   uint8_t iPlayer;
@@ -205,7 +206,7 @@ void InitialisePlayers(void)
   INT_TO_FX(g_PhysicsTurnRate, g_TurnRateFx);
   DIV2Nth_FX(g_TurnRateFx, 2); /* Divide by 4 = quarters */
 
-  /* Set up the players, scattered across the screen. */
+  /* Set up the players, scattered across the screen by default. */
 
   pixelCoord = 32;
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
@@ -241,6 +242,37 @@ void InitialisePlayers(void)
 }
 
 
+/* Reinitialise an AI player, or Human player, in the middle of a game.  Used
+   when a player joins the game or an AI takes over from an inactive player.
+   Also used as part of level reset too.  Note that the player is left at its
+   previous position, useful for visual continuity when it is taken over by a
+   different operator.
+*/
+static void ReinitialisePlayer(player_pointer pPlayer)
+{
+  ZERO_FX(pPlayer->velocity_x);
+  ZERO_FX(pPlayer->velocity_y);
+  pPlayer->pixel_flying_height = MAX_FLYING_HEIGHT; /* Start from a height. */
+  pPlayer->player_collision_count = 0;
+  bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
+  pPlayer->joystick_inputs = 0;
+  pPlayer->brain_info.algo.desired_speed = g_PhysicsStepSizeLimit / 2;
+  pPlayer->brain_info.algo.target_list_index =
+    g_target_start_indices[pPlayer->player_array_index];
+  pPlayer->brain_info.algo.steer = false; /* AI not steering towards target. */
+  pPlayer->brain_info.algo.target_distance = 0;
+  pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
+  pPlayer->brain_info.algo.divert_to_pTile = NULL;
+  pPlayer->brain_info.algo.delay_remaining = 0;
+  pPlayer->brain_info.algo.stuck_time_remaining = 10; /* 2 seconds. */
+  pPlayer->last_brain_activity_time = g_FrameCounter;
+#ifdef NABU_H
+  pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
+  pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
+#endif /* NABU_H */
+}
+
+
 /* Reset player things to get ready for running the next level.
 */
 void InitialisePlayersForNewLevel(void)
@@ -262,27 +294,9 @@ void InitialisePlayersForNewLevel(void)
   for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
   iPlayer++, pPlayer++)
   {
+    ReinitialisePlayer(pPlayer);
     INT_TO_FX(pPlayer->starting_level_pixel_x, pPlayer->pixel_center_x);
     INT_TO_FX(pPlayer->starting_level_pixel_y, pPlayer->pixel_center_y);
-    pPlayer->pixel_flying_height = MAX_FLYING_HEIGHT;
-    ZERO_FX(pPlayer->velocity_x);
-    ZERO_FX(pPlayer->velocity_y);
-    pPlayer->player_collision_count = 0;
-    bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
-    pPlayer->joystick_inputs = 0;
-    pPlayer->brain_info.algo.target_list_index =
-      g_target_start_indices[iPlayer];
-    pPlayer->brain_info.algo.steer = false;
-    pPlayer->brain_info.algo.target_distance = 0;
-    pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
-    pPlayer->brain_info.algo.divert_to_pTile = NULL;
-    pPlayer->brain_info.algo.delay_remaining = 0;
-    pPlayer->brain_info.algo.stuck_time_remaining = 10; /* 2 seconds. */
-    pPlayer->last_brain_activity_time = g_FrameCounter;
-#ifdef NABU_H
-    pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
-    pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
-#endif /* NABU_H */
   }
 }
 
@@ -1279,6 +1293,7 @@ void UpdatePlayerInputs(void)
     }
     if (iPlayer < MAX_PLAYERS)
     {
+      ReinitialisePlayer(pPlayer);
       pPlayer->brain_info.iJoystick = iInput;
       pPlayer->brain = (iInput < 4) ?
         ((player_brain) BRAIN_JOYSTICK) :
@@ -1289,12 +1304,13 @@ void UpdatePlayerInputs(void)
     }
   }
 
-  /* See if we need to add an AI player to make the quota of AI players.  But
-     only check about once every eight seconds. */
+  /* See if we need to add or remove an AI player to make the desired quota of
+     players.  But only check about once every eight seconds. */
 
   if ((uint8_t) g_FrameCounter == (uint8_t) 187)
   {
     uint8_t numAIPlayers = 0;
+    uint8_t numHumanPlayers = 0;
     player_pointer pFreePlayer = NULL;
     player_pointer pAIPlayer = NULL;
 
@@ -1308,26 +1324,35 @@ void UpdatePlayerInputs(void)
         pAIPlayer = pPlayer;
         numAIPlayers++;
       }
+      else
+        numHumanPlayers++;
     }
-    if (numAIPlayers > gLevelMaxAIPlayers)
+    uint8_t totalPlayers = numAIPlayers + numHumanPlayers;
+
+    if (totalPlayers == gLevelDesiredNumberOfPlayers)
     {
-      /* Too many AI players, remove one.  Happens usually when carrying over
-         AI players from the previous level. */
-      pAIPlayer->brain = (player_brain) BRAIN_INACTIVE;
-      DebugPrintPlayerAssignment(pAIPlayer);
+      /* Have the right number of players, skip the rest of the tests. */
     }
-    else if (numAIPlayers < gLevelMaxAIPlayers && pFreePlayer != NULL)
+    else if (totalPlayers > gLevelDesiredNumberOfPlayers)
     {
-      /* Make an AI player. */
-      bzero(&pFreePlayer->brain_info, sizeof(pFreePlayer->brain_info));
-      pFreePlayer->brain = (player_brain) BRAIN_ALGORITHM;
-      pFreePlayer->brain_info.algo.desired_speed = 4 + numAIPlayers;
-      pFreePlayer->brain_info.algo.target_list_index =
-        g_target_start_indices[pFreePlayer->player_array_index];
-      pFreePlayer->brain_info.algo.steer = false;
-      pFreePlayer->brain_info.algo.target_player = MAX_PLAYERS;
-      pFreePlayer->last_brain_activity_time = g_FrameCounter;
-      DebugPrintPlayerAssignment(pFreePlayer);
+      /* Too many players, if possible, remove an AI one.  Happens usually when
+         carrying over AI players from the previous level. */
+      if (pAIPlayer != NULL)
+      {
+        pAIPlayer->brain = (player_brain) BRAIN_INACTIVE;
+        DebugPrintPlayerAssignment(pAIPlayer);
+      }
+    }
+    else /* totalPlayers < gLevelDesiredNumberOfPlayers */
+    {
+      /* Make an AI player to bring up the number of players, if there's an
+         empty player slot available. */
+      if (pFreePlayer != NULL)
+      {
+        ReinitialisePlayer(pFreePlayer);
+        pFreePlayer->brain = (player_brain) BRAIN_ALGORITHM;
+        DebugPrintPlayerAssignment(pFreePlayer);
+      }
     }
   }
 

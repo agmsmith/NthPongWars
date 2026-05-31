@@ -16,7 +16,7 @@ LevelNext: P2, WINP2
 LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
-MaxAIPlayers: 1
+DesiredPlayerCount: 1
 AIPlayerCodeStart: 80, 80, 88, 86
 BoardSize: 30, 19
 InitialCount: 100
@@ -39,9 +39,9 @@ BoardTileData:
 2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
 2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
 . . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-B . . . . . . + B . . . . . . + B . . . . . . + B . . . . .
+. . . B . . . + . . . B . . . + . . . B . . . + . . . B . .
 . . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . 1 . . B + . . . 2 . . B + . . . 3 . . B + . . . 4 . B
+. . . 1 . . . + . . . 2 . . . + . . . 3 . . . + . . . 4 . .
 END
 
 # No power-ups or other funny tiles.

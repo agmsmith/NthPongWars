@@ -537,6 +537,7 @@ bool LoadScreen(const char *FileName)
 /* Turn off sprites, since they make the VDP too busy which causes it to ignore
    writes to memory at times which leads to corrupted screen loads. */
 
+  vdp_waitVDPReadyInt();
   vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
   IO_VDPDATA = 0xD0;
 

@@ -261,7 +261,10 @@ static void ReinitialisePlayer(player_pointer pPlayer)
     g_target_start_indices[pPlayer->player_array_index];
   pPlayer->brain_info.algo.steer = false; /* AI not steering towards target. */
   pPlayer->brain_info.algo.target_distance = 0;
+  pPlayer->brain_info.algo.target_pixel_x = PLAYER_PIXEL_DIAMETER_NORMAL * 2;
+  pPlayer->brain_info.algo.target_pixel_y = PLAYER_PIXEL_DIAMETER_NORMAL * 2;
   pPlayer->brain_info.algo.target_player = MAX_PLAYERS;
+  pPlayer->brain_info.algo.divert_powerup_distance = 0; /* Turn off divert. */
   pPlayer->brain_info.algo.divert_to_pTile = NULL;
   pPlayer->brain_info.algo.delay_remaining = 0;
   pPlayer->brain_info.algo.stuck_time_remaining = 10; /* 2 seconds. */
@@ -871,8 +874,8 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         pPlayer->brain_info.algo.target_pixel_y =
           pPlayer->brain_info.algo.divert_saved_pixel_y;
 
-#if 1 /* Optional debug message to report reverting players. */
-        DebugPrintString("Finished tile divert for ");
+#if 0 /* Optional debug message to report reverting players. */
+        DebugPrintString("  finished tile divert for ");
         DumpPlayerStateToTerminal(pPlayer);
 #endif
       }
@@ -1020,6 +1023,9 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
         pPlayer->brain_info.algo.steer = true;
         break;
       }
+#if 0 /* For debugging, display result of executing the opcode. */
+      DumpPlayerStateToTerminal(pPlayer);
+#endif
     }
   }
 
@@ -1085,7 +1091,7 @@ static void BrainUpdateJoystick(player_pointer pPlayer)
 
       if (bestTile != NULL && bestDistance <= powerUpMaxPixelDistance)
       {
-#if 1 /* Optional debug message to report diverting players. */
+#if 0 /* Optional debug message to report diverting players. */
         DebugPrintString("Diverting ");
         DumpPlayerStateToTerminal(pPlayer);
         DebugPrintString("  to tile ");

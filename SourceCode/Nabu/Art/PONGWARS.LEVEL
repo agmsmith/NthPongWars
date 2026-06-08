@@ -24,6 +24,7 @@ PlayTimeout: 500
 
 # Set fast inaccurate physics behaviour.
 PhysicsFrictionSpeed: 32
+PhysicsFrictionShift: 8
 PhysicsSeparatePlayersSpeed: 10
 PhysicsMoreStepsSpeed: 32
 PhysicsTurnRate: 35

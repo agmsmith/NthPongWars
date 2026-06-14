@@ -156,7 +156,8 @@ static char HitAnyKey(const char *MessageText)
 
 /*******************************************************************************
  * Process Keyboard inputs.  Mostly making fake joystick data from cursor keys,
- * and checking for "q" to quit.
+ * and checking for "q" to quit, ESC to go to title and "0" to end the current
+ * level quickly by setting the time remaining to near zero.
  */
 #define DEBUG_KEYBOARD 0
 static void ProcessKeyboard(void)
@@ -208,6 +209,10 @@ static void ProcessKeyboard(void)
       {
         s_KeepRunning = false;
         strcpy(gLevelName, "TITLE");
+      }
+      else if (letter == '0') /* Zero key, end the current level. */
+      {
+        g_ScoreGoal = 10;
       }
     }
   }
@@ -390,7 +395,7 @@ void main(void)
         CopyTilesToScreen();
         CopyScoresToScreen();
       }
-      else /* Game not running, turn off the sprites, slow down to 30hz updates. */
+      else /* Game not running, turn off sprites, slow down to 30hz updates. */
       {
         if (g_ScoreFramesPerUpdate < 2)
           vdp_waitVDPReadyInt();
@@ -418,7 +423,7 @@ void main(void)
       if ((g_FrameCounter & 0x1F) == 0)
       {
         if (g_ScoreGoal-- == 0)
-          g_ScoreGoal = 9; /* Shouldn't happen, somebody should have won. */
+          g_ScoreGoal = 5; /* Shouldn't happen, somebody should have won. */
       }
 
 #if 0 /* Check for corrupted memory every frame. */

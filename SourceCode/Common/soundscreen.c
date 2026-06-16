@@ -252,24 +252,36 @@ FileHandleType OpenDataFile(const char *fileNameBase, const char *extension,
     /* End of list marker. */
     NULL
   };
+  #define SNDSCR_PATH_WWW_INDEX 2
+  /* Paths at this index and above are web site URLs, so we can skip the size
+     test and go directly to trying to open the file (can't do that with local
+     files since opening also creates an empty file).  Avoids an extra web
+     server request/response cycle. */
 
   const char *pPath;
   uint8_t iPath = 0;
   while ((pPath = sPathsToTry[iPath++]) != NULL)
   {
+    int32_t fileSize = 0;
     nameLen = SetUpPathInTempBuffer(pPath);
-    int32_t fileSize = rn_fileSize(nameLen, g_TempBuffer);
-    if (fileSize > 0) /* Size bigger than zero if the file exists. */
+    if (iPath < SNDSCR_PATH_WWW_INDEX)
     {
-      fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
-        0xff /* Use a new file handle */);
-      SoundUpdateIfNeeded(); /* Each open attempt could take a while. */
-      if (fileID != BAD_FILE_HANDLE)
+      fileSize = rn_fileSize(nameLen, g_TempBuffer);
+      if (fileSize <= 0)
+        continue; /* File doesn't exist. */
+    }
+    fileID = rn_fileOpen(nameLen, g_TempBuffer, OPEN_FILE_FLAG_READONLY,
+      0xff /* Use a new file handle */);
+    SoundUpdateIfNeeded(); /* Each open attempt could take a while. */
+    if (fileID != BAD_FILE_HANDLE)
+    {
+      if (pFileSize != NULL)
       {
-        if (pFileSize != NULL)
-          *pFileSize = fileSize;
-        return fileID;
+        if (iPath >= SNDSCR_PATH_WWW_INDEX) /* Do need the file size, get it. */
+          fileSize = rn_fileHandleSize(fileID);
+        *pFileSize = fileSize;
       }
+      return fileID;
     }
   }
 #endif /* NABU_H */

@@ -17,7 +17,7 @@ LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 DesiredPlayerCount: 2
-AIPlayerCodeStart: 80, 80, 88, 86
+AIPlayerCodeStart: 60, 60, 60, 60
 BoardSize: 30, 18
 InitialCount: 100
 BoardScreen: 1, 2, 30, 18, 0, 0

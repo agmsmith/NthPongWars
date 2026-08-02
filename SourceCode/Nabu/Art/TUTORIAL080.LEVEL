@@ -6,8 +6,8 @@ GameMode: PongWar
 Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 180
-ScreenText: 22, 1, 0, 32, Bash Away!  Destroy opponent's
-ScreenText: 23, 0, 0, 32, tiles faster with Bash power-up.
+ScreenText: 21, 11, 0, 32, Bash Away!
+ScreenText: 22, 0, 0, 32, Destroy opponent's tiles faster with the bash power-up.
 LevelBookmark: TUTORIAL090
 LevelNext: All, TUTORIAL090
 LevelNext: P0, WINP0
@@ -18,9 +18,9 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 DesiredPlayerCount: 4
 AIPlayerCodeStart: 30, 30, 30, 30
-BoardSize: 30, 19
+BoardSize: 30, 18
 InitialCount: 150
-BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScreen: 1, 2, 30, 18, 0, 0
 BoardScroll: 0
 BoardTileData:
 .
@@ -40,7 +40,6 @@ BoardTileData:
 . . + + + + + + + + + + + . B . + + + + + + + + + + + +
 .
 . . . . . . . . . . . . . . 4
-.
 .
 END
 

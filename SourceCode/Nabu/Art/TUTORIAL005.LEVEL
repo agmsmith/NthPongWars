@@ -1,4 +1,5 @@
-# The start of the series of tutorial levels, by Alexander G. M. Smith.
+# Originally this was the start of the series of tutorial levels,
+# by Alexander G. M. Smith.
 # AGMS20260106 - started this file.
 # Tutorial005 is a box around each player, where they have to get enough
 # tiles of their colour to win.  Mostly about learning movement.  And
@@ -18,9 +19,8 @@ LevelNext: P2, WINP2
 LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
-RemovePlayers:
 DesiredPlayerCount: 1
-AIPlayerCodeStart: 80, 80, 80, 80
+AIPlayerCodeStart: 60, 60, 60, 60
 BoardSize: 26, 15
 InitialCount: 90
 BoardScreen: 3, 3, 26, 15, 0, 0

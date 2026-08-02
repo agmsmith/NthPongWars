@@ -9,8 +9,8 @@ GameMode: PongWar
 Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 160
-ScreenText: 22, 6, 0, 32, Meet the Neighbours!
-ScreenText: 23, 1, 0, 32, Player vs Player Interactions.
+ScreenText: 21, 6, 0, 32, Meet the Neighbours!
+ScreenText: 22, 0, 0, 32, Player vs Player Interactions.
 LevelBookmark: TUTORIAL070
 LevelNext: All, TUTORIAL070
 LevelNext: P0, WINP0
@@ -21,9 +21,9 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 DesiredPlayerCount: 2
 AIPlayerCodeStart: 80, 80, 88, 86
-BoardSize: 30, 19
+BoardSize: 30, 18
 InitialCount: 160
-BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScreen: 1, 2, 30, 18, 0, 0
 BoardScroll: 0
 BoardTileData:
 .
@@ -43,7 +43,6 @@ BoardTileData:
 + + + + + + + + + + + + + + + + + + + + + + + + + + + +
 .
 . 3
-.
 .
 END
 

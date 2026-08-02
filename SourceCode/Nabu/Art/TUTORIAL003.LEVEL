@@ -3,7 +3,7 @@
 # Tutorial003 shows the players how the goal works.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
-Music: Default
+Music: Silence
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 21, 8, 0, 32, Goal Counts Down

@@ -6,7 +6,8 @@ GameMode: Slide
 Music: SQUAROOT
 Screen: TEXTSCREEN.NSCR
 LevelNext: All, TITLE
-PlayTimeout: 7
-ScreenText: 4, 5, 5, 32, More tutorials later?
-ScreenText: 7, 3, 3, 32, Perhaps explain hazards...
+PlayTimeout: 30
+ScreenText: 4, 5, 5, 29, More tutorials later?
+ScreenText: 7, 3, 3, 29, Perhaps explain hazards...
+ScreenText: 9, 3, 3, 29, Stop signs (stop your motion), Barriers (stop and lose all power-ups), Flying wings (make you fly above the tiles).
 

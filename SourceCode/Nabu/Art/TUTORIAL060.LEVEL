@@ -1,6 +1,6 @@
 # Allow players to mix tutorial, by Alexander G. M. Smith.
 # AGMS20260106 - started this file.
-# Tutorial006 is a set of lanes for each player, where they have to get
+# Tutorial060 is a set of lanes for each player, where they have to get
 # enough tiles of their colour to win.  However the ends of the lanes open
 # to a common area where they can fight it out.
 # AI players just bounce around at a medium speed.
@@ -11,8 +11,8 @@ Screen: TUTORIAL.NSCR
 PlayTimeout: 160
 ScreenText: 22, 6, 0, 32, Meet the Neighbours!
 ScreenText: 23, 1, 0, 32, Player vs Player Interactions.
-LevelBookmark: TUTORIAL007
-LevelNext: All, TUTORIAL007
+LevelBookmark: TUTORIAL070
+LevelNext: All, TUTORIAL070
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2

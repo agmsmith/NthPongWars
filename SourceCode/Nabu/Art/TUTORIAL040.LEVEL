@@ -1,0 +1,49 @@
+# Tutorial showing off the power-ups to new players, by Alexander G. M. Smith.
+# AGMS20260106 - started this file.
+# Tutorial040 is a set of lanes for each player, with a Bash power-up.
+LevelVersion: 20260106, NthPongWars
+GameMode: PongWar
+Music: Default
+Screen: TUTORIAL.NSCR
+PlayTimeout: 120
+ScreenText: 22, 5, 0, 32, Bash power-up gets you
+ScreenText: 23, 5, 0, 32, through tiles faster.
+LevelBookmark: TUTORIAL050
+LevelNext: All, TUTORIAL050
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
+DesiredPlayerCount: 1
+AIPlayerCodeStart: 80, 80, 88, 86
+BoardSize: 30, 19
+InitialCount: 100
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . B . . . + . . . B . . . + . . . B . . . + . . . B . .
+. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
+. . . 1 . . . + . . . 2 . . . + . . . 3 . . . + . . . 4 . .
+END
+
+# No power-ups or other funny tiles.
+TileQuota: S, 0
+

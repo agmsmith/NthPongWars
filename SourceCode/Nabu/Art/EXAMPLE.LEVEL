@@ -93,7 +93,15 @@ Screen: HELP.NCHR
 # handle new line characters, so you would have to do several ScreenText
 # keywords to get a similar effect.  Magic words you can use are "Copyright"
 # and "Version" to display those text items.
+# ScreenText: Row, FirstLeftMargin, SubsequentLeftMargin, RightMargin
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
+
+# When playing in countdown mode, the first player to reach this many tiles in
+# their colour wins.  The count starts at this value and counts down about once
+# per second.  If you don't specify it, it gets set to the number of tiles in
+# the level.  Use after BoardSize, which resets the count to the number of
+# tiles in the board.
+InitialCount: 100
 
 # When this much time has elapsed while running a level, the next level choice
 # for the timeout (see LevelNext: Timeout, LevelName) is used to load the next
@@ -160,15 +168,10 @@ AIPlayerCodeStart: 30, 40, 0, 30
 # Set up a game board with the given width and height in tiles.  On the NABU
 # you can use up to 800 tiles, though full screen can display 32x24 = 768 tiles.
 # However, you can scroll the screen...  Usually you leave space for a score
-# line at the top of the screen.  Also the maximum height and width are 254.
+# line at the top of the screen.  The maximum height and width are 254.
+# Also sets InitialCount to the number of tiles (width * height).
+# BoardSize: Width, Height
 BoardSize: 32, 23
-
-# When playing in countdown mode, the first player to reach this many tiles in
-# their colour wins.  The count starts at this value and counts down about once
-# per second.  If you don't specify it, it gets set to the number of tiles in
-# the level.  Use after BoardSize, which resets the count to the number of
-# tiles in the board.
-InitialCount: 100
 
 # Specify the rectangle on the screen where the game board is displayed.  Lets
 # you have smaller game boards inside a bigger picture frame.  Values are X
@@ -177,6 +180,7 @@ InitialCount: 100
 # tile X and Y positions of the top left corner of the screen inside the
 # game world.  The example uses all the screen except the topmost line
 # (where the scores are always displayed).
+# BoardScreen: ScreenColumn, ScreenRow, Width, Height, BoardX, BoardY
 BoardScreen: 0, 1, 32, 23, 0, 0
 
 # Should the board scroll around to follow a player?  We'll use the lowest

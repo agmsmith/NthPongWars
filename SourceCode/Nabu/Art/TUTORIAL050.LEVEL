@@ -1,0 +1,50 @@
+# The start of the series of tutorial levels, by Alexander G. M. Smith.
+# AGMS20260212 - started this file.
+# Tutorial050 is a box around each player, where they have to get enough
+# tiles of their colour to win, but now with aged tiles and a Solid power-up.
+LevelVersion: 20260209, NthPongWars
+GameMode: PongWar
+Music: Default
+Screen: TUTORIAL.NSCR
+PlayTimeout: 120
+ScreenText: 22, 2, 0, 32, Fill in the blanks!  Use the
+ScreenText: 23, 1, 0, 32, Solid power-up to fill faster.
+LevelBookmark: TUTORIAL060
+LevelNext: All, TUTORIAL060
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
+DesiredPlayerCount: 1
+AIPlayerCodeStart: 80, 80, 80, 80
+BoardSize: 30, 19
+InitialCount: 100
+BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScroll: 0
+BoardTileData:
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . S . 1 . . . . . . + . . . . S . 2 . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . S + . . . . . . . . . . . S + .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . S . 3 . . . . . . + . . . . S . 4 . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . . + . . . . . . . . . . . . + .
+. + . . . . . . . . . . . . S + . . . . . . . . . . . S + .
+. + + + + + + + + + + + + + + + + + + + + + + + + + + + + .
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+END
+
+# No power-ups or other funny tiles.
+TileQuota: N, 0
+

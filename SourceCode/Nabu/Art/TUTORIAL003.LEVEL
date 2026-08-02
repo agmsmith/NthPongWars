@@ -1,52 +1,33 @@
-# Tutorial showing off the power-ups to new players, by Alexander G. M. Smith.
-# AGMS20260212 - started this file.
-# Tutorial003 is a set of lanes for each player, showing tile aging.
-LevelVersion: 20260209, NthPongWars
+# The start of the series of tutorial levels, by Alexander G. M. Smith.
+# AGMS20260802 - started this file.
+# Tutorial003 shows the players how the goal works.
+LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
 Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
-ScreenText: 22, 2, 0, 32, Less Solid Tiles!  Need many
-ScreenText: 23, 0, 0, 32, passes to break or make tiles.
-LevelBookmark: TUTORIAL004
-LevelNext: All, TUTORIAL004
+ScreenText: 21, 8, 0, 32, Goal Counts Down
+ScreenText: 22, 0, 0, 32, Observe: Winner is the first player reaching the goal score.
+
+LevelBookmark: TUTORIAL005
+LevelNext: All, TUTORIAL005
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
 LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
-DesiredPlayerCount: 1
-AIPlayerCodeStart: 80, 80, 88, 86
-BoardSize: 30, 19
+
+DesiredPlayerCount: 4
+AIPlayerCodeStart: 60, 60, 60, 60
+BoardSize: 30, 18
 InitialCount: 100
-BoardScreen: 1, 2, 30, 19, 0, 0
+BoardScreen: 1, 2, 30, 18, 0, 0
 BoardScroll: 0
-BoardTileData:
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
-2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
-2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
-2 2 2 2 2 2 2 + 3 3 3 3 3 3 3 + 4 4 4 4 4 4 4 + 1 1 1 1 1 1
-. . . . . . . + . . . . . . . + . . . . . . . + . . . . . .
-. . . 1 . . . + . . . 2 . . . + . . . 3 . . . + . . . 4 . .
-END
 
 # No power-ups or other funny tiles.
-TileQuota: S, 0
+TileQuota: N, 0
 
-# Turn on tile aging.
-TileAgeFeature: 1
+# Use solid tiles to keep it simple initially, no age effects.
+TileAgeFeature: 0
 

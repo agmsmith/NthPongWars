@@ -1,6 +1,6 @@
 # Allow players to mix tutorial, by Alexander G. M. Smith.
 # AGMS20260106 - started this file.
-# Tutorial007 is a more open area where players can fight it out.
+# Tutorial070 is a more open area where players can fight it out.
 LevelVersion: 20260106, NthPongWars
 GameMode: PongWar
 Music: Default
@@ -8,8 +8,8 @@ Screen: TUTORIAL.NSCR
 PlayTimeout: 170
 ScreenText: 22, 5, 0, 32, Open Plan Neighbours!
 ScreenText: 23, 0, 0, 32, More dodging around recommended.
-LevelBookmark: TUTORIAL008
-LevelNext: All, TUTORIAL008
+LevelBookmark: TUTORIAL080
+LevelNext: All, TUTORIAL080
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2

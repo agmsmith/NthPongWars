@@ -31,3 +31,6 @@ TileQuota: N, 0
 # Use solid tiles to keep it simple initially, no age effects.
 TileAgeFeature: 0
 
+# Wider slower turns.
+PhysicsTurnRate: 2
+

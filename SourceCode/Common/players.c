@@ -334,7 +334,11 @@ void UpdatePlayerAnimations(void)
   {
     if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE))
     {
-      UpdateOneAnimation(&pPlayer->main_anim);
+      /* Update player's animation to show which direction they are pointing
+         towards, rather than just animating by time. */
+
+      pPlayer->main_anim.current_name = pPlayer->main_anim.first_name +
+        pPlayer->velocity_octant * 4 /* 4 characters per 16x16 sprite. */;
 
 #ifdef NABU_H
       if (pPlayer->sparkle_anim.type != ((SpriteAnimationType) SPRITE_ANIM_NONE))

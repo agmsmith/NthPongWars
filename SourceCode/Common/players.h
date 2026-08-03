@@ -392,7 +392,13 @@ typedef struct player_struct {
   uint8_t vdpShadowSpriteY;
   uint8_t vdpShadowEarlyClock32Left;
 
-  SpriteAnimRecord main_anim;/* Animation for the main ball sprite. */
+  SpriteAnimRecord main_anim;
+  /* Animation for the main ball sprite.  Though we now just use the player's
+     direction octant to select which animation frame to display, so the
+     player's shape reflects the direction they are heading towards.  Lets the
+     player understand they are steering something like a car, not just moving
+     a dot without orientation, explains why bounces sometimes move you
+     sideways. */
 
   uint8_t shadow_colour;
   /* Predefined colour for this player's shadow sprite.  We're using colours

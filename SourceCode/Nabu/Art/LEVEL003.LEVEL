@@ -3,8 +3,7 @@ GameMode: PongWar
 Music: SQUAROOT
 Music: MELTDOWN
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 9, 9, 32, _The Long One_
-ScreenText: 22, 3, 3, 32, (Or so it seems right now)
+ScreenText: 21, 11, 11, 32, _Wide Open_
 
 # After showing the win screen, will advance to the next level.
 LevelBookmark: LEVEL004

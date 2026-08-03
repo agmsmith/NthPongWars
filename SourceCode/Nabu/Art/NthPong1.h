@@ -49,11 +49,11 @@ typedef struct SpriteAnimStruct {
 */
 static const SpriteAnimRecord g_SpriteAnimData[SPRITE_ANIM_MAX] = {
   {SPRITE_ANIM_NONE, 0, 4, 60, 250, 0}, /* Nothing, box test pattern shown. */
-  {SPRITE_ANIM_BALL_ROLLING, 4, 20, 3, 250, 0}, /* A ball rolling. */
-  {SPRITE_ANIM_BALL_EFFECT_THRUST, 20, 32, 2, 250, 0}, /* Halo circling ball. */
-  {SPRITE_ANIM_BALL_EFFECT_WIDER, 32, 48, 3, 250, 0}, /* Expanding rings. */
-  {SPRITE_ANIM_BALL_EFFECT_BASH, 48, 68, 2, 250, 0}, /* Moving fist. */
-  {SPRITE_ANIM_BALL_EFFECT_SOLID, 68, 84, 2, 250, 0}, /* Filling squares. */
+  {SPRITE_ANIM_BALL_ROLLING, 4, 36, 3, 250, 0}, /* A ball rolling. */
+  {SPRITE_ANIM_BALL_EFFECT_THRUST, 36, 48, 2, 250, 0}, /* Halo circling ball. */
+  {SPRITE_ANIM_BALL_EFFECT_WIDER, 48, 64, 3, 250, 0}, /* Expanding rings. */
+  {SPRITE_ANIM_BALL_EFFECT_BASH, 64, 84, 2, 250, 0}, /* Moving glitter cloud. */
+  {SPRITE_ANIM_BALL_EFFECT_SOLID, 84, 100, 2, 250, 0}, /* Filling squares. */
 };
 
 /* One more sprite frame after SPRITE_ANIM_BALL_EFFECT_THRUST for extra

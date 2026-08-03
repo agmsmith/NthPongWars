@@ -9,7 +9,7 @@ Screen: TITLESCREEN.NFUL
 LevelNext: All, LEVEL001
 LevelNext: Left, Quit
 LevelNext: Right, CREDITS
-LevelNext: Up, PONGWARS
+LevelNext: Up, CLASSICPONGWARS
 LevelNext: Down, TUTORIAL001
 LevelNext: Timeout, GAMEDEMO
 PlayTimeout: 8

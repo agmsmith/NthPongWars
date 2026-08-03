@@ -4,7 +4,7 @@ Music: ONECOLN1
 # Need the font and sprites as usual.
 Screen: NTHPONG1.NSCR
 # But have a different background screen for the game's square play area.
-Screen: PONGWARS.NCHR
+Screen: CLASSICPONGWARS.NCHR
 
 # After showing the win screen, will return to the title.
 LevelBookmark: TITLE

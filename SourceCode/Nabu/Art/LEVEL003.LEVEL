@@ -30,3 +30,6 @@ TileQuota: W, 2 # OWNER_PUP_WIDER
 TileQuota: B, 2 # OWNER_PUP_BASH_WALL
 TileQuota: S, 2 # OWNER_PUP_SOLID
 
+# Slower turn rate for first few levels.
+PhysicsTurnRate: 2
+

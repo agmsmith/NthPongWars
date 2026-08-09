@@ -49,3 +49,6 @@ TileQuota: S, 2 # OWNER_PUP_SOLID
 DesiredPlayerCount: 3
 AIPlayerCodeStart: 90, 90, 0, 90
 
+# Back to normal turn rate for remaining levels.
+PhysicsTurnRate: 8
+

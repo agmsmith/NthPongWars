@@ -49,3 +49,6 @@ BoardTileData:
 . ( ( ( ( ( . . ) ) ) ) ) ) . . . . . . [ [ [ . ] ] ] . . ] ] ]
 END
 
+# Back to normal turn rate for confined spaces.
+PhysicsTurnRate: 8
+

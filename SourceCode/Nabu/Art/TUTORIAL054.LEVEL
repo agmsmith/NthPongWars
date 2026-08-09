@@ -1,0 +1,47 @@
+# About stopping and barriers, by Alexander G. M. Smith.
+# AGMS20260809 - started this file.
+# Tutorial054 is a box around each player, where they can bounce into various
+# kinds of stop and barrier and other power-ups to show their effect.
+LevelVersion: 20260209, NthPongWars
+GameMode: PongWar
+Music: Default
+Screen: TUTORIAL.NSCR
+PlayTimeout: 120
+ScreenText: 21, 2, 0, 32, Stop and Barrier Power-downs
+ScreenText: 22, 0, 0, 32, One stops you, the other also removes all power-ups.
+LevelBookmark: TUTORIAL060
+LevelNext: All, TUTORIAL060
+LevelNext: P0, WINP0
+LevelNext: P1, WINP1
+LevelNext: P2, WINP2
+LevelNext: P3, WINP3
+LevelNext: Fire, WINP4
+LevelNext: Timeout, WINP5
+DesiredPlayerCount: 2
+AIPlayerCodeStart: 60, 60, 60, 60
+BoardSize: 26, 15
+InitialCount: 100
+BoardScreen: 3, 3, 26, 15, 0, 0
+BoardScroll: 0
+BoardTileData:
+. . . . . . . . . . . . . + . . . . . . . . . . . .
+. . . . . . H . . . . . . + . . . . . . H . . . . .
+. . . . . . . . . . . . . + . . . . . . . . . . . .
+. . . H . . 1 . . H . . . + . . . H . . 2 . . H . .
+. . . . . . . . . . . . . + . . . . . . . . . . . .
+. . . . . . S . . . . . . + . . . . . . S . . . . .
+. . . . . . N . . . F . N + . . . . . . N . . F . N
++ + + + + + + + + + + + + + + + + + + + + + + + + +
+. . . . . . . . . . . . . + . . . . . . . . . . . .
+. . . . . . H . . . . . . + . . . . . . H . . . . .
+. . . . . . . . . . . . . + . . . . . . . . . . . .
+. . . H . . 3 . . H . . . + . . . H . . 4 . . H . .
+. . . . . . . . . . . . . + . . . . . . . . . . . .
+. . . . . . S . . . . . . + . . . . . . S . . . . .
+. . . . . . N . . . F . N + . . . . . . N . . F . N
+END
+
+# Just a lot of stop power-ups.
+TileQuota: H, 4
+TileQuota: N, 4
+

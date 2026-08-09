@@ -1,35 +1,34 @@
-# Originally this was the start of the series of tutorial levels,
-# by Alexander G. M. Smith.
-# AGMS20260106 - started this file.
-# Tutorial005 is a box around each player, where they have to get enough
-# tiles of their colour to win.  Mostly about learning movement.  And
-# testing physics simulation of walls, which have lots of problems.
-# AI players just bounce around at a medium speed.
-LevelVersion: 20260106, NthPongWars
+# About flying, by Alexander G. M. Smith.
+# AGMS20260809 - started this file.
+# Tutorial052 is a box around each player, where they have to get enough
+# tiles of their colour to win, but  with flying power-ups, so you can fly to
+# your opponent's area and take their tiles.
+LevelVersion: 20260209, NthPongWars
 GameMode: PongWar
 Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
-ScreenText: 21, 0, 0, 32, Fire/Yes to harvest your tiles for speed.  Rapid taps to go faster.  Arrows/joystick steer.
-LevelBookmark: TUTORIAL020
-LevelNext: All, TUTORIAL020
+ScreenText: 21, 10, 0, 32, Fly Power-up
+ScreenText: 22, 0, 0, 32, Lifts you up over tiles & walls.  But can't harvest or collide.
+LevelBookmark: TUTORIAL054
+LevelNext: All, TUTORIAL054
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
 LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
-DesiredPlayerCount: 2
+DesiredPlayerCount: 4
 AIPlayerCodeStart: 60, 60, 60, 60
 BoardSize: 26, 15
-InitialCount: 90
+InitialCount: 100
 BoardScreen: 3, 3, 26, 15, 0, 0
 BoardScroll: 0
 BoardTileData:
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
-. . . . . . 1 . . . . . . + . . . . . . 2 . . . . .
+. . . F . . 1 . . . . . . + . . . F . . 2 . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
@@ -37,15 +36,12 @@ BoardTileData:
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
-. . . . . . 3 . . . . . . + . . . . . . 4 . . . . .
+. . . F . . 3 . . . . . . + . . . F . . 4 . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 . . . . . . . . . . . . . + . . . . . . . . . . . .
 END
 
-# No power-ups or other funny tiles.
-TileQuota: N, 0
-
-# Use solid tiles to keep it simple initially, no age effects.
-TileAgeFeature: 0
+# Just a lot of fly power-ups.
+TileQuota: F, 4
 

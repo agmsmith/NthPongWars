@@ -1,12 +1,12 @@
-# Level #5.  AGMS20260224
+# Level 050.  AGMS20260224
 GameMode: PongWar
 Music: Silence
 Music: JUPITERP
 Screen: NTHPONG1.NSCR
 ScreenText: 21, 9, 9, 32, _ Scroll'n _
 
-LevelBookmark: LEVEL006
-LevelNext: All, LEVEL006
+LevelBookmark: LEVEL060
+LevelNext: All, LEVEL060
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2

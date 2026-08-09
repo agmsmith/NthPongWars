@@ -1,13 +1,12 @@
-# Level 030.  AGMS20251219
+# Level 070.  Slow turn rate example. AGMS20260809
 GameMode: PongWar
 Music: SQUAROOT
 Music: MELTDOWN
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 11, 11, 32, _Wide Open_
+ScreenText: 21, 10, 10, 32, _Wide Turns_
 
-# After showing the win screen, will advance to the next level.
-LevelBookmark: LEVEL040
-LevelNext: All, LEVEL040
+LevelBookmark: HIGHSCORE
+LevelNext: All, HIGHSCORE
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2
@@ -16,7 +15,8 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
-InitialCount: 450
+# Low goal since this level is frustrating to play.
+InitialCount: 150
 
 DesiredPlayerCount: 4
 # Back to default AI player personalities.
@@ -30,6 +30,6 @@ TileQuota: W, 2 # OWNER_PUP_WIDER
 TileQuota: B, 2 # OWNER_PUP_BASH_WALL
 TileQuota: S, 2 # OWNER_PUP_SOLID
 
-# Back to normal turn rate for remaining levels.
-PhysicsTurnRate: 8
+# Slower turn rate to frustrate gamers.
+PhysicsTurnRate: 2
 

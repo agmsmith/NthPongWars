@@ -1,12 +1,13 @@
-# Level #2.  AGMS20251210
+# Level 020.  AGMS20251210
 GameMode: PongWar
 Music: Silence
 Screen: NTHPONG1.NSCR
 ScreenText: 21, 1, 1, 32, _Silent Walls of Obstruction_
+ScreenText: 22, 0, 0, 32, Only you can take down walls with your colour.
 
 # After showing the win screen, will go to the next level.
-LevelBookmark: LEVEL003
-LevelNext: All, LEVEL003
+LevelBookmark: LEVEL030
+LevelNext: All, LEVEL030
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2

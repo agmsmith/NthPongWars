@@ -1,4 +1,4 @@
-# Level #6.  AGMS20260410
+# Level 060.  AGMS20260410
 LevelVersion: 20260209, NthPongWars
 GameMode: PongWar
 Music: Default
@@ -7,8 +7,8 @@ Screen: NTHPONG1.NSCR
 ScreenText: 21, 6, 6, 32, _ Solo Fast Fight _
 
 # After showing the win screen, will return to the full credits.
-LevelBookmark: HIGHSCORE
-LevelNext: All, HIGHSCORE
+LevelBookmark: LEVEL070
+LevelNext: All, LEVEL070
 LevelNext: P0, WINP0
 LevelNext: P1, WINP1
 LevelNext: P2, WINP2

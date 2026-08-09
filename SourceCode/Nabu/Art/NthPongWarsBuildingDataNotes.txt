@@ -62,14 +62,15 @@ or by the web browser tool Dithertron, available at:
 https://8bitworkshop.com/dithertron/#sys=msx
 
 So, make your graphics in whatever tool (I use GIMP), save to 256x192 pixel PNG,
-then use the Dithertron to convert it (often with dithering turned off for logo
-solid colour graphics made using colours in the TMS9918A palette).  You may have
-to make things bigger or adjust pixel boundaries to fit into the two different
-colours per character cell scan line rule.  Rename the Dithertron output file
-to *.NFUL and put a copy in "Documents/NABU Internet Adapter/Store/NTHPONG/" for
-the NABU Internet Adapter fake NABU network server to use.  Or put a copy on my
-web site (http://www.agmsmith.ca/NTHPONG/), which gets used if there isn't one
-on your local Internet Adapter directory.
+then use the Dithertron to convert it (often with dithering turned off and noise
+to the maximum for logo solid colour graphics made using colours in the
+TMS9918A palette).  You may have to make things bigger or adjust pixel
+boundaries to fit into the two different colours per character cell scan line
+rule.  Rename the Dithertron output file to *.NFUL and put a copy in
+"Documents/NABU Internet Adapter/Store/NTHPONG/" for the NABU Internet Adapter
+fake NABU network server to use.  Or put a copy on my web site
+(http://www.agmsmith.ca/NTHPONG/), which gets used if there isn't one on your
+local Internet Adapter directory.
 
 
 Building Character and Sprite Screen *.NSCR Graphics

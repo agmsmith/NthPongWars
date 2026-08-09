@@ -6,7 +6,7 @@ Screen: TITLESCREEN.NFUL
 
 # If a direction is  selected, start the game or show credits etc, else
 # wait 5 seconds and then show a demonstration of gameplay.
-LevelNext: All, LEVEL001
+LevelNext: All, LEVEL010
 LevelNext: Left, Quit
 LevelNext: Right, CREDITS
 LevelNext: Up, CLASSICPONGWARS

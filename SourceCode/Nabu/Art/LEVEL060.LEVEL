@@ -4,7 +4,7 @@ GameMode: PongWar
 Music: Default
 Music: THINGBBK
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 6, 6, 32, _ Solo Fast Fight _
+ScreenText: 21, 9, 9, 32, _ Fast Fight _
 
 # After showing the win screen, will return to the full credits.
 LevelBookmark: LEVEL070

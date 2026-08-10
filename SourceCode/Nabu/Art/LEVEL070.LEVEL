@@ -1,9 +1,9 @@
 # Level 070.  Slow turn rate example. AGMS20260809
 GameMode: PongWar
-Music: SQUAROOT
-Music: MELTDOWN
+Music: Default
+Music: SOLNEGRP
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 10, 10, 32, _Wide Turns_
+ScreenText: 21, 9, 9, 32, _ Wide Turns _
 
 LevelBookmark: HIGHSCORE
 LevelNext: All, HIGHSCORE
@@ -16,7 +16,7 @@ LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
 # Low goal since this level is frustrating to play.
-InitialCount: 150
+InitialCount: 200
 
 DesiredPlayerCount: 4
 # Back to default AI player personalities.

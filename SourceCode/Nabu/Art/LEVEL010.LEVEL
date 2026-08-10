@@ -2,7 +2,7 @@
 GameMode: PongWar
 Music: Default
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 4, 4, 32, _The First Level is Easy_
+ScreenText: 21, 3, 3, 32, _ The First Level is Easy _
 
 LevelBookmark: LEVEL020
 LevelNext: All, LEVEL020

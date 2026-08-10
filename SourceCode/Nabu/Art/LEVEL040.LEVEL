@@ -3,8 +3,8 @@ GameMode: PongWar
 Music: LOADSONG
 Music: BURNINR1
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 9, 9, 32, _Cowboy Time_
-ScreenText: 22, 1, 1, 32, _Herd the Other Players Around_
+ScreenText: 21, 8, 8, 32, _ Cowboy Time _
+ScreenText: 22, 0, 0, 32, Herd the other players around.
 
 LevelBookmark: LEVEL050
 LevelNext: All, LEVEL050

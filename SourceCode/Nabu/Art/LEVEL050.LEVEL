@@ -3,7 +3,7 @@ GameMode: PongWar
 Music: Silence
 Music: JUPITERP
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 9, 9, 32, _ Scroll'n _
+ScreenText: 21, 10, 10, 32, _ Scroll'n _
 
 LevelBookmark: LEVEL060
 LevelNext: All, LEVEL060

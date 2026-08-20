@@ -57,28 +57,41 @@ GameMode: Slide
 Music: SQUAROOT
 
 # Load a full screen bitmap graphic.  This is a 12KB file, so it will take
-# about 1 second to load (or longer if running with a slow simulated serial
-# connection to the server, like ArcadeMania on the iPhone using the cellular
-# network).  Since the TMS9918A video chip in the NABU does only
-# character mapped graphics, a full screen is done with a custom font per
-# character.  So you can't play a game or see text when one of these is
-# displayed.  NthPongWarsBuildingDataNotes.txt explains how to make a picture
-# into a *.NFUL file.  This will load TITLESCREEN.NFUL.  If you use a name
-# without an extension, it will look for a file with no extension and then use
-# the file size to determine which picture format it is.
+# about 1 second to load (the NABU serial port runs at 111861 bits per second
+# with 2 stop bits, for a bit over 10 kilobytes per second).  Could be longer
+# if you're running with a slow simulated serial connection to the server, like
+# ArcadeMania on the iPhone using the cellular network.  Since the TMS9918A
+# video chip in the NABU does only character mapped graphics, a full screen is
+# done with a custom font per character.  So you can't play a game or see text
+# when one of these is displayed.  NthPongWarsBuildingDataNotes.txt explains
+# how to make a picture into a *.NFUL file.
+#
+# This example will load TITLESCREEN.NFUL.  If you use a name without an
+# extension, it will look for a file with no extension and then use the file
+# size to determine which picture format it is.
 Screen: TITLESCREEN.NFUL
 
+# You can load a one third slice of a .NFUL bitmap file into one of three
+# thirds of the screen by appending a "1" to "3" to the .NFUL extension.  The
+# actual file name just ends in the usual ".NFUL" extension.  The corresponding
+# third inside the .NFUL file will get loaded into that third of the screen,
+# taking 4K rather than 12K of bandwidth.
+Screen: WINGREEN.NFUL2
+
 # This keyword loads a font based screen (*.NSCR) which includes sprites.  It's
-# about 7KB so it takes half a second to load.  This is the kind of screen you
+# about 7KB so it takes 0.7 seconds to load.  This is the kind of screen you
 # need to see a game correctly, assuming the font and sprite parts have the
 # graphics the game uses.  This example loads NTHPONG1.NSCR.
 Screen: NTHPONG1.NSCR
 
+# This same keyword loads a Text With Font screen (*.NTWF) which skips the
+# sprites, saving 2KB of loading time over *.NSCR files.
+Screen: NTHPONG1.NTWF
+
 # This keyword loads just the name table, the characters of a screen (*.NCHR).
-# It's 768 bytes long, so it takes about 1/10 of a second to load.  It's
-# basically just the first part of a *.NSCR file, so you can create it the
-# same way.  The characters are displayed with whatever font is already loaded.
-# This one would load the text for a help screen from HELP.NCHR.
+# It's 768 bytes long, so it takes less than 1/10 of a second to load.  The
+# characters are displayed with whatever font is already loaded.
+# This example would load the text for a help screen from HELP.NCHR.
 Screen: HELP.NCHR
 
 # This draws some text on the screen, using whatever font is currently loaded.
@@ -93,7 +106,7 @@ Screen: HELP.NCHR
 # handle new line characters, so you would have to do several ScreenText
 # keywords to get a similar effect.  Magic words you can use are "Copyright"
 # and "Version" to display those text items.
-# ScreenText: Row, FirstLeftMargin, SubsequentLeftMargin, RightMargin
+# ScreenText: Row, FirstLeftMargin, SubsequentLeftMargin, RightMargin, Text
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
 
 # When playing in countdown mode, the first player to reach this many tiles in

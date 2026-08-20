@@ -238,6 +238,20 @@ void main(void)
     gfx_Constant_Eighth);
   COPY_NEGATE_FX(gfx_Constant_Eighth, gfx_Constant_MinusEighth);
 
+  /* Allocate all free memory for tiles. */
+  {
+    uint16_t totalMem, largestMem;
+
+    mallinfo(&totalMem, &largestMem);
+    g_tile_array = malloc(largestMem);
+    gTileArraySize = largestMem / sizeof(tile_record);
+    if (gTileArraySize < 768 || g_tile_array == NULL)
+    {
+      DebugPrintString("Not enough free memory for 768 tiles.  Can't run.\n");
+      return;
+    }
+  }
+
   /* So CP/M users can see the welcome text. */
   DebugPrintString(StockTextMessages(kMagicWordCopyright));
   DebugPrintString(StockTextMessages(kMagicWordVersion));
@@ -281,40 +295,8 @@ void main(void)
   /* Start the frame interrupt, to count frames and do sound tick timing. */
   vdp_enableVDPReadyInt();
 
-#if 0
-  /* Print some text on screen which we can screen grab and put into the fully
-     graphic title screen, and it will still look pixel perfect due to the use
-     of only two colours. */
-
-  if (!LoadScreenNSCR("NTHPONG1"))
-    return;
-  vdp_clearRows(0, 23);
-  vdp_setCursor2(0, 0);
-  /* 32 wide 12345678901234567890123456789012 */
-  vdp_print("Nth Pong Wars copyright (c) 2025");
-  vdp_newLine();
-  vdp_print("by Alexander G. M. Smith.");
-  vdp_newLine();
-  vdp_print("hit any key to continue...");
-  vdp_newLine();
-  HitAnyKey(NULL);
-#endif
-
-  /* Set up the tiles.  Allocate all free memory for tiles.  Directly map play
-     area to screen rather than using scrolling to keep it simple initially. */
-
-  {
-    uint16_t totalMem, largestMem;
-
-    mallinfo(&totalMem, &largestMem);
-    g_tile_array = malloc(largestMem);
-    gTileArraySize = largestMem / sizeof(tile_record);
-    if (gTileArraySize < 768 || g_tile_array == NULL)
-    {
-      HitAnyKey("Not enough free memory for 768 tiles.  Can't run.\n");
-      return;
-    }
-  }
+  /* Directly map play area to screen rather than using scrolling to keep it
+     simple initially. */
 
   g_play_area_height_tiles = 23;
   g_play_area_width_tiles = 32;

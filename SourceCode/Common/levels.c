@@ -398,10 +398,10 @@ bool LevelReadNumericArguments(uint8_t NumberOfArguments)
 }
 
 
-/* This keyword loads a screen (*.NFUL, *.NSCR, *.NCHR) graphic, defaulting to
-   .NSCR if an extension isn't specified.  Returns true if you can continue
-   processing, false to abort the level file load.  Should usually print a
-   debug message if that happens.
+/* This keyword loads a screen (*.NFUL[1-3], *.NSCR, *.NTWF, *.NCHR) graphic,
+   defaulting to .NSCR if an extension isn't specified.  Returns true if you
+   can continue processing, false to abort the level file load.  Should usually
+   print a debug message if that happens.
 */
 bool KeywordScreen(void)
 {

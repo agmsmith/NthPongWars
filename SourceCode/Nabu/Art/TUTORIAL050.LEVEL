@@ -8,7 +8,7 @@ Music: Default
 Screen: TUTORIAL.NSCR
 PlayTimeout: 120
 ScreenText: 21, 9, 0, 32, Solid Power-up
-ScreenText: 22, 0, 0, 32, Leave a more solid trail of tiles behind you.  Slows enemies.
+ScreenText: 22, 0, 0, 32, Leave a more solid trail of tiles behind you.  Slows others.
 LevelBookmark: TUTORIAL052
 LevelNext: All, TUTORIAL052
 LevelNext: P0, WINP0

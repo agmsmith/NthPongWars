@@ -1,11 +1,11 @@
-# Level 020.  AGMS20251210
+# Level 020.  AGMS20251219
 GameMode: PongWar
-Music: Silence
+Music: SQUAROOT
+Music: MELTDOWN
 Screen: NTHPONG1.NSCR
-ScreenText: 21, 0, 0, 32, _ Silent Walls of Obstruction _
-ScreenText: 22, 0, 0, 32, Only you can take down walls with your colour.
+ScreenText: 21, 10, 10, 32, _ Wide Open _
 
-# After showing the win screen, will go to the next level.
+# After showing the win screen, will advance to the next level.
 LevelBookmark: LEVEL030
 LevelNext: All, LEVEL030
 LevelNext: P0, WINP0
@@ -15,41 +15,21 @@ LevelNext: P3, WINP3
 LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
-# Lots of Wide Power-ups, which make you too large to fit through wall gaps.
-TileQuota: N, 1 # OWNER_PUP_NORMAL
-TileQuota: W, 5 # OWNER_PUP_WIDER
-TileQuota: B, 1 # OWNER_PUP_BASH_WALL
-TileQuota: S, 1 # OWNER_PUP_SOLID
-
 BoardSize: 32, 23
-InitialCount: 200
-BoardTileData:
-( ( ( 1 ( ( ( ( ) ) ) 2 ) ) ) ) [ [ [ 3 [ [ [ [ ] ] ] 4 ] ] ] ]
-( ( ( ( ( ( ( + ) ) ) ) ) ) ) + [ [ [ [ [ [ [ + ] ] ] ] ] ] ] ]
-( ( ( ( ( ( ( + ) ) ) ) ) ) ) + [ [ [ [ [ [ [ + ] ] ] ] ] ] ] ]
-( ( ( ( ( ( ( + ) ) ) ) ) ) ) + [ [ [ [ [ [ [ + ] ] ] ] ] ] ] ]
-( ( ( ( ( . . . . . ) ) ) ) ) . [ [ [ . . . . . . . ] ] ] ] ] ]
-( ( ( ( . . ( + ) . . ) ) ) ) + [ [ . . [ [ [ + ] . . ] ] ] ] ]
-( ( ( . . ( ( + ) ) . . ) ) ) + [ . . [ [ [ [ + ] ] . . ] ] ] ]
-( ( . . ( ( ( + ) ) ) . . ) ) + . . [ [ [ [ [ + ] ] ] . . ] ] ]
-( . . ( ( ( ( . ) ) ) ) . . . . . [ [ [ [ [ [ . ] ] ] ] . . ] ]
-. . ( ( ( ( ( + ) ) ) ) ) . . + . . [ [ [ [ [ + ] ] ] ] ] . . ]
-. ( ( ( ( ( ( + ) ) ) ) ) . ) + [ . . [ [ [ [ + ] ] ] ] ] ] . .
-. ( ( ( ( ( ( + ) ) ) ) . . ) + [ [ . . [ [ [ + ] ] ] ] ] ] ] .
-. . ( ( ( ( ( . ) ) ) . . ) ) . [ [ [ . . [ [ . ] ] ] ] ] ] . .
-( . . ( ( ( ( + ) ) . . ) ) ) + [ [ [ [ . . [ + ] ] ] ] ] . . ]
-( ( . . ( ( ( + ) . . ) ) ) ) + [ [ [ [ [ . [ + ] ] ] ] . . ] ]
-( ( ( . . ( ( + . . ) ) ) ) ) + [ [ [ [ [ . [ + ] ] ] . . ] ] ]
-( ( ( ( . . . . . . ) ) ) ) ) . [ [ [ [ [ . . . . . . . ] ] ] ]
-( ( ( ( ( . . + ) . . ) ) ) ) + [ [ [ [ [ [ [ + ] . . ] ] ] ] ]
-( ( ( ( . . ( + ) ) . . ) ) ) + [ [ [ [ [ [ [ + . . ] ] ] ] ] ]
-( ( ( . . ( ( + ) ) ) . . ) ) + [ [ [ [ [ [ [ + . ] ] ] ] ] ] ]
-( ( . . . ( ( . ) ) ) ) . . . . [ [ [ [ [ . . . . . ] ] ] ] ] ]
-( . . ( . . ( + ) ) ) ) ) . . + [ [ [ [ . . [ + ] . . ] ] ] ] ]
-. . ( ( ( . . + ) ) ) ) ) ) . + [ [ [ . . [ [ + ] ] . . ] ] ] ]
-. ( ( ( ( ( . . ) ) ) ) ) ) . . . . . . [ [ [ . ] ] ] . . ] ] ]
-END
+InitialCount: 450
 
-# Back to normal turn rate for confined spaces.
+DesiredPlayerCount: 4
+# Back to default AI player personalities.
+AIPlayerCodeStart: 30, 40, 0, 30
+
+# Back to default Power-up quotas.
+TileQuota: N, 1 # OWNER_PUP_NORMAL
+TileQuota: H, 3 # OWNER_PUP_STOP - using H for Halt
+TileQuota: F, 2 # OWNER_PUP_FLY
+TileQuota: W, 2 # OWNER_PUP_WIDER
+TileQuota: B, 2 # OWNER_PUP_BASH_WALL
+TileQuota: S, 2 # OWNER_PUP_SOLID
+
+# Back to normal turn rate for remaining levels.
 PhysicsTurnRate: 8
 

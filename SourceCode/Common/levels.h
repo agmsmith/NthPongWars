@@ -48,6 +48,12 @@ extern bool gVictoryModeHighestTileCount;
    (g_ScoreGoal).  The countdown ticks down once per second and starts at the
    number of tiles in the game area, unless otherwise specified. */
 
+extern bool gVictoryModeEditScores;
+/* High scores of some sort or another are shown on the screen and the players
+   can edit their name (left/right moves cursor, up/down changes letter, fire
+   toggles between done and editing mode, screen ends when all players done.
+   AI players can edit their own name too. */
+
 extern uint8_t gVictoryWinningPlayer;
 /* Number of the winning player, or MAX_PLAYERS+2 if no player has won.  Does
    get set to MAX_PLAYERS (not a valid player) when in gVictoryModeJoystickPress

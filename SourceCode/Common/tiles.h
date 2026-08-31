@@ -44,7 +44,7 @@
 /* The various things that a tile can be.  Empty space, or coloured to show
    the player who owns it, or a power up.
 */
-typedef enum tile_owner_enum {
+enum tile_owner_enum {
   OWNER_EMPTY = 0,
   OWNER_PLAYER_1,
   OWNER_PLAYER_2,

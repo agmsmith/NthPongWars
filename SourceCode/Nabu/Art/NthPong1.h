@@ -28,6 +28,7 @@ typedef enum SpriteAnimationsEnum {
   SPRITE_ANIM_BALL_EFFECT_WIDER,
   SPRITE_ANIM_BALL_EFFECT_BASH,
   SPRITE_ANIM_BALL_EFFECT_SOLID,
+  SPRITE_ANIM_CURSOR,
   SPRITE_ANIM_MAX
 };
 typedef uint8_t SpriteAnimationType; /* Want it to be 8 bits, not 16. */
@@ -54,6 +55,7 @@ static const SpriteAnimRecord g_SpriteAnimData[SPRITE_ANIM_MAX] = {
   {SPRITE_ANIM_BALL_EFFECT_WIDER, 48, 64, 3, 250, 0}, /* Expanding rings. */
   {SPRITE_ANIM_BALL_EFFECT_BASH, 64, 84, 2, 250, 0}, /* Moving glitter cloud. */
   {SPRITE_ANIM_BALL_EFFECT_SOLID, 84, 100, 2, 250, 0}, /* Filling squares. */
+  {SPRITE_ANIM_CURSOR, 84, 92, 10, 250, 0}, /* Flashing square cursor. */
 };
 
 /* One more sprite frame after SPRITE_ANIM_BALL_EFFECT_THRUST for extra

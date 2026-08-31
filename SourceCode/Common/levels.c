@@ -29,6 +29,7 @@ const char kMagicWordVersion[] = "Version";
 bool gVictoryModeFireButtonPress = true;
 bool gVictoryModeJoystickPress = false;
 bool gVictoryModeHighestTileCount = false;
+bool gVictoryModeEditScores = false;
 uint8_t gVictoryWinningPlayer = MAX_PLAYERS + 2;
 
 char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";

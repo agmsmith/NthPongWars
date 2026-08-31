@@ -30,16 +30,27 @@ LevelVersion: 20260209, NthPongWars
 # on port 5815 (or whatever you have the RetroNetTCPServerPort set to in the
 # NABU Internet Adapter).
 
-# Sets the game mode for this level.  Values are Slide, Trivia, PongWar.
+# Sets the game mode for this level.  Values are:
 # SLIDE does a slide show, the game doesn't run and a static slide is
 # displayed.  When any player hits a fire button, the level ends and that
 # player is the winner.
+#
 # TRIVIA runs the level as a trivia game.  A static screen is shown and the
 # game doesn't run.  A choice is made by a joystick movement or fire button,
 # and that ends the level, with the winner being set by the direction of
 # joystick movement or fire button action (see LevelNext: options).
+#
 # PONGWAR runs the level as a playable Nth Pong Wars game, with AI players
 # enabled, remember to load a font and sprites for the game graphics.
+#
+# EDITSCORES runs the level as a score display and editing screen.  Eligible
+# players (local high score winners) can move a cursor left/right with the
+# joystick to edit their name, up/down changes the letter under the cursor
+# and fire toggles between editing (cursor visible) and "done" (no cursor).
+# When somebody presses a fire button and all players have selected "Done",
+# the level ends (local scores are uploaded to the global server) and the
+# "Fire" is the winner (see the LevelNext keyword).  You can also have a
+# timeout as usual to end the level, then the winner is "Timeout".
 GameMode: Slide
 
 # When loading a screen, it's best to start the music first, since the level
@@ -105,7 +116,11 @@ Screen: HELP.NCHR
 # rest is the text, with leading and trailing spaces removed.  No, it doesn't
 # handle new line characters, so you would have to do several ScreenText
 # keywords to get a similar effect.  Magic words you can use are "Copyright"
-# and "Version" to display those text items.
+# and "Version" to display those text items.  "High0Score" to "High9core"
+# display the top ten high scores in the currently selected score page,
+# similarly "High0Name" to "High9Name" display the names of the top ten, and
+# "High0Date" the date of the win, "High0Time" time of win, "High0Wins" number
+# of levels won, "High0Levels" number of levels played.
 # ScreenText: Row, FirstLeftMargin, SubsequentLeftMargin, RightMargin, Text
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
 
@@ -126,6 +141,16 @@ InitialCount: 100
 # zero for no timeout.
 PlayTimeout: 30
 
+# Selects which page (local, global daily, etc) of high score data to load.
+# Non-local ones may request a page from a web server, which could take a
+# little while or fail.  Certain magic keywords in the ScreenText keyword will
+# now look up values from the selected high score data.  Usually the GameMode
+# will be either Slide to just show the scores, or EditScores to let winners
+# edit their names (after editing the scores, if there are any changes then
+# they will be submitted over the network to the server).  Possible values are:
+# Local (the default), Daily, Weekly, Monthly, Yearly, AllTime.
+ScorePage: Local
+
 # This specifies which level gets played after this one finishes.  Base level
 # names can be up to 31 characters long.  The very first level is "Title".
 # You can specify it generically (with All as the first argument), like this,
@@ -137,7 +162,8 @@ LevelNext: All, LEVEL007
 # Slide game mode:
 LevelNext: P3, CONGRATS_YELLOW
 # Or the next level is determined by a joystick direction or button press
-# (Left, Down, Right, Up, Fire, Timeout) in Trivia mode.
+# (Left, Down, Right, Up, Fire, Timeout) in Trivia mode.  Or ending a high
+# score display level (Fire, Timeout).
 LevelNext: Down, ANSWER026_B
 # If you only want to specify one or two players, you can use LevelNext:All to
 # set the next level for all players and direction options then use more

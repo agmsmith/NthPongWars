@@ -122,7 +122,7 @@ void UpdateScores(void)
 
 
 /* Update the screen display with the current scores.  They're the top line
-   of the screen, snowing each player's score in their colour, followed by the
+   of the screen, showing each player's score in their colour, followed by the
    goal score to win.
 */
 void CopyScoresToScreen(void)

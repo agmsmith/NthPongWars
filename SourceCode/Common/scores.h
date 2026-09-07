@@ -71,14 +71,14 @@ typedef struct high_score_struct {
 
   char name[MAX_SCORE_NAME_LENGTH+1];
   /* Name the player enters, blank padded, NUL at end, only ASCII printable
-     characters (0x20 to 0x7F).  Default is the player colour or if it's an AI
-     player, colour+bot.  Longest would be "Yellow-Bot". */
+     characters (0x20 to 0x7F).  Default is the player colour.  AI players
+     use colour+bot.  Longest would be "Yellow-Bot". */
 
   uint8_t editable_by_player;
   /* If this score is from the just finished game, this is the related player
-     number.  Or set to MAX_PLAYERS if it is an old score.  This lets the user
-     edit the name of this entry in the high score list while it is being
-     displayed. */
+     number.  Or set to MAX_PLAYERS if it is an old score.  This lets a
+     particular user edit the name of this entry in the high score list while
+     it is being displayed. */
 
   uint16_t year; /* Full year number, Common Era (CE or AD) dating system. */
   uint8_t month; /* 0 (January) to 11 (December). */
@@ -86,6 +86,8 @@ typedef struct high_score_struct {
   uint8_t hour; /* 0 to 23.  Probably just the local time zone. */
   uint8_t minute; /* 0 to 59. */
   /* When the score was achieved.  So you can see how long it existed. */
+
+  /* The server side may store IP address and other things. */
 } high_score_record, *high_score_pointer;
 
 
@@ -101,29 +103,26 @@ extern high_score_record g_LocalHighScores[MAX_SCORE_TABLE_ENTRIES];
 extern bool MergeHighScore(high_score_pointer pNewScore,
   high_score_pointer pScoreTable);
 
-/* Prints a score record to a text format in a buffer.  IP address will be
-   zero since the server is the one that records it.  Returns a pointer to the
-   NUL byte written at the end, or NULL if something went wrong. */
+/* Prints a score record to a text format in a buffer.  Returns a pointer to
+   the NUL byte written at the end, or NULL if something went wrong. */
 extern char * PrintHighScore(high_score_pointer pScore, char *pBuffer,
   uint8_t bufferSize);
 
-/* Reads a high score from a null terminated text buffer.  The format is:
-   score in base 10 ASCII digits, tab (0x09),
-   level_count in base 10 ASCII digits, tab,
-   win_count in base 10 ASCII digits, tab,
-   name in ASCII printable characters (0x20 to 0x7F), tab,
-   ip_address in ASCII hex digits without separators (IPv4 or IPv6), tab,
-   year in base 10 ASCII digits (all of the year's digits), tab,
-   month in base 10 ASCII digits (0 to 11), tab,
-   day in base 10 ASCII digits (1 to 31), tab, 
-   hour in base 10 ASCII digits (0 to 23), tab,
-   minute in base 10 ASCII digits (0 to 59),
-   future other stuff ignored,
+/* Reads a high score from a file.  The format is:
+   name in ASCII printable characters (0x20 to 0x7F), tab (0x09),
+   score in base 10 ASCII digits, comma,
+   level_count in base 10 ASCII digits, comma,
+   win_count in base 10 ASCII digits, comma,
+   year in base 10 ASCII digits (all of the year's digits), comma,
+   month in base 10 ASCII digits (0 to 11), comma,
+   day in base 10 ASCII digits (1 to 31), comma, 
+   hour in base 10 ASCII digits (0 to 23), comma,
+   minute in base 10 ASCII digits (0 to 59), comma,
+   future other stuff ignored like IP address,
    line feed or NUL byte to mark end of record.
-   Returns pointer to the line feed or NUL if it successfully read all the
-   expected fields, returns NULL if fields were missing.
+   Returns TRUE if it read something, FALSE at end of file.
    Note that editable_by_player is set to MAX_PLAYERS to turn off editing. */
-extern char * ReadHighScore(char *pBuffer, high_score_pointer pScore);
+extern bool ReadHighScore(char *pBuffer, high_score_pointer pScore);
 
 
 /* Resets the goal score and forces a score display redraw on next update. */

@@ -44,11 +44,7 @@ static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
    need to be cleared the first time we see the keyword for any tile quota. */
 
-#define MAX_NUMERIC_ARGUMENTS 6
-static int16_t sNumericArgumentsDecoded[MAX_NUMERIC_ARGUMENTS];
-/* To avoid duplicating code, we have a generic function for reading in comma
-   separated arguments after a keyword.  That function deposits the values in
-   this array. */
+int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 
 
 /* Checks the victory conditions and sets things up for loading the next level
@@ -145,10 +141,11 @@ bool VictoryConditionTest(void)
 }
 
 
-/* Internal utilities to read some text from the level file.  Uses a temporary
-   buffer to cache data so that it reads in larger more efficient chunks.  If
-   the buffer is empty, refill it almost but not quite full (for undo reasons)
-   from the already open level file.
+/* Internal utilities to read some text from the level file, and later we
+   reused this code for high score files since we don't have space for stdio.h
+   library file access.  Uses a temporary buffer to cache data so that it reads
+   in larger more efficient chunks.  If the buffer is empty, refill it almost
+   but not quite full (for undo reasons) from the already open level file.
 */
 #define LEVEL_READ_BUFFER_SIZE 256 /* For easier wrap-around when reading. */
 static FileHandleType sLevelFileHandle;
@@ -158,7 +155,7 @@ static char *sLevelBuffer; /* Points to a temporary on-stack buffer. */
 
 /* Read the next byte, refill the buffer if needed, returns 0 on end of file.
 */
-static char LevelReadByte(void)
+char LevelReadByte(void)
 {
   if (sLevelReadPosition != sLevelWritePosition)
     return sLevelBuffer[sLevelReadPosition++];
@@ -186,7 +183,7 @@ static char LevelReadByte(void)
    since the buffer filling is only guaranteed to not overwrite just the last
    read byte.  Also, don't call this if you got end of file.
 */
-static void LevelUndoReadByte(void)
+void LevelUndoReadByte(void)
 {
   sLevelReadPosition--;
 }
@@ -195,7 +192,7 @@ static void LevelUndoReadByte(void)
 /* Look at the next byte, but put it back in the buffer for later reading.
    This is so you can read ahead a bit to remove leading spaces etc.
 */
-static char LevelPeekNextByte(void)
+char LevelPeekNextByte(void)
 {
   char letter = LevelReadByte();
   if (letter != 0)
@@ -207,7 +204,7 @@ static char LevelPeekNextByte(void)
 /* Skip spaces and tabs until a non-blank character or end of file.  Returns
    FALSE when it hits end of file, TRUE otherwise.
 */
-static bool LevelSkipSpaces(void)
+bool LevelSkipSpaces(void)
 {
   while (true)
   {
@@ -237,11 +234,12 @@ static bool LevelSkipSpaces(void)
    have spurious end of file indications.
 */
 
-/* Make sure our large temp buffer is safe to use in LevelReadLine() with a
-   hard coded 255 buffer length, since the length here is byte sized. */
+/* We quite often call LevelReadLine() with g_TempBuffer as the buffer and a
+   hard coded 255 as the buffer size (actual size may be larger than fits in
+   a byte).  Make sure that hard coded 255 is safe to use. */
 COMPILER_VERIFY(sizeof(g_TempBuffer) >= 255);
 
-static bool LevelReadLine(char *Buffer, uint8_t BufferSize)
+bool LevelReadLine(char *Buffer, uint8_t BufferSize)
 {
   char *pDest = Buffer;
   uint8_t dataSize = BufferSize - 1; /* Save space for final NUL character. */
@@ -284,7 +282,7 @@ static bool LevelReadLine(char *Buffer, uint8_t BufferSize)
 
 /* Read to the start of the next line.  Useful for skipping over the remainder
    of a line that you don't want to process. */
-static bool LevelReadToStartOfNextLine(void)
+bool LevelReadToStartOfNextLine(void)
 {
   char Buffer[10];
   return LevelReadLine(Buffer, sizeof(Buffer));
@@ -299,7 +297,7 @@ static bool LevelReadToStartOfNextLine(void)
    BufferSize should be at least 2, max 255, zero will trash memory, 1 will
    have spurious end of file indications.
 */
-static bool LevelReadWord(
+bool LevelReadWord(
   char *Buffer, uint8_t BufferSize, char Delimiter)
 {
   char *pDest = Buffer;
@@ -332,7 +330,8 @@ static bool LevelReadWord(
 }
 
 
-/* Read a line and trim off leading and trailing spaces and tabs.
+/* Read a line and trim off leading and trailing spaces and tabs.  Returns TRUE
+  if successful, FALSE at end of file. 
 */
 bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
 {
@@ -370,7 +369,7 @@ bool LevelReadNumericArguments(uint8_t NumberOfArguments)
   char numberText[10];
   bzero(sNumericArgumentsDecoded, sizeof(sNumericArgumentsDecoded));
 
-  maxCount = MAX_NUMERIC_ARGUMENTS;
+  maxCount = MAX_LEVEL_NUMERIC_ARGUMENTS;
   if (NumberOfArguments < maxCount)
     maxCount = NumberOfArguments;
   for (i = 0; i < maxCount; i++)

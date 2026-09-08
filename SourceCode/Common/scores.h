@@ -34,10 +34,24 @@ extern uint16_t g_ScoreGoal;
    will usually be 3 (20hz frame rate). */
 extern uint8_t g_ScoreFramesPerUpdate;
 
+/* Resets the goal score and forces a score display redraw on next update. */
+extern void InitialiseScores(void);
 
-/* For keeping track of high scores, locally and world wide over the
-   Internet.  The global ones can have daily, weekly, monthly, yearly and
-   all-time high score lists. */
+/* Converts the player's scores into colourful text, cached in each player.
+   Also update the goal text. */
+extern void UpdateScores(void);
+
+/* Update the screen display with the current scores.  They're the top line
+   of the screen, showing each player's score in their colour, followed by the
+   goal score to win. */
+extern void CopyScoresToScreen(void);
+
+
+/******************************************************************************
+ * For keeping track of high scores, locally and world wide over the
+ * Internet.  The global ones can have daily, weekly, monthly, yearly and
+ * all-time high score lists.
+ */
 
 #define MAX_SCORE_NAME_LENGTH 10 /* For "Yellow-bot" */
 #define MAX_SCORE_TABLE_ENTRIES 10 /* So you can have a top 10 list. */
@@ -93,50 +107,29 @@ typedef struct high_score_struct {
 
 /* Local high scores are kept in memory, loaded when the program starts,
    written out to a file every time they change (so it will still work even if
-   files don't work). */
+   files don't work).  In order of decreasing score. */
 
 extern high_score_record g_LocalHighScores[MAX_SCORE_TABLE_ENTRIES];
 
-/* Given a single high score record in pNewScore, updates pScoreTable to
+/* Given a single high score record in pNewScore, updates scoreTable to
    include a copy of it if the score is high enough to be in the table.
    Returns TRUE if the table was changed, FALSE otherwise. */
 extern bool MergeHighScore(high_score_pointer pNewScore,
-  high_score_pointer pScoreTable);
+  high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES]);
 
-/* Prints a score record to a text format in a buffer.  Returns a pointer to
-   the NUL byte written at the end, or NULL if something went wrong. */
-extern char * PrintHighScore(high_score_pointer pScore, char *pBuffer,
-  uint8_t bufferSize);
+/* Reads a high score table from the given data source (local file or global
+   network server) into the specified table, replacing its contents.  Returns
+   TRUE if something was read, FALSE if no data was read.  Actual code is in
+   levels.c since that's where our file handling functions are. */
+extern bool ReadHighScoreTable(high_score_table_type table_type,
+  high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES]);
 
-/* Reads a high score from a file.  The format is:
-   name in ASCII printable characters (0x20 to 0x7F), tab (0x09),
-   score in base 10 ASCII digits, comma,
-   level_count in base 10 ASCII digits, comma,
-   win_count in base 10 ASCII digits, comma,
-   year in base 10 ASCII digits (all of the year's digits), comma,
-   month in base 10 ASCII digits (0 to 11), comma,
-   day in base 10 ASCII digits (1 to 31), comma, 
-   hour in base 10 ASCII digits (0 to 23), comma,
-   minute in base 10 ASCII digits (0 to 59), comma,
-   future other stuff ignored like IP address,
-   line feed or NUL byte to mark end of record.
-   Returns TRUE if it read something, FALSE at end of file.
-   Note that editable_by_player is set to MAX_PLAYERS to turn off editing. */
-extern bool ReadHighScore(char *pBuffer, high_score_pointer pScore);
-
-
-/* Resets the goal score and forces a score display redraw on next update. */
-extern void InitialiseScores(void);
-
-/* Converts the player's scores into colourful text, cached in each player.
-   Also update the goal text. */
-extern void UpdateScores(void);
-
-/* Update the screen display with the current scores.  They're the top line
-   of the screen, showing each player's score in their colour, followed by the
-   goal score to win. */
-extern void CopyScoresToScreen(void);
-
+/* Writes the given data to the data storage system implied by the high score
+   type.  Local file for local scores, global server for other scores.  Returns
+   FALSE if something went wrong.  Actual code is in levels.c since that's
+   where our file handling functions are. */
+extern bool WriteHighScoreTable(high_score_table_type table_type,
+  high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES]);
 
 #endif /* _SCORES_H */
 

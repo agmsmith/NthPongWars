@@ -18,6 +18,7 @@
  */
 
 #include "levels.h"
+#include "scores.h"
 
 #ifndef NUL  /* Our end of string marker. */
   #define NUL ((char) 0)
@@ -44,7 +45,8 @@ static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
    need to be cleared the first time we see the keyword for any tile quota. */
 
-int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
+#define MAX_LEVEL_NUMERIC_ARGUMENTS 6
+static int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 
 
 /* Checks the victory conditions and sets things up for loading the next level
@@ -155,7 +157,7 @@ static char *sLevelBuffer; /* Points to a temporary on-stack buffer. */
 
 /* Read the next byte, refill the buffer if needed, returns 0 on end of file.
 */
-char LevelReadByte(void)
+static char LevelReadByte(void)
 {
   if (sLevelReadPosition != sLevelWritePosition)
     return sLevelBuffer[sLevelReadPosition++];
@@ -183,7 +185,7 @@ char LevelReadByte(void)
    since the buffer filling is only guaranteed to not overwrite just the last
    read byte.  Also, don't call this if you got end of file.
 */
-void LevelUndoReadByte(void)
+static void LevelUndoReadByte(void)
 {
   sLevelReadPosition--;
 }
@@ -192,7 +194,7 @@ void LevelUndoReadByte(void)
 /* Look at the next byte, but put it back in the buffer for later reading.
    This is so you can read ahead a bit to remove leading spaces etc.
 */
-char LevelPeekNextByte(void)
+static char LevelPeekNextByte(void)
 {
   char letter = LevelReadByte();
   if (letter != 0)
@@ -204,7 +206,7 @@ char LevelPeekNextByte(void)
 /* Skip spaces and tabs until a non-blank character or end of file.  Returns
    FALSE when it hits end of file, TRUE otherwise.
 */
-bool LevelSkipSpaces(void)
+static bool LevelSkipSpaces(void)
 {
   while (true)
   {
@@ -239,7 +241,7 @@ bool LevelSkipSpaces(void)
    a byte).  Make sure that hard coded 255 is safe to use. */
 COMPILER_VERIFY(sizeof(g_TempBuffer) >= 255);
 
-bool LevelReadLine(char *Buffer, uint8_t BufferSize)
+static bool LevelReadLine(char *Buffer, uint8_t BufferSize)
 {
   char *pDest = Buffer;
   uint8_t dataSize = BufferSize - 1; /* Save space for final NUL character. */
@@ -282,7 +284,7 @@ bool LevelReadLine(char *Buffer, uint8_t BufferSize)
 
 /* Read to the start of the next line.  Useful for skipping over the remainder
    of a line that you don't want to process. */
-bool LevelReadToStartOfNextLine(void)
+static bool LevelReadToStartOfNextLine(void)
 {
   char Buffer[10];
   return LevelReadLine(Buffer, sizeof(Buffer));
@@ -297,7 +299,7 @@ bool LevelReadToStartOfNextLine(void)
    BufferSize should be at least 2, max 255, zero will trash memory, 1 will
    have spurious end of file indications.
 */
-bool LevelReadWord(
+static bool LevelReadWord(
   char *Buffer, uint8_t BufferSize, char Delimiter)
 {
   char *pDest = Buffer;
@@ -333,7 +335,7 @@ bool LevelReadWord(
 /* Read a line and trim off leading and trailing spaces and tabs.  Returns TRUE
   if successful, FALSE at end of file. 
 */
-bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
+static bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
 {
   if (!LevelSkipSpaces())
     return false;
@@ -363,7 +365,7 @@ bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
    file).  Doesn't read the remainder of the line after the last number and
    comma, so you may need to purge that.
 */
-bool LevelReadNumericArguments(uint8_t NumberOfArguments)
+static bool LevelReadNumericArguments(uint8_t NumberOfArguments)
 {
   uint8_t i, maxCount;
   char numberText[10];
@@ -1140,5 +1142,66 @@ const char *StockTextMessages(const char *MagicWord)
   }
 
   return MagicWord;
+}
+
+
+/******************************************************************************
+ * A group of functions for keeping track of high scores, stuck in the level.c
+ * file so they can reuse the file handling system.
+ */
+
+/* Appends text for a score record to g_TempBuffer.  Returns a pointer to
+   the NUL byte written at the end of the string.
+*/
+static char * AppendHighScoreText(high_score_pointer pScore)
+{
+  return g_TempBuffer;
+}
+
+
+/* Reads a high score from the sLevelFileHandle file (a static variable in the
+   levels.c file, thus the source code for this function is actually in
+   levels.c so it can access it and the related utility functions).
+   The format is:
+   name in ASCII printable characters (0x20 to 0x7F), tab (0x09),
+   score in base 10 ASCII digits, comma,
+   level_count in base 10 ASCII digits, comma,
+   win_count in base 10 ASCII digits, comma,
+   year in base 10 ASCII digits (all of the year's digits), comma,
+   month in base 10 ASCII digits (0 to 11), comma,
+   day in base 10 ASCII digits (1 to 31), comma, 
+   hour in base 10 ASCII digits (0 to 23), comma,
+   minute in base 10 ASCII digits (0 to 59), comma,
+   future other stuff ignored like IP address,
+   line feed or NUL byte to mark end of record.
+   Returns TRUE if it read something, FALSE at end of file.
+   Note that editable_by_player is set to MAX_PLAYERS to turn off editing.
+*/
+static bool ReadHighScore(high_score_pointer pScore)
+{
+  return false;
+}
+
+
+
+/* Reads a high score table from the given data source (local file or global
+   network server) into the specified table, replacing its contents.  Returns
+   TRUE if something was read, FALSE if no data was read.
+*/
+bool ReadHighScoreTable(high_score_table_type table_type,
+  high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
+{
+  return false;
+}
+
+
+/* Writes the given data to the data storage system implied by the high score
+   type.  Local file for local scores, global server for other scores.  Returns
+   FALSE if something went wrong.
+*/
+bool WriteHighScoreTable(high_score_table_type table_type,
+  high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
+{
+  return false;
 }
 

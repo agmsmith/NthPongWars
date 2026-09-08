@@ -215,3 +215,21 @@ void CopyScoresToScreen(void)
 #endif
 }
 
+
+
+/******************************************************************************
+ * For keeping track of high scores, locally and world wide.
+ */
+
+high_score_record g_LocalHighScores[MAX_SCORE_TABLE_ENTRIES];
+
+/* Given a single high score record in pNewScore, updates scoreTable to
+   include a copy of it if the score is high enough to be in the table.
+   Returns TRUE if the table was changed, FALSE otherwise.
+*/
+bool MergeHighScore(high_score_pointer pNewScore,
+  high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
+{
+  return false;
+}
+

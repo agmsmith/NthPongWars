@@ -45,7 +45,7 @@ static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
    need to be cleared the first time we see the keyword for any tile quota. */
 
-#define MAX_LEVEL_NUMERIC_ARGUMENTS 6
+#define MAX_LEVEL_NUMERIC_ARGUMENTS 8
 static int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 
 
@@ -1150,12 +1150,31 @@ const char *StockTextMessages(const char *MagicWord)
  * file so they can reuse the file handling system.
  */
 
-/* Appends text for a score record to g_TempBuffer.  Returns a pointer to
-   the NUL byte written at the end of the string.
+/* Appends text for a score record to g_TempBuffer, followed by a new line.
 */
-static char * AppendHighScoreText(high_score_pointer pScore)
+static void AppendHighScoreText(high_score_pointer pScore)
 {
-  return g_TempBuffer;
+  COMPILER_VERIFY(MAX_LEVEL_NUMERIC_ARGUMENTS >= 8);
+  static uint16_t numbers[MAX_LEVEL_NUMERIC_ARGUMENTS];
+  uint8_t i;
+
+  strcat(g_TempBuffer, pScore->name);
+  strcat(g_TempBuffer, "\0x09");
+
+  numbers[0] = pScore->score;
+  numbers[1] = pScore->level_count;
+  numbers[2] = pScore->win_count;
+  numbers[3] = pScore->year;
+  numbers[4] = pScore->month;
+  numbers[5] = pScore->day;
+  numbers[6] = pScore->hour;
+  numbers[7] = pScore->minute;
+  for (i = 0; i < 8; i++)
+  {
+    AppendDecimalUInt16(numbers[i]);
+    strcat(g_TempBuffer, ",");
+  }
+  strcat(g_TempBuffer, "\n");
 }
 
 
@@ -1179,9 +1198,23 @@ static char * AppendHighScoreText(high_score_pointer pScore)
 */
 static bool ReadHighScore(high_score_pointer pScore)
 {
-  return false;
-}
+  if (!LevelReadWord(pScore->name, sizeof(pScore->name), 9 /* Tab char */))
+    return false;
 
+  if (!LevelReadNumericArguments(8))
+    return false;
+  pScore->score = sNumericArgumentsDecoded[0];
+  pScore->level_count = sNumericArgumentsDecoded[1];
+  pScore->win_count = sNumericArgumentsDecoded[2];
+  pScore->year = sNumericArgumentsDecoded[3];
+  pScore->month = sNumericArgumentsDecoded[4];
+  pScore->day = sNumericArgumentsDecoded[5];
+  pScore->hour = sNumericArgumentsDecoded[6];
+  pScore->minute = sNumericArgumentsDecoded[7];
+  LevelReadToStartOfNextLine();
+
+  return true;
+}
 
 
 /* Reads a high score table from the given data source (local file or global
@@ -1191,7 +1224,36 @@ static bool ReadHighScore(high_score_pointer pScore)
 bool ReadHighScoreTable(high_score_table_type table_type,
   high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
 {
+#ifdef NABU_H
+  char fileName[40];
+
+  strcpy(fileName, "HIGH_SCORES_");
+  strcat(fileName, g_TableTypeNames[table_type]);
+
+  sLevelFileHandle = OpenDataFile(fileName, "TXT", NULL /* No size */);
+  if (sLevelFileHandle == BAD_FILE_HANDLE)
+    return false;
+
+  /* Set up our local file buffering system to be empty. */
+  char levelBuffer[LEVEL_READ_BUFFER_SIZE]; /* On stack buffer for reading. */
+  sLevelBuffer = levelBuffer;
+  sLevelReadPosition = 0;
+  sLevelWritePosition = 0;
+
+  uint8_t iScore;
+  for (iScore = 0; iScore < MAX_SCORE_TABLE_ENTRIES; iScore++, scoreTable++)
+  {
+    if (!ReadHighScore(scoreTable))
+      break;
+  }
+
+  CloseDataFile(sLevelFileHandle);
+  sLevelFileHandle = BAD_FILE_HANDLE;
+  sLevelBuffer = NULL;
+  return true;
+#else /* Not NABU_H */
   return false;
+#endif
 }
 
 
@@ -1202,6 +1264,25 @@ bool ReadHighScoreTable(high_score_table_type table_type,
 bool WriteHighScoreTable(high_score_table_type table_type,
   high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
 {
+#ifdef NABU_H
+  char fileName[40];
+
+  strcpy(fileName, "NTHPONG\\HIGH_SCORES_");
+  strcat(fileName, g_TableTypeNames[table_type]);
+  strcat(fileName, ".TXT");
+
+  g_TempBuffer[0] = 0;
+  uint8_t iScore;
+  for (iScore = 0; iScore < MAX_SCORE_TABLE_ENTRIES; iScore++, scoreTable++)
+    AppendHighScoreText(scoreTable);
+
+  rn_FileReplace(strlen(fileName), fileName, 0 /* fileOffset*/,
+    0 /* dataOffset */, strlen(g_TempBuffer) /* dataLen */, g_TempBuffer);
+
+  SoundUpdateIfNeeded();
+  return true;
+#else /* Not NABU_H */
   return false;
+#endif
 }
 

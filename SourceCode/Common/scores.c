@@ -218,10 +218,21 @@ void CopyScoresToScreen(void)
 
 
 /******************************************************************************
- * For keeping track of high scores, locally and world wide.
+ * Variables and functions for keeping track of high scores, both locally and
+ * world wide (via a server on the Internet).
  */
 
+const char *g_TableTypeNames[HIGH_SCORE_TABLE_MAX] = {
+  "LOCAL",
+  "DAILY",
+  "WEEKLY",
+  "MONTHLY",
+  "YEARLY",
+  "ALLTIME"
+};
+
 high_score_record g_LocalHighScores[MAX_SCORE_TABLE_ENTRIES];
+
 
 /* Given a single high score record in pNewScore, updates scoreTable to
    include a copy of it if the score is high enough to be in the table.
@@ -230,6 +241,23 @@ high_score_record g_LocalHighScores[MAX_SCORE_TABLE_ENTRIES];
 bool MergeHighScore(high_score_pointer pNewScore,
   high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
 {
-  return false;
+  bool changed = false;
+  uint8_t iScore;
+  high_score_record bubbleScore; /* Score under consideration, bubble sort. */
+
+  memcpy(&bubbleScore, pNewScore, sizeof(high_score_record));
+  for (iScore = 0; iScore < MAX_SCORE_TABLE_ENTRIES; iScore++, scoreTable++)
+  {
+    if (bubbleScore.score > scoreTable->score)
+    {
+      /* New score is larger, swap it with the score in the table, and continue
+         on with the old score as the bubble score so it may find a new home. */
+
+      memswap(scoreTable, &bubbleScore, sizeof(high_score_record));
+      changed = true;
+    }
+  }
+
+  return changed;
 }
 

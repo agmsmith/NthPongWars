@@ -321,6 +321,13 @@ void main(void)
   CSFX_start(NthEffects_a_z, true /* IsEffects */);
   CSFX_start(NthMusic_a_z, false /* IsEffects */); /* Game background music. */
 
+  /* Load local high scores before the game starts.  From now on, will only
+     write to the score file if we have higher scores. */
+
+  ReadHighScoreTable(HIGH_SCORE_TABLE_LOCAL, g_LocalHighScores);
+
+  /* Corrupted memory test.  Used to have buggy int16 string conversion. */
+
   if (memcmp(s_OriginalLocationZeroMemory, NULL,
   sizeof(s_OriginalLocationZeroMemory)) != 0)
   {

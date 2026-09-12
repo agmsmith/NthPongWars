@@ -66,6 +66,7 @@ enum high_score_table_types_enum {
   HIGH_SCORE_TABLE_MAX
 };
 typedef uint8_t high_score_table_type; /* Want 8 bits, not a 16 bit enum. */
+extern const char *g_TableTypeNames[HIGH_SCORE_TABLE_MAX];
 
 /* One of these structures keeps track of each high score entry. */
 

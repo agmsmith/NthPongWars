@@ -40,6 +40,14 @@ const colour_triplet_record k_PLAYER_COLOURS[MAX_PLAYERS] = {
 };
 #endif /* NABU_H */
 
+const char *gDefaultPlayerNames[MAX_PLAYERS] =
+{
+  "Green",
+  "Blue",
+  "Yellow",
+  "Red",
+};
+
 const char* gBrainNames[BRAIN_MAX] =
 {
   "Inactive", /* BRAIN_INACTIVE */
@@ -214,6 +222,7 @@ void InitialisePlayers(void)
   {
     pPlayer->player_array_index = iPlayer; /* Fast convert pointer to index. */
     pPlayer->win_count = 0;
+    pPlayer->score_cumulative = 0;
 
     pPlayer->starting_level_pixel_x = pixelCoord;
     pPlayer->starting_level_pixel_y = pixelCoord;
@@ -1310,6 +1319,7 @@ void UpdatePlayerInputs(void)
         ((player_brain) BRAIN_KEYBOARD);
       pPlayer->joystick_inputs = joyStickData;
       pPlayer->win_count = 0;
+      pPlayer->score_cumulative = 0;
       DebugPrintPlayerAssignment(pPlayer);
     }
   }

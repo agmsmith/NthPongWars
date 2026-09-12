@@ -75,6 +75,8 @@ extern char gWinnerNextLevelName[MAX_PLAYERS+2][MAX_LEVEL_NAME_LENGTH];
 extern char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH];
 /* A level name saved for later use.  Possibly many levels later. */
 
+extern uint8_t gLevelCounter;
+/* Counts the number of levels played.  Gets reset to zero by RemovePlayers. */
 
 extern bool VictoryConditionTest(void);
 /* Checks the victory conditions and sets things up for loading the next level

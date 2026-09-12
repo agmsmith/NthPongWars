@@ -261,3 +261,46 @@ bool MergeHighScore(high_score_pointer pNewScore,
   return changed;
 }
 
+
+/* A level has just finished.  Update the various score counts and add them to
+   the local high score table if they qualify, and write out the local table.
+   Doesn't ask players to enter names etc, that's the job of a special level at
+   the end of the game.  Returns TRUE if there is a new high score.
+*/
+bool UpdateHighScoresForLevelFinished(void)
+{
+  bool newHighScore = false;
+  high_score_record scoreRecord;
+  uint8_t i;
+  player_pointer pPlayer = g_player_array;
+
+/* bleeble
+get date
+wrute scire,
+*/
+
+  for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
+  {
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      continue;
+
+    strcpy(scoreRecord.name, gDefaultPlayerNames[i]);
+    if (pPlayer->brain == BRAIN_ALGORITHM)
+      strcat(scoreRecord.name, "-bot");
+
+    pPlayer->score_cumulative += GetPlayerScore(i);
+    scoreRecord.score = pPlayer->score_cumulative;
+    scoreRecord.level_count = gLevelCounter;
+    scoreRecord.win_count = pPlayer->win_count;
+    scoreRecord.editable_by_player = true;
+#if 0
+  uint16_t year; /* Full year number, Common Era (CE or AD) dating system. */
+  uint8_t month; /* 0 (January) to 11 (December). */
+  uint8_t day; /* 1 to 31. */
+  uint8_t hour; /* 0 to 23.  Probably just the local time zone. */
+  uint8_t minute; /* 0 to 59. */
+#endif
+  }
+  return newHighScore;
+}
+

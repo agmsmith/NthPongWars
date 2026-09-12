@@ -32,6 +32,7 @@ bool gVictoryModeJoystickPress = false;
 bool gVictoryModeHighestTileCount = false;
 bool gVictoryModeEditScores = false;
 uint8_t gVictoryWinningPlayer = MAX_PLAYERS + 2;
+uint8_t gLevelCounter = 0;
 
 char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";
 char gWinnerNextLevelName[MAX_PLAYERS+2][MAX_LEVEL_NAME_LENGTH];
@@ -50,7 +51,8 @@ static int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 
 
 /* Checks the victory conditions and sets things up for loading the next level
-   (depending on which player won).  Returns TRUE if the level was completed.
+   (depending on which player won).  Also updates the high scores.  Returns
+   TRUE if the level was completed.
 */
 bool VictoryConditionTest(void)
 {
@@ -64,7 +66,7 @@ bool VictoryConditionTest(void)
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
-    /* First player to press their fire button wins. */
+    /* Slide show mode: First player to press their fire button wins. */
 
     if (gVictoryModeFireButtonPress)
     {
@@ -109,6 +111,8 @@ bool VictoryConditionTest(void)
       if (g_TileOwnerCounts[OWNER_PLAYER_1 + i] >= g_ScoreGoal)
       {
         winningPlayer = i;
+        pPlayer->win_count++;
+        UpdateHighScoresForLevelFinished();
         break;
       }
     }
@@ -570,6 +574,7 @@ bool KeywordRemovePlayers(void)
   LevelReadToStartOfNextLine();
 
   DeassignPlayersFromDevices();
+  gLevelCounter = 0; /* Count of levels played so far. */
   return true;
 }
 

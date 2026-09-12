@@ -132,5 +132,11 @@ extern bool ReadHighScoreTable(high_score_table_type table_type,
 extern bool WriteHighScoreTable(high_score_table_type table_type,
   high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES]);
 
+/* A level has just finished.  Update the various score counts and add them to
+   the local high score table if they qualify, and write out the local table.
+   Doesn't ask players to enter names etc, that's the job of a special level at
+   the end of the game.  Returns TRUE if there is a new high score. */
+extern bool UpdateHighScoresForLevelFinished(void);
+
 #endif /* _SCORES_H */
 

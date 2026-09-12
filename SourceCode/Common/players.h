@@ -44,6 +44,9 @@
 /* Bits for masking off a counter to have values from 0 to MAX_PLAYERS-1. */
 #define MAX_PLAYERS_MASK 3
 
+/* Default names for the players, just their colour. */
+extern const char *gDefaultPlayerNames[MAX_PLAYERS];
+
 /* Variable sized balls are problematic.  Having in-between sizes doesn't add
    much to the game, just a few ones are great for sweeping out large areas.
    But even then, we'd double the animation space needed (we have only 2K of
@@ -346,6 +349,9 @@ typedef struct player_struct {
      a player has reached the goal score, the game is over.  Gave up on doing
      it as percentages, too CPU expensive.  Count incremental updates are done
      in SetTileOwner(). */
+
+  uint16_t score_cumulative;
+    /* Total score over all the levels played contiguously. */
 
   uint16_t score_displayed;
   /* The score value currently being shown on the display and in score_text.

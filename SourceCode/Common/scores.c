@@ -262,23 +262,59 @@ bool MergeHighScore(high_score_pointer pNewScore,
 }
 
 
-/* A level has just finished.  Update the various score counts and add them to
-   the local high score table if they qualify, and write out the local table.
-   Doesn't ask players to enter names etc, that's the job of a special level at
-   the end of the game.  Returns TRUE if there is a new high score.
+/* A level has just finished.  Update the various score counts and add or
+   replace them in the local high score table if they qualify, and write out
+   the local table.  Doesn't ask players to enter names etc, that's the job of
+   a special level at the end of the game.  Returns TRUE if there is a new high
+   score.
 */
 bool UpdateHighScoresForLevelFinished(void)
 {
   bool newHighScore = false;
-  high_score_record scoreRecord;
   uint8_t i;
+
+  /* Remove existing entries for the players in the high score table.  They are
+     the ones marked as editable.  Move up valid scores from other games, and
+     pad the end with zero scores. */
+
+  high_score_pointer destinationScore = g_LocalHighScores;
+  high_score_pointer sourceScore = g_LocalHighScores;
+  for (i = 0; i < MAX_SCORE_TABLE_ENTRIES; i++)
+  {
+    if (!sourceScore->editable_by_player)
+      *destinationScore++ = *sourceScore; /* Not a score from current game. */
+    sourceScore++;
+  }
+  while (destinationScore < sourceScore)
+  {
+    bzero(destinationScore, sizeof(high_score_record));
+    destinationScore++;
+  }
+
+  /* Set up some common things in the score record, shared by all players. */
+
+  high_score_record scoreRecord;
+  bzero(&scoreRecord, sizeof(scoreRecord));
+  scoreRecord.level_count = gLevelCounter;
+
+  /* Get the current date.  Will be used for all the players high scores. */
+
+  char dateString[64];
+  const char *dateFormat = "yyyyMMddHHmm";
+  ia_getCurrentDateTimeStr(dateFormat, strlen(dateFormat), dateString);
+  SoundUpdateIfNeeded();
+
+  char *pNumber = dateString + 10;
+  i = MAX_DATE_UNION_FIELDS - 1;
+  do {
+    uint16_t number;
+    number = atoi(pNumber);
+    *pNumber = 0;
+    pNumber -= 2;
+    scoreRecord.date_of_score.array[i] = number;
+  } while (i-- != 0);
+
   player_pointer pPlayer = g_player_array;
-
-/* bleeble
-get date
-wrute scire,
-*/
-
   for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
   {
     if (pPlayer->brain == BRAIN_INACTIVE)
@@ -290,17 +326,14 @@ wrute scire,
 
     pPlayer->score_cumulative += GetPlayerScore(i);
     scoreRecord.score = pPlayer->score_cumulative;
-    scoreRecord.level_count = gLevelCounter;
     scoreRecord.win_count = pPlayer->win_count;
     scoreRecord.editable_by_player = true;
-#if 0
-  uint16_t year; /* Full year number, Common Era (CE or AD) dating system. */
-  uint8_t month; /* 0 (January) to 11 (December). */
-  uint8_t day; /* 1 to 31. */
-  uint8_t hour; /* 0 to 23.  Probably just the local time zone. */
-  uint8_t minute; /* 0 to 59. */
-#endif
+
+    if (MergeHighScore(&scoreRecord, g_LocalHighScores))
+      newHighScore = true;
   }
+
+  WriteHighScoreTable(HIGH_SCORE_TABLE_LOCAL, g_LocalHighScores);
   return newHighScore;
 }
 

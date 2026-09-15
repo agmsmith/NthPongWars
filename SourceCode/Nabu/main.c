@@ -94,8 +94,10 @@
 /* #define DISABLE_VDP /* Disable if not using the Video Display Processor. */
 /* #define DEBUG_VDP_INT /* Flash the Alert LED if VDP updates are too slow. */
 #define DISABLE_CURSOR /* Don't flash on VDP during NABU-LIB keyboard input. */
+#define NTHPONG_IACONTROL_DATE_ONLY /* Remove unused IA functions. */
 #include "../../../NABU-LIB/NABULIB/NABU-LIB.h" /* Also includes NABU-LIB.c */
 #include "../../../NABU-LIB/NABULIB/RetroNET-FileStore.h" /* For TCP Server. */
+#include "../../../NABU-LIB/NABULIB/RetroNET-IAControl.h" /* For Date & time. */
 
 #if 0 /* We have our own VDP font now, don't need array using up memory. */
 #define FONT_LM80C

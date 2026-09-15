@@ -95,11 +95,18 @@ typedef struct high_score_struct {
      particular user edit the name of this entry in the high score list while
      it is being displayed. */
 
-  uint16_t year; /* Full year number, Common Era (CE or AD) dating system. */
-  uint8_t month; /* 0 (January) to 11 (December). */
-  uint8_t day; /* 1 to 31. */
-  uint8_t hour; /* 0 to 23.  Probably just the local time zone. */
-  uint8_t minute; /* 0 to 59. */
+#define MAX_DATE_UNION_FIELDS 6
+  union date_or_bytes_union {
+    struct date_fields_struct {
+      uint8_t centuries; /* Year / 100 using Common Era (CE or AD) dates. */
+      uint8_t year; /* Year mod 100, just the lower 2 digits of the year. */
+      uint8_t month; /* 0 (January) to 11 (December). */
+      uint8_t day; /* 1 to 31. */
+      uint8_t hour; /* 0 to 23.  Probably just the local time zone. */
+      uint8_t minute; /* 0 to 59. */
+    } fields;
+    uint8_t array[MAX_DATE_UNION_FIELDS]; /* Same thing as a plain array. */
+  } date_of_score;
   /* When the score was achieved.  So you can see how long it existed. */
 
   /* The server side may store IP address and other things. */

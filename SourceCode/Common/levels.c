@@ -46,7 +46,7 @@ static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
    need to be cleared the first time we see the keyword for any tile quota. */
 
-#define MAX_LEVEL_NUMERIC_ARGUMENTS 8
+#define MAX_LEVEL_NUMERIC_ARGUMENTS 9
 static int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 
 
@@ -1159,24 +1159,21 @@ const char *StockTextMessages(const char *MagicWord)
 */
 static void AppendHighScoreText(high_score_pointer pScore)
 {
-  COMPILER_VERIFY(MAX_LEVEL_NUMERIC_ARGUMENTS >= 8);
-  static uint16_t numbers[MAX_LEVEL_NUMERIC_ARGUMENTS];
+  COMPILER_VERIFY(MAX_LEVEL_NUMERIC_ARGUMENTS >= MAX_DATE_UNION_FIELDS + 3);
   uint8_t i;
 
   strcat(g_TempBuffer, pScore->name);
-  strcat(g_TempBuffer, "\0x09");
+  strcat(g_TempBuffer, "\x09");
 
-  numbers[0] = pScore->score;
-  numbers[1] = pScore->level_count;
-  numbers[2] = pScore->win_count;
-  numbers[3] = pScore->year;
-  numbers[4] = pScore->month;
-  numbers[5] = pScore->day;
-  numbers[6] = pScore->hour;
-  numbers[7] = pScore->minute;
-  for (i = 0; i < 8; i++)
+  sNumericArgumentsDecoded[0] = pScore->score;
+  sNumericArgumentsDecoded[1] = pScore->win_count;
+  sNumericArgumentsDecoded[2] = pScore->level_count;
+  for (i = 0; i < MAX_DATE_UNION_FIELDS; i++)
+    sNumericArgumentsDecoded[3 + i] = pScore->date_of_score.array[i];
+
+  for (i = 0; i < MAX_DATE_UNION_FIELDS + 3; i++)
   {
-    AppendDecimalUInt16(numbers[i]);
+    AppendDecimalUInt16(sNumericArgumentsDecoded[i]);
     strcat(g_TempBuffer, ",");
   }
   strcat(g_TempBuffer, "\n");
@@ -1189,9 +1186,10 @@ static void AppendHighScoreText(high_score_pointer pScore)
    The format is:
    name in ASCII printable characters (0x20 to 0x7F), tab (0x09),
    score in base 10 ASCII digits, comma,
-   level_count in base 10 ASCII digits, comma,
    win_count in base 10 ASCII digits, comma,
-   year in base 10 ASCII digits (all of the year's digits), comma,
+   level_count in base 10 ASCII digits, comma,
+   century in base 10 ASCII digits (integer year divided by 100), comma,
+   year in base 10 ASCII digits (lower two digits of the year), comma,
    month in base 10 ASCII digits (0 to 11), comma,
    day in base 10 ASCII digits (1 to 31), comma, 
    hour in base 10 ASCII digits (0 to 23), comma,
@@ -1203,19 +1201,18 @@ static void AppendHighScoreText(high_score_pointer pScore)
 */
 static bool ReadHighScore(high_score_pointer pScore)
 {
+  uint8_t i;
+
   if (!LevelReadWord(pScore->name, sizeof(pScore->name), 9 /* Tab char */))
     return false;
 
-  if (!LevelReadNumericArguments(8))
+  if (!LevelReadNumericArguments(MAX_DATE_UNION_FIELDS + 3))
     return false;
   pScore->score = sNumericArgumentsDecoded[0];
-  pScore->level_count = sNumericArgumentsDecoded[1];
-  pScore->win_count = sNumericArgumentsDecoded[2];
-  pScore->year = sNumericArgumentsDecoded[3];
-  pScore->month = sNumericArgumentsDecoded[4];
-  pScore->day = sNumericArgumentsDecoded[5];
-  pScore->hour = sNumericArgumentsDecoded[6];
-  pScore->minute = sNumericArgumentsDecoded[7];
+  pScore->win_count = sNumericArgumentsDecoded[1];
+  pScore->level_count = sNumericArgumentsDecoded[2];
+  for (i = 0; i < MAX_DATE_UNION_FIELDS; i++)
+    pScore->date_of_score.array[i] = sNumericArgumentsDecoded[3 + i];
   LevelReadToStartOfNextLine();
 
   return true;
@@ -1236,6 +1233,7 @@ bool ReadHighScoreTable(high_score_table_type table_type,
   strcat(fileName, g_TableTypeNames[table_type]);
 
   sLevelFileHandle = OpenDataFile(fileName, "TXT", NULL /* No size */);
+  SoundUpdateIfNeeded();
   if (sLevelFileHandle == BAD_FILE_HANDLE)
     return false;
 
@@ -1250,9 +1248,11 @@ bool ReadHighScoreTable(high_score_table_type table_type,
   {
     if (!ReadHighScore(scoreTable))
       break;
+    SoundUpdateIfNeeded();
   }
 
   CloseDataFile(sLevelFileHandle);
+  SoundUpdateIfNeeded();
   sLevelFileHandle = BAD_FILE_HANDLE;
   sLevelBuffer = NULL;
   return true;
@@ -1280,6 +1280,12 @@ bool WriteHighScoreTable(high_score_table_type table_type,
   uint8_t iScore;
   for (iScore = 0; iScore < MAX_SCORE_TABLE_ENTRIES; iScore++, scoreTable++)
     AppendHighScoreText(scoreTable);
+  SoundUpdateIfNeeded();
+
+DebugPrintString("Before writing the ");
+DebugPrintString(fileName);
+DebugPrintString(" file, high score string is:\n");
+DebugPrintString(g_TempBuffer);
 
   rn_FileReplace(strlen(fileName), fileName, 0 /* fileOffset*/,
     0 /* dataOffset */, strlen(g_TempBuffer) /* dataLen */, g_TempBuffer);

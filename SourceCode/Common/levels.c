@@ -112,6 +112,7 @@ bool VictoryConditionTest(void)
       {
         winningPlayer = i;
         pPlayer->win_count++;
+        gLevelCounter++; /* Finished playing a game level, that counts. */
         UpdateHighScoresForLevelFinished();
         break;
       }
@@ -1270,7 +1271,7 @@ bool WriteHighScoreTable(high_score_table_type table_type,
   high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
 {
 #ifdef NABU_H
-  char fileName[40];
+  char fileName[50];
 
   strcpy(fileName, "NTHPONG\\HIGH_SCORES_");
   strcat(fileName, g_TableTypeNames[table_type]);
@@ -1286,6 +1287,9 @@ DebugPrintString("Before writing the ");
 DebugPrintString(fileName);
 DebugPrintString(" file, high score string is:\n");
 DebugPrintString(g_TempBuffer);
+if (strlen(g_TempBuffer) >= sizeof(g_TempBuffer))
+  DebugPrintString("Oops, output buffer overflow!\n");
+DebugPrintString("Trying rn_FileReplace...\n");
 
   rn_FileReplace(strlen(fileName), fileName, 0 /* fileOffset*/,
     0 /* dataOffset */, strlen(g_TempBuffer) /* dataLen */, g_TempBuffer);

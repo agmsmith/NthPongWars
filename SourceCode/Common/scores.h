@@ -53,7 +53,7 @@ extern void CopyScoresToScreen(void);
  * all-time high score lists.
  */
 
-#define MAX_SCORE_NAME_LENGTH 10 /* For "Yellow-bot" */
+#define MAX_SCORE_NAME_LENGTH 12 /* For "Yellow-bot" or "AGMS20260917". */
 #define MAX_SCORE_TABLE_ENTRIES 10 /* So you can have a top 10 list. */
 
 enum high_score_table_types_enum {
@@ -66,7 +66,7 @@ enum high_score_table_types_enum {
   HIGH_SCORE_TABLE_MAX
 };
 typedef uint8_t high_score_table_type; /* Want 8 bits, not a 16 bit enum. */
-extern const char *g_TableTypeNames[HIGH_SCORE_TABLE_MAX];
+extern const char *g_TableTypeNames[HIGH_SCORE_TABLE_MAX]; /* Enum to string. */
 
 /* One of these structures keeps track of each high score entry. */
 
@@ -76,13 +76,13 @@ typedef struct high_score_struct {
      enough; most levels are under 700 for a score so that's something like
      90 levels in a whole game, which would be too long a campaign. */
 
-  uint8_t level_count;
-  /* How many levels have been played in this game campaign to get the score.
-     Useful for having the player quit early but still get a high score. */
-
   uint8_t win_count;
   /* Number of levels won in the campaign.  Can combine it with level_count to
      get a win percentage. */
+
+  uint8_t level_count;
+  /* How many levels have been played in this game campaign to get the score.
+     Useful for having the player quit early but still get a high score. */
 
   char name[MAX_SCORE_NAME_LENGTH+1];
   /* Name the player enters, blank padded, NUL at end, only ASCII printable
@@ -95,19 +95,11 @@ typedef struct high_score_struct {
      particular user edit the name of this entry in the high score list while
      it is being displayed. */
 
-#define MAX_DATE_UNION_FIELDS 6
-  union date_or_bytes_union {
-    struct date_fields_struct {
-      uint8_t centuries; /* Year / 100 using Common Era (CE or AD) dates. */
-      uint8_t year; /* Year mod 100, just the lower 2 digits of the year. */
-      uint8_t month; /* 0 (January) to 11 (December). */
-      uint8_t day; /* 1 to 31. */
-      uint8_t hour; /* 0 to 23.  Probably just the local time zone. */
-      uint8_t minute; /* 0 to 59. */
-    } fields;
-    uint8_t array[MAX_DATE_UNION_FIELDS]; /* Same thing as a plain array. */
-  } date_of_score;
-  /* When the score was achieved.  So you can see how long it existed. */
+#define MAX_SCORE_DATE_LENGTH 16
+  char date_of_score[MAX_SCORE_DATE_LENGTH+1];
+  /* The date the score was achieved in local time (whatever that is).  Will
+     be of the format "yyyy.MM.dd HH:mm" followed by a NUL character.  Not
+     broken down into separate numbers to save on code space. */
 
   /* The server side may store IP address and other things. */
 } high_score_record, *high_score_pointer;

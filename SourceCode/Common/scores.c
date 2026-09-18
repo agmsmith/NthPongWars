@@ -299,20 +299,12 @@ bool UpdateHighScoresForLevelFinished(void)
 
   /* Get the current date.  Will be used for all the players high scores. */
 
-  char dateString[64];
-  const char *dateFormat = "yyyyMMddHHmm";
+  char dateString[64]; /* NABU-LIB expects a 64 byte buffer and zeroes it. */
+  const char *dateFormat = "yyyy.MM.dd HH:mm";
   ia_getCurrentDateTimeStr(dateFormat, strlen(dateFormat), dateString);
   SoundUpdateIfNeeded();
-
-  char *pNumber = dateString + 10;
-  i = MAX_DATE_UNION_FIELDS - 1;
-  do {
-    uint16_t number;
-    number = atoi(pNumber);
-    *pNumber = 0;
-    pNumber -= 2;
-    scoreRecord.date_of_score.array[i] = number;
-  } while (i-- != 0);
+  strncpy(scoreRecord.date_of_score, dateString, MAX_SCORE_DATE_LENGTH);
+  scoreRecord.date_of_score[MAX_SCORE_DATE_LENGTH] = 0;
 
   player_pointer pPlayer = g_player_array;
   for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)

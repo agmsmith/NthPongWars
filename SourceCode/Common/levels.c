@@ -46,7 +46,7 @@ static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
    need to be cleared the first time we see the keyword for any tile quota. */
 
-#define MAX_LEVEL_NUMERIC_ARGUMENTS 9
+#define MAX_LEVEL_NUMERIC_ARGUMENTS 6
 static int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 
 
@@ -1160,7 +1160,7 @@ const char *StockTextMessages(const char *MagicWord)
 */
 static void AppendHighScoreText(high_score_pointer pScore)
 {
-  COMPILER_VERIFY(MAX_LEVEL_NUMERIC_ARGUMENTS >= MAX_DATE_UNION_FIELDS + 3);
+  COMPILER_VERIFY(MAX_LEVEL_NUMERIC_ARGUMENTS >= 3);
   uint8_t i;
 
   strcat(g_TempBuffer, pScore->name);
@@ -1169,15 +1169,14 @@ static void AppendHighScoreText(high_score_pointer pScore)
   sNumericArgumentsDecoded[0] = pScore->score;
   sNumericArgumentsDecoded[1] = pScore->win_count;
   sNumericArgumentsDecoded[2] = pScore->level_count;
-  for (i = 0; i < MAX_DATE_UNION_FIELDS; i++)
-    sNumericArgumentsDecoded[3 + i] = pScore->date_of_score.array[i];
 
-  for (i = 0; i < MAX_DATE_UNION_FIELDS + 3; i++)
+  for (i = 0; i < 3; i++)
   {
     AppendDecimalUInt16(sNumericArgumentsDecoded[i]);
     strcat(g_TempBuffer, ",");
   }
-  strcat(g_TempBuffer, "\n");
+  strcat(g_TempBuffer, pScore->date_of_score);
+  strcat(g_TempBuffer, ",\n");
 }
 
 
@@ -1189,12 +1188,7 @@ static void AppendHighScoreText(high_score_pointer pScore)
    score in base 10 ASCII digits, comma,
    win_count in base 10 ASCII digits, comma,
    level_count in base 10 ASCII digits, comma,
-   century in base 10 ASCII digits (integer year divided by 100), comma,
-   year in base 10 ASCII digits (lower two digits of the year), comma,
-   month in base 10 ASCII digits (0 to 11), comma,
-   day in base 10 ASCII digits (1 to 31), comma, 
-   hour in base 10 ASCII digits (0 to 23), comma,
-   minute in base 10 ASCII digits (0 to 59), comma,
+   score_date in format "yyyy.MM.dd HH:mm", comma,
    future other stuff ignored like IP address,
    line feed or NUL byte to mark end of record.
    Returns TRUE if it read something, FALSE at end of file.
@@ -1202,21 +1196,29 @@ static void AppendHighScoreText(high_score_pointer pScore)
 */
 static bool ReadHighScore(high_score_pointer pScore)
 {
-  uint8_t i;
-
   if (!LevelReadWord(pScore->name, sizeof(pScore->name), 9 /* Tab char */))
     return false;
 
-  if (!LevelReadNumericArguments(MAX_DATE_UNION_FIELDS + 3))
+  if (!LevelReadNumericArguments(3))
     return false;
   pScore->score = sNumericArgumentsDecoded[0];
   pScore->win_count = sNumericArgumentsDecoded[1];
   pScore->level_count = sNumericArgumentsDecoded[2];
-  for (i = 0; i < MAX_DATE_UNION_FIELDS; i++)
-    pScore->date_of_score.array[i] = sNumericArgumentsDecoded[3 + i];
-  LevelReadToStartOfNextLine();
-
+  if (!LevelReadWord(pScore->date_of_score, sizeof(pScore->date_of_score), ','))
+    return false;
+  LevelReadToStartOfNextLine(); /* Discard rest of future data fields. */
   return true;
+}
+
+
+/* Internal function to store the file name in pBuffer for reading or
+   writing a given type of score.
+*/
+static void BuildScoreFileName(high_score_table_type table_type, char *pBuffer)
+{
+  strcpy(pBuffer, "NTHPONG\\HIGH_SCORES_");
+  strcat(pBuffer, g_TableTypeNames[table_type]);
+  strcat(pBuffer, ".TXT");
 }
 
 
@@ -1227,13 +1229,14 @@ static bool ReadHighScore(high_score_pointer pScore)
 bool ReadHighScoreTable(high_score_table_type table_type,
   high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
 {
+  /* Zero table in case we get an error while reading. */
+  bzero(scoreTable, sizeof(high_score_record) * MAX_SCORE_TABLE_ENTRIES);
+
 #ifdef NABU_H
-  char fileName[40];
+  char fileName[80]; /* OpenDataFile overwrites g_TempBuffer; can't use it. */
+  BuildScoreFileName(table_type, fileName);
 
-  strcpy(fileName, "HIGH_SCORES_");
-  strcat(fileName, g_TableTypeNames[table_type]);
-
-  sLevelFileHandle = OpenDataFile(fileName, "TXT", NULL /* No size */);
+  sLevelFileHandle = OpenDataFile(fileName, "", NULL /* No size needed */);
   SoundUpdateIfNeeded();
   if (sLevelFileHandle == BAD_FILE_HANDLE)
     return false;
@@ -1251,6 +1254,8 @@ bool ReadHighScoreTable(high_score_table_type table_type,
       break;
     SoundUpdateIfNeeded();
   }
+
+  /* Close file, reset the static file buffered read variables for next time. */
 
   CloseDataFile(sLevelFileHandle);
   SoundUpdateIfNeeded();
@@ -1272,9 +1277,7 @@ bool WriteHighScoreTable(high_score_table_type table_type,
 {
 #ifdef NABU_H
   FileHandleType fileID;
-  strcpy(g_TempBuffer, "NTHPONG\\HIGH_SCORES_");
-  strcat(g_TempBuffer, g_TableTypeNames[table_type]);
-  strcat(g_TempBuffer, ".TXT");
+  BuildScoreFileName(table_type, g_TempBuffer);
   fileID = rn_fileOpen(strlen(g_TempBuffer), g_TempBuffer,
     OPEN_FILE_FLAG_READWRITE, 0xff /* Use a new file handle */);
   SoundUpdateIfNeeded(); /* Each open attempt could take a while. */
@@ -1292,18 +1295,12 @@ bool WriteHighScoreTable(high_score_table_type table_type,
     AppendHighScoreText(scoreTable);
   SoundUpdateIfNeeded();
 
-DebugPrintString("Bleeble: High score string is:\n");
-DebugPrintString(g_TempBuffer);
-
-  if (strlen(g_TempBuffer) >= sizeof(g_TempBuffer))
-    DebugPrintString("Oops, output buffer overflow!  Will crash?\n");
-
   /* Huh, no fileHandleWrite functionality.  Need to use replace or append. */
 
   rn_fileHandleEmptyFile(fileID);
   SoundUpdateIfNeeded();
-  rn_fileHandleAppend(fileID, 0 /* dataOffset */, strlen(g_TempBuffer),
-    g_TempBuffer);
+  rn_fileHandleAppend(fileID, 0 /* dataOffset */,
+    strlen(g_TempBuffer), g_TempBuffer);
   SoundUpdateIfNeeded();
   rn_fileHandleClose(fileID);
   SoundUpdateIfNeeded();

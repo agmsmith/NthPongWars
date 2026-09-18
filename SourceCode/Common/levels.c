@@ -1271,11 +1271,20 @@ bool WriteHighScoreTable(high_score_table_type table_type,
   high_score_record scoreTable[MAX_SCORE_TABLE_ENTRIES])
 {
 #ifdef NABU_H
-  char fileName[50];
-
-  strcpy(fileName, "NTHPONG\\HIGH_SCORES_");
-  strcat(fileName, g_TableTypeNames[table_type]);
-  strcat(fileName, ".TXT");
+  FileHandleType fileID;
+  strcpy(g_TempBuffer, "NTHPONG\\HIGH_SCORES_");
+  strcat(g_TempBuffer, g_TableTypeNames[table_type]);
+  strcat(g_TempBuffer, ".TXT");
+  fileID = rn_fileOpen(strlen(g_TempBuffer), g_TempBuffer,
+    OPEN_FILE_FLAG_READWRITE, 0xff /* Use a new file handle */);
+  SoundUpdateIfNeeded(); /* Each open attempt could take a while. */
+  if (fileID == BAD_FILE_HANDLE)
+  {
+    DebugPrintString("Failed to open \"");
+    DebugPrintString(g_TempBuffer);
+    DebugPrintString("\" for writing.\n");
+    goto ErrorExit;
+  }
 
   g_TempBuffer[0] = 0;
   uint8_t iScore;
@@ -1283,21 +1292,25 @@ bool WriteHighScoreTable(high_score_table_type table_type,
     AppendHighScoreText(scoreTable);
   SoundUpdateIfNeeded();
 
-DebugPrintString("Before writing the ");
-DebugPrintString(fileName);
-DebugPrintString(" file, high score string is:\n");
+DebugPrintString("Bleeble: High score string is:\n");
 DebugPrintString(g_TempBuffer);
-if (strlen(g_TempBuffer) >= sizeof(g_TempBuffer))
-  DebugPrintString("Oops, output buffer overflow!\n");
-DebugPrintString("Trying rn_FileReplace...\n");
 
-  rn_FileReplace(strlen(fileName), fileName, 0 /* fileOffset*/,
-    0 /* dataOffset */, strlen(g_TempBuffer) /* dataLen */, g_TempBuffer);
+  if (strlen(g_TempBuffer) >= sizeof(g_TempBuffer))
+    DebugPrintString("Oops, output buffer overflow!  Will crash?\n");
 
+  /* Huh, no fileHandleWrite functionality.  Need to use replace or append. */
+
+  rn_fileHandleEmptyFile(fileID);
+  SoundUpdateIfNeeded();
+  rn_fileHandleAppend(fileID, 0 /* dataOffset */, strlen(g_TempBuffer),
+    g_TempBuffer);
+  SoundUpdateIfNeeded();
+  rn_fileHandleClose(fileID);
   SoundUpdateIfNeeded();
   return true;
-#else /* Not NABU_H */
+#endif /* NABU_H */
+
+ErrorExit:
   return false;
-#endif
 }
 

@@ -185,7 +185,9 @@ extern uint16_t gTileArraySize;
    of the minuscule NABU memory, it is allocated at the start of the program to
    be as large as possible, and then never changed.  This also lets us have
    more code in the executable (limited by the NABU boot loader to 59K), by not
-   including the array in the executable. */
+   including the array in the executable.  During display of high scores, this
+   memory space is used for temporarily loaded global high score data from the
+   servers, since we aren't displaying tiles when displaying scores. */
 extern tile_pointer g_tile_array; /* Points to the start of the array. */
 
 /* We keep an array of pointers to the start of each row of tiles, to save on

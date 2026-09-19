@@ -116,13 +116,22 @@ Screen: HELP.NCHR
 # rest is the text, with leading and trailing spaces removed.  No, it doesn't
 # handle new line characters, so you would have to do several ScreenText
 # keywords to get a similar effect.  Magic words you can use are "Copyright"
-# and "Version" to display those text items.  "High0Score" to "High9core"
+# and "Version" to display those text items.  "Score0" to "Score3" display the
+# current cumulative scores for each player.  "High0Score" to "High9Score"
 # display the top ten high scores in the currently selected score page,
 # similarly "High0Name" to "High9Name" display the names of the top ten, and
-# "High0Date" the date of the win, "High0Time" time of win, "High0Wins" number
-# of levels won, "High0Levels" number of levels played.
+# "High0Date" the full date and tiem of the win, "High0ShortDate" just 8
+# characters for the date, "High0Wins" number of levels won, "High0Levels"
+# number of levels played.
 # ScreenText: Row, FirstLeftMargin, SubsequentLeftMargin, RightMargin, Text
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
+
+# Specify which high score table to load, most of them are from a global server
+# on the Internet.  This gets the values the magic keywords in ScreenText
+# display for high scores.  Note that it overwrites the tile data, so only use
+# this on levels that are just displaying high scores.  Possible values are
+# Local, Daily, Weekly, Monthly, Yearly, AllTime.
+LoadHighScoreTable: AllTime
 
 # When playing in countdown mode, the first player to reach this many tiles in
 # their colour wins.  The count starts at this value and counts down about once

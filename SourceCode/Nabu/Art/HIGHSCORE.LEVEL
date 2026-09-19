@@ -1,11 +1,83 @@
-# Show the high score screen.
-GameMode: Trivia
+# Show the high score screen sequence, starting with the local scores.
+# AGMS20260918
+LevelVersion: 20260209, NthPongWars
+# GameMode: EditScores
+GameMode: Slide
 Music: Silence
 Music: TECHTED3
-Screen: TEXTSCREEN.NSCR
-LevelNext: All, CREDITS
-PlayTimeout: 7
-ScreenText: 5, 13, 4, 28, Insert
-ScreenText: 7, 11, 4, 28, High Score
-ScreenText: 9, 10, 4, 28, Screen Here
+Screen: HIGHSCORE.NCHR
+LevelNext: All, TITLE
+PlayTimeout: 15
+
+ScreenText: 0, 6, 6, 32, _Local High Scores_
+
+ScreenText: 2, 3, 3, 32, High0Score
+ScreenText: 2, 9, 9, 32, High0Name
+ScreenText: 3, 11, 11, 32, /
+ScreenText: 3, 9, 9, 32, High0Wins
+ScreenText: 3, 12, 12, 32, High0Levels
+ScreenText: 3, 15, 15, 32, High0Date
+
+ScreenText: 4, 3, 3, 32, High1Score
+ScreenText: 4, 9, 9, 32, High1Name
+ScreenText: 5, 11, 11, 32, /
+ScreenText: 5, 9, 9, 32, High1Wins
+ScreenText: 5, 12, 12, 32, High1Levels
+ScreenText: 5, 15, 15, 32, High1Date
+
+ScreenText: 6, 3, 3, 32, High2Score
+ScreenText: 6, 9, 9, 32, High2Name
+ScreenText: 7, 11, 11, 32, /
+ScreenText: 7, 9, 9, 32, High2Wins
+ScreenText: 7, 12, 12, 32, High2Levels
+ScreenText: 7, 15, 15, 32, High2Date
+
+ScreenText: 8, 3, 3, 32, High3Score
+ScreenText: 8, 9, 9, 32, High3Name
+ScreenText: 9, 11, 11, 32, /
+ScreenText: 9, 9, 9, 32, High3Wins
+ScreenText: 9, 12, 12, 32, High3Levels
+ScreenText: 9, 15, 15, 32, High3Date
+
+ScreenText: 10, 3, 3, 32, High4Score
+ScreenText: 10, 9, 9, 32, High4Name
+ScreenText: 11, 11, 11, 32, /
+ScreenText: 11, 9, 9, 32, High4Wins
+ScreenText: 11, 12, 12, 32, High4Levels
+ScreenText: 11, 15, 15, 32, High4Date
+
+ScreenText: 12, 3, 3, 32, High5Score
+ScreenText: 12, 9, 9, 32, High5Name
+ScreenText: 13, 11, 11, 32, /
+ScreenText: 13, 9, 9, 32, High5Wins
+ScreenText: 13, 12, 12, 32, High5Levels
+ScreenText: 13, 15, 15, 32, High5Date
+
+ScreenText: 14, 3, 3, 32, High6Score
+ScreenText: 14, 9, 9, 32, High6Name
+ScreenText: 15, 11, 11, 32, /
+ScreenText: 15, 9, 9, 32, High6Wins
+ScreenText: 15, 12, 12, 32, High6Levels
+ScreenText: 15, 15, 15, 32, High6Date
+
+ScreenText: 16, 3, 3, 32, High7Score
+ScreenText: 16, 9, 9, 32, High7Name
+ScreenText: 17, 11, 11, 32, /
+ScreenText: 17, 9, 9, 32, High7Wins
+ScreenText: 17, 12, 12, 32, High7Levels
+ScreenText: 17, 15, 15, 32, High7Date
+
+ScreenText: 18, 3, 3, 32, High8Score
+ScreenText: 18, 9, 9, 32, High8Name
+ScreenText: 19, 11, 11, 32, /
+ScreenText: 19, 9, 9, 32, High8Wins
+ScreenText: 19, 12, 12, 32, High8Levels
+ScreenText: 19, 15, 15, 32, High8Date
+
+ScreenText: 20, 3, 3, 32, High9Score
+ScreenText: 20, 9, 9, 32, High9Name
+ScreenText: 21, 11, 11, 32, /
+ScreenText: 21, 9, 9, 32, High9Wins
+ScreenText: 21, 12, 12, 32, High9Levels
+ScreenText: 21, 15, 15, 32, High9Date
 

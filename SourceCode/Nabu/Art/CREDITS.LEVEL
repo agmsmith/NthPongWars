@@ -1,8 +1,11 @@
 # Show the first credits screen, followed by others.  Keeps playing the current
 # music, which is often the winner's music from the previous player win screen.
-GameMode: Slide
-Screen: TEXTSCREEN.NTWF
+# Easter egg left move will show the cottage picture.
+GameMode: Trivia
+Screen: CREDITS.NFUL
+# Use bookmark to go back to credits after displaying Cottage.
+LevelBookmark: CREDITS1
 LevelNext: All, CREDITS1
+LevelNext: Left, COTTAGE
 PlayTimeout: 7
-ScreenText: 4, 4, 4, 28, Copyright
 

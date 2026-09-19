@@ -23,6 +23,7 @@
 uint16_t g_FrameCounter;
 uint16_t g_ScoreGoal;
 uint8_t g_ScoreFramesPerUpdate;
+char g_CurrentScoreDateTime[MAX_SCORE_DATE_LENGTH+1];
 
 static char s_ScoreGoalText[8];
 static uint16_t s_ScoreGoalDisplayed;
@@ -54,24 +55,29 @@ void InitialiseScores(void)
 }
 
 
-/* Convert a binary 16 bit number to 3 digits and write to the given
+/* Convert a binary 16 bit number to N digits (max 5) and write to the given
    destination string.  The fontOffset is added to each ASCII code to get
-   colourful digits from the game font.  Returns end of string pointer.
+   colourful digits from the game font.  If nDigits is zero then it doesn't do
+   leading zeroes and the string is as long as it is.  Returns end of string
+   pointer.
 */
-static char * Write3DigitColourfulNumber(
-  uint16_t number, char *pDest, uint8_t fontOffset)
+char * WriteNDigitColourfulNumber(
+  uint16_t number, uint8_t nDigits, char *pDest, uint8_t fontOffset)
 {
-  char numberText[10]; /* 16 bits, largest is "65535", + 3 zeroes. */
+  char numberText[12]; /* 16 bits, so largest is "65535", + 5 zeroes. */
   char *pSource;
 
-  strcpy(numberText, "000"); /* Leading zeroes. */
-  pSource = fast_utoa(number, numberText + 3);
-  pSource -= 3; /* Back up 3 characters from the end. */
+  strcpy(numberText, "00000"); /* Leading zeroes. */
+  pSource = fast_utoa(number, numberText + 5);
+  if (nDigits != 0)
+    pSource -= nDigits; /* Back up N characters from the end. */
+  else
+    pSource = numberText + 5; /* Just use the number without leading zeroes. */
+
   for (; *pSource != 0; pDest++, pSource++)
-  {
     *pDest = fontOffset + *pSource;
-  }
   *pDest = 0;
+
   return pDest;
 }
 
@@ -95,7 +101,7 @@ void UpdateScores(void)
     {
       /* Prepare a RAM copy of a colourful score number or other info. */
 
-      Write3DigitColourfulNumber(score, pPlayer->score_text,
+      WriteNDigitColourfulNumber(score, 3, pPlayer->score_text,
         fontOffset /* Font offset to a colour digit set */);
     }
 
@@ -117,7 +123,7 @@ void UpdateScores(void)
   }
 
   if (s_ScoreGoalDisplayed != g_ScoreGoal)
-    Write3DigitColourfulNumber(g_ScoreGoal, s_ScoreGoalText, 0);
+    WriteNDigitColourfulNumber(g_ScoreGoal, 3, s_ScoreGoalText, 0);
 }
 
 
@@ -232,6 +238,8 @@ const char *g_TableTypeNames[HIGH_SCORE_TABLE_MAX] = {
 };
 
 high_score_record g_LocalHighScores[MAX_SCORE_TABLE_ENTRIES];
+high_score_pointer g_LoadedHighScores = NULL;
+high_score_table_type g_LoadedScoreTableType = HIGH_SCORE_TABLE_LOCAL;
 
 
 /* Given a single high score record in pNewScore, updates scoreTable to
@@ -281,13 +289,14 @@ bool UpdateHighScoresForLevelFinished(void)
   high_score_pointer sourceScore = g_LocalHighScores;
   for (i = 0; i < MAX_SCORE_TABLE_ENTRIES; i++)
   {
-    if (!sourceScore->editable_by_player)
+    if (sourceScore->editable_by_player >= MAX_PLAYERS)
       *destinationScore++ = *sourceScore; /* Not a score from current game. */
     sourceScore++;
   }
   while (destinationScore < sourceScore)
   {
     bzero(destinationScore, sizeof(high_score_record));
+    destinationScore->editable_by_player = MAX_PLAYERS;
     destinationScore++;
   }
 
@@ -303,8 +312,9 @@ bool UpdateHighScoresForLevelFinished(void)
   const char *dateFormat = "yyyy.MM.dd HH:mm";
   ia_getCurrentDateTimeStr(dateFormat, strlen(dateFormat), dateString);
   SoundUpdateIfNeeded();
-  strncpy(scoreRecord.date_of_score, dateString, MAX_SCORE_DATE_LENGTH);
-  scoreRecord.date_of_score[MAX_SCORE_DATE_LENGTH] = 0;
+  strncpy(g_CurrentScoreDateTime, dateString, MAX_SCORE_DATE_LENGTH);
+  g_CurrentScoreDateTime[MAX_SCORE_DATE_LENGTH] = 0;
+  strcpy(scoreRecord.date_of_score, g_CurrentScoreDateTime);
 
   player_pointer pPlayer = g_player_array;
   for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
@@ -319,7 +329,7 @@ bool UpdateHighScoresForLevelFinished(void)
     pPlayer->score_cumulative += GetPlayerScore(i);
     scoreRecord.score = pPlayer->score_cumulative;
     scoreRecord.win_count = pPlayer->win_count;
-    scoreRecord.editable_by_player = true;
+    scoreRecord.editable_by_player = i; /* Has player number when editable. */
 
     if (MergeHighScore(&scoreRecord, g_LocalHighScores))
       newHighScore = true;

@@ -1,7 +1,86 @@
 # Player #4 (not a player) Wins.
 GameMode: Slide
 Music: Silence
-Screen: WINP4.NFUL
+Screen: LOCALSCORES.NCHR
+Screen: WINP4.NFUL1
 LevelNext: All, Bookmark
-PlayTimeout: 5
+PlayTimeout: 15
+
+ScreenText: 9, 6, 6, 32, Total Scores So Far
+ScreenText: 10, 3, 3, 32, Score0
+ScreenText: 10, 10, 10, 32, Score1
+ScreenText: 10, 17, 17, 32, Score2
+ScreenText: 10, 24, 24, 32, Score3
+
+ScreenText: 12, 9, 9, 32, Local Leaders
+
+ScreenText: 13, 0, 0, 32, High0Score
+ScreenText: 13, 6, 6, 32, High0Name
+ScreenText: 13, 21, 20, 32, /
+ScreenText: 13, 19, 19, 32, High0Wins
+ScreenText: 13, 22, 22, 32, High0Levels
+ScreenText: 13, 25, 25, 32, High0ShortDate
+
+ScreenText: 14, 0, 0, 32, High1Score
+ScreenText: 14, 6, 6, 32, High1Name
+ScreenText: 14, 21, 20, 32, /
+ScreenText: 14, 19, 19, 32, High1Wins
+ScreenText: 14, 22, 22, 32, High1Levels
+ScreenText: 14, 25, 25, 32, High1ShortDate
+
+ScreenText: 15, 0, 0, 32, High2Score
+ScreenText: 15, 6, 6, 32, High2Name
+ScreenText: 15, 21, 20, 32, /
+ScreenText: 15, 19, 19, 32, High2Wins
+ScreenText: 15, 22, 22, 32, High2Levels
+ScreenText: 15, 25, 25, 32, High2ShortDate
+
+ScreenText: 16, 0, 0, 32, High3Score
+ScreenText: 16, 6, 6, 32, High3Name
+ScreenText: 16, 21, 20, 32, /
+ScreenText: 16, 19, 19, 32, High3Wins
+ScreenText: 16, 22, 22, 32, High3Levels
+ScreenText: 16, 25, 25, 32, High3ShortDate
+
+ScreenText: 17, 0, 0, 32, High4Score
+ScreenText: 17, 6, 6, 32, High4Name
+ScreenText: 17, 21, 20, 32, /
+ScreenText: 17, 19, 19, 32, High4Wins
+ScreenText: 17, 22, 22, 32, High4Levels
+ScreenText: 17, 25, 25, 32, High4ShortDate
+
+ScreenText: 18, 0, 0, 32, High5Score
+ScreenText: 18, 6, 6, 32, High5Name
+ScreenText: 18, 21, 20, 32, /
+ScreenText: 18, 19, 19, 32, High5Wins
+ScreenText: 18, 22, 22, 32, High5Levels
+ScreenText: 18, 25, 25, 32, High5ShortDate
+
+ScreenText: 19, 0, 0, 32, High6Score
+ScreenText: 19, 6, 6, 32, High6Name
+ScreenText: 19, 21, 20, 32, /
+ScreenText: 19, 19, 19, 32, High6Wins
+ScreenText: 19, 22, 22, 32, High6Levels
+ScreenText: 19, 25, 25, 32, High6ShortDate
+
+ScreenText: 20, 0, 0, 32, High7Score
+ScreenText: 20, 6, 6, 32, High7Name
+ScreenText: 20, 21, 20, 32, /
+ScreenText: 20, 19, 19, 32, High7Wins
+ScreenText: 20, 22, 22, 32, High7Levels
+ScreenText: 20, 25, 25, 32, High7ShortDate
+
+ScreenText: 21, 0, 0, 32, High8Score
+ScreenText: 21, 6, 6, 32, High8Name
+ScreenText: 21, 21, 20, 32, /
+ScreenText: 21, 19, 19, 32, High8Wins
+ScreenText: 21, 22, 22, 32, High8Levels
+ScreenText: 21, 25, 25, 32, High8ShortDate
+
+ScreenText: 22, 0, 0, 32, High9Score
+ScreenText: 22, 6, 6, 32, High9Name
+ScreenText: 22, 21, 20, 32, /
+ScreenText: 22, 19, 19, 32, High9Wins
+ScreenText: 22, 22, 22, 32, High9Levels
+ScreenText: 22, 25, 25, 32, High9ShortDate
 

@@ -56,11 +56,20 @@ static int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 */
 bool VictoryConditionTest(void)
 {
+  uint8_t i;
+  uint16_t highestScore = 0;
   uint8_t winningPlayer = MAX_PLAYERS + 2;
   /* 0 to 3 are players, 4 is Fire button, 5 is Timeout, 6 is invalid. */
 
-  uint8_t i;
   player_pointer pPlayer = g_player_array;
+  for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
+  {
+    uint16_t score = GetPlayerScore(i);
+    if (score > highestScore)
+      highestScore = score;
+  }
+
+  pPlayer = g_player_array;
   for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
   {
     if (pPlayer->brain == BRAIN_INACTIVE)
@@ -108,7 +117,7 @@ bool VictoryConditionTest(void)
 
     if (gVictoryModeHighestTileCount)
     {
-      if (g_TileOwnerCounts[OWNER_PLAYER_1 + i] >= g_ScoreGoal)
+      if (highestScore >= g_ScoreGoal && GetPlayerScore(i) >= highestScore)
       {
         winningPlayer = i;
         pPlayer->win_count++;
@@ -338,7 +347,7 @@ static bool LevelReadWord(
 
 
 /* Read a line and trim off leading and trailing spaces and tabs.  Returns TRUE
-  if successful, FALSE at end of file. 
+  if successful, FALSE at end of file.
 */
 static bool LevelReadAndTrimLine(char *Buffer, uint8_t BufferSize)
 {
@@ -440,11 +449,11 @@ bool KeywordTextOnScreen(void)
 
   /* Read the line of text from the level file and print it. */
 
-  SoundUpdateIfNeeded();
   if (!LevelReadAndTrimLine(g_TempBuffer, 255))
     return false;
-
   SoundUpdateIfNeeded();
+
+  vdp_waitVDPReadyInt(); /* So text doesn't get scrambled by hardware delays. */
   vdp_printJustified((char *) StockTextMessages(g_TempBuffer),
     sNumericArgumentsDecoded[2], sNumericArgumentsDecoded[3]);
 
@@ -567,7 +576,8 @@ bool KeywordLevelBookmark(void)
 }
 
 
-/* Remove all the players from the game.  Lets you have an AI only game.
+/* Remove all the players from the game.  Lets you have an AI only game.  Also
+   marks the end of the previous series of levels - reset scores etc.
 */
 bool KeywordRemovePlayers(void)
 {
@@ -575,7 +585,25 @@ bool KeywordRemovePlayers(void)
   LevelReadToStartOfNextLine();
 
   DeassignPlayersFromDevices();
-  gLevelCounter = 0; /* Count of levels played so far. */
+  gLevelCounter = 0; /* Global count of levels played so far. */
+
+  /* Reset player scores to zero. */
+
+  player_pointer pPlayer = g_player_array;
+  uint8_t iPlayer;
+  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    pPlayer->score_cumulative = 0;
+    pPlayer->win_count = 0;
+  }
+
+  /* Remove editability of local high score table entries; that game is over. */
+
+  high_score_pointer pScore = g_LocalHighScores;
+  uint8_t iScore;
+  for (iScore = 0; iScore < MAX_SCORE_TABLE_ENTRIES; iScore++, pScore++)
+    pScore->editable_by_player = MAX_PLAYERS; /* Score now part of history. */
+
   return true;
 }
 
@@ -709,6 +737,7 @@ bool KeywordBoardSize(void)
 */
 bool KeywordBoardScreen(void)
 {
+  COMPILER_VERIFY(MAX_LEVEL_NUMERIC_ARGUMENTS >= 6);
   if (!LevelReadNumericArguments(6))
     return false;
 
@@ -1128,6 +1157,17 @@ bool LoadLevelFile(void)
 */
 const char *StockTextMessages(const char *MagicWord)
 {
+  #define MAX_MAGIC_SCORE_WORDS 6
+  #define MAX_MAGIC_SCORE_NUMERIC 3
+  static const char *sStockFieldNames[MAX_MAGIC_SCORE_WORDS] = {
+    "Score",
+    "Wins",
+    "Levels", /* First three are numeric values. */
+    "Name", /* Rest are string values. */
+    "Date",
+    "ShortDate" /* Last one is special handling string. */
+  };
+
   if (strcasecmp(MagicWord, kMagicWordCopyright) == 0)
   {
     return
@@ -1137,7 +1177,8 @@ const char *StockTextMessages(const char *MagicWord)
       "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
       "Released under the GNU General Public License version 3.\n";
   }
-  else if (strcasecmp(MagicWord, kMagicWordVersion) == 0)
+
+  if (strcasecmp(MagicWord, kMagicWordVersion) == 0)
   {
     strcpy(g_TempBuffer, "Using D. J. Sures NABU-LIB, compiled with "
       "the Z88DK build environment (using the SDCC compiler).  "
@@ -1145,6 +1186,96 @@ const char *StockTextMessages(const char *MagicWord)
     AppendDecimalUInt16(gTileArraySize);
     strcat(g_TempBuffer, " game tiles.\n");
     return g_TempBuffer;
+  }
+
+  /* "ScoreN" gets the cumulative score for player N (0 to 3). */
+
+  if (strncasecmp(MagicWord, "Score", 5) == 0)
+  {
+    uint8_t playerNumber = MagicWord[5] - '0';
+    if (playerNumber <= 3)
+    {
+      WriteNDigitColourfulNumber(g_player_array[playerNumber].score_cumulative,
+        5 /* digits */, g_TempBuffer, 80 + 11 * playerNumber);
+      return g_TempBuffer;
+    }
+  }
+
+  /* "HighNzzz" gets the high score at index N (0 to 9).  Zzz is the high score
+     field: "Score", "Name", "Date", "Wins", "Levels".   Uses the currently
+     loaded high score table, or Local if none loaded. */
+
+  if (strncasecmp(MagicWord, "High", 4) == 0)
+  {
+    uint8_t scoreIndex = MagicWord[4] - '0';
+    if (scoreIndex <= 9)
+    {
+      /* Does the rest of the word after "HighN" have a known field name? */
+
+      const char *pFieldInput = MagicWord + 5;
+      uint8_t fieldIndex;
+      for (fieldIndex = 0; fieldIndex < MAX_MAGIC_SCORE_WORDS; fieldIndex++)
+      {
+        if (strcasecmp(pFieldInput, sStockFieldNames[fieldIndex]) == 0)
+          break;
+      }
+      if (fieldIndex < MAX_MAGIC_SCORE_WORDS) /* Found a known field name. */
+      {
+        high_score_pointer pTable = g_LoadedHighScores;
+        if (pTable == NULL)
+          pTable = g_LocalHighScores;
+        high_score_pointer pScore = pTable + scoreIndex;
+
+        if (fieldIndex < MAX_MAGIC_SCORE_NUMERIC)
+        {
+          uint8_t fontOffset = 0;
+          uint8_t playerNumber = pScore->editable_by_player;
+          if (playerNumber < MAX_PLAYERS)
+            fontOffset = 80 + 11 * playerNumber;
+
+          uint16_t value;
+          if (fieldIndex == 0)
+            value = pScore->score;
+          else if (fieldIndex == 1)
+            value = pScore->win_count;
+          else
+            value = pScore->level_count;
+
+          WriteNDigitColourfulNumber(value,
+            (fieldIndex == 0) ? 5 : 2 /* digits, zero for no leading zeroes */,
+            g_TempBuffer, fontOffset);
+        }
+        else if (fieldIndex == MAX_MAGIC_SCORE_WORDS - 1) /* Short date last. */
+        {
+          /* Convert "yyyy.mm.dd hh:mm" to 6 characters or less, use "yymmdd"
+             or if it is today's date use "hh:mm". */
+
+          if (strncmp(g_CurrentScoreDateTime, pScore->date_of_score, 10) == 0)
+          {
+            strcpy(g_TempBuffer, pScore->date_of_score + 11); /* hh:mm part. */
+          }
+          else /* Use the yymmdd portion. */
+          {
+            g_TempBuffer[0] = 0;
+            char *pSource = pScore->date_of_score + 2;
+            uint8_t i;
+            for (i = 3; i > 0; i--)
+            {
+              strncat(g_TempBuffer, pSource, 2);
+              pSource += 3;
+            }
+          }
+        }
+        else
+        {
+          /* A string type of field.  Can only fancy colour digits. */
+          strcpy(g_TempBuffer, (fieldIndex == MAX_MAGIC_SCORE_NUMERIC) ?
+            pScore->name : pScore->date_of_score);
+        }
+
+        return g_TempBuffer;
+      }
+    }
   }
 
   return MagicWord;
@@ -1196,6 +1327,8 @@ static void AppendHighScoreText(high_score_pointer pScore)
 */
 static bool ReadHighScore(high_score_pointer pScore)
 {
+  pScore->editable_by_player = MAX_PLAYERS;
+
   if (!LevelReadWord(pScore->name, sizeof(pScore->name), 9 /* Tab char */))
     return false;
 
@@ -1204,8 +1337,10 @@ static bool ReadHighScore(high_score_pointer pScore)
   pScore->score = sNumericArgumentsDecoded[0];
   pScore->win_count = sNumericArgumentsDecoded[1];
   pScore->level_count = sNumericArgumentsDecoded[2];
+
   if (!LevelReadWord(pScore->date_of_score, sizeof(pScore->date_of_score), ','))
     return false;
+
   LevelReadToStartOfNextLine(); /* Discard rest of future data fields. */
   return true;
 }
@@ -1283,7 +1418,7 @@ bool WriteHighScoreTable(high_score_table_type table_type,
   SoundUpdateIfNeeded(); /* Each open attempt could take a while. */
   if (fileID == BAD_FILE_HANDLE)
   {
-    DebugPrintString("Failed to open \"");
+    DebugPrintString("Can't open \"");
     DebugPrintString(g_TempBuffer);
     DebugPrintString("\" for writing.\n");
     goto ErrorExit;
@@ -1293,7 +1428,6 @@ bool WriteHighScoreTable(high_score_table_type table_type,
   uint8_t iScore;
   for (iScore = 0; iScore < MAX_SCORE_TABLE_ENTRIES; iScore++, scoreTable++)
     AppendHighScoreText(scoreTable);
-  SoundUpdateIfNeeded();
 
   /* Huh, no fileHandleWrite functionality.  Need to use replace or append. */
 

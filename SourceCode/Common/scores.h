@@ -34,6 +34,11 @@ extern uint16_t g_ScoreGoal;
    will usually be 3 (20hz frame rate). */
 extern uint8_t g_ScoreFramesPerUpdate;
 
+/* The current date and time in "yyyy.MM.dd HH:mm" format, plus a NUL at end.
+   Updated when the level ends as part of the high score table updating. */
+#define MAX_SCORE_DATE_LENGTH 16
+extern char g_CurrentScoreDateTime[MAX_SCORE_DATE_LENGTH+1];
+
 /* Resets the goal score and forces a score display redraw on next update. */
 extern void InitialiseScores(void);
 
@@ -45,6 +50,14 @@ extern void UpdateScores(void);
    of the screen, showing each player's score in their colour, followed by the
    goal score to win. */
 extern void CopyScoresToScreen(void);
+
+/* Convert a binary 16 bit number to N digits (max 5) and write to the given
+   destination string.  The fontOffset is added to each ASCII code to get
+   colourful digits from the game font.  If nDigits is zero then it doesn't do
+   leading zeroes and the string is as long as it is.  Returns end of string
+   pointer. */
+extern char * WriteNDigitColourfulNumber(
+  uint16_t number, uint8_t nDigits, char *pDest, uint8_t fontOffset);
 
 
 /******************************************************************************
@@ -95,7 +108,6 @@ typedef struct high_score_struct {
      particular user edit the name of this entry in the high score list while
      it is being displayed. */
 
-#define MAX_SCORE_DATE_LENGTH 16
   char date_of_score[MAX_SCORE_DATE_LENGTH+1];
   /* The date the score was achieved in local time (whatever that is).  Will
      be of the format "yyyy.MM.dd HH:mm" followed by a NUL character.  Not
@@ -108,8 +120,15 @@ typedef struct high_score_struct {
 /* Local high scores are kept in memory, loaded when the program starts,
    written out to a file every time they change (so it will still work even if
    files don't work).  In order of decreasing score. */
-
 extern high_score_record g_LocalHighScores[MAX_SCORE_TABLE_ENTRIES];
+
+/* Global high scores from the server are temporarily loaded into memory in
+   this [MAX_SCORE_TABLE_ENTRIES] array, which overwrites the g_tile_array tile
+   data to save space (no tiles when displaying high scores).  NULL when no
+   data is available.  g_LoadedScoreTableType specifies what kind of table was
+   last loaded. */
+extern high_score_pointer g_LoadedHighScores;
+extern high_score_table_type g_LoadedScoreTableType;
 
 /* Given a single high score record in pNewScore, updates scoreTable to
    include a copy of it if the score is high enough to be in the table.

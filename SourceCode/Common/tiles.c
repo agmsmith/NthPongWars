@@ -17,6 +17,7 @@
  */
 
 #include "tiles.h"
+#include "scores.h"
 
 /******************************************************************************/
 
@@ -269,6 +270,10 @@ bool InitTileArray(void)
   tile_pointer pTile;
   uint8_t col, row;
   int16_t x, y;
+
+  /* Scores share same memory as tiles.  Mark high score table as invalid. */
+  g_LoadedHighScores = NULL;
+  g_LoadedScoreTableType = HIGH_SCORE_TABLE_LOCAL;
 
   g_play_area_end_tile = NULL;
   g_play_area_num_tiles = g_play_area_height_tiles * g_play_area_width_tiles;

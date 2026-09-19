@@ -1,10 +1,8 @@
 # Show the second credits screen with version info, followed by others.
-GameMode: Trivia
-Screen: TEXTSCREEN.NCHR
-LevelBookmark: CREDITS2
+GameMode: Slide
+# Was displaying a bitmap screen, need to reload font as well as screen text.
+Screen: TEXTSCREEN.NSCR
 LevelNext: All, CREDITS2
-LevelNext: Left, COTTAGE
 PlayTimeout: 7
 ScreenText: 4, 4, 4, 28, Version
-ScreenText: 22, 6, 6, 32, _ Left for Cottage _
 

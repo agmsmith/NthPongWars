@@ -319,11 +319,10 @@ bool UpdateHighScoresForLevelFinished(void)
   player_pointer pPlayer = g_player_array;
   for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
   {
-    if (pPlayer->brain == BRAIN_INACTIVE)
-      continue;
-
     strcpy(scoreRecord.name, gDefaultPlayerNames[i]);
-    if (pPlayer->brain == BRAIN_ALGORITHM)
+    if (pPlayer->brain == BRAIN_INACTIVE)
+      strcat(scoreRecord.name, "-MIA");
+    else if (pPlayer->brain == BRAIN_ALGORITHM)
       strcat(scoreRecord.name, "-bot");
 
     pPlayer->score_cumulative += GetPlayerScore(i);

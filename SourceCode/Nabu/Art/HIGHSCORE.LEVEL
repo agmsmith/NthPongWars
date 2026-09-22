@@ -5,11 +5,11 @@ LevelVersion: 20260209, NthPongWars
 GameMode: Slide
 Music: Silence
 Music: TECHTED3
-Screen: HIGHSCORE.NCHR
+Screen: HIGHSCORE.NSCR
 LevelNext: All, TITLE
-PlayTimeout: 15
+PlayTimeout: 20
 
-ScreenText: 0, 6, 6, 32, _Local High Scores_
+ScreenText: 0, 5, 5, 32, _ Local High Scores _
 
 ScreenText: 2, 3, 3, 32, High0Score
 ScreenText: 2, 9, 9, 32, High0Name

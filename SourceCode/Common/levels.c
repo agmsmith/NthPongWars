@@ -453,7 +453,7 @@ bool KeywordTextOnScreen(void)
     return false;
   SoundUpdateIfNeeded();
 
-  vdp_waitVDPReadyInt(); /* So text doesn't get scrambled by hardware delays. */
+  vdp_waitVDPReadyInt(); /* Avoids scrambling text, but makes it so slow! */
   vdp_printJustified((char *) StockTextMessages(g_TempBuffer),
     sNumericArgumentsDecoded[2], sNumericArgumentsDecoded[3]);
 
@@ -1347,11 +1347,11 @@ static bool ReadHighScore(high_score_pointer pScore)
 
 
 /* Internal function to store the file name in pBuffer for reading or
-   writing a given type of score.
+   writing a given type of score.  Doesn't do a path, just the file name.
 */
 static void BuildScoreFileName(high_score_table_type table_type, char *pBuffer)
 {
-  strcpy(pBuffer, "NTHPONG\\HIGH_SCORES_");
+  strcpy(pBuffer, "HIGH_SCORES_");
   strcat(pBuffer, g_TableTypeNames[table_type]);
   strcat(pBuffer, ".TXT");
 }
@@ -1412,7 +1412,8 @@ bool WriteHighScoreTable(high_score_table_type table_type,
 {
 #ifdef NABU_H
   FileHandleType fileID;
-  BuildScoreFileName(table_type, g_TempBuffer);
+  strcpy(g_TempBuffer, "NTHPONG\\");
+  BuildScoreFileName(table_type, g_TempBuffer + strlen(g_TempBuffer));
   fileID = rn_fileOpen(strlen(g_TempBuffer), g_TempBuffer,
     OPEN_FILE_FLAG_READWRITE, 0xff /* Use a new file handle */);
   SoundUpdateIfNeeded(); /* Each open attempt could take a while. */

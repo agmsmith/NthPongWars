@@ -1,7 +1,7 @@
 # Show the third credits screen.
 GameMode: Slide
 Screen: TEXTSCREEN.NCHR
-LevelNext: All, HIGHSCORE
+LevelNext: All, TITLE
 PlayTimeout: 7
 ScreenText: 4, 4, 4, 28, Copyright
 

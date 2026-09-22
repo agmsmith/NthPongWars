@@ -64,5 +64,5 @@ AIPlayerCodeStart: 60, 60, 60, 60
 # tile in one shot like the original game, so scatter a lot of Bash
 # power-ups around.  Nope, now we have the TileAgeFeature, no bash needed,
 # well except for randomness.
-TileQuota: H, 1
+TileQuota: F, 1
 

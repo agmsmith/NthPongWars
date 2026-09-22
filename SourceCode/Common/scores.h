@@ -66,7 +66,7 @@ extern char * WriteNDigitColourfulNumber(
  * all-time high score lists.
  */
 
-#define MAX_SCORE_NAME_LENGTH 12 /* For "Yellow-bot" or "AGMS20260917". */
+#define MAX_SCORE_NAME_LENGTH 13 /* Max that fits in the NABU display. */
 #define MAX_SCORE_TABLE_ENTRIES 10 /* So you can have a top 10 list. */
 
 enum high_score_table_types_enum {

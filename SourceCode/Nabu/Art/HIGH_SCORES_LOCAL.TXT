@@ -6,7 +6,7 @@ Leo Binkowski	600,5,10,Pac-Man & 2049er,
 D. J. Sures	500,6,10,Nabu.ca Revival,
 K&R	400,7,10,C Language,
 BeOS & Haiku	300,8,10,My Fave OSes,
-Yoda	200,9,10,Pizza & Uni.,
+Yoda	200,9,10,Pizza & Uni. Pal,
 Hacked! Overflow?	10,10,10,Not a valid date here?
 Past End	42,11,10,2026.09.22 00:00,
 

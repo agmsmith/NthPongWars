@@ -2906,16 +2906,89 @@ void AddAllByPointers(int16_t *First, int16_t *Second,int16_t *Sum)
 #define AddByMacro(First, Second) ((First) + (Second))
 </PRE>
 
-<P><B>Pass by value</B> uses 22 bytes to do the call and 23 bytes for the subroutine
-code, totalling <B>45 bytes</B>.
+<P><B>Pass by value</B> uses 22 bytes to do the call and 23 bytes for the
+subroutine code, totalling <B>45 bytes</B>.
 
-<P><B>Pass by reference</B> (result returned in a register) totalled 18+31 = <B>49 bytes</B>.
+<P><B>Pass by reference</B> (result returned in a register) totalled 18+31 =
+<B>49 bytes</B>.
 
-<P><B>Pass by pointers</B> (result via pointer) totalled 23+39 = <B>62 bytes</B>.
+<P><B>Pass by pointers</B> (result via pointer) totalled 23+39 =
+<B>62 bytes</B>.
 
 <P>Using an <B>inline macro</B> totalled <B>17 bytes</B>.
 
 <P>I like that macro one!  Will try to do it that way.
+
+
+<HR>
+<H2><A NAME="2026.09.22"></A>2026.09.22</H2>
+
+<H3>Summer Progress</H3>
+
+<P>A busy summer kept me busy on other things, like painting the family cottage
+exterior and taking care of quite a few groups of visitors.  But I did have
+time to do a bit of programming, and rework the tutorials - made more of them
+to cover game hazards and did a better explanation of scoring.
+
+<P>Also, after those experiments with math, I settled on 24 bit (3 byte) math
+with a 16 bit integer portion and 8 bit binary fraction, which gives you easy
+access to the integer portion.  The game wasn't much faster after all that.  So
+some levels now have fewer AI players for speed.
+
+<P>I play tested it on some friends, and then had to answer the question "Why
+does it bounce funny off the walls?" It's actually because the game avatars
+steer like a car and have to turn around to bounce off a wall (done repeatedly
+to break down the wall).  The player can't switch direction 180 degrees
+instantaneously.  To make it more obvious, I changed the player image from a
+ball to an arrow shape which shows steering direction, mostly (only 8 shapes at
+45 degree angles).  The odd thing was that coming up with a directional shape
+lead to the stock Asteroids shape as being the most readable one in an 8x8
+monochrome pixel image.  I tried several others, outlines and other shapes, but
+that filled-in arrow worked best.
+
+<P>I've added a level parameter to set turning radius in the physics, then made
+a few levels that have wide turns.  If you go fast, it's harder to turn
+quickly.  But that turns out to not be fun so only a few short duration levels
+use it.
+
+<H3>Adding High Scores</H3>
+
+<P>I wanted a post-level high score screen.  Currently it just says <I>Blue
+Player Wins!</I> in a full screen fancy bitmap.  I wanted to keep that too.
+Fortunately, the TMS9918A running in graphics mode 2 draws the screen in three
+parts, each one 8 rows (64 pixels) tall, and each with its own font.  That's
+how you do bitmaps, a custom font "letter" for each of the 256 characters in
+that 8 row screen.  So I just changed my full screen bitmap loading code to
+load 1/3 of the screen with the custom bitmap-in-a-font, and we use the regular
+text font for the other 2/3 of the screen, so you can print high scores and
+other text there.
+
+<P ALIGN="CENTER"><A HREF="20260922BlueWins.png"><IMG
+SRC="20260922BlueWins.png" WIDTH="280" HEIGHT="226"
+ALT="[Combined text and graphics score screen]"></A><BR>
+Combined Bitmap Graphic and Text
+
+<P>The next step was saving and loading high scores.  I made a simple data
+structure and reused some of the level loading code to read values.  The
+trouble is that with 10 high scores, each with a player name and date stamp,
+totals around 500 bytes.  With daily, weekly, monthly, yearly, all time score
+tables, it would suck up several kilobytes.  So I'm just keeping local high
+scores in memory and later on putting the others on an Internet server, so they
+can be temporarily loaded into memory (and have world-wide high score lists).
+
+<P>Displaying the high scores is done with a special level that's mostly text
+items, with magic strings that make the code dig values out of the score
+tables.  I even have it drawing the active players' numbers in their own
+colours.  I still have to put in a way to enter a name with a joystick, though
+I'll skip adding AI code to do that for the 'bot players due to code space
+limitations.  Yes, we're getting to the end of the NABU part of this project as
+the amount of free RAM dwindles to zero.  Though levels are free, since they're
+stored on a server somewhere.
+
+<P ALIGN="CENTER"><A HREF="20260922HighScores.png"><IMG
+SRC="20260922HighScores.png" WIDTH="280" HEIGHT="226"
+ALT="[High Score Table Screen]"></A><BR>
+Full High Score Table
 
 <P>- Alex
 

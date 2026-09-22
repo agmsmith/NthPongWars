@@ -1155,19 +1155,19 @@ bool LoadLevelFile(void)
    g_TempBuffer or maybe not.  Returns your MagicWord if it doesn't know
    that magic word.  Currently recognises "Copyright" and "Version".
 */
+#define MAX_MAGIC_SCORE_WORDS 6
+#define MAX_MAGIC_SCORE_NUMERIC 3
+static const char *sStockFieldNames[MAX_MAGIC_SCORE_WORDS] = {
+  "Score",
+  "Wins",
+  "Levels", /* First three are numeric values. */
+  "Name", /* Rest are string values. */
+  "Date",
+  "ShortDate" /* Last one is special handling string. */
+};
+
 const char *StockTextMessages(const char *MagicWord)
 {
-  #define MAX_MAGIC_SCORE_WORDS 6
-  #define MAX_MAGIC_SCORE_NUMERIC 3
-  static const char *sStockFieldNames[MAX_MAGIC_SCORE_WORDS] = {
-    "Score",
-    "Wins",
-    "Levels", /* First three are numeric values. */
-    "Name", /* Rest are string values. */
-    "Date",
-    "ShortDate" /* Last one is special handling string. */
-  };
-
   if (strcasecmp(MagicWord, kMagicWordCopyright) == 0)
   {
     return
@@ -1256,14 +1256,16 @@ const char *StockTextMessages(const char *MagicWord)
           }
           else /* Use the yymmdd portion. */
           {
-            g_TempBuffer[0] = 0;
+            char *pDest = g_TempBuffer;
             char *pSource = pScore->date_of_score + 2;
             uint8_t i;
             for (i = 3; i > 0; i--)
             {
-              strncat(g_TempBuffer, pSource, 2);
-              pSource += 3;
+              *pDest++ = *pSource++;
+              *pDest++ = *pSource++;
+              pSource++;
             }
+            *pDest = 0;
           }
         }
         else

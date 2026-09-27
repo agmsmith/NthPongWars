@@ -1188,16 +1188,30 @@ const char *StockTextMessages(const char *MagicWord)
     return g_TempBuffer;
   }
 
-  /* "ScoreN" gets the cumulative score for player N (0 to 3). */
+  /* "ScoreNCumulative" displays the current cumulative scores for the specified
+     player.  "ScoreNLastLevel" gets the score on the last level finished. */
 
   if (strncasecmp(MagicWord, "Score", 5) == 0)
   {
     uint8_t playerNumber = MagicWord[5] - '0';
     if (playerNumber <= 3)
     {
-      WriteNDigitColourfulNumber(g_player_array[playerNumber].score_cumulative,
-        5 /* digits */, g_TempBuffer, 80 + 11 * playerNumber);
-      return g_TempBuffer;
+      bool valid = true;
+      player_pointer pPlayer = g_player_array + playerNumber;
+      uint16_t value;
+      if (strcasecmp(MagicWord + 6, "Cumulative") == 0)
+        value = pPlayer->score_cumulative;
+      else if (strcasecmp(MagicWord + 6, "LastLevel") == 0)
+        value = pPlayer->score_last_level;
+      else
+        valid = false;
+
+      if (valid)
+      {
+        WriteNDigitColourfulNumber(value, 5 /* digits */,
+          g_TempBuffer, 80 + 11 * playerNumber);
+        return g_TempBuffer;
+      }
     }
   }
 

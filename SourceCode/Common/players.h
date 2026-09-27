@@ -353,6 +353,9 @@ typedef struct player_struct {
   uint16_t score_cumulative;
     /* Total score over all the levels played contiguously. */
 
+  uint16_t score_last_level;
+    /* Score for the last level that was finished, set at level end. */
+
   uint16_t score_displayed;
   /* The score value currently being shown on the display and in score_text.
      Don't need to update the display if it's the same as score. */

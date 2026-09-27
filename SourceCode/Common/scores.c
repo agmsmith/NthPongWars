@@ -325,7 +325,8 @@ bool UpdateHighScoresForLevelFinished(void)
     else if (pPlayer->brain == BRAIN_ALGORITHM)
       strcat(scoreRecord.name, "-bot");
 
-    pPlayer->score_cumulative += GetPlayerScore(i);
+    pPlayer->score_cumulative +=
+      (pPlayer->score_last_level = GetPlayerScore(i));
     scoreRecord.score = pPlayer->score_cumulative;
     scoreRecord.win_count = pPlayer->win_count;
     scoreRecord.editable_by_player = i; /* Has player number when editable. */

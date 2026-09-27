@@ -7,11 +7,19 @@ Screen: WINP5.NFUL1
 LevelNext: All, Bookmark
 PlayTimeout: 15
 
-ScreenText: 9, 6, 6, 32, Total Scores So Far
-ScreenText: 10, 3, 3, 32, Score0
-ScreenText: 10, 10, 10, 32, Score1
-ScreenText: 10, 17, 17, 32, Score2
-ScreenText: 10, 24, 24, 32, Score3
+ScreenText: 8, 9, 9, 32, Scores So Far
+
+ScreenText: 9, 0, 0, 32, Just Now
+ScreenText: 9, 9, 9, 32, Score0LastLevel
+ScreenText: 9, 15, 15, 32, Score1LastLevel
+ScreenText: 9, 21, 21, 32, Score2LastLevel
+ScreenText: 9, 27, 27, 32, Score3LastLevel
+
+ScreenText: 10, 2, 2, 32, Totals
+ScreenText: 10, 9, 9, 32, Score0Cumulative
+ScreenText: 10, 15, 15, 32, Score1Cumulative
+ScreenText: 10, 21, 21, 32, Score2Cumulative
+ScreenText: 10, 27, 27, 32, Score3Cumulative
 
 ScreenText: 12, 9, 9, 32, Local Leaders
 

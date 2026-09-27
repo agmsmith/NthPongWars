@@ -185,7 +185,7 @@ target_list_item_record g_target_list[] = {
   {5, TARGET_CODE_DELAY}, /* Delay 1 second attacking leading player. */
   {6, TARGET_CODE_SPEED}, /* Slow down. */
   {99, TARGET_CODE_STEER}, /* Just bounce around, no steering, no power-ups. */
-  {15, TARGET_CODE_DELAY}, /* Delay 3 seconds idling and bouncing. */
+  {25, TARGET_CODE_DELAY}, /* Delay 5 seconds idling and bouncing. */
   {90, TARGET_CODE_GOTO},
 };
 

@@ -9,12 +9,12 @@ Screen: CLASSICPONGWARS.NCHR
 # After showing the win screen, will return to the title.
 LevelBookmark: TITLE
 LevelNext: All, TITLE
-LevelNext: P0, WINP0
-LevelNext: P1, WINP1
-LevelNext: P2, WINP2
-LevelNext: P3, WINP3
-LevelNext: Fire, WINP4
-LevelNext: Timeout, WINP5
+LevelNext: P0, WINP0SHORT
+LevelNext: P1, WINP1SHORT
+LevelNext: P2, WINP2SHORT
+LevelNext: P3, WINP3SHORT
+LevelNext: Fire, WINP4SHORT
+LevelNext: Timeout, WINP5SHORT
 
 # Remove all players and reset win counts to zero.  Just want AIs doing
 # boring bounces around most of the time.  Though Humans can join in.

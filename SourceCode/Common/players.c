@@ -282,6 +282,8 @@ static void ReinitialisePlayer(player_pointer pPlayer)
   pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
   pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
+  /* Use the default name for high scores, Humans can edit it later. */
+  strcpy(pPlayer->name, gDefaultPlayerNames[pPlayer->player_array_index]);
 }
 
 

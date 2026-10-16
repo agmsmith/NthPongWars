@@ -56,22 +56,51 @@ static int16_t sNumericArgumentsDecoded[MAX_LEVEL_NUMERIC_ARGUMENTS];
 */
 bool VictoryConditionTest(void)
 {
-  uint8_t i;
-  uint16_t highestScore = 0;
   uint8_t winningPlayer = MAX_PLAYERS + 2;
   /* 0 to 3 are players, 4 is Fire button, 5 is Timeout, 6 is invalid. */
 
-  player_pointer pPlayer = g_player_array;
-  for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
+  uint8_t i;
+  player_pointer pPlayer;
+
+  /* Find current highest score.  Include missing players. */
+
+  uint16_t highestScore = 0;
+  if (gVictoryModeHighestTileCount)
   {
-    uint16_t score = GetPlayerScore(i);
-    if (score > highestScore)
-      highestScore = score;
+    pPlayer = g_player_array;
+    for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
+    {
+      uint16_t score = GetPlayerScore(i);
+      if (score > highestScore)
+        highestScore = score;
+    }
   }
+
+  /* Check all players (even no brainers, they have a score) to see if one is
+     a winner that satisfies the current victory condition. */
 
   pPlayer = g_player_array;
   for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
   {
+    /* First player whose tile count reaches the countdown goal wins.  Includes
+       players who are missing in action; ones who got points then left the
+       game. */
+
+    if (gVictoryModeHighestTileCount)
+    {
+      if (highestScore >= g_ScoreGoal && GetPlayerScore(i) >= highestScore)
+      {
+        winningPlayer = i;
+        pPlayer->win_count++;
+        gLevelCounter++; /* Finished playing a game level, that counts. */
+        UpdateHighScoresForLevelFinished();
+        break;
+      }
+    }
+
+    /* The rest of the victory conditions come from pressing a button, so you
+       need an active player, no zombies allowed. */
+
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
@@ -112,20 +141,6 @@ bool VictoryConditionTest(void)
         break;
       }
     }
-
-    /* First player whose tile count reaches the countdown timer wins. */
-
-    if (gVictoryModeHighestTileCount)
-    {
-      if (highestScore >= g_ScoreGoal && GetPlayerScore(i) >= highestScore)
-      {
-        winningPlayer = i;
-        pPlayer->win_count++;
-        gLevelCounter++; /* Finished playing a game level, that counts. */
-        UpdateHighScoresForLevelFinished();
-        break;
-      }
-    }
   }
 
   /* Check for a level timeout if we don't have a winner yet. */
@@ -143,12 +158,14 @@ bool VictoryConditionTest(void)
     gVictoryWinningPlayer = winningPlayer;
     strcpy(gLevelName, gWinnerNextLevelName[winningPlayer]);
 
+#if 1
     strcpy(g_TempBuffer, "Winner is player #");
     AppendDecimalUInt16(winningPlayer);
     strcat(g_TempBuffer, ", next level \"");
     strcat(g_TempBuffer, gLevelName);
     strcat(g_TempBuffer, "\".\n");
     DebugPrintString(g_TempBuffer);
+#endif
 
     return true;
   }

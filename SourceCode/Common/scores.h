@@ -84,6 +84,11 @@ extern const char *g_TableTypeNames[HIGH_SCORE_TABLE_MAX]; /* Enum to string. */
 /* One of these structures keeps track of each high score entry. */
 
 typedef struct high_score_struct {
+  char name[MAX_SCORE_NAME_LENGTH+1];
+  /* Name the player enters, blank padded, NUL at end, only ASCII printable
+     characters (0x20 to 0x7F).  Default is the player colour.  Longest would
+     be "Yellow-Bot". */
+
   uint16_t score;
   /* Total of the scores of all levels played.  16 bits (65535 max) should be
      enough; most levels are under 700 for a score so that's something like
@@ -96,11 +101,6 @@ typedef struct high_score_struct {
   uint8_t level_count;
   /* How many levels have been played in this game campaign to get the score.
      Useful for having the player quit early but still get a high score. */
-
-  char name[MAX_SCORE_NAME_LENGTH+1];
-  /* Name the player enters, blank padded, NUL at end, only ASCII printable
-     characters (0x20 to 0x7F).  Default is the player colour.  AI players
-     use colour+bot.  Longest would be "Yellow-Bot". */
 
   uint8_t editable_by_player;
   /* If this score is from the just finished game, this is the related player

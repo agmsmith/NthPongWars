@@ -1,6 +1,7 @@
 # Player #5 (not a player) Wins, but with short timeout for demo mode levels.
 GameMode: Slide
 Music: Silence
+Music: PINKPNTH
 Screen: LOCALSCORES.NCHR
 Screen: WINP5.NFUL1
 LevelNext: All, Bookmark

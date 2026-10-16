@@ -319,11 +319,20 @@ bool UpdateHighScoresForLevelFinished(void)
   player_pointer pPlayer = g_player_array;
   for (i = 0; i < MAX_PLAYERS; i++, pPlayer++)
   {
-    strcpy(scoreRecord.name, gDefaultPlayerNames[i]);
+    uint8_t nameLen = strlen(pPlayer->name);
+    strncpy(scoreRecord.name, pPlayer->name, MAX_SCORE_NAME_LENGTH);
+    scoreRecord.name[MAX_SCORE_NAME_LENGTH] = 0;
+
     if (pPlayer->brain == BRAIN_INACTIVE)
-      strcat(scoreRecord.name, "-MIA");
+    {
+      if (nameLen + 4 <= MAX_SCORE_NAME_LENGTH)
+        strcat(scoreRecord.name, "-MIA");
+    }
     else if (pPlayer->brain == BRAIN_ALGORITHM)
-      strcat(scoreRecord.name, "-bot");
+    {
+      if (nameLen + 4 <= MAX_SCORE_NAME_LENGTH)
+        strcat(scoreRecord.name, "-bot");
+    }
 
     pPlayer->score_cumulative +=
       (pPlayer->score_last_level = GetPlayerScore(i));

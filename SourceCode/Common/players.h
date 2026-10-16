@@ -377,6 +377,13 @@ typedef struct player_struct {
     /* The lozenge character currently displayed after the score when close to
        the goal.  Or a space character if not showing a lozenge. */
 
+  char name[MAX_SCORE_NAME_LENGTH+1];
+    /* Name of the player for high score tables, NUL terminated.  Reset to a
+       default whenever a new game controller (joystick, keyboard, AI brain) is
+       assigned to the player.  Can be edited during per-level high score
+       displays by using the joystick, if you got a score good enough.  Will be
+       used for global high scores once the game is over. */
+
   uint16_t win_count;
   /* Number of levels won by this player.  Will be used for high score listings
      later on. */

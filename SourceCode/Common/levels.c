@@ -1215,7 +1215,7 @@ const char *StockTextMessages(const char *MagicWord)
     {
       bool valid = true;
       player_pointer pPlayer = g_player_array + playerNumber;
-      uint16_t value;
+      uint16_t value = 0;
       if (strcasecmp(MagicWord + 6, "Cumulative") == 0)
         value = pPlayer->score_cumulative;
       else if (strcasecmp(MagicWord + 6, "LastLevel") == 0)

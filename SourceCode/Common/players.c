@@ -221,6 +221,7 @@ void InitialisePlayers(void)
   iPlayer++, pPlayer++)
   {
     pPlayer->player_array_index = iPlayer; /* Fast convert pointer to index. */
+    pPlayer->name[0] = 0; /* No name for unused players. */
     pPlayer->win_count = 0;
     pPlayer->score_cumulative = 0;
 
@@ -282,8 +283,6 @@ static void ReinitialisePlayer(player_pointer pPlayer)
   pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
   pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
-  /* Use the default name for high scores, Humans can edit it later. */
-  strcpy(pPlayer->name, gDefaultPlayerNames[pPlayer->player_array_index]);
 }
 
 
@@ -1180,7 +1179,9 @@ static void DebugPrintPlayerAssignment(player_pointer pPlayer)
 {
   strcpy(g_TempBuffer, "Player #");
   AppendDecimalUInt16(pPlayer->player_array_index);
-  strcat(g_TempBuffer, " assigned to ");
+  strcat(g_TempBuffer, " \"");
+  strcat(g_TempBuffer, pPlayer->name);
+  strcat(g_TempBuffer, "\" assigned to ");
   switch (pPlayer->brain)
   {
     case BRAIN_INACTIVE:
@@ -1320,8 +1321,7 @@ void UpdatePlayerInputs(void)
         ((player_brain) BRAIN_JOYSTICK) :
         ((player_brain) BRAIN_KEYBOARD);
       pPlayer->joystick_inputs = joyStickData;
-      pPlayer->win_count = 0;
-      pPlayer->score_cumulative = 0;
+      strcpy(pPlayer->name, gDefaultPlayerNames[iPlayer]);
       DebugPrintPlayerAssignment(pPlayer);
     }
   }
@@ -1373,6 +1373,8 @@ void UpdatePlayerInputs(void)
       {
         ReinitialisePlayer(pFreePlayer);
         pFreePlayer->brain = (player_brain) BRAIN_ALGORITHM;
+        strcpy(pFreePlayer->name,
+          gDefaultPlayerNames[pFreePlayer->player_array_index]);
         DebugPrintPlayerAssignment(pFreePlayer);
       }
     }

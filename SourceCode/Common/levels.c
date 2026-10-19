@@ -1188,8 +1188,8 @@ const char *StockTextMessages(const char *MagicWord)
   if (strcasecmp(MagicWord, kMagicWordCopyright) == 0)
   {
     return
-      "Welcome to the Nth Pong Wars NABU game.  "
-      "Copyright 2026 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
+      "Nth Pong Wars for NABU is "
+      "copyright 2026 by Alexander G. M. Smith, contact agmsmith@ncf.ca.  "
       "Started in February 2024, see the blog at "
       "https://web.ncf.ca/au829/WeekendReports/20240207/NthPongWarsBlog.html  "
       "Released under the GNU General Public License version 3.\n";
@@ -1197,9 +1197,9 @@ const char *StockTextMessages(const char *MagicWord)
 
   if (strcasecmp(MagicWord, kMagicWordVersion) == 0)
   {
-    strcpy(g_TempBuffer, "Using D. J. Sures NABU-LIB, compiled with "
-      "the Z88DK build environment (using the SDCC compiler).  "
-      "Compiled on " __DATE__ " at " __TIME__ ".  Free memory has space for ");
+    strcpy(g_TempBuffer, "Using D.J. Sures NABU-LIB, compiled with "
+      "the Z88DK build system (SDCC compiler).  "
+      "Compiled on " __DATE__ " at " __TIME__ ".  Free memory for ");
     AppendDecimalUInt16(gTileArraySize);
     strcat(g_TempBuffer, " game tiles.\n");
     return g_TempBuffer;

@@ -261,7 +261,10 @@ typedef struct player_struct {
   int16_t starting_level_pixel_x;
   int16_t starting_level_pixel_y;
   /* The initial position of the players in pixels on the game board.  Set by
-     the level loader and used by InitialisePlayersForNewLevel. */
+     the level loader and used by InitialisePlayersForNewLevel.  If this is a
+     high score screen, it's the location of the pixel center of the character
+     cell where the player's name starts on screen, pixel_center_x will be used
+     to move the player's cursor sprite as they edit the name. */
 
   fx velocity_x;
   fx velocity_y;
@@ -382,7 +385,7 @@ typedef struct player_struct {
        default whenever a new game controller (joystick, keyboard, AI brain) is
        assigned to the player.  Can be edited during per-level high score
        displays by using the joystick, if you got a score good enough.  Will be
-       used for global high scores once the game is over. */
+       used for submitting global high scores once the game is over. */
 
   uint16_t win_count;
   /* Number of levels won by this player.  Will be used for high score listings

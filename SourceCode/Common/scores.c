@@ -37,7 +37,7 @@ static uint8_t s_ScoreFramesPerUpdateDisplayed;
    the score for each player based on the state of the tiles in the play area,
    in case we want to reload a saved game or have pre-made scenarios.
 */
-void InitialiseScores(void)
+void InitialiseScoreDisplay(void)
 {
   uint8_t iPlayer;
   player_pointer pPlayer;

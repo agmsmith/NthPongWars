@@ -40,7 +40,7 @@ extern uint8_t g_ScoreFramesPerUpdate;
 extern char g_CurrentScoreDateTime[MAX_SCORE_DATE_LENGTH+1];
 
 /* Resets the goal score and forces a score display redraw on next update. */
-extern void InitialiseScores(void);
+extern void InitialiseScoreDisplay(void);
 
 /* Converts the player's scores into colourful text, cached in each player.
    Also update the goal text. */
@@ -80,6 +80,7 @@ enum high_score_table_types_enum {
 };
 typedef uint8_t high_score_table_type; /* Want 8 bits, not a 16 bit enum. */
 extern const char *g_TableTypeNames[HIGH_SCORE_TABLE_MAX]; /* Enum to string. */
+#define MAX_HIGH_SCORE_TABLE_NAME_LENGTH 7 /* For "AllTime" */
 
 /* One of these structures keeps track of each high score entry. */
 

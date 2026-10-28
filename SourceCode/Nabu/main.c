@@ -258,7 +258,7 @@ void main(void)
   DebugPrintString(StockTextMessages(kMagicWordCopyright));
   DebugPrintString(StockTextMessages(kMagicWordVersion));
 
-  initNABULib(); /* No longer can use CP/M text input or output. */
+  initNABULib(); /* No longer can use CP/M text input or output past here. */
 
   vdp_init(VDP_MODE_G2,
     VDP_WHITE /* fgColor not applicable */, VDP_BLACK /* bgColor */,

@@ -344,11 +344,16 @@ void UpdatePlayerAnimations(void)
   {
     if (pPlayer->brain != ((player_brain) BRAIN_INACTIVE))
     {
-      /* Update player's animation to show which direction they are pointing
-         towards, rather than just animating by time. */
+      if (gVictoryModeHighestTileCount) /* Playing a game, not other screens. */
+      {
+        /* Update player's animation to show which direction they are pointing
+           towards, rather than just animating by time. */
 
-      pPlayer->main_anim.current_name = pPlayer->main_anim.first_name +
-        pPlayer->velocity_octant * 4 /* 4 characters per 16x16 sprite. */;
+        pPlayer->main_anim.current_name = pPlayer->main_anim.first_name +
+          pPlayer->velocity_octant * 4 /* 4 name cells per 16x16 sprite. */;
+      }
+      else /* Regular time based animation, like for high score cursors. */
+        UpdateOneAnimation(&pPlayer->main_anim);
 
 #ifdef NABU_H
       if (pPlayer->sparkle_anim.type != ((SpriteAnimationType) SPRITE_ANIM_NONE))
@@ -1567,6 +1572,14 @@ void UpdatePlayerInputs(void)
          pPlayer->sparkle_anim.current_name =
           SPRITE_ANIM_BALL_EFFECT_THRUST_BOLD_FRAME;
       }
+    }
+
+    /* If this is a high score editing screen, move the player's cursors around
+       and change letters. */
+
+    if (gVictoryModeEditScores)
+    {
+      /* bleeble; */
     }
   }
 }

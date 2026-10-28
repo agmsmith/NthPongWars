@@ -281,7 +281,7 @@ static bool LevelReadLine(char *Buffer, uint8_t BufferSize)
   while (true)
   {
     letter = LevelReadByte();
-    if (letter == NUL || letter == 10 /* LF */ || letter == 13 /* return */)
+    if (letter == NUL || letter == 10 /* LF */ || letter == 13 /* RET */)
       break;
     if (sizeSoFar < dataSize)
     {
@@ -678,29 +678,33 @@ bool KeywordGameMode(void)
   if (!LevelReadAndTrimLine(modeName, sizeof(modeName)))
     return true; /* Early end of file.  Leave mode unchanged. */
 
+  gVictoryModeEditScores = false;
+  gVictoryModeFireButtonPress = false;
+  gVictoryModeHighestTileCount = false;
+  gVictoryModeJoystickPress = false;
+
   if (strcasecmp(modeName, "Slide") == 0)
   {
     gVictoryModeFireButtonPress = true;
-    gVictoryModeJoystickPress = false;
-    gVictoryModeHighestTileCount = false;
   }
   else if (strcasecmp(modeName, "Trivia") == 0)
   {
-    gVictoryModeFireButtonPress = false;
     gVictoryModeJoystickPress = true;
-    gVictoryModeHighestTileCount = false;
   }
   else if (strcasecmp(modeName, "PongWar") == 0)
   {
-    gVictoryModeFireButtonPress = false;
-    gVictoryModeJoystickPress = false;
     gVictoryModeHighestTileCount = true;
+  }
+  else if (strcasecmp(modeName, "Scores") == 0)
+  {
+    gVictoryModeEditScores = true;
   }
   else
   {
     DebugPrintString("Unrecognised GameMode: \"");
     DebugPrintString(modeName);
-    DebugPrintString("\", try Slide, Trivia, PongWar.\n");
+    DebugPrintString("\", try Slide, Trivia, PongWar, Scores.\n");
+    gVictoryModeFireButtonPress = true;
   }
 
   return true;
@@ -878,6 +882,34 @@ bool KeywordTileQuota(void)
 }
 
 
+
+/* Set up a high score display using the given high score listing, which may
+   need to be loaded here.  Data overwrites the tile array.
+*/
+bool KeywordScorePage(void)
+{
+  char scorePageName[MAX_HIGH_SCORE_TABLE_NAME_LENGTH+1];
+  if (!LevelReadAndTrimLine(scorePageName, sizeof(scorePageName)))
+    return false; /* Early end of file.  Something went wrong. */
+
+  high_score_table_type scoreType;
+  for (scoreType = 0; scoreType < HIGH_SCORE_TABLE_MAX; scoreType++)
+  {
+    if (strcasecmp(scorePageName, g_TableTypeNames[scoreType]) == 0)
+      break;
+  }
+  if (scoreType >= HIGH_SCORE_TABLE_MAX)
+    return false;
+
+  memcpy(g_tile_array, g_LocalHighScores, sizeof(g_LocalHighScores));
+  if (scoreType == HIGH_SCORE_TABLE_LOCAL)
+    return true;
+
+  ReadHighScoreTable(scoreType, g_tile_array); /* If it fails, uses local. */
+  return true;
+}
+
+
 /* The speed at which velocity starts being reduced by friction.  In quarter
    pixels speed per frame.
 */
@@ -1003,6 +1035,7 @@ static struct KeyWordCallStruct kKeywordFunctionTable[] = {
   {"BoardScreen", KeywordBoardScreen},
   {"BoardTileData", KeywordBoardTileData},
   {"BoardScroll", KeywordAutoBoardScrollFeature},
+  {"ScorePage", KeywordScorePage},
   {"PhysicsFrictionSpeed", KeywordPhysicsFrictionSpeed},
   {"PhysicsFrictionShift", KeywordPhysicsFrictionShift},
   {"PhysicsSeparatePlayersSpeed", KeywordPhysicsSeparatePlayersSpeed},
@@ -1152,7 +1185,7 @@ bool LoadLevelFile(void)
   InitialisePlayersForNewLevel();
 
   /* Do after tiles & players set up: calc initial score. */
-  InitialiseScores();
+  InitialiseScoreDisplay();
 
   /* Remove extra keystrokes and joystick actions from the input queue, so a
      stale joystick action doesn't take over an AI player or skip to the next

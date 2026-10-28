@@ -43,7 +43,7 @@ LevelVersion: 20260209, NthPongWars
 # PONGWAR runs the level as a playable Nth Pong Wars game, with AI players
 # enabled, remember to load a font and sprites for the game graphics.
 #
-# EDITSCORES runs the level as a score display and editing screen.  Eligible
+# SCORES runs the level as a score display and editing screen.  Eligible
 # players (local high score winners) can move a cursor left/right with the
 # joystick to edit their name, up/down changes the letter under the cursor
 # and fire toggles between editing (cursor visible) and "done" (no cursor).
@@ -129,13 +129,6 @@ Screen: HELP.NCHR
 # ScreenText: Row, FirstLeftMargin, SubsequentLeftMargin, RightMargin, Text
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
 
-# Specify which high score table to load, most of them are from a global server
-# on the Internet.  This gets the values the magic keywords in ScreenText
-# display for high scores.  Note that it overwrites the tile data, so only use
-# this on levels that are just displaying high scores.  Possible values are
-# Local, Daily, Weekly, Monthly, Yearly, AllTime.
-LoadHighScoreTable: AllTime
-
 # When playing in countdown mode, the first player to reach this many tiles in
 # their colour wins.  The count starts at this value and counts down about once
 # per second.  If you don't specify it, it gets set to the number of tiles in
@@ -153,13 +146,15 @@ InitialCount: 100
 # zero for no timeout.
 PlayTimeout: 30
 
-# Selects which page (local, global daily, etc) of high score data to load.
+# Selects which page (local, global daily, etc) of high score data to display.
 # Non-local ones may request a page from a web server, which could take a
 # little while or fail.  Certain magic keywords in the ScreenText keyword will
 # now look up values from the selected high score data.  Usually the GameMode
-# will be either Slide to just show the scores, or EditScores to let winners
+# will be either Slide to just show the scores, or Scores to let winners
 # edit their names (after editing the scores, if there are any changes then
-# they will be submitted over the network to the server).  Possible values are:
+# they will be submitted over the network to the server).  Note that it
+# overwrites the tile data, so only use this on levels that are just displaying
+# high scores (will cause an error in PONGWAR game mode).  Possible values are:
 # Local (the default), Daily, Weekly, Monthly, Yearly, AllTime.
 ScorePage: Local
 

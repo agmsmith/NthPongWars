@@ -17,6 +17,7 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
+InitialCount: 400
 BoardScreen: 0, 1, 32, 23, 0, 0
 BoardScroll: 0
 

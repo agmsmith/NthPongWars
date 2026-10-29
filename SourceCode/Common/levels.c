@@ -882,12 +882,14 @@ bool KeywordTileQuota(void)
 }
 
 
-
 /* Set up a high score display using the given high score listing, which may
    need to be loaded here.  Data overwrites the tile array.
 */
 bool KeywordScorePage(void)
 {
+  if (!gVictoryModeEditScores)
+    return false;
+
   char scorePageName[MAX_HIGH_SCORE_TABLE_NAME_LENGTH+1];
   if (!LevelReadAndTrimLine(scorePageName, sizeof(scorePageName)))
     return false; /* Early end of file.  Something went wrong. */
@@ -900,12 +902,19 @@ bool KeywordScorePage(void)
   }
   if (scoreType >= HIGH_SCORE_TABLE_MAX)
     return false;
+  g_LoadedScoreTableType = scoreType;
 
-  memcpy(g_tile_array, g_LocalHighScores, sizeof(g_LocalHighScores));
+  /* Reuse tile memory for the scores. */
+  g_play_area_num_tiles = 0;
+  g_play_area_end_tile = g_tile_array;
+  g_LoadedHighScores = g_tile_array;
+
+  memcpy(g_LoadedHighScores, g_LocalHighScores, sizeof(g_LocalHighScores));
   if (scoreType == HIGH_SCORE_TABLE_LOCAL)
     return true;
 
-  ReadHighScoreTable(scoreType, g_tile_array); /* If it fails, uses local. */
+  /* Read scores from a file or from a server on the Internet. */
+  ReadHighScoreTable(scoreType, g_LoadedHighScores); /* If fails, uses local. */
   return true;
 }
 
@@ -1203,10 +1212,22 @@ bool LoadLevelFile(void)
 
 /* Returns one of several stock text messages when given a keyword.  May use
    g_TempBuffer or maybe not.  Returns your MagicWord if it doesn't know
-   that magic word.  Currently recognises "Copyright" and "Version".
+   that magic word.  Currently recognises "Copyright" and "Version",
+   and various score values prefixed by "ScoreN", where N is player 0 to 3.
+   "ScoreNCumulative" - accumulated score for a player over several levels,
+   "ScoreNLastLevel" - score in the just finished level for a player,
+   For the high score table data, "HighN" will get the table entry at row
+   0 (best player) to 9 (tenth best).  The particular table depends on which
+   one was loaded by the ScorePage keyword (local, all time, daily, etc).
+   "HighNScore" - The score from the high score table,
+   "HighNName" - the name of the player,
+   "HighNWins" - number of levels won in the game by the player,
+   "HighNLevels" - total number of levels in the game,
+   "HighNDate" - the date when the score was achieved,
+   "HighNShortDate" - a shorter format of the date.
 */
 #define MAX_MAGIC_SCORE_WORDS 6
-#define MAX_MAGIC_SCORE_NUMERIC 3
+#define MAX_MAGIC_SCORE_NUMERIC_NAME 3 /* First 3 are numbers, [3] is name */
 static const char *sStockFieldNames[MAX_MAGIC_SCORE_WORDS] = {
   "Score",
   "Wins",
@@ -1290,13 +1311,13 @@ const char *StockTextMessages(const char *MagicWord)
           pTable = g_LocalHighScores;
         high_score_pointer pScore = pTable + scoreIndex;
 
-        if (fieldIndex < MAX_MAGIC_SCORE_NUMERIC)
-        {
-          uint8_t fontOffset = 0;
-          uint8_t playerNumber = pScore->editable_by_player;
-          if (playerNumber < MAX_PLAYERS)
-            fontOffset = 80 + 11 * playerNumber;
+        uint8_t fontOffset = 0;
+        uint8_t playerNumber = pScore->editable_by_player;
+        if (playerNumber < MAX_PLAYERS)
+          fontOffset = 80 + 11 * playerNumber;
 
+        if (fieldIndex < MAX_MAGIC_SCORE_NUMERIC_NAME)
+        {
           uint16_t value;
           if (fieldIndex == 0)
             value = pScore->score;
@@ -1332,11 +1353,27 @@ const char *StockTextMessages(const char *MagicWord)
             *pDest = 0;
           }
         }
-        else
+        else /* A string type of field.  Just plain white text. */
         {
-          /* A string type of field.  Can only fancy colour digits. */
-          strcpy(g_TempBuffer, (fieldIndex == MAX_MAGIC_SCORE_NUMERIC) ?
-            pScore->name : pScore->date_of_score);
+          if (fieldIndex == MAX_MAGIC_SCORE_NUMERIC_NAME) /* Player name? */
+          {
+            if (playerNumber < MAX_PLAYERS)
+            {
+              /* Score from an active player!  Move the player (acting as a
+                 cursor sprite) to the start of the text on screen.  Uses the
+                 current cursor position, as set by KeywordTextOnScreen()
+                 before it called this function. */
+
+              player_pointer pPlayer = g_player_array + playerNumber;
+              pPlayer->starting_level_pixel_x =
+                vdp_cursor.x * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+              pPlayer->starting_level_pixel_y =
+                vdp_cursor.y * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+            }
+            strcpy(g_TempBuffer, pScore->name);
+          }
+          else /* Only other string is the date. */
+            strcpy(g_TempBuffer, pScore->date_of_score);
         }
 
         return g_TempBuffer;

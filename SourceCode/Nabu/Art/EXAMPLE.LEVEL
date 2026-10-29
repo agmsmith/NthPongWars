@@ -119,13 +119,17 @@ Screen: HELP.NCHR
 # "Copyright" displays the copyright text for the game.
 # "Version" displays the version info (build date, free memory).
 # "Score0Cumulative" to "Score3Cumulative" display the current cumulative
-# scores for the specified player.  "Score0LastLevel" to "Score3LastLevel"
-# display the non-cumulative score for the last finished level for the player.
+# scores for the specified player, 5 digits in the player's colour.
+# "Score0LastLevel" to "Score3LastLevel" display the non-cumulative score for
+# the last finished level for the player, also 5 digits.
 # "High0Score" to "High9Score" display the top ten high scores in the currently
-# loaded score page, similarly "High0Name" to "High9Name" display the names of
-# the top ten, and "High0Date" the full date and tiem of the win,
-# "High0ShortDate" just 6 characters for the date, "High0Wins" number of levels
-# won, "High0Levels" number of levels played.
+# loaded score page, 5 digits, in player's colour if it is their current score
+# in the local high scores list.  "High0Name" to "High9Name" display the names
+# of the top ten, 13 characters.  "High0Date" the full date and time of the win,
+# in "2026.10.29 16:32" format.  "High0ShortDate" just 6 characters for the
+# date, like "16:32" for today or "261029" when displayed on some other day.
+# "High0Wins" number of levels won, 2 digits. "High0Levels" number of levels
+# played, also 2 digits.
 # ScreenText: Row, FirstLeftMargin, SubsequentLeftMargin, RightMargin, Text
 ScreenText: 2, 5, 0, 32, This is one very long line of text printed on screen.
 

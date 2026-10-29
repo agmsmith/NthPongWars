@@ -96,7 +96,18 @@ extern bool LoadLevelFile(void);
 extern const char *StockTextMessages(const char *MagicWord);
 /* Returns one of several stock text messages when given a keyword.  May use
    g_TempBuffer or maybe not.  Returns your MagicWord if it doesn't know
-   that magic word.  Currently recognises "Copyright" and "Version". */
+   that magic word.  Currently recognises "Copyright" and "Version",
+   and various score values prefixed by "ScoreN", where N is player 0 to 3.
+   "ScoreNCumulative" - accumulated score for a player over several levels,
+   "ScoreNLastLevel" - score in the just finished level for a player,
+   For the high score table data, "HighN" will get the table entry at row
+   0 (best player) to 9 (tenth best).  The particular table depends on which
+   one was loaded by the ScorePage keyword (local, all time, daily, etc).
+   "HighNScore" - The score from the high score table,
+   "HighNName" - the name of the player,
+   "HighNWins" - number of levels won in the game by the player,
+   "HighNLevels" - total number of levels in the game,
+   "HighNDate" - the date when the score was achieved,
+   "HighNShortDate" - a shorter format of the date. */
 
 #endif /* _LEVELS_H */
-

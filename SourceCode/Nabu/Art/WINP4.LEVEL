@@ -1,5 +1,6 @@
 # Player #4 (not a player) Wins.
-GameMode: Slide
+GameMode: Scores
+ScorePage: Local
 Music: Silence
 Screen: LOCALSCORES.NCHR
 Screen: WINP4.NFUL1

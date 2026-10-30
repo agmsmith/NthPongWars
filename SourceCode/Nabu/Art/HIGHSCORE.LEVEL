@@ -1,8 +1,8 @@
 # Show the high score screen sequence, starting with the local scores.
 # AGMS20260918
 LevelVersion: 20260209, NthPongWars
-# GameMode: EditScores
-GameMode: Slide
+GameMode: Scores
+ScorePage: Local
 Music: Silence
 Music: TECHTED3
 Screen: HIGHSCORE.NSCR

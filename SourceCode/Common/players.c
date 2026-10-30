@@ -262,7 +262,8 @@ static void ReinitialisePlayer(player_pointer pPlayer)
 {
   ZERO_FX(pPlayer->velocity_x);
   ZERO_FX(pPlayer->velocity_y);
-  pPlayer->pixel_flying_height = MAX_FLYING_HEIGHT; /* Start from a height. */
+  pPlayer->pixel_flying_height =
+    (gVictoryModeEditScores ? 0 : MAX_FLYING_HEIGHT); /* Start from a height. */
   pPlayer->player_collision_count = 0;
   bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
   pPlayer->joystick_inputs = 0;
@@ -280,7 +281,10 @@ static void ReinitialisePlayer(player_pointer pPlayer)
   pPlayer->brain_info.algo.stuck_time_remaining = 10; /* 2 seconds. */
   pPlayer->last_brain_activity_time = g_FrameCounter;
 #ifdef NABU_H
-  pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
+  if (gVictoryModeEditScores) /* Player is a cursor for text entry. */
+    pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_EFFECT_WIDER];
+  else
+    pPlayer->main_anim = g_SpriteAnimData[SPRITE_ANIM_BALL_ROLLING];
   pPlayer->sparkle_anim = g_SpriteAnimData[SPRITE_ANIM_NONE];
 #endif /* NABU_H */
 }

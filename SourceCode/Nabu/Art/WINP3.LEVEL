@@ -1,5 +1,6 @@
 # Player #3 Wins.
-GameMode: Slide
+GameMode: Scores
+ScorePage: Local
 Music: ONECOLN1
 Screen: LOCALSCORES.NCHR
 Screen: WINP3.NFUL1

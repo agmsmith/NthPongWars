@@ -348,7 +348,8 @@ void main(void)
        go back to updating things, etc.  Unfortunately we don't have enough time
        to do everything in one frame, so it's usually 20 frames per second with
        4 players, often dropping when there's lots of physics simulation
-       activity due to players moving too fast. */
+       activity due to players moving too fast.  Really should improve that
+       tic-tac-toe collision detection bottleneck. */
 
     s_KeepRunning = true;
     while (true)
@@ -364,6 +365,11 @@ void main(void)
         UpdateTileAnimations();
         UpdatePlayerAnimations();
         UpdateScores();
+      }
+      else if (gVictoryModeEditScores) /* Showing editable high scores. */
+      {
+        /* Player sprites act as cursors over the player's name on screen. */
+        UpdatePlayerAnimations();
       }
 
       /* Check for game exit here, after the updates have been done, but before
@@ -390,8 +396,14 @@ void main(void)
       {
         if (g_ScoreFramesPerUpdate < 2)
           vdp_waitVDPReadyInt();
-        vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
-        IO_VDPDATA = 0xD0;
+        if (gVictoryModeEditScores)
+          CopyPlayersToSprites(); /* Move player sprites to cursor positions. */
+        else
+        {
+          /* Turn off remaining sprites. */
+          vdp_setWriteAddress(_vdpSpriteAttributeTableAddr);
+          IO_VDPDATA = 0xD0;
+        }
       }
 
       /* Update the audio hardware with the music being played.  Can debug which

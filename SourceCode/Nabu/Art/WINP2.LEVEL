@@ -1,5 +1,6 @@
 # Player #2 Wins.
-GameMode: Slide
+GameMode: Scores
+ScorePage: Local
 Music: SQUAROOT
 Screen: LOCALSCORES.NCHR
 Screen: WINP2.NFUL1

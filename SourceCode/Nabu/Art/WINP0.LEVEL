@@ -1,5 +1,6 @@
 # Player #0 Wins.
-GameMode: Slide
+GameMode: Scores
+ScorePage: Local
 Music: UNDERWTR
 Screen: LOCALSCORES.NCHR
 Screen: WINP0.NFUL1

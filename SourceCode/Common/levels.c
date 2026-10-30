@@ -698,6 +698,25 @@ bool KeywordGameMode(void)
   else if (strcasecmp(modeName, "Scores") == 0)
   {
     gVictoryModeEditScores = true;
+
+    /* No actual game play tile area window in this mode, player sprites can
+       move around whole screen, as cursors for name editing. */
+    g_sprite_window_offset_x = -PLAYER_SCREEN_TO_SPRITE_OFFSET;
+    g_sprite_window_offset_y =
+      -PLAYER_SCREEN_TO_SPRITE_OFFSET - 1 /* For sprite hardware -1 */;
+    g_play_area_col_for_screen = 0;
+    g_play_area_row_for_screen = 0;
+
+    /* Players without score entries can't edit their names, move them to the
+       side of the screen. */
+    uint8_t iPlayer;
+    player_pointer pPlayer;
+    for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
+    iPlayer++, pPlayer++)
+    {
+      pPlayer->starting_level_pixel_x = 250;
+      pPlayer->starting_level_pixel_y = 32 + iPlayer * 32;
+    }
   }
   else
   {

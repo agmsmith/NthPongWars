@@ -1,5 +1,6 @@
 # Player #5 (not a player) Wins.
-GameMode: Slide
+GameMode: Scores
+ScorePage: Local
 Music: Silence
 Music: PINKPNTH
 Screen: LOCALSCORES.NCHR

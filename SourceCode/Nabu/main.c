@@ -369,6 +369,7 @@ void main(void)
       else if (gVictoryModeEditScores) /* Showing editable high scores. */
       {
         /* Player sprites act as cursors over the player's name on screen. */
+        UpdatePlayerNameEditing();
         UpdatePlayerAnimations();
       }
 

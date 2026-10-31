@@ -78,6 +78,13 @@ extern char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH];
 extern uint8_t gLevelCounter;
 /* Counts the number of levels played.  Gets reset to zero by RemovePlayers. */
 
+extern uint16_t gVictoryTimeoutFrame;
+/* Frame counter when the current level times out and player 4 (the Fire
+   button) is declared the winner.  Zero if the timeout isn't active.
+   GameMode Score (for high score screens) resets the timeout to +15 seconds
+   (assumes 20 frames per second) whenever someone does an edit action, so you
+   have time to finish editing. */
+
 extern bool VictoryConditionTest(void);
 /* Checks the victory conditions and sets things up for loading the next level
    (depending on which player won).  Returns TRUE if the level was completed. */

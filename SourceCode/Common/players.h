@@ -329,6 +329,10 @@ typedef struct player_struct {
      the various bits.  Zero if no buttons pressed.  Human, AI and remote
      players all talk to the simulation code through these five bits. */
 
+  uint8_t joystick_previous_frame;
+  /* Joystick from the previous frame.  So you can detect changes in the
+     buttons, for actions that are triggered when a button changes. */
+
   player_brain brain;
   /* What controls this player, or marks it as inactive (not drawn). */
 
@@ -377,15 +381,24 @@ typedef struct player_struct {
      not, it gets moved to lower bits as the score gets closer to the goal. */
 
   char lozenge_text;
-    /* The lozenge character currently displayed after the score when close to
-       the goal.  Or a space character if not showing a lozenge. */
+  /* The lozenge character currently displayed after the score when close to
+     the goal.  Or a space character if not showing a lozenge. */
 
   char name[MAX_SCORE_NAME_LENGTH+1];
-    /* Name of the player for high score tables, NUL terminated.  Reset to a
-       default whenever a new game controller (joystick, keyboard, AI brain) is
-       assigned to the player.  Can be edited during per-level high score
-       displays by using the joystick, if you got a score good enough.  Will be
-       used for submitting global high scores once the game is over. */
+  /* Name of the player for high score tables, NUL terminated.  Reset to a
+     default whenever a new game controller (joystick, keyboard, AI brain) is
+     assigned to the player.  Can be edited during per-level high score
+     displays by using the joystick, if you got a score good enough.  Will be
+     used for submitting global high scores once the game is over. */
+
+  int8_t name_cursor_index;
+  /* Which letter is the player currently editing in the name?  Corresponds to
+     the position in the character string.  Set to negative when the player is
+     done editing.  When all players are done, the score level can finish.
+     Note that the corresponding letter on the screen can be found by looking
+     at starting_level_pixel which is where the first letter of the name is on
+     screen.  When done, the cursor can be moved to the right side of the
+     screen at a height related to the player index. */
 
   uint16_t win_count;
   /* Number of levels won by this player.  Will be used for high score listings
@@ -531,6 +544,13 @@ extern void UpdateScreenScrollToShowPlayer(void);
    Humans.  Scrolls the screen so that player is visible.  Will trigger a
    scroll to move them back to the center of the screen if they go too far
    away from center.  Does nothing if g_scroll_to_follow_player; is false. */
+
+extern void UpdatePlayerNameEditing(void);
+/* Joystick left and right move the cursor to the adjacent letter, up and down
+   change letters, fire flips between Done and Editing states.  The player
+   sprite moves gradually to the appropriate cursor position (near the right
+   edge of the screen in Done mode).  Letter changes write the changed letter
+   to video memory. */
 
 #ifdef NABU_H
 extern void CopyPlayersToSprites(void);

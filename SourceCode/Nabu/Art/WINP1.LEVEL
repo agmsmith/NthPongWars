@@ -5,7 +5,6 @@ Music: LOADSONG
 Screen: LOCALSCORES.NCHR
 Screen: WINP1.NFUL1
 LevelNext: All, Bookmark
-PlayTimeout: 15
 
 ScreenText: 8, 9, 9, 32, Scores So Far
 

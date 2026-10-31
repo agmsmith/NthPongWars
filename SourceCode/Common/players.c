@@ -267,6 +267,7 @@ static void ReinitialisePlayer(player_pointer pPlayer)
   pPlayer->player_collision_count = 0;
   bzero(&pPlayer->power_up_timers, sizeof(pPlayer->power_up_timers));
   pPlayer->joystick_inputs = 0;
+  pPlayer->joystick_previous_frame = 0;
   pPlayer->brain_info.algo.desired_speed = g_PhysicsStepSizeLimit / 2;
   pPlayer->brain_info.algo.target_list_index =
     g_target_start_indices[pPlayer->player_array_index];
@@ -790,13 +791,18 @@ head_towards_octant, head_clockwise);
 
 
 /* Figure out what joystick action the AI player should do based on various
-   algorithms.
+   algorithms.  Note that this is called only every 4 frames or so, which means
+   the joystick action will stick for a few frames.
 */
 static void BrainUpdateJoystick(player_pointer pPlayer)
 {
   if (!gVictoryModeHighestTileCount) /* Not playing a game, so do nothing. */
   {
-    pPlayer->joystick_inputs = 0;
+    /* Switch out of name editing mode into Done mode if needed. */
+    if (gVictoryModeEditScores && pPlayer->name_cursor_index >= 0)
+      pPlayer->joystick_inputs = Joy_Button;
+    else
+      pPlayer->joystick_inputs = 0;
     return;
   }
 
@@ -1248,6 +1254,8 @@ void UpdatePlayerInputs(void)
   pPlayer = g_player_array;
   for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
   {
+    pPlayer->joystick_previous_frame = pPlayer->joystick_inputs;
+
     if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
       continue;
 
@@ -1577,14 +1585,6 @@ void UpdatePlayerInputs(void)
           SPRITE_ANIM_BALL_EFFECT_THRUST_BOLD_FRAME;
       }
     }
-
-    /* If this is a high score editing screen, move the player's cursors around
-       and change letters. */
-
-    if (gVictoryModeEditScores)
-    {
-      /* bleeble; */
-    }
   }
 }
 
@@ -1717,6 +1717,157 @@ void UpdateScreenScrollToShowPlayer(void)
 #endif
 
     ActivateTileArrayWindow();
+  }
+}
+
+
+/* Joystick left and right move the cursor to the adjacent letter, up and down
+   change letters, fire flips between Done and Editing states.  The player
+   sprite moves gradually to the appropriate cursor position (near the right
+   edge of the screen in Done mode).  Letter changes write the changed letter
+   to video memory.
+*/
+void UpdatePlayerNameEditing(void)
+{
+  uint8_t iPlayer;
+  player_pointer pPlayer = g_player_array;
+  for (iPlayer = 0; iPlayer < MAX_PLAYERS; iPlayer++, pPlayer++)
+  {
+    if (pPlayer->brain == ((player_brain) BRAIN_INACTIVE))
+      continue;
+
+    int8_t nameIndex = pPlayer->name_cursor_index;
+    uint8_t joyStickData = pPlayer->joystick_inputs;
+    uint8_t previousJoyStick = pPlayer->joystick_previous_frame;
+
+    if (nameIndex < 0) /* In Done mode? */
+    {
+      /* Switch mode but only on initial press of the fire button, ignore it
+         while it is held down (AI players hold them down for a few frames,
+         Humans too). */
+      if ((joyStickData & Joy_Button) && !(previousJoyStick & Joy_Button))
+        pPlayer->name_cursor_index = nameIndex = 0; /* Go back to editing. */
+    }
+    else /* In editing mode. */
+    {
+      /* Make sure name has no NUL characters until the end.  We'll trim
+         trailing spaces later when saving.  Don't want players to put stuff
+         after the NUL.  So fill with spaces. */
+
+      char *pLetter = pPlayer->name + strlen(pPlayer->name);
+      char *pEnd = pPlayer->name + MAX_SCORE_NAME_LENGTH;
+      while (pLetter != pEnd)
+        *pLetter++ = ' ';
+      *pLetter = 0; /* NUL at very end of the full string. */
+
+      /* Check for joystick activity.  Avoid doing two kinds of things at once,
+         like moving the cursor and changing the letter. */
+
+      if (joyStickData) /* Reset level timer if joystick is doing something. */
+        gVictoryTimeoutFrame = g_FrameCounter + 15 /* seconds */ * 20 /* hz */;
+
+      if (joyStickData & (Joy_Right | Joy_Left))
+      { /* Left and right move the cursor around.  Wraps at ends. */
+        /* Only the initial press moves the cursor, holding doesn't repeat. */
+        if (!(previousJoyStick & (Joy_Right | Joy_Left)))
+        {
+          if (joyStickData & Joy_Right)
+          {
+            if (++nameIndex >= MAX_SCORE_NAME_LENGTH)
+              nameIndex = 0;
+          }
+          else
+          {
+            if (nameIndex-- <= 0)
+              nameIndex = MAX_SCORE_NAME_LENGTH-1;
+          }
+          pPlayer->name_cursor_index = nameIndex;
+        }
+      }
+      else if (joyStickData & (Joy_Up | Joy_Down))
+      { /* Up and down change the character under the cursor. */
+        /* Initial press or every 4th frame, to slow it down from unusable. */
+        if (!(previousJoyStick & (Joy_Up | Joy_Down)) ||
+        (g_FrameCounter & MAX_PLAYERS_MASK) == iPlayer)
+        {
+          unsigned char letter = pPlayer->name[nameIndex];
+          if (joyStickData & Joy_Up)
+          {
+            if (++letter > 127)
+              letter = 32; /* Skip control characters, only printing letters. */
+          }
+          else /* Lower letter. */
+          {
+            if (--letter < 32)
+              letter = 127;
+          }
+          pPlayer->name[nameIndex] = letter;
+
+          /* Print the letter on the screen in the appropriate spot. */
+          vdp_setCursor2(
+            pPlayer->starting_level_pixel_x / TILE_PIXEL_WIDTH + nameIndex,
+            pPlayer->starting_level_pixel_y / TILE_PIXEL_WIDTH /* row */);
+          vdp_write(letter);
+        }
+      }
+      else if (joyStickData & Joy_Button)
+      { /* Stop editing, in Done mode now.  But only on initial Fire press. */
+        if (!(previousJoyStick & Joy_Button))
+        {
+          pPlayer->name_cursor_index = nameIndex = -1;
+
+          /* Remove trailing spaces. */
+          char *pLetter = pPlayer->name + MAX_SCORE_NAME_LENGTH;
+          while (pLetter != pPlayer->name)
+          {
+            pLetter--;
+            if (*pLetter != ' ')
+              break;
+            *pLetter = 0;
+          }
+        }
+      }
+    }
+
+    /* Now move the player's sprite cursor to the current cursor position or
+       to the side of the screen for Done mode, but slowly so you can see it
+       moving. */
+
+    uint8_t targetX, targetY;
+    if (nameIndex < 0) /* In Done mode? */
+    {
+      /* Move to the side of the screen. */
+
+      targetX = 250; /* Right hand side of the screen. */
+      targetY = 32 + iPlayer * 32; /* Player specific home spot. */
+    }
+    else /* In editing mode. */
+    {
+      /* Move to the spot around the current letter. */
+
+      targetX = pPlayer->starting_level_pixel_x + nameIndex * TILE_PIXEL_WIDTH;
+      targetY = pPlayer->starting_level_pixel_y;
+    }
+
+    /* Move the player towards the new spot, slowly. */
+
+    int16_t value, delta;
+
+    value = GET_FX_INTEGER(pPlayer->pixel_center_x);
+    delta = targetX - value;
+    if (delta > 4)
+      delta = 4;
+    else if (delta < -4)
+      delta = -4;
+    INT_TO_FX(value + delta, pPlayer->pixel_center_x);
+
+    value = GET_FX_INTEGER(pPlayer->pixel_center_y);
+    delta = targetY - value;
+    if (delta > 4)
+      delta = 4;
+    else if (delta < -4)
+      delta = -4;
+    INT_TO_FX(value + delta, pPlayer->pixel_center_y);
   }
 }
 

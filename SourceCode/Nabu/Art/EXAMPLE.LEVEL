@@ -49,8 +49,8 @@ LevelVersion: 20260209, NthPongWars
 # and fire toggles between editing (cursor visible) and "done" (no cursor).
 # When somebody presses a fire button and all players have selected "Done",
 # the level ends (local scores are uploaded to the global server) and the
-# "Fire" is the winner (see the LevelNext keyword).  You can also have a
-# timeout as usual to end the level, then the winner is "Timeout".
+# "Fire" is the winner (see the LevelNext keyword).  There is a hard coded 15
+# second timeout after no editing activity, then the winner is "Timeout".
 GameMode: Slide
 
 # When loading a screen, it's best to start the music first, since the level

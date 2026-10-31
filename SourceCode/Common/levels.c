@@ -38,9 +38,12 @@ char gLevelName[MAX_LEVEL_NAME_LENGTH] = "TITLE";
 char gWinnerNextLevelName[MAX_PLAYERS+2][MAX_LEVEL_NAME_LENGTH];
 char gBookmarkedLevelName [MAX_LEVEL_NAME_LENGTH] = "TITLE";
 
-static uint16_t sVictoryTimeoutFrame = 0;
+uint16_t gVictoryTimeoutFrame = 0;
 /* Frame counter when the current level times out and player 4 (the Fire
-   button) is declared the winner.  Zero if the timeout isn't active. */
+   button) is declared the winner.  Zero if the timeout isn't active.
+   GameMode Score (for high score screens) resets the timeout to +15 seconds
+   (assumes 20 frames per second) whenever someone does an edit action, so you
+   have time to finish editing. */
 
 static bool sFirstTileQuotaKeywordClears = true;
 /* A flag that's set for each level load so we know that all tile quotas
@@ -58,6 +61,7 @@ bool VictoryConditionTest(void)
 {
   uint8_t winningPlayer = MAX_PLAYERS + 2;
   /* 0 to 3 are players, 4 is Fire button, 5 is Timeout, 6 is invalid. */
+  bool allPlayersDoneEditing = true;
 
   uint8_t i;
   player_pointer pPlayer;
@@ -104,6 +108,18 @@ bool VictoryConditionTest(void)
     if (pPlayer->brain == BRAIN_INACTIVE)
       continue;
 
+    /* All players are done editing ends a high score name editing level. */
+
+    if (gVictoryModeEditScores)
+    {
+      /* Not Done editing or the player icon hasn't finished moving to the side
+         of the screen so that the players get visual feedback that name
+         editing has completed. */
+      if (pPlayer->name_cursor_index >= 0 ||
+      GET_FX_INTEGER(pPlayer->pixel_center_x) < 250)
+        allPlayersDoneEditing = false;
+    }
+
     /* Slide show mode: First player to press their fire button wins. */
 
     if (gVictoryModeFireButtonPress)
@@ -143,9 +159,17 @@ bool VictoryConditionTest(void)
     }
   }
 
+  /* Now that all players have been scanned... */
+
+  if (gVictoryModeEditScores)
+  { /* High score editing over when everyone is done. */
+    if (allPlayersDoneEditing)
+      winningPlayer = MAX_PLAYERS; /* Fire button wins. */
+  }
+
   /* Check for a level timeout if we don't have a winner yet. */
 
-  if (sVictoryTimeoutFrame && (sVictoryTimeoutFrame == g_FrameCounter) &&
+  if (gVictoryTimeoutFrame && (gVictoryTimeoutFrame == g_FrameCounter) &&
   (winningPlayer >= MAX_PLAYERS + 2))
     winningPlayer = MAX_PLAYERS + 1; /* Timeout "player" is the winner. */
 
@@ -495,13 +519,13 @@ bool KeywordPlayTimeout(void)
 {
   if (!LevelReadNumericArguments(1))
     return false;
-  sVictoryTimeoutFrame = sNumericArgumentsDecoded[0] * 20 /* Assume 20hz */;
+  gVictoryTimeoutFrame = sNumericArgumentsDecoded[0] * 20 /* Assume 20hz */;
 
-  if (sVictoryTimeoutFrame != 0)
+  if (gVictoryTimeoutFrame != 0)
   { /* User wants a timeout, we need a global frame number to trigger it. */
-    sVictoryTimeoutFrame += g_FrameCounter;
-    if (sVictoryTimeoutFrame == 0)
-      sVictoryTimeoutFrame = 1; /* Handle rare case of hitting zero. */
+    gVictoryTimeoutFrame += g_FrameCounter;
+    if (gVictoryTimeoutFrame == 0)
+      gVictoryTimeoutFrame = 1; /* Handle rare case of hitting zero. */
   }
 
   return true;
@@ -707,15 +731,13 @@ bool KeywordGameMode(void)
     g_play_area_col_for_screen = 0;
     g_play_area_row_for_screen = 0;
 
-    /* Players without score entries can't edit their names, move them to the
-       side of the screen. */
+    /* Players without score entries can't edit their names. */
     uint8_t iPlayer;
     player_pointer pPlayer;
     for (iPlayer = 0, pPlayer = g_player_array; iPlayer < MAX_PLAYERS;
     iPlayer++, pPlayer++)
     {
-      pPlayer->starting_level_pixel_x = 250;
-      pPlayer->starting_level_pixel_y = 32 + iPlayer * 32;
+      pPlayer->name_cursor_index = -1; /* Editing state initially Done. */
     }
   }
   else
@@ -1175,7 +1197,7 @@ bool LoadLevelFile(void)
 
   /* Some things that need to be reset at the start of a level. */
   gVictoryWinningPlayer = MAX_PLAYERS + 2;
-  sVictoryTimeoutFrame = 0;
+  gVictoryTimeoutFrame = 0;
   gLevelDesiredNumberOfPlayers = MAX_PLAYERS;
 
   sLevelFileHandle = OpenDataFile(gLevelName, "LEVEL", NULL /* No size */);
@@ -1388,6 +1410,7 @@ const char *StockTextMessages(const char *MagicWord)
                 vdp_cursor.x * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
               pPlayer->starting_level_pixel_y =
                 vdp_cursor.y * TILE_PIXEL_WIDTH + TILE_PIXEL_WIDTH / 2;
+              pPlayer->name_cursor_index = 0; /* Start editing first letter. */
             }
             strcpy(g_TempBuffer, pScore->name);
           }

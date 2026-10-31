@@ -6,7 +6,6 @@ Music: PINKPNTH
 Screen: LOCALSCORES.NCHR
 Screen: WINP5.NFUL1
 LevelNext: All, Bookmark
-PlayTimeout: 15
 
 ScreenText: 8, 9, 9, 32, Scores So Far
 

@@ -1,0 +1,7 @@
+# Show the third credits screen, the Kitsune Games Team No AI logo with a fox.
+GameMode: Trivia
+Music: FOXBACK4
+Screen: NOAINOTICE.NFUL
+LevelNext: All, TITLE
+PlayTimeout: 7
+

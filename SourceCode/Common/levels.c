@@ -928,7 +928,7 @@ bool KeywordTileQuota(void)
 */
 bool KeywordScorePage(void)
 {
-  if (!gVictoryModeEditScores)
+  if (gVictoryModeHighestTileCount) /* If this level uses tiles, no scores. */
     return false;
 
   char scorePageName[MAX_HIGH_SCORE_TABLE_NAME_LENGTH+1];

@@ -1786,9 +1786,17 @@ void UpdatePlayerNameEditing(void)
       }
       else if (joyStickData & (Joy_Up | Joy_Down))
       { /* Up and down change the character under the cursor. */
-        /* Initial press or every 4th frame, to slow it down from unusable. */
-        if (!(previousJoyStick & (Joy_Up | Joy_Down)) ||
-        (g_FrameCounter & MAX_PLAYERS_MASK) == iPlayer)
+
+        /* Initial press changes the letter or if you hold it down long enough,
+           every 4th frame (to slow it down from unusable speed).  Uses
+           repeat_timer as a delay timer: set to zero on first press,
+           ticks at every update, when over 10 it changes the character and
+           resets to some slightly smaller value. */
+
+        bool previouslyNotPressed = !(previousJoyStick & (Joy_Up | Joy_Down)); 
+        if (previouslyNotPressed)
+          pPlayer->repeat_timer = 0; /* Reset repeat time delay. */
+        if (previouslyNotPressed || pPlayer->repeat_timer >= 10)
         {
           unsigned char letter = pPlayer->name[nameIndex];
           if (joyStickData & Joy_Up)
@@ -1809,6 +1817,12 @@ void UpdatePlayerNameEditing(void)
             pPlayer->starting_level_pixel_y / TILE_PIXEL_WIDTH /* row */);
           vdp_write(letter);
         }
+
+        /* Tick the key repeat timer, which is only used for letter changing. */
+        if (pPlayer->repeat_timer >= 10)
+          pPlayer->repeat_timer = 8;
+        else
+          pPlayer->repeat_timer++;
       }
       else if (joyStickData & Joy_Button)
       { /* Stop editing, in Done mode now.  But only on initial Fire press. */

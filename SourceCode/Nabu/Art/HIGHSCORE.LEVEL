@@ -6,7 +6,7 @@ ScorePage: Local
 Music: Silence
 Music: TECHTED3
 Screen: HIGHSCORE.NSCR
-LevelNext: All, TITLE
+LevelNext: All, CREDITS
 PlayTimeout: 20
 
 ScreenText: 0, 5, 5, 32, _ Local High Scores _

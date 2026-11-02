@@ -22,7 +22,7 @@ TileQuota: B, 1 # OWNER_PUP_BASH_WALL
 TileQuota: S, 1 # OWNER_PUP_SOLID
 
 BoardSize: 32, 23
-InitialCount: 100
+InitialCount: 120
 BoardTileData:
 ( ( ( 1 ( ( ( ( ) ) ) 2 ) ) ) ) [ [ [ 3 [ [ [ [ ] ] ] 4 ] ] ] ]
 ( ( ( ( ( ( ( + ) ) ) ) ) ) ) + [ [ [ [ [ [ [ + ] ] ] ] ] ] ] ]

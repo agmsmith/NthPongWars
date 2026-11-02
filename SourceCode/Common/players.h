@@ -256,7 +256,7 @@ typedef struct player_struct {
     /* How far above the board the player is.  Will draw the shadow sprite
        offset diagonally by this many pixels. 2 is a good value, 1 is hard to
        see, 0 is hidden by the ball (ball on ground?).  Can be larger to make
-       it look like you are flying, and perhaps not colliding with tiles.*/
+       it look like you are flying, and perhaps not colliding with tiles. */
 
   int16_t starting_level_pixel_x;
   int16_t starting_level_pixel_y;
@@ -399,6 +399,13 @@ typedef struct player_struct {
      at starting_level_pixel which is where the first letter of the name is on
      screen.  When done, the cursor can be moved to the right side of the
      screen at a height related to the player index. */
+
+  uint8_t repeat_timer;
+  /* A a delay timer used when editing scores, for key repeat when changing a
+     letter.  Set to zero on first press, ticks whenever that button is held
+     down, when over 10 it changes the character and resets to some slightly
+     smaller value.  So you have control of the initial delay before repeating
+     and the repeat speed. */
 
   uint16_t win_count;
   /* Number of levels won by this player.  Will be used for high score listings

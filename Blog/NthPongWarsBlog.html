@@ -2990,6 +2990,57 @@ SRC="20260922HighScores.png" WIDTH="280" HEIGHT="226"
 ALT="[High Score Table Screen]"></A><BR>
 Full High Score Table
 
+
+<HR>
+<H2><A NAME="2026.11.03"></A>2026.11.03</H2>
+
+<H3>High Score Name Entry</H3>
+
+<P>I wanted people to be able to enter their names for the high score tables,
+but without having to share the keyboard.  The obvious thing is a cursor to
+select characters (left and right on the joysticks) and a way to change the
+letter under the cursor (up and down on the joystick) and a way of signalling
+you are done.
+
+<P>It turned out fairly nicely, with player sprites reused as cursors so each
+player gets a cursor in their colour.  I went for the full auto-repeat, where
+you tap the button to change letters and hold it down (with a brief delay) to
+rapidly switch letters.  Hitting the fire button signals you are done (cursor
+moves away from the letters and parks at the side of the screen), or hit fire
+again to change your mind and resume editing.  The screen / level waits until
+all players are done, or exits if nothing happens long enough.
+
+<P ALIGN="CENTER"><A HREF="20261103HighFox.mp4"><IMG
+SRC="20261103HighFox.gif" WIDTH="280" HEIGHT="216"
+ALT="[Video of High Scores with Name Editing, and the No AI Fox]"></A><BR>
+<A HREF="20261103HighFox.mp4">20261103HighFox.mp4</A> video with sound.
+
+<H3>No Artificial Intelligence Logo</H3>
+
+<P>The other bit of fuss was around adding a <I>No Artificial Intelligence</I>
+logo, after seeing a cute one with a fox <A
+HREF="https://mastodon.gamedev.place/@eniko/117531579933123942">on
+Mastodon</A>.  You can download it from <A
+HREF="https://eniko.itch.io/cute-fox-no-ai-notice">Kitsune Games Team</A>.
+There was quite a big heated discussion of AI's effect on culture on
+Mastocon, as you might expect for this time in history.
+
+<P ALIGN="CENTER">
+<A HREF="dark-fox-no-ai-notice-opaque_192p.jpeg"><IMG
+SRC="dark-fox-no-ai-notice-opaque_192p.jpeg"
+ALT="[Fox sleeping on a permission denied circle with AI letters inside it.]"
+WIDTH="256" HEIGHT="192"></A>
+<A HREF="20261103NoAILogo.png"><IMG SRC="20261103NoAILogo.png"
+ALT="[TMS9918 graphics version of the Fox sleeping on a permission denied circle
+with AI letters inside it.]" WIDTH="280" HEIGHT="216"></A>
+
+<P>For the NABU, a lot of the subtlety is lost in the TMS9918A graphics
+limitation of having only two colours per character cell 8 pixel line.  Hmmm,
+maybe I should have another go at manually editing the pixels in the text and
+make it thicker, but would it be readable?  Oh well, the Vintage Computer
+Federation convention in Montreal is coming up next weekend so it will have
+to do.
+
 <P>- Alex
 
 <P ALIGN="CENTER">Copyright &copy; 2026 by Alexander G. M. Smith.

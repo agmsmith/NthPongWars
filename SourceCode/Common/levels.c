@@ -483,6 +483,7 @@ bool KeywordTextOnScreen(void)
 
   if (!LevelReadNumericArguments(4))
     return false;
+  SoundUpdateIfNeeded();
 
   /* Yes, vdp_setCursor2() has input sanity checking. */
   vdp_setCursor2(sNumericArgumentsDecoded[1] /* column */,
@@ -494,9 +495,10 @@ bool KeywordTextOnScreen(void)
     return false;
   SoundUpdateIfNeeded();
 
+  char *pText = (char *) StockTextMessages(g_TempBuffer); /* Takes a while. */
   vdp_waitVDPReadyInt(); /* Avoids scrambling text, but makes it so slow! */
-  vdp_printJustified((char *) StockTextMessages(g_TempBuffer),
-    sNumericArgumentsDecoded[2], sNumericArgumentsDecoded[3]);
+  vdp_printJustified(
+    pText, sNumericArgumentsDecoded[2], sNumericArgumentsDecoded[3]);
 
   return true;
 }

@@ -2,6 +2,6 @@
 GameMode: Slide
 Screen: TEXTSCREEN.NCHR
 LevelNext: All, CREDITS3
-PlayTimeout: 7
+PlayTimeout: 9
 ScreenText: 4, 4, 4, 28, Copyright
 

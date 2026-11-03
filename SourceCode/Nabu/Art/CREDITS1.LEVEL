@@ -3,6 +3,8 @@ GameMode: Slide
 # Was displaying a bitmap screen, need to reload font as well as screen text.
 Screen: TEXTSCREEN.NSCR
 LevelNext: All, CREDITS2
-PlayTimeout: 7
+PlayTimeout: 9
 ScreenText: 4, 4, 4, 28, Version
+ScreenText: 14, 4, 4, 28, No AI logo by Kitsune Games Team, available at
+ScreenText: 16, 4, 4, 28, https://eniko.itch.io/cute-fox-no-ai-notice
 

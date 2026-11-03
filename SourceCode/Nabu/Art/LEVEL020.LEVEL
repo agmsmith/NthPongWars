@@ -16,7 +16,7 @@ LevelNext: Fire, WINP4
 LevelNext: Timeout, WINP5
 
 BoardSize: 32, 23
-InitialCount: 450
+InitialCount: 250
 
 DesiredPlayerCount: 4
 # Back to default AI player personalities.

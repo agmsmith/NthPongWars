@@ -8,7 +8,7 @@ Screen: TITLESCREEN.NFUL
 # wait 5 seconds and then show a demonstration of gameplay.
 LevelNext: All, LEVEL010
 LevelNext: Left, Quit
-LevelNext: Right, CREDITS
+LevelNext: Right, HIGHSCORE
 LevelNext: Up, CLASSICPONGWARS
 LevelNext: Down, TUTORIAL001
 LevelNext: Timeout, GAMEDEMO

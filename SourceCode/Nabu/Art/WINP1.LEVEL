@@ -92,3 +92,5 @@ ScreenText: 22, 19, 19, 32, High9Wins
 ScreenText: 22, 22, 22, 32, High9Levels
 ScreenText: 22, 25, 25, 32, High9ShortDate
 
+ScreenText: 23, 0, 0, 32, (Name edits apply in next level)
+

@@ -1,8 +1,8 @@
 # Load a picture of the family cottage, it's a full screen picture.
 GameMode: Slide
 Music: ONECOLN1
-Music: FOXBACK3
+Music: GUNFRITG
 Screen: COTTAGE.NFUL
-LevelNext: All, Bookmark
+LevelNext: All, RIVER
 PlayTimeout: 7
 
